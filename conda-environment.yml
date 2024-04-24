@@ -1,0 +1,28 @@
+name: roger-modflow
+
+channels:
+    - conda-forge
+
+dependencies:
+    - python=3.11
+    - pip
+    - click
+    - pyyaml
+    - entrypoints
+    - numpy
+    - scipy
+    - pandas
+    - loguru
+    - tqdm
+    - cython
+    - h5netcdf
+    - h5py
+    - matplotlib
+    - seaborn
+    - cftime
+    - flopy
+    - xarray
+    - rasterio
+    - pyproj
+    - netCDF4
+    - xmipy
