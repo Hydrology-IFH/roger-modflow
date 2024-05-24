@@ -1,0 +1,25 @@
+# name of the model run; is used to name the output files
+identifier: hillslope
+# number of grid cells in x-direction
+nx: 12
+# number of grid cells in y-direction
+ny: 24
+# number of grid cells in z-direction
+nz: 1
+# spatial discretization in x-direction (in meters)
+dx: 25
+# spatial discretization in y-direction (in meters)
+dy: 25
+# origin of spatial grid
+x_origin: 0
+# origin of spatial grid
+y_origin: 0
+# origin of temporal grid
+t_origin: "2020-01-01"
+# number of time steps
+ndays: 365
+
+# soil depth (in meters)
+soildepth: 1.0
+# aquifer thickness (in meters)
+aquifer_thickness: 30.0

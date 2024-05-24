@@ -1,0 +1,13 @@
+OUTPUT_COLLECT:
+- z_gw
+OUTPUT_FREQUENCY: 86400
+OUTPUT_RATE:
+- q_ss
+dx: 25
+dy: 25
+identifier: hillslope
+nx: 1000
+ny: 1000
+t_origin: '2020-01-01'
+x_origin: 0
+y_origin: 0

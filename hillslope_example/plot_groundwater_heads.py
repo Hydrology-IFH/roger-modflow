@@ -51,8 +51,12 @@ for k, i, j in ra["cellid"]:
 for t in range(1, ds_mf.sizes['time'], 7):
     fig, axes = plt.subplots(figsize=(3, 3))
     c = plt.contour(x, yr, h[t, :, :])
+    # plot location of the well
+    axes.scatter(x[6], yr[6], color="red", s=20, marker="x")  
     plt.clabel(c, fmt="%2.1f")
     plt.axis("scaled")
+    axes.set_xlabel("distance in x-direction [m]")
+    axes.set_ylabel("distance in y-direction [m]")
     fig.tight_layout()
     path = base_path_figs / f"heads_{t}.png"
     fig.savefig(path, dpi=300)
@@ -67,6 +71,8 @@ for t in range(1, ds_mf.sizes['time'], 7):
     quadmesh = modelmap.plot_ibound(ibound=ibd)
     linecollection = modelmap.plot_grid()
     contours = modelmap.contour_array(h[t, :, :])
+    ax.set_xlabel("distance in x-direction [m]")
+    ax.set_ylabel("distance in y-direction [m]")
     fig.tight_layout()
     path = base_path_figs / f"heads_contrours_grid_{t}.png"
     fig.savefig(path, dpi=300)
@@ -80,7 +86,9 @@ for t in range(1, ds_mf.sizes['time'], 7):
     quadmesh = modelmap.plot_ibound(ibound=ibd)
     linecollection = modelmap.plot_grid()
     pa = modelmap.plot_array(h[t, :, :])
-    cb = plt.colorbar(pa, shrink=0.5)
+    cb = plt.colorbar(pa, shrink=0.5, label="head [m.a.s.l.]")
+    plt.xlabel("distance in x-direction [m]")
+    plt.ylabel("distance in y-direction [m]")
     fig.tight_layout()
     path = base_path_figs / f"heads_grid_{t}.png"
     fig.savefig(path, dpi=300)

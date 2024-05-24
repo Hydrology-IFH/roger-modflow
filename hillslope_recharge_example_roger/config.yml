@@ -1,18 +1,28 @@
 # --- Settings --------------------------------------------------------------
 # name of the model run; is used to name the output files
-identifier: SVAT
+identifier: hillslope
 # number of grid cells in x-direction
 nx: 12
 # number of grid cells in y-direction
 ny: 24
+# number of grid cells in z-direction
+nz: 1
 # spatial discretization in x-direction (in meters)
-dx: 5
+dx: 25
 # spatial discretization in y-direction (in meters)
-dy: 5
+dy: 25
 # origin of spatial grid
 x_origin: 0
 # origin of spatial grid
 y_origin: 0
+# origin of temporal grid
+t_origin: "2019-11-01"
+# number of time steps
+ndays: 1095
+
+# --- Parameters ---------------------------------------------------------------
+# aquifer thickness (in meters)
+aquifer_thickness: 50.0
 
 # --- Diagnostics --------------------------------------------------------------
 OUTPUT_FREQUENCY: 86400  # output frequency in seconds
@@ -45,3 +55,4 @@ OUTPUT_COLLECT:
 - "theta_ss"  # soil water content of subsoil (-)
 - "theta"  # soil water content (-)
 - "S_snow"  # storage volume snow cover (mm)
+- "z_gw"  # groundwater depth (m)
