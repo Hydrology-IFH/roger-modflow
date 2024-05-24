@@ -1,5 +1,6 @@
 # Moehlin catchment
 
+Simulation of the soil water and groundwater of the Moehlin catchment (Germany) using MODFLOW coupled with RoGeR. The models are coupled online (i.e. variables/boundary conditions are updated after every time step).
 
 Short description of files and folders:
 - `input/`: contains precipitation data (`PREC.txt`; 10 minutes time steps), air temperature data (`TA.txt`; daily time steps) and potential evapotranspiration data (`PET.txt`; daily time steps).
