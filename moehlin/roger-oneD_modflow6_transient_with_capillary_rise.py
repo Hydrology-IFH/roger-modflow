@@ -310,10 +310,10 @@ class ModFlowSimulation:
         zw_merged = np.column_stack((zw1,zw2,zw3)).astype(int)
         connection = []
         for index in range(0, nstrm):
-            laenge = sum(zw_merged[index] > -1000000000)
+            length = sum(zw_merged[index] > -1000000000)
             selection = []
             selection.append(reach_connection_data['rno'][index]-1)
-            for i2 in range(0,laenge):
+            for i2 in range(0,length):
                 selection.append(zw_merged[index][i2])
             selection = tuple(selection)
             connection.append((selection))
@@ -421,13 +421,20 @@ class ModFlowSimulation:
     def set_recharge(self, recharge):
         """Set recharge, value in m/day"""
         recharge_tag = self.mf6.get_var_address("RECHARGE", self.name, "RCH_0")
-        self.mf6.set_value(recharge_tag, recharge)
+        mask = self.modflow_basin.flatten()  # mask of active cells
+        self.mf6.set_value(recharge_tag, recharge[mask])
 
     def get_groundwater_head(self, groundwater_head):
         """Get groundwater head from upper layer, value in m"""
         head_tag = self.mf6.get_var_address("X", self.name)
         mask = self.modflow_basin.flatten()  # mask of active cells
         groundwater_head[mask] = self.mf6.get_value_ptr(head_tag)[:self.n_active_cells_per_layer]
+
+    def get_recharge(self, recharge):
+        """Get recharge, value in m/day"""
+        recharge_tag = self.mf6.get_var_address("RECHARGE", self.name, "RCH_0")
+        mask = self.modflow_basin.flatten() 
+        recharge[mask] = self.mf6.get_value_ptr(recharge_tag)
 
     def step(self):
         if self.mf6.get_current_time() > self.end_time:
@@ -463,24 +470,30 @@ class ModFlowSimulation:
     def finalize(self):
         self.mf6.finalize()
 
-@click.option("-b", "--backend", type=click.Choice(["numpy", "jax"]), default="numpy", help="Computational backend of RoGeR")
+@click.option("-b", "--backend", type=click.Choice(["numpy", "jax"]), default="jax", help="Computational backend of RoGeR")
+@click.option("-ft", "--float_type", type=click.Choice(["float32", "float64"]), default="float32", help="Float type of RoGeR")
 @click.command("main", short_help="Run MODFLOW in transient mode coupled with RoGeR.")
-def main(backend):
+def main(backend, float_type):
     from roger import runtime_settings
     runtime_settings.update(
     backend=backend,
+    float_type=float_type,
     )
     from bmiroger import BmiRoger
-    from roger.bmimodels.svat import SVATSetup
+    from roger.bmimodels.oneD import ONEDSetup
     file_config = base_path / "config.yml"
     with open(file_config, "r") as file:
         roger_config = yaml.safe_load(file)
+
+    # define the output variables of RoGeR
+    roger_config['OUTPUT_COLLECT'] = ["theta", "z_gw"]
+    roger_config['OUTPUT_RATE'] = ["q_hof", "q_ss", "q_sub", "cpr_ss"]
 
     # choose parameters depending on the resolution of RoGeR
     file1 = base_path / "input" / f"parameters_{int(roger_config['dx'])}.nc"
     file2 = base_path / "parameters.nc"
     shutil.copy(file1, file2)
-    file = base_path / "write_parameters_to_csv_for_SVAT.py"
+    file = base_path / "write_parameters_to_csv_for_ONED.py"
     subprocess.run(["python", str(file)], check=True, timeout=20)
 
     # set the number of grid cells in x and y direction from the parameters file
@@ -513,7 +526,7 @@ def main(backend):
     topography = aggregate_to_finer_resolution(topography, modflow_config['dx'], roger_config['dx'], method="keep")
 
     # initialize the SVAT model of RoGeR using BMI
-    model = SVATSetup(base_path)
+    model = ONEDSetup(base_path, enable_groundwater_boundary=True)
     roger_interface = BmiRoger(model=model)
     roger_interface._model._output_dir = base_path / "output" / "transient"
     roger_interface.initialize(base_path)
@@ -544,12 +557,14 @@ def main(backend):
         # update groundwater head
         groundwater_head = np.zeros(modflow_config['nx'] * modflow_config['ny'])
         modflow_interface.get_groundwater_head(groundwater_head)
-        # aggregate groundwater head to the resolution of RoGeR
         groundwater_head = groundwater_head.reshape(modflow_config['nx'], modflow_config['ny'])
+        # aggregate groundwater head to the resolution of RoGeR
         groundwater_head = aggregate_to_finer_resolution(groundwater_head, modflow_config['dx'], roger_config['dx'], method="keep")
         # RoGeR requires depth of groundwater head (in meters)
         groundwater_depth = topography.flatten() - groundwater_head.flatten()
-        roger_interface.set_value("z_gw", groundwater_depth)
+        groundwater_depth[(groundwater_depth <= soildepth)] = soildepth[(groundwater_depth <= soildepth)] + 0.05  # constrain groundwater depth to soil depth
+        with roger_interface._model.state.variables.unlock():
+            roger_interface._model.state.variables.z_gw = roger_interface.set_value("z_gw", groundwater_depth)
 
         # run RoGeR for one timestep
         roger_interface.update_until(roger_interface._model._config["OUTPUT_FREQUENCY"])
@@ -557,15 +572,16 @@ def main(backend):
         # update recharge and pass it to MODFLOW
         recharge = np.zeros(roger_interface.get_grid_node_count())
         roger_interface.get_value("q_ss", recharge)
+        recharge[(groundwater_depth <= soildepth)] = 0 # constrain recharge to zero where groundwater depth is equal to soil depth
         recharge = recharge.reshape(roger_config['nx'], roger_config['ny']).astype(np.float64) / 1000  # mm/day to m/day
-        recharge[~roger_mask] = 0
-        # aggregate recharge to the resolution of MODFLOW
-        recharge = aggregate_to_coarser_resolution(recharge, roger_config['dx'], modflow_config['dx'], method="sum")
+        recharge = aggregate_to_coarser_resolution(recharge, roger_config['dx'], modflow_config['dx'], method="average")
+        recharge[~modflow_mask] = np.nan
+        recharge = recharge.flatten()
         modflow_interface.set_recharge(recharge)
-
+    
         # run MODFLOW for one timestep
         modflow_interface.step()
-    
+
     roger_interface.finalize()
     modflow_interface.finalize()
     print("RoGeR and MODFLOW (transient) finalized")

@@ -447,8 +447,8 @@ def main():
         groundwater_depth = topography.flatten() - groundwater_head
         if (groundwater_depth < 0).any():
             raise ValueError("Groundwater table reaches surface")
-        roger_interface.set_value("z_gw", groundwater_depth)
-
+        with roger_interface._model.state.variables.unlock():
+            roger_interface._model.state.variables.z_gw = roger_interface.set_value("z_gw", groundwater_depth)
         # run RoGeR for one timestep
         roger_interface.update_until(roger_interface._model._config["OUTPUT_FREQUENCY"])
 
@@ -456,14 +456,16 @@ def main():
         recharge = np.zeros(roger_interface.get_grid_node_count())
         roger_interface.get_value("q_ss", recharge)
         recharge = recharge.reshape(domain['nrow'], domain['ncol']) .astype(np.float64) / 1000  # mm/day to m/day
-        recharge[~mask] = np.nan
+        recharge[~mask] = 0
+        recharge = recharge.flatten()
         modflow_interface.set_recharge(recharge)
 
         # update capillary rise and pass it to MODFLOW
         cpr = np.zeros(roger_interface.get_grid_node_count())
         roger_interface.get_value("cpr_ss", cpr)
         cpr = cpr.reshape(domain['nrow'], domain['ncol']) .astype(np.float64) / 1000  # mm/day to m/day
-        cpr[~mask] = np.nan
+        cpr[~mask] = 0
+        cpr = cpr.flatten()
         modflow_interface.set_capillary_rise(cpr)
 
         # run MODFLOW for one timestep

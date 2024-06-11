@@ -8,14 +8,14 @@ import roger
 
 base_path = Path(__file__).parent
 # directory of results
-base_path_output = base_path / "output"
+base_path_output = base_path / "output" / "transient"
 if not os.path.exists(base_path_output):
     os.mkdir(base_path_output)
 
 # merge model output into single file
-path = str(base_path / "moehlin.*.nc")
+path = str(base_path_output / "moehlin.*.nc")
 diag_files = glob.glob(path)
-states_hm_file = base_path / "moehlin.nc"
+states_hm_file = base_path_output / "roger_output.nc"
 if not os.path.exists(states_hm_file):
     with h5netcdf.File(states_hm_file, "w", decode_vlen_strings=False) as f:
         f.attrs.update(

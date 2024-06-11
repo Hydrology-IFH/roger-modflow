@@ -34,21 +34,24 @@ def main():
 
     # write parameters to csv
     df_params = pd.DataFrame(index=range(nrows * ncols))
-    df_params.loc[:, "lu_id"] = ds_params.lanu.values.T.flatten()
-    df_params.loc[:, "slope"] = ds_params.slope.values.T.flatten() / 100
-    df_params.loc[:, "sealing"] = ds_params.vers.values.T.flatten() / 100
-    df_params.loc[:, "z_soil"] = ds_params.GRUND.values.T.flatten() * 10
-    df_params.loc[:, "dmpv"] = ds_params.MPD_V.values.T.flatten()
-    df_params.loc[:, "lmpv"] = ds_params.MPL_V.values.T.flatten()
-    df_params.loc[:, "dmph"] = ds_params.MPD_H.values.T.flatten()
-    df_params.loc[:, "theta_ac"] = ds_params.LK.values.T.flatten() / 100
-    df_params.loc[:, "theta_ufc"] = ds_params.NFK.values.T.flatten() / 100
-    df_params.loc[:, "theta_pwp"] = ds_params.PWP.values.T.flatten() / 100
-    df_params.loc[:, "ks"] = ds_params.KS.values.T.flatten()
-    df_params.loc[:, "kf"] = ds_params.TP.values.T.flatten()
+    df_params.loc[:, "lu_id"] = ds_params.lanu.values.flatten()
+    df_params.loc[:, "slope"] = ds_params.slope.values.flatten() / 100
+    df_params.loc[:, "sealing"] = ds_params.vers.values.flatten() / 100
+    df_params.loc[:, "z_soil"] = ds_params.GRUND.values.flatten() * 10
+    df_params.loc[:, "dmpv"] = ds_params.MPD_V.values.flatten()
+    df_params.loc[:, "lmpv"] = ds_params.MPL_V.values.flatten()
+    df_params.loc[:, "dmph"] = ds_params.MPD_H.values.flatten()
+    df_params.loc[:, "theta_ac"] = ds_params.LK.values.flatten() / 100
+    df_params.loc[:, "theta_ufc"] = ds_params.NFK.values.flatten() / 100
+    df_params.loc[:, "theta_pwp"] = ds_params.PWP.values.flatten() / 100
+    df_params.loc[:, "ks"] = ds_params.KS.values.flatten()
+    df_params.loc[:, "kf"] = ds_params.TP.values.flatten()
     df_params.loc[:, "ta_offset"] = ds_params.F_t.T.values.flatten()
     df_params.loc[:, "pet_weight"] = ds_params.F_et.T.values.flatten() / 100
     df_params.loc[:, "prec_weight"] = ds_params.F_n_h_y.T.values.flatten() / 100
+    df_params.loc[:, "ta_offset"] = df_params.loc[:, "ta_offset"].fillna(0)
+    df_params.loc[:, "pet_weight"] = df_params.loc[:, "pet_weight"].fillna(0)
+    df_params.loc[:, "prec_weight"] = df_params.loc[:, "prec_weight"].fillna(0)
 
     df_params = df_params.loc[
         :,

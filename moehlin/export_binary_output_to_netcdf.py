@@ -9,7 +9,7 @@ print(f"flopy version: {flopy.__version__}")
 
 base_path = Path(__file__).parent
 
-for model_type in ["transient"]:
+for model_type in ["steady-state", "transient"]:
     sim = flopy.mf6.MFSimulation.load(
         sim_ws=base_path / "output" / model_type,
         exe_name="mf6",

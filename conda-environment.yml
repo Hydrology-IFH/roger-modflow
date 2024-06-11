@@ -26,3 +26,5 @@ dependencies:
     - pyproj
     - netCDF4
     - xmipy
+    - pip:
+        - jax

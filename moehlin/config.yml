@@ -3,7 +3,9 @@ OUTPUT_COLLECT:
 - z_gw
 OUTPUT_FREQUENCY: 86400
 OUTPUT_RATE:
+- q_hof
 - q_ss
+- q_sub
 dx: 25
 dy: 25
 identifier: moehlin

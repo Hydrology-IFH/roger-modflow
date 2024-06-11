@@ -20,14 +20,24 @@ base_path = Path(__file__).parent
 # load the config file
 file_config = base_path / "config.yml"
 with open(file_config, "r") as file:
-    config = yaml.safe_load(file)
+    roger_config = yaml.safe_load(file)
+
+res_modflow = 50  # spatial resolution of MODFLOW in meters
+
+modflow_config = {
+    'dx': int(roger_config['dx']*(res_modflow/roger_config['dx'])),
+    'dy': int(roger_config['dy']*(res_modflow/roger_config['dx'])),
+    'nx': int(roger_config['nx']/(res_modflow/roger_config['dx'])),
+    'ny': int(roger_config['ny']/(res_modflow/roger_config['dx'])),
+    'nz': 4,
+}
 
 file = base_path / "input" / "domain.grd"
 domain = Raster.load(file)
 mask = (domain.get_array(1)[:, :-1] == 1)
 mask_basin = np.zeros_like(mask)
 mask_basin[mask] = 1
-grid_extent = (0, config['ny']*config['dy'], 0, config['nx']*config['dx'])
+grid_extent = (0, modflow_config['ny'] * modflow_config['dy'], 0, modflow_config['nx']*modflow_config['dx'])
 
 # load topography
 file = base_path / "input" / "elevation.grd"
@@ -57,7 +67,6 @@ output_file = base_path / "output" / model_type / "modflow_output.nc"
 ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
 ndays = ds_mf.sizes['time']
 
-grid_extent = (0, config['nx']*config['dx'], 0, config['ny']*config['dy'])
 
 x = np.cumsum(ds_mf.delr.values)
 y = np.cumsum(ds_mf.delc.values)
@@ -75,25 +84,7 @@ for k, i, j in ra["cellid"]:
     ibd[k, i, j] = -1
 
 # plot the heads for all time steps
-heads = ds_mf['head'].isel(layer=0).values
-heads_avg = np.mean(heads, axis=0)
-heads_p50 = np.median(heads, axis=0)
-heads_p5 = np.percentile(heads, 5, axis=0)
-heads_p95 = np.percentile(heads, 95, axis=0)
-heads_min = np.min(heads, axis=0)
-heads_max = np.max(heads, axis=0)
-
-fig, axes = plt.subplots(figsize=(2, 4))
-axes.plot(range(ndays), heads_avg, ls='--', label='average', lw=1.5)
-axes.plot(range(ndays), heads_p50, ls='-', label='median', lw=2)
-axes.plot(range(ndays), heads_p5, ls='-.', label='5th percentile', alpha=0.5)
-axes.plot(range(ndays), heads_p95, ls='-.', label='95th percentile', alpha=0.5)
-fig.tight_layout()
-path = base_path_figs / "heads_time_series.png"
-fig.savefig(path, dpi=300)
-
-# plot the heads for all time steps
-# for t in range(1, ds_mf.sizes['time']):
+for t in range(1, ds_mf.sizes['time'], 30):
     # fig, axes = plt.subplots(figsize=(3, 3))
     # c = plt.contour(x, yr, h[t, :, :])
     # plt.clabel(c, fmt="%2.1f")
@@ -101,7 +92,7 @@ fig.savefig(path, dpi=300)
     # axes.set_xlabel("distance in x-direction [m]")
     # axes.set_ylabel("distance in y-direction [m]")
     # fig.tight_layout()
-    # path = base_path_figs / f"heads_{t}.png"
+    # path = base_path_figs / f"heads_{t}_transient_layer0.png"
     # fig.savefig(path, dpi=300)
 
     # fig = plt.figure(figsize=(6, 6))
@@ -117,7 +108,7 @@ fig.savefig(path, dpi=300)
     # ax.set_xlabel("distance in x-direction [m]")
     # ax.set_ylabel("distance in y-direction [m]")
     # fig.tight_layout()
-    # path = base_path_figs / f"heads_contrours_grid_{t}.png"
+    # path = base_path_figs / f"heads_contours_grid_{t}_transient_layer0.png"
     # fig.savefig(path, dpi=300)
 
     # fig = plt.figure(figsize=(6, 6))
@@ -135,20 +126,53 @@ fig.savefig(path, dpi=300)
     # plt.xlabel("distance in y-direction [m]")
     # plt.ylabel("distance in x-direction [m]")
     # fig.tight_layout()
-    # path = base_path_figs / f"heads_grid_{t}.png"
+    # path = base_path_figs / f"heads_grid_{t}_transient_layer0.png"
     # fig.savefig(path, dpi=300)
     # plt.close(fig)
 
-    # fig, axes = plt.subplots(figsize=(4, 4))
-    # plt.imshow(ds_mf['head'].isel(time=t, layer=0).values.T, extent=grid_extent, cmap='viridis', vmin=190, vmax=202, aspect='equal')
-    # plt.colorbar(label='groundwater head [m a.s.l.]', shrink=0.5)
-    # plt.grid(zorder=0)
-    # plt.xlabel('Distance in y-direction [m]')
-    # plt.ylabel('Distance in x-direction [m]')
-    # plt.tight_layout()
-    # file = base_path_figs / f"gw_head_{t}.png"
-    # fig.savefig(file, dpi=300)
-    # plt.close(fig)
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(ds_mf['head'].isel(time=t, layer=0).values, extent=grid_extent, vmin=100, vmax=300, cmap='viridis', aspect='equal')
+    plt.colorbar(label='groundwater head [m a.s.l.]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
+    plt.tight_layout()
+    file = base_path_figs / f"gw_head_{t}_transient_layer0.png"
+    fig.savefig(file, dpi=300)
+    plt.close(fig)
+
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(ds_mf['head'].isel(time=t, layer=1).values, extent=grid_extent, vmin=100, vmax=300, cmap='viridis', aspect='equal')
+    plt.colorbar(label='groundwater head [m a.s.l.]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
+    plt.tight_layout()
+    file = base_path_figs / f"gw_head_{t}_transient_layer1.png"
+    fig.savefig(file, dpi=300)
+    plt.close(fig)
+
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(ds_mf['head'].isel(time=t, layer=2).values, extent=grid_extent, vmin=100, vmax=300, cmap='viridis', aspect='equal')
+    plt.colorbar(label='groundwater head [m a.s.l.]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
+    plt.tight_layout()
+    file = base_path_figs / f"gw_head_{t}_transient_layer2.png"
+    fig.savefig(file, dpi=300)
+    plt.close(fig)
+
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(ds_mf['head'].isel(time=t, layer=3).values, extent=grid_extent, vmin=100, vmax=300, cmap='viridis', aspect='equal')
+    plt.colorbar(label='groundwater head [m a.s.l.]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
+    plt.tight_layout()
+    file = base_path_figs / f"gw_head_{t}_transient_layer3.png"
+    fig.savefig(file, dpi=300)
+    plt.close(fig)
 
 model_type = "steady-state"
 base_path_figs = base_path / "figures" / model_type
@@ -226,18 +250,18 @@ t = 0
 # path = base_path_figs / f"heads_grid_steady_state.png"
 # fig.savefig(path, dpi=300)
 
-ll_levels = [[242, 242.5, 243, 244],
-             [242, 242.5, 243, 244],
-             [242, 242.5, 243, 244],
-             [130, 230, 242, 242.5, 243, 244]]
+ll_levels = [[224.5, 245, 250, 300, 400, 500, 600],
+             [224.5, 245, 250, 300, 400, 500, 600],
+             [224.5, 245, 250, 300, 400, 500, 600],
+             [224.5, 245, 250, 300, 400, 500, 600]]
 
 for layer in range(4):
     fig, axes = plt.subplots(figsize=(4, 4))
-    plt.imshow(ds_mf['head'].isel(time=0, layer=layer).values, extent=grid_extent, vmin=100, vmax=250, cmap='viridis', aspect='equal')
-    plt.colorbar(label='groundwater head [m a.s.l.]', shrink=0.5)
+    plt.imshow(ds_mf['head'].isel(time=0, layer=layer).values, extent=grid_extent, cmap='viridis', aspect='equal')
+    plt.colorbar(label='groundwater head \n[m a.s.l.]', shrink=0.5)
     plt.grid(zorder=0)
-    plt.xlabel('Distance in y-direction [m]')
-    plt.ylabel('Distance in x-direction [m]')
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
     plt.tight_layout()
     i = layer + 1
     file = base_path_figs / f"gw_head_steady_state_layer{i}_grid.png"
@@ -251,8 +275,8 @@ for layer in range(4):
     plt.imshow(gw_thickness, extent=grid_extent, cmap='viridis', aspect='equal')
     plt.colorbar(label='groundwater thickness [m]', shrink=0.5)
     plt.grid(zorder=0)
-    plt.xlabel('Distance in y-direction [m]')
-    plt.ylabel('Distance in x-direction [m]')
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
     plt.tight_layout()
     i = layer + 1
     file = base_path_figs / f"gw_thickness_steady_state_layer{i}_grid.png"
@@ -260,19 +284,66 @@ for layer in range(4):
     plt.close("all")
 
     fig, axes = plt.subplots(figsize=(4, 4))
-    y = np.arange(0, config['nx']*config['dx'], config['dx'])[::-1]
-    x = np.arange(0, config['ny']*config['dy'], config['dy'])
-    X, Y = np.meshgrid(x, y)
-    Z = ds_mf['head'].isel(time=0, layer=layer).values
-    levels = ll_levels[layer]
-    CS = axes.contour(X, Y, Z, levels, colors='black')
-    axes.clabel(CS, inline=True, fontsize=8, colors='black')
-    axes.imshow(mask_basin, extent=grid_extent, cmap='Greys', alpha=0.25)
-    plt.xlabel('Distance in y-direction [m]')
-    plt.ylabel('Distance in x-direction [m]')
-    plt.title(f"Groundwater head of layer {layer + 1} [m a.s.l.]", fontsize=8)
+    gw_depth = topography - ds_mf['head'].isel(time=0, layer=layer).values
+    plt.imshow(gw_depth, extent=grid_extent, cmap='viridis', aspect='equal')
+    plt.colorbar(label='groundwater thickness [m]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
     plt.tight_layout()
     i = layer + 1
-    file = base_path_figs / f"gw_head_steady_state_layer{i}_contour.png"
+    file = base_path_figs / f"gw_depth_steady_state_layer{i}_grid.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+    # fig, axes = plt.subplots(figsize=(4, 4))
+    # y = np.arange(0, modflow_config['nx']*modflow_config['dx'], modflow_config['dx'])[::-1]
+    # x = np.arange(0, modflow_config['ny']*modflow_config['dy'], modflow_config['dy'])
+    # X, Y = np.meshgrid(x, y)
+    # Z = ds_mf['head'].isel(time=0, layer=layer).values
+    # levels = ll_levels[layer]
+    # CS = axes.contour(X, Y, Z, levels, colors='black')
+    # axes.clabel(CS, inline=True, fontsize=8, colors='black')
+    # axes.imshow(mask_basin, extent=grid_extent, cmap='Greys', alpha=0.25)
+    # plt.xlabel('Distance in x-direction [m]')
+    # plt.ylabel('Distance in y-direction [m]')
+    # plt.title(f"Groundwater head of layer {layer + 1} [m a.s.l.]", fontsize=8)
+    # plt.tight_layout()
+    # i = layer + 1
+    # file = base_path_figs / f"gw_head_steady_state_layer{i}_contour.png"
+    # fig.savefig(file, dpi=300)
+    # plt.close("all")
+
+fig, axes = plt.subplots(4, 1, figsize=(6, 6), sharex=True, sharey=True)
+x = np.arange(0, modflow_config['ny']*modflow_config['dy'], modflow_config['dy'])
+for layer in range(4):
+    z = ds_mf['head'].isel(time=0, layer=layer).values[82, :]
+    axes[layer].plot(x, z, ls='-', lw=1, color='black')
+    axes[layer].set_xlim(0, x[-1])
+    axes[layer].set_ylabel('[m a.s.l.]')
+axes[-1].set_xlabel('Distance in x-direction [m]')
+fig.tight_layout()
+file = base_path_figs / "gw_head_x_cross_section_layer.png"
+fig.savefig(file, dpi=300)
+plt.close("all")
+
+
+for layer in range(4):
+    grid_extent1 = (-2000, modflow_config['ny']*modflow_config['dy'], 0, modflow_config['nx']*modflow_config['dx'])
+    arr = ds_mf['head'].isel(time=0, layer=layer).values
+    empty_arr = np.zeros((modflow_config['nx'], int(2000/modflow_config['dy'])))
+    empty_arr[:, :] = np.nan
+    arr1 = np.concatenate((empty_arr, arr), axis=1)
+    fig, axes = plt.subplots(figsize=(5, 6))
+    plt.scatter(-1350, 96*50, marker='x', s=20, c='black')  # approximate location of the observation well
+    plt.scatter(150, 96*50, marker='x', s=20, c='red')  # approximate location of the observation well
+    plt.imshow(arr1, extent=grid_extent1, cmap='viridis', aspect='equal')
+    plt.colorbar(label='groundwater head \n[m a.s.l.]', shrink=0.34)
+    plt.grid(zorder=0)
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
+    plt.tight_layout()
+    i = layer + 1
+    file = base_path_figs / f"gw_head_steady_state_layer{i}_grid_.png"
     fig.savefig(file, dpi=300)
     plt.close("all")

@@ -21,7 +21,6 @@ class ModFlowSimulation:
         ncol,
         rowsize,
         colsize,
-        config,
         verbose=False
     ):
         self.name = name.upper()  # MODFLOW requires the name to be uppercase
@@ -30,7 +29,6 @@ class ModFlowSimulation:
         self.ncol = ncol
         self.rowsize = rowsize
         self.colsize = colsize
-        self.config = config
         self.working_directory = os.path.join(folder, 'output/steady-state')
         if not os.path.exists(self.working_directory):
             os.makedirs(self.working_directory)
@@ -50,7 +48,7 @@ class ModFlowSimulation:
 
         # Create the Flopy temporal discretization object
         tdis = flopy.mf6.modflow.mftdis.ModflowTdis(
-            sim, pname="tdis", time_units="DAYS", start_date_time=str(self.config['t_origin']), nper=1, perioddata=[(1.0, 1, 1)]
+            sim, pname="tdis", time_units="DAYS", nper=1, perioddata=[(1.0, 1, 1)]
         )
 
         # Create the Flopy groundwater flow (gwf) model object
@@ -78,6 +76,7 @@ class ModFlowSimulation:
         elevation_bottom_layer2 = layer_elevations.get_array(3)[:, :-1]  # [:, :-1]=leave last column out to match the shape of the RoGeR domain
         elevation_bottom_layer3 = layer_elevations.get_array(4)[:, :-1]  # [:, :-1]=leave last column out to match the shape of the RoGeR domain
         elevation_bottom_layer4 = layer_elevations.get_array(5)[:, :-1]  # [:, :-1]=leave last column out to match the shape of the RoGeR domain
+        elevation_bottom_layer4[elevation_bottom_layer4 <= 100] = 100
         elevation_bottom_layers = [elevation_bottom_layer1, elevation_bottom_layer2, elevation_bottom_layer3, elevation_bottom_layer4]
         domain_layer1 = domain.get_array(1)[:, :-1]
         domain_layers = [domain_layer1, domain_layer1, domain_layer1, domain_layer1]
@@ -99,6 +98,11 @@ class ModFlowSimulation:
         initial_conditions_layer2 = elevation_bottom_layer2
         initial_conditions_layer3 = elevation_bottom_layer3
         initial_conditions_layer4 = ((elevation_bottom_layer3 - elevation_bottom_layer4)) / 2 + elevation_bottom_layer4
+        # constrain the initial conditions to the average groundwater head of the closest groundwater gauge
+        initial_conditions_layer1 = np.where(initial_conditions_layer1 < 224.5, 224.5, initial_conditions_layer1)
+        initial_conditions_layer2 = np.where(initial_conditions_layer1 < 224.5, 224.5, initial_conditions_layer2)
+        initial_conditions_layer3 = np.where(initial_conditions_layer1 < 224.5, 224.5, initial_conditions_layer3)
+        initial_conditions_layer4 = np.where(initial_conditions_layer1 < 224.5, 224.5, initial_conditions_layer4)
         initial_conditions_layers = [initial_conditions_layer1, initial_conditions_layer2, initial_conditions_layer3, initial_conditions_layer4]
         ic = flopy.mf6.modflow.mfgwfic.ModflowGwfic(gwf, pname="ic", strt=initial_conditions_layers)
 
@@ -157,7 +161,7 @@ class ModFlowSimulation:
         )
             
         # Recharge package
-        recharge = flopy.mf6.ModflowGwfrcha(gwf, recharge=0.000001)
+        recharge = flopy.mf6.ModflowGwfrcha(gwf, recharge=1/1000000, fixed_cell=True)
         
         # create streamflow routing package
         # Prepare the reach data
@@ -187,10 +191,10 @@ class ModFlowSimulation:
         zw_merged = np.column_stack((zw1,zw2,zw3)).astype(int)
         connection = []
         for index in range(0, nstrm):
-            laenge = sum(zw_merged[index] > -1000000000)
+            length = sum(zw_merged[index] > -1000000000)
             selection = []
             selection.append(reach_connection_data['rno'][index]-1)
-            for i2 in range(0,laenge):
+            for i2 in range(0,length):
                 selection.append(zw_merged[index][i2])
             selection = tuple(selection)
             connection.append((selection))
@@ -321,18 +325,27 @@ class ModFlowSimulation:
 def main():
     file_config = base_path / "config.yml"
     with open(file_config, "r") as file:
-        config = yaml.safe_load(file)
+        roger_config = yaml.safe_load(file)
+
+    res_modflow = 50  # spatial resolution of MODFLOW in meters
+
+    modflow_config = {
+        'dx': int(roger_config['dx']*(res_modflow/roger_config['dx'])),
+        'dy': int(roger_config['dy']*(res_modflow/roger_config['dx'])),
+        'nx': int(roger_config['nx']/(res_modflow/roger_config['dx'])),
+        'ny': int(roger_config['ny']/(res_modflow/roger_config['dx'])),
+        'nz': 4,
+    }
     
     # initialize the MODFLOW model using XMI
     modflow_interface = ModFlowSimulation(
-        config['identifier'],
+        roger_config['identifier'],
         base_path,
         nlay=4,
-        nrow=config['nx'],
-        ncol=config['ny'],
-        rowsize=config['dx'],
-        colsize=config['dy'],
-        config=config,
+        nrow=modflow_config['nx'],
+        ncol=modflow_config['ny'],
+        rowsize=modflow_config['dx'],
+        colsize=modflow_config['dy'],
         verbose=True
     )
     # run MODFLOW for one timestep

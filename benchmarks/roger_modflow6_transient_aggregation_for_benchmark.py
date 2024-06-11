@@ -482,7 +482,8 @@ def main(backend):
             groundwater_head = aggregate_to_finer_resolution(groundwater_head, modflow_config['dx'], roger_config['dx'], method="keep")
             # RoGeR requires depth of groundwater head (in meters)
             groundwater_depth = topography.flatten() - groundwater_head.flatten()
-            roger_interface.set_value("z_gw", groundwater_depth)
+            with roger_interface._model.state.variables.unlock():
+                roger_interface._model.state.variables.z_gw = roger_interface.set_value("z_gw", groundwater_depth)
 
             # run RoGeR for one timestep
             roger_interface.update_until(roger_interface._model._config["OUTPUT_FREQUENCY"])
@@ -492,6 +493,7 @@ def main(backend):
             roger_interface.get_value("q_ss", recharge)
             recharge = recharge.reshape(roger_config['nx'], roger_config['ny']).astype(np.float64) / 1000  # mm/day to m/day
             recharge = aggregate_to_coarser_resolution(recharge, roger_config['dx'], modflow_config['dx'], method="sum")
+            recharge = recharge.flatten()
             modflow_interface.set_recharge(recharge)
 
             # run MODFLOW for one timestep
