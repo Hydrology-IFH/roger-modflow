@@ -21,6 +21,7 @@ zbud6
 *.evt
 *.sto
 *.rch
+*.rcha
 *.riv
 *.sfr
 *.uzf
@@ -42,3 +43,5 @@ benchmarks/parameters.csv
 moehlin/parameters.csv
 moehlin/input/parameters_5.nc
 moehlin/observations/
+forcing.nc
+/bin

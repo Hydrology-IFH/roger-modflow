@@ -658,6 +658,8 @@ def main(backend, float_type):
         well_rate = np.zeros((modflow_config['nz'], modflow_config['nx'], modflow_config['ny']))
         well_rate[-1, :, :] = well_rate1
         well_rate[~well_mask[-1, :, :]] = 0
+
+        
         well_rate = well_rate.flatten()
         modflow_interface.set_well_rate(well_rate)
     

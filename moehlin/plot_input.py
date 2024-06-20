@@ -4,6 +4,7 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import xarray as xr
 from flopy.utils import Raster
 import yaml
 
@@ -202,25 +203,48 @@ plt.close(fig)
 # plt.close(fig)
 
 file = base_path / "input" / "hydraulic_conductivity_layer1.grd"
-hydraulic_conductivities_layer1 = Raster.load(file).get_array(1)
+hydraulic_conductivities_layer1 = Raster.load(file).get_array(1) / (60 * 60 * 24)
 file = base_path / "input" / "hydraulic_conductivity_layer2.grd"
-hydraulic_conductivities_layer2 = Raster.load(file).get_array(1)
+hydraulic_conductivities_layer2 = Raster.load(file).get_array(1) / (60 * 60 * 24)
 file = base_path / "input" / "hydraulic_conductivity_layer3.grd"
-hydraulic_conductivities_layer3 = Raster.load(file).get_array(1)
-file = base_path / "input" / "hydraulic_conductivity_layer1.grd"
-hydraulic_conductivities_layer4 = Raster.load(file).get_array(1)
+hydraulic_conductivities_layer3 = Raster.load(file).get_array(1) / (60 * 60 * 24)
+file = base_path / "input" / "hydraulic_conductivity_layer4.grd"
+hydraulic_conductivities_layer4 = Raster.load(file).get_array(1) / (60 * 60 * 24)
 hydraulic_conductivities_layers = [hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4]
 for i, hydraulic_conductivities_layer in enumerate(hydraulic_conductivities_layers):
     i = i + 1
     fig, axes = plt.subplots(figsize=(4, 4))
     hydraulic_conductivities_layer[~mask] = np.nan
     plt.imshow(hydraulic_conductivities_layer, extent=grid_extent, cmap='Oranges', aspect='equal')
-    plt.colorbar(label='$k_f$ [m/day]', shrink=0.5)
+    plt.colorbar(label='$k_f$ [m/s]', shrink=0.5)
     plt.grid(zorder=0)
     plt.xlabel('Distance in x-direction [m]')
     plt.ylabel('Distance in y-direction [m]')
     plt.tight_layout()
     file = base_path_figs / f"hydraulic_conductivity_layer_{i}.png"
+    fig.savefig(file, dpi=300)
+    plt.close(fig)
+
+file = base_path / "input" / "specific_yield_layer1.grd"
+specific_yield_layer1 = Raster.load(file).get_array(1)
+file = base_path / "input" / "specific_yield_layer2.grd"
+specific_yield_layer2 = Raster.load(file).get_array(1)
+file = base_path / "input" / "specific_yield_layer3.grd"
+specific_yield_layer3 = Raster.load(file).get_array(1)
+file = base_path / "input" / "specific_yield_layer4.grd"
+specific_yield_layer4 = Raster.load(file).get_array(1)
+specific_yield_layers = [specific_yield_layer1, specific_yield_layer2, specific_yield_layer3, specific_yield_layer4]
+for i, specific_yield_layer in enumerate(specific_yield_layers):
+    i = i + 1
+    fig, axes = plt.subplots(figsize=(4, 4))
+    specific_yield_layer[~mask] = np.nan
+    plt.imshow(specific_yield_layer, extent=grid_extent, cmap='Oranges', aspect='equal')
+    plt.colorbar(label='$n$ [-]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
+    plt.tight_layout()
+    file = base_path_figs / f"specific_yield_layer_{i}.png"
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
@@ -313,3 +337,69 @@ fig.tight_layout()
 file = base_path_figs / "gw_layers_cross_section_west-east_layer.png"
 fig.savefig(file, dpi=300)
 plt.close("all")
+
+
+transmissivity_layer1 = hydraulic_conductivities_layer1 * thickness_layer1
+transmissivity_layer2 = hydraulic_conductivities_layer2 * thickness_layer2
+transmissivity_layer3 = hydraulic_conductivities_layer3 * thickness_layer3
+transmissivity_layer4 = hydraulic_conductivities_layer4 * thickness_layer4
+transmissivity_layers = [transmissivity_layer1, transmissivity_layer2, transmissivity_layer3, transmissivity_layer4]
+for i, transmissivity_layer in enumerate(transmissivity_layers):
+    i = i + 1
+    fig, axes = plt.subplots(figsize=(4, 4))
+    transmissivity_layer[~mask] = np.nan
+    plt.imshow(transmissivity_layer, extent=grid_extent, cmap='Oranges', aspect='equal')
+    plt.colorbar(label='$T$ [$m^2$/s]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
+    plt.tight_layout()
+    file = base_path_figs / f"transmissivity_layer_{i}.png"
+    fig.savefig(file, dpi=300)
+    plt.close(fig)
+
+
+params_file = base_path / "parameters.nc"
+ds_params = xr.open_dataset(params_file, engine="h5netcdf")
+data1 = ds_params['TP'].values / (1000 * 60 * 60)
+
+fig, axes = plt.subplots(2, 1, figsize=(4, 6))
+ax1 = axes[0].imshow(data1, extent=grid_extent, aspect='equal', vmin=0, vmax=int(np.nanmax(data1)))
+fig.colorbar(ax1, shrink=0.45, label='[m/s]')
+axes[0].set_xlabel('Distance in y-direction [m]')
+axes[0].set_ylabel('Distance in x-direction [m]')
+ax2 = axes[1].imshow(hydraulic_conductivities_layer1, extent=grid_extent, aspect='equal', vmin=0, vmax=int(np.nanmax(data1)))
+axes[1].set_xlabel('Distance in y-direction [m]')
+axes[1].set_ylabel('Distance in x-direction [m]')
+fig.colorbar(ax2, shrink=0.45, label='[m/s]')
+fig.tight_layout()
+file = base_path_figs / "kf_comparison_layer1.png"
+fig.savefig(file, dpi=300)
+plt.close("all")
+
+fig, axes = plt.subplots(2, 1, figsize=(4, 6))
+ax1 = axes[0].imshow(data1, extent=grid_extent, aspect='equal', vmin=0, vmax=int(np.nanmax(data1)))
+fig.colorbar(ax1, shrink=0.45, label='[m/s]')
+axes[0].set_xlabel('Distance in y-direction [m]')
+axes[0].set_ylabel('Distance in x-direction [m]')
+ax2 = axes[1].imshow(hydraulic_conductivities_layer2, extent=grid_extent, aspect='equal', vmin=0, vmax=int(np.nanmax(data1)))
+axes[1].set_xlabel('Distance in y-direction [m]')
+axes[1].set_ylabel('Distance in x-direction [m]')
+fig.colorbar(ax2, shrink=0.45, label='[m/s]')
+fig.tight_layout()
+file = base_path_figs / "kf_comparison_layer2.png"
+fig.savefig(file, dpi=300)
+plt.close("all")
+
+fig, axes = plt.subplots(figsize=(4, 4))
+data = hydraulic_conductivities_layer2 * (1000 * 60 * 60)
+data[~mask] = np.nan
+plt.imshow(data, extent=grid_extent, cmap='Oranges', aspect='equal')
+plt.colorbar(label='$k_f$ [mm/hour]', shrink=0.5)
+plt.grid(zorder=0)
+plt.xlabel('Distance in x-direction [m]')
+plt.ylabel('Distance in y-direction [m]')
+plt.tight_layout()
+file = base_path_figs / f"hydraulic_conductivity_layer_2_mmh.png"
+fig.savefig(file, dpi=300)
+plt.close(fig)
