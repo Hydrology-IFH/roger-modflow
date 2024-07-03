@@ -564,7 +564,7 @@ def main(backend, float_type):
         groundwater_depth = topography.flatten() - groundwater_head.flatten()
         groundwater_depth[(groundwater_depth <= soildepth)] = soildepth[(groundwater_depth <= soildepth)] + 0.05  # constrain groundwater depth to soil depth
         with roger_interface._model.state.variables.unlock():
-            roger_interface._model.state.variables.z_gw = roger_interface.set_value("z_gw", groundwater_depth)
+            roger_interface.set_value("z_gw", groundwater_depth)
 
         # run RoGeR for one timestep
         roger_interface.update_until(roger_interface._model._config["OUTPUT_FREQUENCY"])

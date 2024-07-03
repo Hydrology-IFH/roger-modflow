@@ -14,6 +14,7 @@ Short description of files and folders:
 - `parameters.csv`: Model parameters of RoGeR
 - `modflow6_steady-state.py`: Python script to run MODFLOW6 using xmipy for steady-state simulations
 - `roger_modflow6_transient.py`: Python script to run RoGeR and MODFLOW6 using xmipy for transient simulations
+- `roger.py`: Python script to run RoGeR
 - `export_binary_output_to_netcdf.py`: Writes the MODFLOW6 output into a single netCDF file
 - `plot_groundwater_heads.py`: Plots the groundwater head at different time steps
 

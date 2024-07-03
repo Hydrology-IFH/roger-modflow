@@ -433,7 +433,7 @@ def main():
         # RoGeR requires depth of groundwater head (in meters)
         groundwater_depth = topography.flatten() - groundwater_head
         with roger_interface._model.state.variables.unlock():
-            roger_interface._model.state.variables.z_gw = roger_interface.set_value("z_gw", groundwater_depth)
+            roger_interface.set_value("z_gw", groundwater_depth)
         # run RoGeR for one timestep
         roger_interface.update_until(roger_interface._model._config["OUTPUT_FREQUENCY"])
 
