@@ -87,7 +87,7 @@ class ModFlowSimulation:
 
         # Create the Flopy iterative model solver (ims) Package object
         ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", complexity="COMPLEX",
-                                                 outer_maximum=300, inner_maximum=750)
+                                                 outer_maximum=100, inner_maximum=600)
 
         # Now that the overall simulation is set up, we can focus on building the groundwater flow model.  The groundwater flow model will be built by adding packages to it that describe the model characteristics.
         #
@@ -451,19 +451,24 @@ class ModFlowSimulation:
         signal.signal(signal.SIGALRM, handler)
         signal.alarm(60)  # Set the timeout duration to 60 seconds
 
+        complete = 0
         try:
-            has_converged = self.mf6.solve(1)
+            # convergence loop
+            kiter = 0
+            self.mf6.prepare_solve(1)
+            while kiter < self.max_iter:
+                has_converged = self.mf6.solve(kiter)
+                kiter += 1
+
+                if has_converged:
+                    complete = 1
+                    break
         except TimeoutError:
             has_converged = False
             print("MODFLOW numerical solver timed out")
         finally:
             signal.alarm(0)  # Reset the alarm
-
-        if has_converged:
             self.mf6.finalize_solve(1)
-            complete = 1
-        else:
-            complete = 0
 
         self.mf6.finalize_time_step()
 

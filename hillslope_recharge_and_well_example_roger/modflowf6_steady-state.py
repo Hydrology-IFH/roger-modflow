@@ -47,7 +47,7 @@ class ModFlowSimulation:
         h1 = np.max(top) - 8
         h2 = np.min(top) - 8
         h1_h2 = np.linspace(h1, h2, self.ncol)
-        k = 0.1  # hydraulic conductivity
+        k = 10  # hydraulic conductivity
 
         # Temporal discretization (TDIS)
         # One or more models (GWF is the only model supported at present)
@@ -71,7 +71,7 @@ class ModFlowSimulation:
         gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file)
 
         # Create the Flopy iterative model solver (ims) Package object
-        ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", complexity="SIMPLE")
+        ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", complexity="COMPLEX", outer_maximum=300, inner_maximum=750)
 
         # Now that the overall simulation is set up, we can focus on building the groundwater flow model.  The groundwater flow model will be built by adding packages to it that describe the model characteristics.
         #
@@ -289,7 +289,7 @@ class ModFlowSimulation:
             kiter = 0
             self.mf6.prepare_solve(solution_id)
             while kiter < self.max_iter:
-                has_converged = self.mf6.solve(solution_id)
+                has_converged = self.mf6.solve(kiter)
                 kiter += 1
 
                 if has_converged:
@@ -418,7 +418,7 @@ def main():
     # update recharge and pass it to MODFLOW
     recharge = np.zeros(domain['nrow'] * domain['ncol'])
     recharge = recharge.reshape(domain['nrow'], domain['ncol']).astype(np.float64) / 1000  # mm/day to m3/day
-    recharge[:, :] = 0
+    recharge[:, :] = 0.0001
     recharge[~mask] = np.nan
     modflow_interface.set_recharge(recharge)
 
