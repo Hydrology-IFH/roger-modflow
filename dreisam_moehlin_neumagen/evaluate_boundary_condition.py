@@ -6,9 +6,10 @@ import matplotlib.pyplot as plt
 import click
 import flopy
 
+@click.option("-mr", "--model-run", type=int, default=0)
 @click.option("--plot", type=int, is_flag=True, help="Print more output.")
 @click.command("main", short_help="Run MODFLOW in steady-state mode")
-def main(plot):
+def main(model_run, plot):
     try:
         path = Path(__file__).parent / "parameters_modflow.nc"
         ds_params = xr.open_dataset(path, engine="h5netcdf")

@@ -72,7 +72,7 @@ def main(plot):
     mask_boundary_condition[:, :150] = np.where((boundary == 1)[:, :150], 1, mask_boundary_condition[:, :150])
 
     # set constant head to constant value
-    boundary_condition = np.where(mask_boundary_condition, 185, np.nan)
+    boundary_condition = np.where(mask_boundary_condition, 170, np.nan)
 
     # write boundary condtions to netcdf
     params_file = base_path / "boundary_conditions.nc"

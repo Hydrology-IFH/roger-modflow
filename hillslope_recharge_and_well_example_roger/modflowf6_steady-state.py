@@ -289,7 +289,7 @@ class ModFlowSimulation:
             kiter = 0
             self.mf6.prepare_solve(solution_id)
             while kiter < self.max_iter:
-                has_converged = self.mf6.solve(kiter)
+                has_converged = self.mf6.solve(1)
                 kiter += 1
 
                 if has_converged:

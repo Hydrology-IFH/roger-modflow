@@ -87,7 +87,7 @@ class ModFlowSimulation:
 
         # Create the Flopy iterative model solver (ims) Package object
         ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", complexity="COMPLEX",
-                                                 outer_maximum=30, inner_maximum=600)
+                                                 outer_maximum=300, inner_maximum=750)
 
         # Now that the overall simulation is set up, we can focus on building the groundwater flow model.  The groundwater flow model will be built by adding packages to it that describe the model characteristics.
         #
@@ -454,11 +454,9 @@ class ModFlowSimulation:
         complete = 0
         try:
             # convergence loop
-            kiter = 0
             self.mf6.prepare_solve(1)
-            while kiter < self.max_iter:
-                has_converged = self.mf6.solve(kiter)
-                kiter += 1
+            for _ in range(self.max_iter):
+                has_converged = self.mf6.solve(1)
 
                 if has_converged:
                     complete = 1
@@ -524,10 +522,16 @@ def main(model_run):
     path = Path(__file__).parent / "parameters_modflow.nc"
     ds_params = xr.open_dataset(path, engine="h5netcdf")
     topography = ds_params['elevations'].isel(z=0).values
+    mask = np.isfinite(topography)
+    # set Schoenberg to inactive
+    mask_schoenberg = (ds_params['mask_schoenberg'].values == 1)
+    mask = np.where(mask_schoenberg, False, mask)
+    topography[~mask] = np.nan
     fhead = base_path / "output" / "steady-state" / f"dmn_run_{model_run}.hds"
     hds = flopy.utils.HeadFile(fhead)
     head = hds.get_data()[0, :, :]
-    if (head >= topography).any():
+    head[~mask] = np.nan
+    if (head > topography).any():
         complete = 0
 
     # update the fudge parameters if the parameter set produces a useful simulation

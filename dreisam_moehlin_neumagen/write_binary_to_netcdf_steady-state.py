@@ -20,10 +20,10 @@ def main(model_run):
             verbosity_level=0,
         )
 
-        ml = sim.get_model("dmn")
+        ml = sim.get_model(f"dmn_run_{model_run}")
 
         # export groundwater head to netcdf
-        fhead = base_path / "output" / "steady-state" / "dmn.hds"
+        fhead = base_path / "output" / "steady-state" / f"dmn_run_{model_run}.hds"
         hds = flopy.utils.HeadFile(fhead)
 
         export_dict = {"hds": hds}
