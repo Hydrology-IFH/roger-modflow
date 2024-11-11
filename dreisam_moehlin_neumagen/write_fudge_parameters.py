@@ -31,6 +31,8 @@ def main(nsamples):
         df_params.loc[:, param] = values.flatten()
 
     df_params.iloc[0, :] = 1.0
+    df_params.iloc[0, 3] = 2.0
+    df_params.iloc[0, 4] = 2.0
     df_params["complete"] = 0
     df_params = df_params.loc[:, ["v10", "v110", "v00101", "m00101", "m110", "complete"]]
 

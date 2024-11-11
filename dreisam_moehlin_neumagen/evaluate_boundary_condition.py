@@ -92,9 +92,9 @@ def main(model_run, plot):
             constant_head_new_vals[constant_head_new_vals >= topography_vals] = topography_vals[constant_head_new_vals >= topography_vals] - 2
 
             fig, axes = plt.subplots(figsize=(6, 3))
-            # axes.plot(range(len(topography_vals)), topography_vals, label="constant head initial", color="black", linestyle="--", alpha=0.5)
+            axes.plot(range(len(topography_vals)), topography_vals, label="constant head initial", color="black", linestyle="--", alpha=0.5)
+            # axes.plot(range(len(constant_head_new_vals)), constant_head_new_vals, label="constant head new", color="purple", alpha=0.5)
             axes.plot(range(len(constant_head_initial_vals)), constant_head_initial_vals, label="constant head initial", color="black")
-            axes.plot(range(len(constant_head_new_vals)), constant_head_new_vals, label="constant head new", color="purple", alpha=0.5)
             axes.set_ylabel("elevation [m.a.s.l.]")
             fig.tight_layout()
             file = Path(__file__).parent / "figures" / "steady-state" / "evaluation_of_constant_head.png"

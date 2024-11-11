@@ -68,11 +68,28 @@ def main(plot):
     boundary = boundary[2:-2, 2:-2]
     topography[~mask] = np.nan
     # define location of boundary condition
-    mask_boundary_condition = np.where((boundary == 1) & (topography <= 260), 1, np.nan)
-    mask_boundary_condition[:, :150] = np.where((boundary == 1)[:, :150], 1, mask_boundary_condition[:, :150])
+    mask_boundary_condition = np.where((boundary == 1) & (topography <= 240), 1, np.nan)
+    mask_boundary_condition[80:250, :180] = np.where((boundary == 1)[80:250, :180], 1, mask_boundary_condition[80:250, :180])
+
+    # set constant head
+    xx = np.where(mask_boundary_condition == 1)[0]
+    yy = np.where(mask_boundary_condition == 1)[1]
+    headsx = np.linspace(188, topography[xx[-1], yy[-1]] - 30, np.max(xx)+1) - 15
+    headsy = np.linspace(162, 185, np.max(yy)+1)[::-1]
+    boundary_condition = np.empty_like(mask_boundary_condition)
+    for x, y in zip(xx, yy):
+        if y < 250:
+            boundary_condition[x, y] = headsx[x]
+        else:
+            boundary_condition[x, y] = headsy[y]
 
     # set constant head to constant value
-    boundary_condition = np.where(mask_boundary_condition, 150, np.nan)
+    # boundary_condition = np.where(mask_boundary_condition, topography - 10, np.nan)
+    # boundary_condition = np.where(boundary_condition < 180, 180, boundary_condition)
+    # boundary_condition = np.where(boundary_condition > 230, 200, boundary_condition)
+
+    # mask_boundary_condition1 = np.empty_like(mask_boundary_condition)
+    # mask_boundary_condition1[80:250, :180] = np.where((boundary == 1)[80:250, :180] & (topography > 240)[80:250, :180], 1, mask_boundary_condition1[80:250, :180])
 
     # write boundary condtions to netcdf
     params_file = base_path / "boundary_conditions.nc"
@@ -119,29 +136,29 @@ def main(plot):
         v[:, :] = boundary_condition[:, :]
         v.attrs.update(long_name="constant head boundary condition", units="m a.s.l.")
 
-    if plot:
-        fig, axes = plt.subplots(figsize=(4, 4))
-        plt.imshow(boundary, extent=grid_extent, cmap='Greys', aspect='equal')
-        plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
-        plt.tight_layout()
-        file = base_path_figs / "boundary.png"
-        fig.savefig(file, dpi=300)
-        plt.close(fig)
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(boundary, extent=grid_extent, cmap='Greys', aspect='equal')
+    plt.grid(zorder=0)
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
+    plt.tight_layout()
+    file = base_path_figs / "boundary.png"
+    fig.savefig(file, dpi=300)
+    plt.close(fig)
 
-        fig, axes = plt.subplots(figsize=(4, 4))
-        axes.scatter(np.where((boundary == 1))[1]*.05, np.where((boundary == 1))[0]*.05, s=0.5, c='k', alpha=0.5)
-        axes.scatter(np.where((mask_boundary_condition == 1))[1]*.05, np.where((mask_boundary_condition == 1))[0]*.05, s=0.5, c='r')
-        plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5, extent=(0, (modflow_config['ny']*modflow_config['dy'])/1000, (modflow_config['nx']*modflow_config['dx'])/1000, 0))
-        plt.colorbar(label='[m a.s.l.]', shrink=0.5, alpha=1)
-        plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [km]')
-        plt.ylabel('Distance in y-direction [km]')
-        plt.tight_layout()
-        file = base_path_figs / "mask_boundary_condition.png"
-        fig.savefig(file, dpi=300)
-        plt.close(fig)
+    fig, axes = plt.subplots(figsize=(4, 4))
+    axes.scatter(np.where((boundary == 1))[1]*.05, np.where((boundary == 1))[0]*.05, s=0.5, c='k', alpha=0.5)
+    axes.scatter(np.where((mask_boundary_condition == 1))[1]*.05, np.where((mask_boundary_condition == 1))[0]*.05, s=0.5, c='r')
+    # axes.scatter(np.where((mask_boundary_condition1 == 1))[1]*.05, np.where((mask_boundary_condition1 == 1))[0]*.05, s=0.5, c='purple')
+    plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5, extent=(0, (modflow_config['ny']*modflow_config['dy'])/1000, (modflow_config['nx']*modflow_config['dx'])/1000, 0))
+    plt.colorbar(label='[m a.s.l.]', shrink=0.5, alpha=1)
+    plt.grid(zorder=0)
+    plt.xlabel('Distance in x-direction [km]')
+    plt.ylabel('Distance in y-direction [km]')
+    plt.tight_layout()
+    file = base_path_figs / "mask_boundary_condition.png"
+    fig.savefig(file, dpi=300)
+    plt.close(fig)
 
 
     return
