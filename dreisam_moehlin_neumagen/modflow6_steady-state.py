@@ -87,7 +87,7 @@ class ModFlowSimulation:
 
         # Create the Flopy iterative model solver (ims) Package object
         ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", complexity="COMPLEX",
-                                                 outer_maximum=100, inner_maximum=600)
+                                                 outer_maximum=30, inner_maximum=600)
 
         # Now that the overall simulation is set up, we can focus on building the groundwater flow model.  The groundwater flow model will be built by adding packages to it that describe the model characteristics.
         #
