@@ -18,5 +18,5 @@ python evaluate_boundary_condition.py --model-run 0
 
 python modflow6_steady-state.py --model-run 0
 python write_binary_to_netcdf_steady-state.py --model-run 0
-python evaluate_boundary_condition.py --model-run 0
+python evaluate_boundary_condition.py --model-run 0 --plot
 python plot_groundwater_heads_steady-state.py
