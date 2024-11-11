@@ -40,8 +40,6 @@ modflow_output.nc
 roger_output.nc
 .DS_Store
 benchmarks/parameters.csv
-moehlin/parameters.csv
-moehlin/input/parameters_5.nc
-moehlin/observations/
+# *.nc
 forcing.nc
 /bin
