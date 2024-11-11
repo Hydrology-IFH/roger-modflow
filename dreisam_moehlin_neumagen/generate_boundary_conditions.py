@@ -75,7 +75,7 @@ def main(plot):
     xx = np.where(mask_boundary_condition == 1)[0]
     yy = np.where(mask_boundary_condition == 1)[1]
     headsx = np.linspace(188, topography[xx[-1], yy[-1]] - 30, np.max(xx)+1) - 15
-    headsy = np.linspace(162, 185, np.max(yy)+1)[::-1]
+    headsy = np.linspace(162, 185, np.max(yy)+1)
     boundary_condition = np.empty_like(mask_boundary_condition)
     for x, y in zip(xx, yy):
         if y < 250:
