@@ -9,11 +9,11 @@ import click
 def main(nsamples):
     base_path = Path(__file__).parent
 
-    bounds = {"v10": [0.1, 10], 
-              "v110": [0.1, 10], 
-              "v00101": [0.1, 10], 
-              "m00101": [0.1, 10], 
-              "m110": [0.1, 10]
+    bounds = {"v10": [0.1, 100], 
+              "v110": [0.1, 100], 
+              "v00101": [0.1, 100], 
+              "m00101": [0.1, 100], 
+              "m110": [0.1, 100]
     }
 
     nrows = nsamples
@@ -30,9 +30,11 @@ def main(nsamples):
         # write parameters to dataframe
         df_params.loc[:, param] = values.flatten()
 
-    df_params.iloc[0, :] = 1.0
-    df_params.iloc[0, 3] = 2.0
-    df_params.iloc[0, 4] = 2.0
+    df_params.iloc[0, 0] = 10.0
+    df_params.iloc[0, 1] = 10.0
+    df_params.iloc[0, 2] = 10.0
+    df_params.iloc[0, 3] = 50.0
+    df_params.iloc[0, 4] = 50.0
     df_params["complete"] = 0
     df_params = df_params.loc[:, ["v10", "v110", "v00101", "m00101", "m110", "complete"]]
 

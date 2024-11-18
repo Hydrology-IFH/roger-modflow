@@ -3,8 +3,10 @@ from pathlib import Path
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import h5netcdf
 import xarray as xr
+import rasterio
 import datetime
 import yaml
 import click
@@ -39,6 +41,12 @@ def main(plot):
         'ny': 777,
         'nz': 4,
     }
+
+    # load RoGeR recharge
+    base_path = Path(__file__).parent
+    src = rasterio.open(str(base_path / "input" / "recharge_roger_50m.tif"))
+    recharge = src.read(1)
+
 
     # load MODFLOW parameters
     path = Path(__file__).parent / "parameters_modflow.nc"
@@ -136,6 +144,22 @@ def main(plot):
         v[:, :] = boundary_condition[:, :]
         v.attrs.update(long_name="constant head boundary condition", units="m a.s.l.")
 
+        v = f.create_variable(
+            "recharge", ("x", "y"), np.float32, compression="gzip", compression_opts=1
+        )
+        # calculate average recharge from total recharge of the period 2013-2022
+        dates = pd.date_range(start="2013-01-01", end="2022-12-31", freq="D")
+        recharge = np.where(mask, recharge, np.nan) / len(dates)
+        # set recharge to zero in the area of Schoenberg
+        src = rasterio.open(str(base_path / "input" / "schoenberg.tif"))
+        schoenberg_mask = src.read(1)
+        recharge = np.where(schoenberg_mask == 1, np.nan, recharge)
+        # set recharge to zero for NaN values
+        recharge = np.where(np.isnan(recharge), 0, recharge)
+        recharge = np.where(recharge < 0, 0, recharge)
+        v[:, :] = recharge[:, :]
+        v.attrs.update(long_name="recharge boundary condition", units="mm/day")
+
     fig, axes = plt.subplots(figsize=(4, 4))
     plt.imshow(boundary, extent=grid_extent, cmap='Greys', aspect='equal')
     plt.grid(zorder=0)
@@ -160,6 +184,17 @@ def main(plot):
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
+    grid_extent = (0, 777*modflow_config['dy'], 0, 621*modflow_config['dx'])
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(recharge / 1000, cmap='Blues', aspect='equal', extent=grid_extent)
+    plt.colorbar(label='[m/day]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('distance in x-direction [m]')
+    plt.ylabel('distance in y-direction [m]')
+    plt.tight_layout()
+    file = base_path_figs / "average_recharge.png"
+    fig.savefig(file, dpi=300)
+    plt.close(fig)
 
     return
 

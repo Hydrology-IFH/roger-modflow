@@ -53,7 +53,6 @@ elevation_bottom_layer4 = ds_params['elevations'].isel(z=4).values
 elevation_bottom_layers = [elevation_bottom_layer1, elevation_bottom_layer2, elevation_bottom_layer3, elevation_bottom_layer4]
 
 # derive the model domain from the topography
-file = base_path / "input" / "domain.grd"
 mask = np.isfinite(topography)
 grid_extent = (0, modflow_config['ny']*modflow_config['dy'], 0, modflow_config['nx']*modflow_config['dx'])
 
@@ -159,6 +158,7 @@ plt.close(fig)
 # file = base_path_figs / "topography1.png"
 # fig.savefig(file, dpi=300)
 # plt.close(fig)
+
 
 for i, elevation_bottom_layer in enumerate(elevation_bottom_layers):
     i = i + 1
@@ -289,7 +289,6 @@ file = base_path_figs / "river_reach_.png"
 fig.savefig(file, dpi=300)
 plt.close(fig)
 
-
 hydraulic_conductivities_layer1 = ds_params['kf'].isel(layer=0).values
 hydraulic_conductivities_layer2 = ds_params['kf'].isel(layer=1).values
 hydraulic_conductivities_layer3 = ds_params['kf'].isel(layer=2).values
@@ -298,9 +297,12 @@ hydraulic_conductivities_layers = [hydraulic_conductivities_layer1, hydraulic_co
 for i, hydraulic_conductivities_layer in enumerate(hydraulic_conductivities_layers):
     i = i + 1
     fig, axes = plt.subplots(figsize=(4, 4))
+    bounds = [0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10, 100]
+    norm = mpl.colors.BoundaryNorm(bounds, mpl.colormaps["Oranges"].N)
     hydraulic_conductivities_layer[~mask] = np.nan
-    plt.imshow(hydraulic_conductivities_layer, extent=grid_extent, cmap='Oranges', aspect='equal', norm=mpl.colors.LogNorm(vmin=0.000001, vmax=10))
-    plt.colorbar(label='$k_f$ [m/day]', shrink=0.45)
+    plt.imshow(hydraulic_conductivities_layer, extent=grid_extent, cmap='Oranges', aspect='equal', norm=norm)
+    cbar = plt.colorbar(label='$k_f$ [m/day]', shrink=0.45)
+    cbar.set_ticks(ticks=bounds, labels=[r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$', r'$10^{-1}$', r'$1$', r'$10$', r'$100$'])
     plt.grid(zorder=0)
     plt.xlabel('Distance in x-direction [m]')
     plt.ylabel('Distance in y-direction [m]')
@@ -312,6 +314,36 @@ for i, hydraulic_conductivities_layer in enumerate(hydraulic_conductivities_laye
     hydraulic_conductivities_layer[~mask] = 0
     print(f"Kf Layer {i} (Number of no data): ", np.isnan(hydraulic_conductivities_layer).sum())
     print(np.unique(hydraulic_conductivities_layer))
+
+for i, fudge_regions_layer in enumerate(hydraulic_conductivities_layers):
+    i = i + 1
+    fig, axes = plt.subplots(figsize=(4, 4))
+    bounds = [0, 100.1, 200.1, 300.1, 400.1, 500.1]
+    norm = mpl.colors.BoundaryNorm(bounds, mpl.colormaps["Dark2"].N)
+    fudge_regions_layer[~mask] = np.nan
+    mask1 = (topography < 600) & (fudge_regions_layer > 10)
+    mask2 = (topography < 600) & (fudge_regions_layer > 1) & (fudge_regions_layer <= 10)
+    mask3 = (topography < 600) & (fudge_regions_layer > 0.01) & (fudge_regions_layer <= 0.1)
+    mask4 = (topography >= 600) & (fudge_regions_layer > 1) & (fudge_regions_layer <= 10)
+    mask5 = (topography >= 600) & (fudge_regions_layer > 0.01) & (fudge_regions_layer <= 0.1)
+    fudge_regions_layer = np.where(mask1, 100, fudge_regions_layer)
+    fudge_regions_layer = np.where(mask2, 200, fudge_regions_layer)
+    fudge_regions_layer = np.where(mask3, 300, fudge_regions_layer)
+    fudge_regions_layer = np.where(mask4, 400, fudge_regions_layer)
+    fudge_regions_layer = np.where(mask5, 500, fudge_regions_layer)
+    fudge_regions_layer = np.where(np.isin(fudge_regions_layer, [100, 200, 300, 400, 500]), fudge_regions_layer, np.nan)
+
+    plt.imshow(fudge_regions_layer, extent=grid_extent, cmap='Dark2', aspect='equal', norm=norm)
+    cbar = plt.colorbar(label='', shrink=0.45)
+    cbar.set_ticks(ticks=[50, 150, 250, 350, 450], labels=['v10', 'v110', 'v00101', 'm110', 'm00101'])
+    plt.grid(zorder=0)
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
+    plt.tight_layout()
+    file = base_path_figs / f"fudge_regions_layer_{i}.png"
+    fig.savefig(file, dpi=300)
+    plt.close(fig)
+
 
 bins = [10e-7, 10e-6, 10e-5, 10e-4, 10e-3, 10e-2, 10e-1, 10e0, 10e1]
 fig, axes = plt.subplots(4, 1, figsize=(6, 6), sharex=True, sharey=True)
@@ -344,6 +376,7 @@ axes[0, 0].hist(hydraulic_conductivities_layer1[mask], bins=bins, color='black',
 axes[0, 0].set_ylabel('layer 1')
 axes[0, 0].set_xscale('log')
 axes[0, 0].set_yscale('log')
+axes[0, 0].set_title('', fontsize=10)
 axes[1, 0].hist(hydraulic_conductivities_layer2[mask], bins=bins, color='black', alpha=1)
 axes[1, 0].set_ylabel('layer 2')
 axes[1, 0].set_xscale('log')
@@ -361,6 +394,7 @@ axes[3, 0].set_yscale('log')
 axes[0, 1].hist(hydraulic_conductivities_layer1[mask_valleys], bins=bins, color='black', alpha=1)
 axes[0, 1].set_xscale('log')
 axes[0, 1].set_yscale('log')
+axes[0, 1].set_title('Valley region', fontsize=10)
 axes[1, 1].hist(hydraulic_conductivities_layer2[mask_valleys], bins=bins, color='black', alpha=1)
 axes[1, 1].set_xscale('log')
 axes[1, 1].set_yscale('log')
@@ -375,6 +409,7 @@ axes[3, 1].set_yscale('log')
 axes[0, 2].hist(hydraulic_conductivities_layer1[mask_mountains], bins=bins, color='black', alpha=1)
 axes[0, 2].set_xscale('log')
 axes[0, 2].set_yscale('log')
+axes[0, 2].set_title('Mountain region', fontsize=10)
 axes[1, 2].hist(hydraulic_conductivities_layer2[mask_mountains], bins=bins, color='black', alpha=1)
 axes[1, 2].set_xscale('log')
 axes[1, 2].set_yscale('log')

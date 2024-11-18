@@ -144,10 +144,10 @@ class ModFlowSimulation:
         mask2 = (hydraulic_conductivities_layer2 <= 1e-5)
         mask3 = (hydraulic_conductivities_layer3 <= 1e-5)
         mask4 = (hydraulic_conductivities_layer4 <= 1e-5)  
-        hydraulic_conductivities_layer1[mask1] = hydraulic_conductivities_layer1[mask1] * 10
-        hydraulic_conductivities_layer2[mask2] = hydraulic_conductivities_layer2[mask2] * 10
-        hydraulic_conductivities_layer3[mask3] = hydraulic_conductivities_layer3[mask3] * 10
-        hydraulic_conductivities_layer4[mask4] = hydraulic_conductivities_layer4[mask4] * 10
+        hydraulic_conductivities_layer1[mask1] = hydraulic_conductivities_layer1[mask1] * 2000
+        hydraulic_conductivities_layer2[mask2] = hydraulic_conductivities_layer2[mask2] * 2000
+        hydraulic_conductivities_layer3[mask3] = hydraulic_conductivities_layer3[mask3] * 2000
+        hydraulic_conductivities_layer4[mask4] = hydraulic_conductivities_layer4[mask4] * 2000
 
         # fudge parameters in the valley
         mask2 = (topography < 600) & (hydraulic_conductivities_layer2 > 10)
@@ -164,9 +164,9 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer3[mask3] = hydraulic_conductivities_layer3[mask3] * fudge_parameters['v110'].values[model_run]
         hydraulic_conductivities_layer4[mask4] = hydraulic_conductivities_layer4[mask4] * fudge_parameters['v110'].values[model_run]
 
-        mask2 = (topography < 600) & (hydraulic_conductivities_layer2 > 0.01) & (hydraulic_conductivities_layer2 <= 0.1)
-        mask3 = (topography < 600) & (hydraulic_conductivities_layer3 > 0.01) & (hydraulic_conductivities_layer3 <= 0.1)
-        mask4 = (topography < 600) & (hydraulic_conductivities_layer4 > 0.01) & (hydraulic_conductivities_layer4 <= 0.1)  
+        mask2 = (topography < 600) & (hydraulic_conductivities_layer2 > 0.01) & (hydraulic_conductivities_layer2 <= 1)
+        mask3 = (topography < 600) & (hydraulic_conductivities_layer3 > 0.01) & (hydraulic_conductivities_layer3 <= 1)
+        mask4 = (topography < 600) & (hydraulic_conductivities_layer4 > 0.01) & (hydraulic_conductivities_layer4 <= 1)  
         hydraulic_conductivities_layer2[mask2] = hydraulic_conductivities_layer2[mask2] * fudge_parameters['v00101'].values[model_run]
         hydraulic_conductivities_layer3[mask3] = hydraulic_conductivities_layer3[mask3] * fudge_parameters['v00101'].values[model_run]
         hydraulic_conductivities_layer4[mask4] = hydraulic_conductivities_layer4[mask4] * fudge_parameters['v00101'].values[model_run]
@@ -174,14 +174,14 @@ class ModFlowSimulation:
         # fudge parameters in the mountain
         mask2 = (topography >= 600) & (hydraulic_conductivities_layer2 > 1) & (hydraulic_conductivities_layer2 <= 10)
         mask3 = (topography >= 600) & (hydraulic_conductivities_layer3 > 1) & (hydraulic_conductivities_layer3 <= 10)
-        mask4 = (topography >= 600) & (hydraulic_conductivities_layer4 > 1) & (hydraulic_conductivities_layer4 <= 10)  
+        mask4 = (topography >= 600) & (hydraulic_conductivities_layer4 > 1) & (hydraulic_conductivities_layer4 <= 10)
         hydraulic_conductivities_layer2[mask2] = hydraulic_conductivities_layer2[mask2] * fudge_parameters['m110'].values[model_run]
         hydraulic_conductivities_layer3[mask3] = hydraulic_conductivities_layer3[mask3] * fudge_parameters['m110'].values[model_run]
         hydraulic_conductivities_layer4[mask4] = hydraulic_conductivities_layer4[mask4] * fudge_parameters['m110'].values[model_run]
 
-        mask2 = (topography >= 600) & (hydraulic_conductivities_layer2 > 0.01) & (hydraulic_conductivities_layer2 <= 0.1)
-        mask3 = (topography >= 600) & (hydraulic_conductivities_layer3 > 0.01) & (hydraulic_conductivities_layer3 <= 0.1)
-        mask4 = (topography >= 600) & (hydraulic_conductivities_layer4 > 0.01) & (hydraulic_conductivities_layer4 <= 0.1)  
+        mask2 = (topography >= 600) & (hydraulic_conductivities_layer2 > 0.01) & (hydraulic_conductivities_layer2 <= 1)
+        mask3 = (topography >= 600) & (hydraulic_conductivities_layer3 > 0.01) & (hydraulic_conductivities_layer3 <= 1)
+        mask4 = (topography >= 600) & (hydraulic_conductivities_layer4 > 0.01) & (hydraulic_conductivities_layer4 <= 1)
         hydraulic_conductivities_layer2[mask2] = hydraulic_conductivities_layer2[mask2] * fudge_parameters['m00101'].values[model_run]
         hydraulic_conductivities_layer3[mask3] = hydraulic_conductivities_layer3[mask3] * fudge_parameters['m00101'].values[model_run]
         hydraulic_conductivities_layer4[mask4] = hydraulic_conductivities_layer4[mask4] * fudge_parameters['m00101'].values[model_run]
@@ -242,7 +242,8 @@ class ModFlowSimulation:
         )
             
         # Recharge package
-        recharge = flopy.mf6.ModflowGwfrcha(gwf, recharge=0.0001, fixed_cell=True)
+        recharge = ds_bc['recharge'].values / 1000  # convert mm/day to m/day
+        rch = flopy.mf6.ModflowGwfrcha(gwf, recharge=recharge, fixed_cell=True)
 
         # # create streamflow routing package
         # # Prepare the reach data
@@ -351,7 +352,10 @@ class ModFlowSimulation:
         wells_x = [66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496]
         wel_rec = []
         for i in range(len(wells_x)):
-            wel_rec.append((2, wells_y[i], wells_x[i], -wells_q[i]))  # extraction from layer 3
+            if i <= 5:
+                wel_rec.append((1, wells_y[i], wells_x[i], -wells_q[i]))
+            else:
+                wel_rec.append((2, wells_y[i], wells_x[i], -wells_q[i]))  # extraction from layer 3
 
         wel = flopy.mf6.ModflowGwfwel(
             gwf,
@@ -531,7 +535,7 @@ def main(model_run):
     hds = flopy.utils.HeadFile(fhead)
     head = hds.get_data()[0, :, :]
     head[~mask] = np.nan
-    if (head > topography).any():
+    if (head > topography + 10).any():
         complete = 0
 
     # update the fudge parameters if the parameter set produces a useful simulation

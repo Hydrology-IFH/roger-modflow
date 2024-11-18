@@ -51,7 +51,9 @@ hydraulic_conductivities_layer3 = ds_params['kf'].isel(layer=2).values
 hydraulic_conductivities_layer4 = ds_params['kf'].isel(layer=3).values
 hydraulic_conductivities_layers = [hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4]
 
-mask = np.isfinite(topography)
+mask_ = np.isfinite(topography)
+mask_schoenberg = ds_params['mask_schoenberg'].values
+mask = mask_ & (mask_schoenberg == False)
 domain = np.empty_like(topography)
 domain[mask] = 1
 domain[~mask] = -1
@@ -132,10 +134,10 @@ t = 0
 # path = base_path_figs / f"heads_grid_steady_state.png"
 # fig.savefig(path, dpi=300)
 
-ll_levels = [[150, 200, 300, 400, 500, 600],
-             [150, 200, 300, 400, 500, 600],
-             [150, 200, 300, 400, 500, 600],
-             [150, 200, 300, 400, 500, 600]]
+ll_levels = [[180, 185, 200, 300, 400, 500, 600],
+             [180, 185, 200, 300, 400, 500, 600],
+             [180, 185, 200, 300, 400, 500, 600],
+             [180, 185, 200, 300, 400, 500, 600]]
 
 for layer in range(4):
     fig, axes = plt.subplots(figsize=(4, 4))
