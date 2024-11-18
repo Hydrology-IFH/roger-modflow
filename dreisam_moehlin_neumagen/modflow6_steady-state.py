@@ -243,7 +243,7 @@ class ModFlowSimulation:
             
         # Recharge package
         recharge = ds_bc['recharge'].values / 1000  # convert mm/day to m/day
-        rch = flopy.mf6.ModflowGwfrcha(gwf, recharge=recharge, fixed_cell=True)
+        rcha = flopy.mf6.ModflowGwfrcha(gwf, recharge=recharge, fixed_cell=True)
 
         # # create streamflow routing package
         # # Prepare the reach data
@@ -456,9 +456,9 @@ class ModFlowSimulation:
         signal.alarm(60)  # Set the timeout duration to 60 seconds
 
         complete = 0
+        self.mf6.prepare_solve(1)
         try:
             # convergence loop
-            self.mf6.prepare_solve(1)
             for _ in range(self.max_iter):
                 has_converged = self.mf6.solve(1)
 
