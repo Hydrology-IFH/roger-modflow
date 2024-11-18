@@ -41,5 +41,6 @@ roger_output.nc
 .DS_Store
 benchmarks/parameters.csv
 # *.nc
+*_run_*.nc
 forcing.nc
 /bin

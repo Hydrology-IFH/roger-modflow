@@ -13,10 +13,10 @@ base_path = Path(__file__).parent
 path = base_path / "fudge_parameters_modflow.csv"
 fudge_parameters = pd.read_csv(path, sep=";", skiprows=1)
 df_params_metrics = fudge_parameters.copy()
+df_params_metrics["ME"] = np.nan
 df_params_metrics["MAE"] = np.nan
 df_params_metrics["RBIAS"] = np.nan
 df_params_metrics["r"] = np.nan
-df_params_metrics["R2"] = np.nan
 
 # load observed groundwater heads
 
@@ -33,10 +33,13 @@ for model_run in range(0, 1):
         ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
         groundwater_heads = ds_mf["head"].values[0, ...]
 
+        # extract the simulated groundwater heads at the location of the observation wells
         sim = groundwater_heads[1, xx, yy].flatten()
 
-        # calculate average error
-        df_params_metrics.loc[model_run, "MAE"] = np.nanmean(sim - obs)
+        # calculate mean error
+        df_params_metrics.loc[model_run, "ME"] = np.nanmean(sim - obs)
+        # calculate mean absolute error
+        df_params_metrics.loc[model_run, "MAE"] = np.nanmean(np.abs(sim - obs))
         # calculate relative bias
         df_params_metrics.loc[model_run, "RBIAS"] = np.nanmean((sim - obs) / obs)
         # calculate spearman correlation
