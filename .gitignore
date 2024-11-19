@@ -42,5 +42,7 @@ roger_output.nc
 benchmarks/parameters.csv
 # *.nc
 *_run_*.nc
+boundary_condtions.nc
 forcing.nc
 /bin
+*.out
