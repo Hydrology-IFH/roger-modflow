@@ -1,6 +1,4 @@
-import os
 from pathlib import Path
-import sys
 import numpy as np
 import scipy as sp
 import xarray as xr
