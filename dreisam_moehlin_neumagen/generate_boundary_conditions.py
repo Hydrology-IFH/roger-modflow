@@ -47,7 +47,6 @@ def main(plot):
     src = rasterio.open(str(base_path / "input" / "recharge_roger_50m.tif"))
     recharge = src.read(1)
 
-
     # load MODFLOW parameters
     path = Path(__file__).parent / "parameters_modflow.nc"
     ds_params = xr.open_dataset(path, engine="h5netcdf")

@@ -103,9 +103,9 @@ class ModFlowSimulation:
         elevation_bottom_layers = [elevation_bottom_layer1, elevation_bottom_layer2, elevation_bottom_layer3, elevation_bottom_layer4]
 
         mask = np.isfinite(topography)
-        # set Schoenberg to inactive
-        mask_schoenberg = (ds_params['mask_schoenberg'].values == 1)
-        mask = np.where(mask_schoenberg, False, mask)
+        # # set Schoenberg to inactive
+        # mask_schoenberg = (ds_params['mask_schoenberg'].values == 1)
+        # mask = np.where(mask_schoenberg, False, mask)
         domain = np.empty_like(topography)
         domain[mask] = 1
         domain[~mask] = -1
@@ -281,67 +281,20 @@ class ModFlowSimulation:
         #     selection = tuple(selection)
         #     connection.append((selection))
 
-        # sfr = flopy.mf6.modflow.mfgwfsfr.ModflowGwfsfr(gwf, pname="sfr",
-        #     time_conversion=86400, nreaches=nstrm, packagedata=reaches, 
-        #     connectiondata=connection,
-        #     save_flows=True)
-
-
-        # # create streamflow routing package
-        # file = base_path / "input" / "river_reach.csv"
-        # reach_data = np.genfromtxt(file, delimiter=',', names=True)
-        # nstrm = len(reach_data)
-        # reach_data_merged = np.column_stack((reach_data['k'],reach_data['i'],reach_data['j'])).astype(int)
-        # reach_data_merged  = tuple(map(tuple,reach_data_merged))
-
-        # file = base_path / "input" / "river_reach_connection.csv"
-        # reach_connection_data = np.genfromtxt(file, delimiter=',', names=True, missing_values='nan')
-        # direction = reach_connection_data['ic1']/np.absolute(reach_connection_data['ic1'])
-        # zw1 = direction*(np.absolute(reach_connection_data['ic1'])-1)
-        # direction = reach_connection_data['ic2']/np.absolute(reach_connection_data['ic2'])
-        # zw2 = direction*(np.absolute(reach_connection_data['ic2'])-1)
-        # direction = reach_connection_data['ic3']/np.absolute(reach_connection_data['ic3'])
-        # zw3 = direction*(np.absolute(reach_connection_data['ic3'])-1)
-        # zw_merged = np.column_stack((zw1,zw2,zw3)).astype(int)
-
-        # # Prepare the reach data
-        # reaches = []
-        # for index in range(0, nstrm):
-        #     rgrd = reach_data['rgrd'][index]
-        #     if rgrd <= 0:
-        #         rgrd = 0.001
-        #     ustrf = reach_data['ustrf'][index]
-        #     ncon = reach_data['ncon'][index]
-        #     idx_ds = reach_connection_data['ic1'][index]
-        #     if (idx_ds < 0) and (idx_ds+2 != -index) and (index > 0):
-        #         idx = int(abs(idx_ds))
-        #         if reach_data['ncon'][idx] == 3:
-        #             ustrf = np.float64(2.0)
-        #     else:
-        #         ustrf = np.float64(1.0)
-        #     # if reach_data['rno'][index].astype(int)-1 in [10921]:
-        #     #     ustrf = 0.80000000000000004
-        #     ndv = reach_data['ndv'][index]
-        #     reaches.append((reach_data['rno'][index].astype(int)-1, reach_data_merged[index],reach_data['rlen'][index],
-        #                 reach_data['rwid'][index],rgrd,reach_data['rtp'][index],
-        #                 reach_data['rbth'][index],reach_data['rhk'][index],
-        #                 reach_data['man'][index],
-        #                 reach_data['ncon'][index],ustrf, np.int64(0)))
-
-        # # Prepare connection data
-        # connection = []
-        # for index in range(0, nstrm):
-        #     length = sum(zw_merged[index] > -1000000000)
-        #     selection = []
-        #     selection.append(reach_connection_data['rno'][index]-1)
-        #     for i2 in range(0,length):
-        #         selection.append(zw_merged[index][i2])
-        #     selection = tuple(selection)
-        #     connection.append((selection))
+        # # Prepare the diversions data
+        # file = base_path / "input" / "diversions.csv"
+        # diversion_data = pd.read_csv(file, delimiter=',')
+        # divsersions = []
+        # for i in range(0, len(diversion_data.index)):
+        #     rno = int(diversion_data['rno'][i])
+        #     idv = int(diversion_data['idv'][i])
+        #     iconr = int(diversion_data['iconr'][i])
+        #     cprior = str(diversion_data['cprior'][i])
+        #     divsersions.append((rno, idv, iconr, cprior))
 
         # sfr = flopy.mf6.modflow.mfgwfsfr.ModflowGwfsfr(gwf, pname="sfr",
         #     time_conversion=86400, nreaches=nstrm, packagedata=reaches, 
-        #     connectiondata=connection,
+        #     connectiondata=connection, diversions=divsersions,
         #     save_flows=True)
 
         # Create the well package

@@ -20,9 +20,9 @@ df_params_metrics["r"] = np.nan
 
 # load observed groundwater heads
 
-obs = np.array([185, 185, 185, 185, 185, 185, 200, 200, 200, 200, 200, 200, 200]) # observed groundwater heads
-xx = [66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496]  # row IDs of the observation wells
-yy = [266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]  # column IDs of the observation wells
+obs = np.array([185, 185, 185, 185, 185, 185, 200, 200, 200, 200, 200, 200, 200])  # observed groundwater heads
+xx = [66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496]   # row IDs of the observation wells
+yy = [266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]   # column IDs of the observation wells
 
 for model_run in range(0, 1):
     complete = df_params_metrics.loc[model_run, "complete"]

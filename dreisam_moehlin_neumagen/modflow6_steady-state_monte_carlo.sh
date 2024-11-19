@@ -1,7 +1,7 @@
 #!/bin/bash
 
 python write_fudge_parameters.py
-for i in {0..10}
+for i in {10..5000}
 do
     python generate_boundary_conditions.py
 
