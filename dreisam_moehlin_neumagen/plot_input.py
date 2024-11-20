@@ -39,7 +39,7 @@ modflow_config = {
 
 # load observed groundwater heads (average values of the observation wells)
 path = base_path / "observations" / "observed_groundwater_heads_average.csv"
-observed_groundwater_heads = pd.read_csv(path, sep=",", skiprows=0)
+observed_groundwater_heads = pd.read_csv(path, sep=";", skiprows=0)
 
 # load MODFLOW parameters
 path = Path(__file__).parent / "parameters_modflow.nc"
@@ -88,7 +88,7 @@ plt.close(fig)
 grid_extent = (0, 777*modflow_config['dy'], 0, 621*modflow_config['dx'])
 fig, axes = plt.subplots(figsize=(4, 4))
 topography[~mask] = np.nan
-plt.imshow(np.where(topography < 600, np.nan, topography), extent=grid_extent, cmap='terrain', aspect='equal')
+plt.imshow(np.where(topography < 500, np.nan, topography), extent=grid_extent, cmap='terrain', aspect='equal')
 plt.colorbar(label='[m a.s.l.]', shrink=0.5)
 plt.grid(zorder=0)
 plt.xlabel('Distance in x-direction [m]')
@@ -345,11 +345,11 @@ for i, fudge_regions_layer in enumerate(hydraulic_conductivities_layers):
     bounds = [0, 100.1, 200.1, 300.1, 400.1, 500.1]
     norm = mpl.colors.BoundaryNorm(bounds, mpl.colormaps["Dark2"].N)
     fudge_regions_layer[~mask] = np.nan
-    mask1 = (topography < 600) & (fudge_regions_layer > 10)
-    mask2 = (topography < 600) & (fudge_regions_layer > 1) & (fudge_regions_layer <= 10)
-    mask3 = (topography < 600) & (fudge_regions_layer > 0.01) & (fudge_regions_layer <= 0.1)
-    mask4 = (topography >= 600) & (fudge_regions_layer > 1) & (fudge_regions_layer <= 10)
-    mask5 = (topography >= 600) & (fudge_regions_layer > 0.01) & (fudge_regions_layer <= 0.1)
+    mask1 = (topography < 500) & (fudge_regions_layer > 10)
+    mask2 = (topography < 500) & (fudge_regions_layer > 1) & (fudge_regions_layer <= 10)
+    mask3 = (topography < 500) & (fudge_regions_layer > 0.01) & (fudge_regions_layer <= 0.1)
+    mask4 = (topography >= 500) & (fudge_regions_layer > 1) & (fudge_regions_layer <= 10)
+    mask5 = (topography >= 500) & (fudge_regions_layer > 0.01) & (fudge_regions_layer <= 0.1)
     fudge_regions_layer = np.where(mask1, 100, fudge_regions_layer)
     fudge_regions_layer = np.where(mask2, 200, fudge_regions_layer)
     fudge_regions_layer = np.where(mask3, 300, fudge_regions_layer)
@@ -367,6 +367,45 @@ for i, fudge_regions_layer in enumerate(hydraulic_conductivities_layers):
     file = base_path_figs / f"fudge_regions_layer_{i}.png"
     fig.savefig(file, dpi=300)
     plt.close(fig)
+
+for i, fudge_regions_layer in enumerate(hydraulic_conductivities_layers):
+    i = i + 1
+    yy = 190
+    xx = 362
+    fig, axes = plt.subplots(figsize=(4, 4))
+    bounds = [0, 100.1, 200.1, 300.1, 400.1, 500.1, 600.1, 700.1, 800.1]
+    norm = mpl.colors.BoundaryNorm(bounds, mpl.colormaps["Dark2"].N)
+    fudge_regions_layer[~mask] = np.nan
+    mask1 = (topography < 500) & (fudge_regions_layer > 10)
+    mask2 = (topography < 500) & (fudge_regions_layer > 1) & (fudge_regions_layer <= 10)
+    mask3 = (topography < 500) & (fudge_regions_layer > 0.01) & (fudge_regions_layer <= 0.1)
+    mask4 = (topography >= 500) & (fudge_regions_layer > 10)
+    mask5 = (topography >= 500) & (fudge_regions_layer > 1) & (fudge_regions_layer <= 10)
+    mask6 = (topography >= 500) & (fudge_regions_layer > 0.01) & (fudge_regions_layer <= 0.1)
+    fudge_regions_layer = np.where(mask1, 100, fudge_regions_layer)
+    fudge_regions_layer = np.where(mask2, 200, fudge_regions_layer)
+    fudge_regions_layer = np.where(mask3, 300, fudge_regions_layer)
+    fudge_regions_layer[yy:, xx:] = np.where(mask1[yy:, xx:], 400, fudge_regions_layer[yy:, xx:])
+    fudge_regions_layer[:, xx:] = np.where(mask3[:, xx:], 500, fudge_regions_layer[:, xx:])
+    # fudge_regions_layer[:, 200:] = np.where(mask3[:, 200:], 500, fudge_regions_layer[:, 200:])
+    fudge_regions_layer = np.where(mask4, 600, fudge_regions_layer)
+    fudge_regions_layer = np.where(mask5, 700, fudge_regions_layer)
+    fudge_regions_layer = np.where(mask6, 800, fudge_regions_layer)
+    fudge_regions_layer = np.where(np.isin(fudge_regions_layer, [100, 200, 300, 400, 500, 600, 700, 800]), fudge_regions_layer, np.nan)
+    plt.imshow(fudge_regions_layer, cmap='Dark2', aspect='equal', norm=norm)
+    cbar = plt.colorbar(label='', shrink=0.45)
+    cbar.set_ticks(ticks=[50, 150, 250, 350, 450, 550, 650, 750], labels=['r10', 'r110', 'r00101', 'z10', 'z00101', 'm10', 'm110', 'm00101'])
+    wells_obs_y = observed_groundwater_heads.iloc[:, -2].values  # row IDs of the observation wells
+    wells_obs_x = observed_groundwater_heads.iloc[:, -3].values  # column IDs of the observation wells
+    plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=2, c='black')
+    plt.grid(zorder=0)
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
+    plt.tight_layout()
+    file = base_path_figs / f"fudge_regions_layer_{i}_.png"
+    fig.savefig(file, dpi=300)
+    plt.close(fig)
+
 
 
 bins = [10e-7, 10e-6, 10e-5, 10e-4, 10e-3, 10e-2, 10e-1, 10e0, 10e1]

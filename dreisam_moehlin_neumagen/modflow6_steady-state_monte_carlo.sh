@@ -1,5 +1,8 @@
 #!/bin/bash
 
+python add_schoenberg_mask.py
+python modify_elevations.py
+python modify_hydraulic_conductivity_and_specific_yield_of_layer1.py
 python write_fudge_parameters.py
 for i in {0..5000}
 do

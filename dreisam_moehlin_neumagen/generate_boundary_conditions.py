@@ -11,9 +11,11 @@ import datetime
 import yaml
 import click
 
+@click.option("-och", "--offset", type=float, default=10)
+@click.option("-mr", "--model-run", type=int, default=0)
 @click.option("--plot", type=int, is_flag=True, help="Print more output.")
 @click.command("main")
-def main(plot):
+def main(offset, model_run, plot):
     # run installed version of flopy or add local path
     try:
         import flopy
@@ -33,6 +35,14 @@ def main(plot):
     with open(file_config, "r") as file:
         roger_config = yaml.safe_load(file)
 
+    # set offset for constant head boundary condition
+    file = base_path / "fudge_parameters_modflow.csv"
+    if os.path.exists(file):
+        fudge_parameters = pd.read_csv(file, sep=";", skiprows=1)
+        offset = fudge_parameters.loc[model_run, 'offset_constant_head']
+    else:
+        offset = offset
+
     res_modflow = 50  # spatial resolution of MODFLOW in meters
     modflow_config = {
         'dx': int(roger_config['dx']*(res_modflow/roger_config['dx'])),
@@ -46,6 +56,11 @@ def main(plot):
     base_path = Path(__file__).parent
     src = rasterio.open(str(base_path / "input" / "recharge_roger_50m.tif"))
     recharge = src.read(1)
+
+    # load interpolated groundwater heads
+    base_path = Path(__file__).parent
+    src = rasterio.open(str(base_path / "input" / "groundwater_heads_interpolated_50m.tif"))
+    gw_heads_interpolated = src.read(1)
 
     # load MODFLOW parameters
     path = Path(__file__).parent / "parameters_modflow.nc"
@@ -78,25 +93,20 @@ def main(plot):
     mask_boundary_condition = np.where((boundary == 1) & (topography <= 240), 1, np.nan)
     mask_boundary_condition[80:250, :180] = np.where((boundary == 1)[80:250, :180], 1, mask_boundary_condition[80:250, :180])
 
-    # set constant head
-    xx = np.where(mask_boundary_condition == 1)[0]
-    yy = np.where(mask_boundary_condition == 1)[1]
-    headsx = np.linspace(188, topography[xx[-1], yy[-1]] - 30, np.max(xx)+1) - 15
-    headsy = np.linspace(162, 185, np.max(yy)+1)
-    boundary_condition = np.empty_like(mask_boundary_condition)
-    for x, y in zip(xx, yy):
-        if y < 250:
-            boundary_condition[x, y] = headsx[x]
-        else:
-            boundary_condition[x, y] = headsy[y]
+    # # set constant head
+    # xx = np.where(mask_boundary_condition == 1)[0]
+    # yy = np.where(mask_boundary_condition == 1)[1]
+    # headsx = np.linspace(188, topography[xx[-1], yy[-1]] - 30, np.max(xx)+1) - 34
+    # headsy = np.linspace(162, 185, np.max(yy)+1) - 27
+    # boundary_condition = np.empty_like(mask_boundary_condition)
+    # for x, y in zip(xx, yy):
+    #     if y < 250:
+    #         boundary_condition[x, y] = headsx[x]
+    #     else:
+    #         boundary_condition[x, y] = headsy[y]
 
-    # set constant head to constant value
-    # boundary_condition = np.where(mask_boundary_condition, topography - 10, np.nan)
-    # boundary_condition = np.where(boundary_condition < 180, 180, boundary_condition)
-    # boundary_condition = np.where(boundary_condition > 230, 200, boundary_condition)
-
-    # mask_boundary_condition1 = np.empty_like(mask_boundary_condition)
-    # mask_boundary_condition1[80:250, :180] = np.where((boundary == 1)[80:250, :180] & (topography > 240)[80:250, :180], 1, mask_boundary_condition1[80:250, :180])
+    # set constant head to interpolated groundwater heads
+    boundary_condition = np.where(mask_boundary_condition, gw_heads_interpolated, np.nan)
 
     # write boundary condtions to netcdf
     params_file = base_path / "boundary_conditions.nc"
@@ -140,7 +150,7 @@ def main(plot):
         v = f.create_variable(
             "constant_head", ("x", "y"), np.int32, compression="gzip", compression_opts=1
         )
-        v[:, :] = boundary_condition[:, :]
+        v[:, :] = boundary_condition[:, :] - offset
         v.attrs.update(long_name="constant head boundary condition", units="m a.s.l.")
 
         v = f.create_variable(

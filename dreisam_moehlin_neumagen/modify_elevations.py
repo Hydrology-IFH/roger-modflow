@@ -19,12 +19,12 @@ with h5netcdf.File(path, "a", decode_vlen_strings=False) as f:
     elevation_bottom_layer1[topography <= elevation_bottom_layer1] = topography[topography <= elevation_bottom_layer1]
     elevation_bottom_layer1[topography <= elevation_bottom_layer1] = elevation_bottom_layer1[topography <= elevation_bottom_layer1] - 1
     elevation_bottom_layer2[elevation_bottom_layer1 <= elevation_bottom_layer2] = elevation_bottom_layer1[elevation_bottom_layer1 <= elevation_bottom_layer2]
-    elevation_bottom_layer2[elevation_bottom_layer1 <= elevation_bottom_layer2] = elevation_bottom_layer2[elevation_bottom_layer1 <= elevation_bottom_layer2] - 5
+    elevation_bottom_layer2[elevation_bottom_layer1 <= elevation_bottom_layer2] = elevation_bottom_layer2[elevation_bottom_layer1 <= elevation_bottom_layer2] - 10
     elevation_bottom_layer3[elevation_bottom_layer2 <= elevation_bottom_layer3] = elevation_bottom_layer2[elevation_bottom_layer2 <= elevation_bottom_layer3]
-    elevation_bottom_layer3[elevation_bottom_layer2 <= elevation_bottom_layer3] = elevation_bottom_layer3[elevation_bottom_layer2 <= elevation_bottom_layer3] - 5
+    elevation_bottom_layer3[elevation_bottom_layer2 <= elevation_bottom_layer3] = elevation_bottom_layer3[elevation_bottom_layer2 <= elevation_bottom_layer3] - 10
     elevation_bottom_layer4[elevation_bottom_layer3 <= elevation_bottom_layer4] = elevation_bottom_layer3[elevation_bottom_layer3 <= elevation_bottom_layer4]
-    elevation_bottom_layer4[elevation_bottom_layer3 <= elevation_bottom_layer4] = elevation_bottom_layer4[elevation_bottom_layer3 <= elevation_bottom_layer4] - 5 
-    elevation_bottom_layer4[elevation_bottom_layer4 <= 100.1] = 0
+    elevation_bottom_layer4[elevation_bottom_layer3 <= elevation_bottom_layer4] = elevation_bottom_layer4[elevation_bottom_layer3 <= elevation_bottom_layer4] - 10 
+    elevation_bottom_layer4[elevation_bottom_layer4 <= 100.1] = 50
 
     var_obj[0, :, :] = topography
     var_obj[1, :, :] = elevation_bottom_layer1
