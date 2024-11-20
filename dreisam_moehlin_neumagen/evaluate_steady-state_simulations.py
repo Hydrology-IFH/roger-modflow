@@ -16,13 +16,16 @@ df_params_metrics["MAE"] = np.nan
 df_params_metrics["RBIAS"] = np.nan
 df_params_metrics["r"] = np.nan
 
+# load observed groundwater heads (average values of the observation wells)
+path = base_path / "observations" / "observed_groundwater_heads_average.csv"
+observed_groundwater_heads = pd.read_csv(path, sep=",", skiprows=0)
+
 # load observed groundwater heads
+obs = observed_groundwater_heads.iloc[:, -1].values  # observed groundwater heads
+rows = observed_groundwater_heads.iloc[:, -2].values  # row IDs of the observation wells
+cols = observed_groundwater_heads.iloc[:, -3].values  # column IDs of the observation wells
 
-obs = np.array([185, 185, 185, 185, 185, 185, 200, 200, 200, 200, 200, 200, 200])  # observed groundwater heads
-xx = [66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496]   # row IDs of the observation wells
-yy = [266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]   # column IDs of the observation wells
-
-for model_run in range(0, 1):
+for model_run in range(0, 100):
     complete = df_params_metrics.loc[model_run, "complete"]
     # skip if steady-state simulation did not converged
     if complete == 1:
@@ -32,14 +35,14 @@ for model_run in range(0, 1):
         groundwater_heads = ds_mf["head"].values[0, ...]
 
         # extract the simulated groundwater heads at the location of the observation wells
-        sim = groundwater_heads[1, xx, yy].flatten()
+        sim = groundwater_heads[1, rows, cols].flatten()
 
         # calculate mean error
-        df_params_metrics.loc[model_run, "ME"] = np.nanmean(sim - obs)
+        df_params_metrics.loc[model_run, "ME"] = np.mean(sim - obs)
         # calculate mean absolute error
-        df_params_metrics.loc[model_run, "MAE"] = np.nanmean(np.abs(sim - obs))
+        df_params_metrics.loc[model_run, "MAE"] = np.mean(np.abs(sim - obs))
         # calculate relative bias
-        df_params_metrics.loc[model_run, "RBIAS"] = np.nanmean((sim - obs) / obs)
+        df_params_metrics.loc[model_run, "RBIAS"] = np.mean((sim - obs) / obs)
         # calculate spearman correlation
         df_params_metrics.loc[model_run, "r"] = sp.stats.spearmanr(sim, obs)[0]
 

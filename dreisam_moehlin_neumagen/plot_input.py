@@ -37,6 +37,10 @@ modflow_config = {
     'nz': 4,
 }
 
+# load observed groundwater heads (average values of the observation wells)
+path = base_path / "observations" / "observed_groundwater_heads_average.csv"
+observed_groundwater_heads = pd.read_csv(path, sep=",", skiprows=0)
+
 # load MODFLOW parameters
 path = Path(__file__).parent / "parameters_modflow.nc"
 ds_params = xr.open_dataset(path, engine="h5netcdf")
@@ -109,6 +113,26 @@ plt.tight_layout()
 file = base_path_figs / "topography_and_wells.png"
 fig.savefig(file, dpi=300)
 plt.close(fig)
+
+grid_extent = (0, 777*modflow_config['dy'], 0, 621*modflow_config['dx'])
+fig, axes = plt.subplots(figsize=(4, 4))
+topography[~mask] = np.nan
+wells_y = [266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]
+wells_x = [66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496]
+plt.scatter(wells_x, wells_y, marker='x', s=5, c='black')
+wells_obs_y = observed_groundwater_heads.iloc[:, -2].values  # row IDs of the observation wells
+wells_obs_x = observed_groundwater_heads.iloc[:, -3].values  # column IDs of the observation wells
+plt.scatter(wells_obs_x, wells_obs_y, marker='^', s=5, c='black')
+plt.imshow(topography, cmap='terrain', aspect='equal')
+plt.colorbar(label='[m a.s.l.]', shrink=0.5)
+plt.grid(zorder=0)
+plt.xlabel('x-direction')
+plt.ylabel('y-direction')
+plt.tight_layout()
+file = base_path_figs / "topography_and_wells_observations.png"
+fig.savefig(file, dpi=300)
+plt.close(fig)
+
 
 grid_extent = (0, 777*modflow_config['dy'], 0, 621*modflow_config['dx'])
 fig, axes = plt.subplots(figsize=(4, 4))

@@ -46,3 +46,5 @@ boundary_condtions.nc
 forcing.nc
 /bin
 *.out
+/sfrmaker
+*.xlsx
