@@ -103,9 +103,9 @@ class ModFlowSimulation:
         elevation_bottom_layers = [elevation_bottom_layer1, elevation_bottom_layer2, elevation_bottom_layer3, elevation_bottom_layer4]
 
         mask = np.isfinite(topography)
-        # # set Schoenberg to inactive
-        # mask_schoenberg = (ds_params['mask_schoenberg'].values == 1)
-        # mask = np.where(mask_schoenberg, False, mask)
+        # set Schoenberg to inactive
+        mask_schoenberg = (ds_params['mask_schoenberg'].values == 1)
+        mask = np.where(mask_schoenberg, False, mask)
         domain = np.empty_like(topography)
         domain[mask] = 1
         domain[~mask] = -1
