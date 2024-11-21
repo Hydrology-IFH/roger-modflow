@@ -9,20 +9,19 @@ import click
 def main(nsamples):
     base_path = Path(__file__).parent
 
-    bounds = {"r10_2": [0.01, 2], 
-              "r110_2": [0.1, 10], 
-              "r00101_2": [0.1, 100],
-              "r10_3": [0.01, 2], 
-              "r110_3": [0.1, 10], 
-              "r00101_3": [0.1, 100],
-              "r10_4": [0.01, 2], 
-              "r110_4": [0.1, 10], 
-              "r00101_4": [0.1, 100],
-              "z10": [0.001, 2], 
-              "z00101": [0.1, 100],  
-              "m00101": [0.1, 100], 
-              "m110": [0.1, 2],
-              "offset_constant_head": [0, 50]
+    bounds = {"r10_2": [0.1, 5], 
+              "r110_2": [2, 100], 
+              "r0011_2": [20, 100],
+              "r10_3": [0.1, 5], 
+              "r110_3": [2, 100], 
+              "r0011_3": [20, 100],
+              "r10_4": [0.1, 5], 
+              "r110_4": [2, 50], 
+              "r0011_4": [20, 50],
+              "z10": [0.1, 5], 
+              "z0011": [20, 100],  
+              "m0011": [50, 100], 
+              "m110": [2, 20],
     }
 
     nrows = nsamples
@@ -39,27 +38,15 @@ def main(nsamples):
         # write parameters to dataframe
         df_params.loc[:, param] = values.flatten()
 
-    df_params.iloc[0, 0] = 0.9
-    df_params.iloc[0, 1] = 1.0
-    df_params.iloc[0, 2] = 1.0
-    df_params.iloc[0, 3] = 1.0
-    df_params.iloc[0, 4] = 50.0
-    df_params.iloc[0, 5] = 100.0
-    df_params.iloc[0, 6] = 0.9
-    df_params.iloc[0, 7] = 50.0
-    df_params.iloc[0, 8] = 100.0
-    df_params.iloc[0, 9] = 0.2
-    df_params.iloc[0, 10] = 30.0
-    df_params.iloc[0, 11] = 50.0
-    df_params.iloc[0, 12] = 1.0
-    df_params.iloc[0, 13] = 19.0
+
+    df_params.iloc[0, :] = 1.
     df_params["complete"] = 0
-    df_params = df_params.loc[:, ["r10_2", "r110_2", "r00101_2", "r10_3", "r110_3", "r00101_3", "r10_4", "r110_4", "r00101_4", "z10", "z00101", "m00101", "m110", "offset_constant_head", "complete"]]
+    df_params = df_params.loc[:, ["r10_2", "r110_2", "r0011_2", "r10_3", "r110_3", "r0011_3", "r10_4", "r110_4", "r0011_4", "z10", "z0011", "m0011", "m110", "complete"]]
 
     # write parameters to csv
     df_params.columns = [
-        ["[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[m]", ""],
-        ["r10_2", "r110_2", "r00101_2", "r10_3", "r110_3", "r00101_3", "r10_4", "r110_4", "r00101_4", "z10", "z00101", "m00101", "m110", "offset_constant_head", "complete"],
+        ["[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", ""],
+        ["r10_2", "r110_2", "r0011_2", "r10_3", "r110_3", "r0011_3", "r10_4", "r110_4", "r0011_4", "z10", "z0011", "m0011", "m110", "complete"],
     ]
     df_params.to_csv(base_path / "fudge_parameters_modflow.csv", index=False, sep=";")
     return

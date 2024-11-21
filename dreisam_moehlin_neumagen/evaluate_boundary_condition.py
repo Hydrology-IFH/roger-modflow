@@ -19,7 +19,7 @@ def main(model_run, plot):
 
         fhead = Path(__file__).parent  / "output" / "steady-state" / f"dmn_run_{model_run}.hds"
         hds = flopy.utils.HeadFile(fhead)
-        head = hds.get_data()[0, :, :]
+        head = hds.get_data()[1, :, :]
 
         topography = ds_params['elevations'].isel(z=0).values
 
@@ -30,14 +30,14 @@ def main(model_run, plot):
         head_gradients = np.empty((head.shape[0]+4, head.shape[1]+4, 8))
         head_[2:-2, 2:-2] = head
 
-        head_gradients[2:-2, 2:-2, 0] = head_[2:-2, 2:-2] - head_[1:-3, 2:-2]
+        # head_gradients[2:-2, 2:-2, 0] = head_[2:-2, 2:-2] - head_[1:-3, 2:-2]
         head_gradients[2:-2, 2:-2, 1] = head_[2:-2, 2:-2] - head_[3:-1, 2:-2]
-        head_gradients[2:-2, 2:-2, 2] = head_[2:-2, 2:-2] - head_[2:-2, 1:-3]
+        # head_gradients[2:-2, 2:-2, 2] = head_[2:-2, 2:-2] - head_[2:-2, 1:-3]
         head_gradients[2:-2, 2:-2, 3] = head_[2:-2, 2:-2] - head_[2:-2, 3:-1]
-        head_gradients[2:-2, 2:-2, 4] = head_[2:-2, 2:-2] - head_[1:-3, 1:-3]
-        head_gradients[2:-2, 2:-2, 5] = head_[2:-2, 2:-2] - head_[1:-3, 3:-1]
-        head_gradients[2:-2, 2:-2, 6] = head_[2:-2, 2:-2] - head_[3:-1, 1:-3]
-        head_gradients[2:-2, 2:-2, 7] = head_[2:-2, 2:-2] - head_[1:-3, 3:-1]
+        # head_gradients[2:-2, 2:-2, 4] = head_[2:-2, 2:-2] - head_[1:-3, 1:-3]
+        # head_gradients[2:-2, 2:-2, 5] = head_[2:-2, 2:-2] - head_[1:-3, 3:-1]
+        # head_gradients[2:-2, 2:-2, 6] = head_[2:-2, 2:-2] - head_[3:-1, 1:-3]
+        head_gradients[2:-2, 2:-2, 7] = head_[2:-2, 2:-2] - head_[3:-1, 3:-1]
 
         # calculate the maximum gradient
         head_gradient_ = np.empty((head.shape[0]+4, head.shape[1]+4))
@@ -50,13 +50,13 @@ def main(model_run, plot):
 
         head_gradient = head_gradient_[2:-2, 2:-2]
         # limit the gradient to the grid resolution of 50 m
-        head_gradient[head_gradient > 50] = 0
-        head_gradient[head_gradient < -50] = 0
+        head_gradient[head_gradient > 5] = 5
+        head_gradient[head_gradient < -5] = -5
 
         if plot:
             fig, axes = plt.subplots(figsize=(4, 4))
-            axes.scatter(np.where(mask_bc)[1], np.where(mask_bc)[0], s=0.5, c='k', alpha=0.5)
-            plt.imshow(head_gradient, cmap='RdYlBu', aspect='equal', vmin=-20, vmax=20)
+            # axes.scatter(np.where(mask_bc)[1], np.where(mask_bc)[0], s=0.5, c='k', alpha=0.5)
+            plt.imshow(head_gradient, cmap='RdYlBu', aspect='equal', vmin=-5, vmax=5)
             plt.colorbar(label='[m]', shrink=0.5)
             plt.grid(zorder=0)
             plt.xlabel('x-direction')
@@ -71,8 +71,8 @@ def main(model_run, plot):
         topography[~mask_bc] = np.nan
 
         # set new constant by adding the gradient to the initial constant head
-        constant_head_new = head + head_gradient
-        constant_head_new[constant_head_new >= topography] = topography[constant_head_new >= topography] - 2
+        constant_head_new = head - head_gradient
+        constant_head_new[constant_head_new >= topography] = topography[constant_head_new >= topography] - 5
 
         ds_bc.close()
         # write the new boundary condition to the netcdf file
@@ -93,7 +93,7 @@ def main(model_run, plot):
 
             fig, axes = plt.subplots(figsize=(6, 3))
             axes.plot(range(len(topography_vals)), topography_vals, label="constant head initial", color="black", linestyle="--", alpha=0.5)
-            # axes.plot(range(len(constant_head_new_vals)), constant_head_new_vals, label="constant head new", color="purple", alpha=0.5)
+            axes.plot(range(len(constant_head_new_vals)), constant_head_new_vals, label="constant head new", color="purple", alpha=0.5)
             axes.plot(range(len(constant_head_initial_vals)), constant_head_initial_vals, label="constant head initial", color="black")
             axes.set_ylabel("elevation [m.a.s.l.]")
             fig.tight_layout()
