@@ -72,7 +72,7 @@ def main(model_run, plot):
 
         # set new constant by adding the gradient to the initial constant head
         constant_head_new = head - head_gradient
-        constant_head_new[constant_head_new >= topography] = topography[constant_head_new >= topography] - 5
+        constant_head_new[constant_head_new >= topography] = topography[constant_head_new >= topography] - 1
 
         ds_bc.close()
         # write the new boundary condition to the netcdf file

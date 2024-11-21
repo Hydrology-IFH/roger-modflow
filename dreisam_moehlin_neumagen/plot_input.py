@@ -58,7 +58,7 @@ elevation_bottom_layers = [elevation_bottom_layer1, elevation_bottom_layer2, ele
 
 # derive the model domain from the topography
 mask = np.isfinite(topography)
-grid_extent = (0, modflow_config['ny']*modflow_config['dy'], 0, modflow_config['nx']*modflow_config['dx'])
+grid_extent = (0, modflow_config['ny']*modflow_config['dy'], modflow_config['nx']*modflow_config['dx'], 0)
 
 basin = np.empty_like(topography)
 basin[mask] = 1
@@ -72,7 +72,7 @@ file = base_path_figs / "basin.png"
 fig.savefig(file, dpi=300)
 plt.close(fig)
 
-grid_extent = (0, 777*modflow_config['dy'], 0, 621*modflow_config['dx'])
+grid_extent = (0, modflow_config['ny']*modflow_config['dy'], modflow_config['nx']*modflow_config['dx'], 0)
 fig, axes = plt.subplots(figsize=(4, 4))
 topography[~mask] = np.nan
 plt.imshow(topography, extent=grid_extent, cmap='terrain', aspect='equal')
@@ -85,7 +85,7 @@ file = base_path_figs / "topography.png"
 fig.savefig(file, dpi=300)
 plt.close(fig)
 
-grid_extent = (0, 777*modflow_config['dy'], 0, 621*modflow_config['dx'])
+grid_extent = (0, modflow_config['ny']*modflow_config['dy'], modflow_config['nx']*modflow_config['dx'], 0)
 fig, axes = plt.subplots(figsize=(4, 4))
 topography[~mask] = np.nan
 plt.imshow(np.where(topography < 500, np.nan, topography), extent=grid_extent, cmap='terrain', aspect='equal')
@@ -98,7 +98,7 @@ file = base_path_figs / "topography_mountains.png"
 fig.savefig(file, dpi=300)
 plt.close(fig)
 
-grid_extent = (0, 777*modflow_config['dy'], 0, 621*modflow_config['dx'])
+grid_extent = (0, modflow_config['ny']*modflow_config['dy'], modflow_config['nx']*modflow_config['dx'], 0)
 fig, axes = plt.subplots(figsize=(4, 4))
 topography[~mask] = np.nan
 wells_y = [266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]
@@ -114,27 +114,26 @@ file = base_path_figs / "topography_and_wells.png"
 fig.savefig(file, dpi=300)
 plt.close(fig)
 
-grid_extent = (0, 777*modflow_config['dy'], 0, 621*modflow_config['dx'])
 fig, axes = plt.subplots(figsize=(4, 4))
 topography[~mask] = np.nan
-wells_y = [266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]
-wells_x = [66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496]
-plt.scatter(wells_x, wells_y, marker='x', s=5, c='black')
-wells_obs_y = observed_groundwater_heads.iloc[:, -2].values  # row IDs of the observation wells
-wells_obs_x = observed_groundwater_heads.iloc[:, -3].values  # column IDs of the observation wells
-plt.scatter(wells_obs_x, wells_obs_y, marker='^', s=5, c='black')
-plt.imshow(topography, cmap='terrain', aspect='equal')
-plt.colorbar(label='[m a.s.l.]', shrink=0.5)
+wells_y = np.array([266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]) * 50
+wells_x = np.array([66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496]) * 50
+plt.scatter(wells_x, wells_y, marker='^', s=5, c='black')
+wells_obs_y = observed_groundwater_heads.iloc[:, -2].values * 50  # row IDs of the observation wells
+wells_obs_x = observed_groundwater_heads.iloc[:, -3].values * 50  # column IDs of the observation wells
+plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=5, c='purple')
+plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5, extent=grid_extent)
+plt.colorbar(label='[m a.s.l.]', shrink=0.45)
 plt.grid(zorder=0)
-plt.xlabel('x-direction')
-plt.ylabel('y-direction')
+plt.xlabel('Distance in x-direction [m]')
+plt.ylabel('Distance in x-direction [m]')
 plt.tight_layout()
 file = base_path_figs / "topography_and_wells_observations.png"
 fig.savefig(file, dpi=300)
 plt.close(fig)
 
 
-grid_extent = (0, 777*modflow_config['dy'], 0, 621*modflow_config['dx'])
+grid_extent = (0, modflow_config['ny']*modflow_config['dy'], modflow_config['nx']*modflow_config['dx'], 0)
 fig, axes = plt.subplots(figsize=(4, 4))
 topography[~mask] = np.nan
 topography_schoenberg = topography.copy()
@@ -321,12 +320,12 @@ hydraulic_conductivities_layers = [hydraulic_conductivities_layer1, hydraulic_co
 for i, hydraulic_conductivities_layer in enumerate(hydraulic_conductivities_layers):
     i = i + 1
     fig, axes = plt.subplots(figsize=(4, 4))
-    bounds = [0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10, 100]
+    bounds = [0.00000001, 0.0000001, 0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1]
     norm = mpl.colors.BoundaryNorm(bounds, mpl.colormaps["Oranges"].N)
     hydraulic_conductivities_layer[~mask] = np.nan
-    plt.imshow(hydraulic_conductivities_layer, extent=grid_extent, cmap='Oranges', aspect='equal', norm=norm)
-    cbar = plt.colorbar(label='$k_f$ [m/day]', shrink=0.45)
-    cbar.set_ticks(ticks=bounds, labels=[r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$', r'$10^{-1}$', r'$1$', r'$10$', r'$100$'])
+    plt.imshow(hydraulic_conductivities_layer/(24*60*60), extent=grid_extent, cmap='Oranges', aspect='equal', norm=norm)
+    cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
+    cbar.set_ticks(ticks=bounds, labels=[r'$10^{-8}$', r'$10^{-7}$', r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$', r'$10^{-1}$'])
     plt.grid(zorder=0)
     plt.xlabel('Distance in x-direction [m]')
     plt.ylabel('Distance in y-direction [m]')
@@ -533,7 +532,7 @@ thickness_layer2 = elevation_bottom_layer1 - elevation_bottom_layer2
 thickness_layer2[thickness_layer2 <= 0] = np.nan
 print("Thickness Layer 2 (Minimum): ", np.nanmin(thickness_layer2))
 print("Thickness Layer 2 (Number of grid cells with negative values): ", np.nansum(thickness_layer2 < 0))
-plt.imshow(thickness_layer2, extent=grid_extent, cmap='viridis', aspect='equal')
+plt.imshow(thickness_layer2, extent=grid_extent, cmap='viridis', aspect='equal', vmin=0, vmax=100)
 plt.colorbar(label='[m]', shrink=0.5)
 plt.grid(zorder=0)
 plt.xlabel('Distance in x-direction [m]')
@@ -550,7 +549,7 @@ thickness_layer3 = elevation_bottom_layer2 - elevation_bottom_layer3
 thickness_layer3[thickness_layer3 <= 0] = np.nan
 print("Thickness Layer 3 (Minimum): ", np.nanmin(thickness_layer3))
 print("Thickness Layer 3 (Number of grid cells with negative values): ", np.nansum(thickness_layer3 < 0))
-plt.imshow(thickness_layer3, extent=grid_extent, cmap='viridis', aspect='equal')
+plt.imshow(thickness_layer3, extent=grid_extent, cmap='viridis', aspect='equal', vmin=0, vmax=100)
 plt.colorbar(label='[m]', shrink=0.5)
 plt.grid(zorder=0)
 plt.xlabel('Distance in x-direction [m]')
@@ -567,7 +566,7 @@ thickness_layer4 = elevation_bottom_layer3 - elevation_bottom_layer4
 thickness_layer4[thickness_layer4 <= 0] = np.nan
 print("Thickness Layer 4 (Minimum): ", np.nanmin(thickness_layer4))
 print("Thickness Layer 4 (Number of grid cells with negative values): ", np.nansum(thickness_layer4 < 0))
-plt.imshow(thickness_layer4, extent=grid_extent, cmap='viridis', aspect='equal')
+plt.imshow(thickness_layer4, extent=grid_extent, cmap='viridis', aspect='equal', vmin=0, vmax=100)
 plt.colorbar(label='[m]', shrink=0.5)
 plt.grid(zorder=0)
 plt.xlabel('Distance in x-direction [m]')

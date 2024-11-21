@@ -24,7 +24,7 @@ def recalc_specific_yield(hydraulic_conductivity, specific_yield_min=0.05):
     Returns:
         numpy.ndarray: specific yield
     """
-    specific_yield = 0.462 + 0.045 * np.log(hydraulic_conductivity)
+    specific_yield = 0.462 + 0.045 * np.log(hydraulic_conductivity/86400)
     specific_yield[specific_yield < specific_yield_min] = specific_yield_min
     return specific_yield
 
@@ -126,10 +126,10 @@ class ModFlowSimulation:
             idomain=domain_layers
         )
         # Create the initial conditions package
-        initial_conditions_layer1 = (topography - elevation_bottom_layer1) * 0.5 + elevation_bottom_layer1
-        initial_conditions_layer2 = (elevation_bottom_layer1 - elevation_bottom_layer2) * 0.5 + elevation_bottom_layer2
-        initial_conditions_layer3 = (elevation_bottom_layer2 - elevation_bottom_layer3) * 0.5 + elevation_bottom_layer3
-        initial_conditions_layer4 = (elevation_bottom_layer3 - elevation_bottom_layer4) * 0.5 + elevation_bottom_layer4
+        initial_conditions_layer1 = (topography - elevation_bottom_layer1) * 0.9 + elevation_bottom_layer1
+        initial_conditions_layer2 = (elevation_bottom_layer1 - elevation_bottom_layer2) * 0.9 + elevation_bottom_layer2
+        initial_conditions_layer3 = (elevation_bottom_layer2 - elevation_bottom_layer3) * 0.9 + elevation_bottom_layer3
+        initial_conditions_layer4 = (elevation_bottom_layer3 - elevation_bottom_layer4) * 0.9 + elevation_bottom_layer4
         initial_conditions_layers = [initial_conditions_layer1, initial_conditions_layer2, initial_conditions_layer3, initial_conditions_layer4]
         ic = flopy.mf6.modflow.mfgwfic.ModflowGwfic(gwf, pname="ic", strt=initial_conditions_layers)
 
@@ -157,7 +157,6 @@ class ModFlowSimulation:
         mask6 = (topography < 500) & (hydraulic_conductivities_layer3 > 1) & (hydraulic_conductivities_layer3 <= 10)
         mask7 = (topography < 500) & (hydraulic_conductivities_layer4 > 1) & (hydraulic_conductivities_layer4 <= 10)
 
-
         mask8 = (topography < 500) & (hydraulic_conductivities_layer2 > 0.01) & (hydraulic_conductivities_layer2 <= 1)
         mask9 = (topography < 500) & (hydraulic_conductivities_layer3 > 0.01) & (hydraulic_conductivities_layer3 <= 1)
         mask10 = (topography < 500) & (hydraulic_conductivities_layer4 > 0.01) & (hydraulic_conductivities_layer4 <= 1)
@@ -178,7 +177,6 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer2[mask5] = hydraulic_conductivities_layer2[mask5] * fudge_parameters['r110_2'].values[model_run]
         hydraulic_conductivities_layer3[mask6] = hydraulic_conductivities_layer3[mask6] * fudge_parameters['r110_3'].values[model_run]
         hydraulic_conductivities_layer4[mask7] = hydraulic_conductivities_layer4[mask7] * fudge_parameters['r110_4'].values[model_run]
-
 
         hydraulic_conductivities_layer2[mask8] = hydraulic_conductivities_layer2[mask8] * fudge_parameters['r0011_2'].values[model_run]
         hydraulic_conductivities_layer3[mask9] = hydraulic_conductivities_layer3[mask9] * fudge_parameters['r0011_3'].values[model_run]

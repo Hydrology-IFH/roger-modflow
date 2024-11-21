@@ -155,17 +155,17 @@ for model_run in range(0, 1):
 
     diff_sim_obs = sim - obs
     cm = plt.get_cmap('PuOr')
-    grid_extent = (0, 777*50, 0, 621*50)
+    grid_extent = (0, 777*50, 621*50, 0)
     fig, axes = plt.subplots(figsize=(4, 4))
     topography[~mask] = np.nan
-    wells_y = [266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]
-    wells_x = [66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496]
+    wells_y = np.array([266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]) * 50
+    wells_x = np.array([66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496]) * 50
     plt.scatter(wells_x, wells_y, marker='x', s=5, c='black')
-    wells_obs_y = observed_groundwater_heads.iloc[:, -2].values  # row IDs of the observation wells
-    wells_obs_x = observed_groundwater_heads.iloc[:, -3].values  # column IDs of the observation wells
-    plt.scatter(wells_obs_x, wells_obs_y, c=diff_sim_obs, s=5, cmap=cm, vmin=-10, vmax=10)
-    plt.colorbar(label='[m]', shrink=0.5)
-    plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5)
+    wells_obs_y = observed_groundwater_heads.iloc[:, -2].values * 50  # row IDs of the observation wells
+    wells_obs_x = observed_groundwater_heads.iloc[:, -3].values * 50  # column IDs of the observation wells
+    plt.scatter(wells_obs_x, wells_obs_y, c=diff_sim_obs, s=5, cmap=cm, vmin=-30, vmax=30)
+    plt.colorbar(label='[m]', shrink=0.45)
+    plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5, extent=grid_extent)
     plt.grid(zorder=0)
     plt.xlabel('x-direction')
     plt.ylabel('y-direction')
@@ -174,10 +174,10 @@ for model_run in range(0, 1):
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
-    grid_extent = (0, 777*50, 0, 621*50)
+    grid_extent = (0, 777*50, 621*50, 0)
     fig, axes = plt.subplots(figsize=(4, 4))
-    plt.imshow(gw_heads_interpolated - groundwater_heads[1, :, :], cmap='PuOr', aspect='equal', vmin=-10, vmax=10)
-    plt.colorbar(label='[m]', shrink=0.5)
+    plt.imshow(gw_heads_interpolated - groundwater_heads[1, :, :], cmap='PuOr', aspect='equal', vmin=-10, vmax=10, extent=grid_extent)
+    plt.colorbar(label='[m]', shrink=0.45)
     plt.grid(zorder=0)
     plt.xlabel('x-direction')
     plt.ylabel('y-direction')
@@ -186,17 +186,17 @@ for model_run in range(0, 1):
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
-    grid_extent = (0, 777*50, 0, 621*50)
+    grid_extent = (0, 621*50, 777*50, 0)
     fig, axes = plt.subplots(figsize=(4, 4))
     topography[~mask] = np.nan
-    wells_y = [266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]
-    wells_x = [66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496]
+    wells_y = np.array([266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]) * 50
+    wells_x = np.array([66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496]) * 50
     plt.scatter(wells_x, wells_y, marker='x', s=5, c='black')
-    wells_obs_y = observed_groundwater_heads.iloc[:, -2].values  # row IDs of the observation wells
-    wells_obs_x = observed_groundwater_heads.iloc[:, -3].values  # column IDs of the observation wells
+    wells_obs_y = observed_groundwater_heads.iloc[:, -2].values * 50  # row IDs of the observation wells
+    wells_obs_x = observed_groundwater_heads.iloc[:, -3].values * 50  # column IDs of the observation wells
     plt.scatter(wells_obs_x, wells_obs_y, c=sim, s=5, cmap="viridis", vmin=150, vmax=400)
-    plt.colorbar(label='[m]', shrink=0.5)
-    plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5)
+    plt.colorbar(label='[m]', shrink=0.45)
+    plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5, extent=grid_extent)
     plt.grid(zorder=0)
     plt.xlabel('x-direction')
     plt.ylabel('y-direction')
@@ -205,17 +205,17 @@ for model_run in range(0, 1):
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
-    grid_extent = (0, 777*50, 0, 621*50)
+    grid_extent = (0, 777*50, 621*50, 0)
     fig, axes = plt.subplots(figsize=(4, 4))
     topography[~mask] = np.nan
-    wells_y = [266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]
-    wells_x = [66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496]
+    wells_y = np.array([266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]) * 50
+    wells_x = np.array([66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496]) * 50
     plt.scatter(wells_x, wells_y, marker='x', s=5, c='black')
-    wells_obs_y = observed_groundwater_heads.iloc[:, -2].values  # row IDs of the observation wells
-    wells_obs_x = observed_groundwater_heads.iloc[:, -3].values  # column IDs of the observation wells
+    wells_obs_y = observed_groundwater_heads.iloc[:, -2].values * 50  # row IDs of the observation wells
+    wells_obs_x = observed_groundwater_heads.iloc[:, -3].values * 50  # column IDs of the observation wells
     plt.scatter(wells_obs_x, wells_obs_y, c=obs, s=5, cmap="viridis", vmin=150, vmax=400)
-    plt.colorbar(label='[m]', shrink=0.5)
-    plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5)
+    plt.colorbar(label='[m]', shrink=0.45)
+    plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5, extent=grid_extent)
     plt.grid(zorder=0)
     plt.xlabel('x-direction')
     plt.ylabel('y-direction')

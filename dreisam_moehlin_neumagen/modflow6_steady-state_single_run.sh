@@ -6,13 +6,13 @@
 python generate_boundary_conditions.py
 # python write_fudge_parameters.py
 
-# python modflow6_steady-state.py --model-run 0
-# python write_binary_to_netcdf_steady-state.py --model-run 0
-# python evaluate_boundary_condition.py --model-run 0
+python modflow6_steady-state.py --model-run 0
+python write_binary_to_netcdf_steady-state.py --model-run 0
+python evaluate_boundary_condition.py --model-run 0
 
-# python modflow6_steady-state.py --model-run 0
-# python write_binary_to_netcdf_steady-state.py --model-run 0
-# python evaluate_boundary_condition.py --model-run 0
+python modflow6_steady-state.py --model-run 0
+python write_binary_to_netcdf_steady-state.py --model-run 0
+python evaluate_boundary_condition.py --model-run 0
 
 python modflow6_steady-state.py --model-run 0
 python write_binary_to_netcdf_steady-state.py --model-run 0

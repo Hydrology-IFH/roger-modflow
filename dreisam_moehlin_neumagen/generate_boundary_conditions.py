@@ -11,7 +11,7 @@ import datetime
 import yaml
 import click
 
-@click.option("-och", "--offset", type=float, default=5)
+@click.option("-och", "--offset", type=float, default=1)
 @click.option("--plot", type=int, is_flag=True, help="Print more output.")
 @click.command("main")
 def main(offset, plot):
