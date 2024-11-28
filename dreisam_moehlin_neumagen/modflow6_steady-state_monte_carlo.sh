@@ -11,8 +11,8 @@ do
     python modflow6_steady-state.py --model-run $i
     python evaluate_boundary_condition.py --model-run $i
 
-    python modflow6_steady-state.py --model-run $i
-    python evaluate_boundary_condition.py --model-run $i
+    # python modflow6_steady-state.py --model-run $i
+    # python evaluate_boundary_condition.py --model-run $i
 
     python modflow6_steady-state.py --model-run $i
     python write_binary_to_netcdf_steady-state.py --model-run $i

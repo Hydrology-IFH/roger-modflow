@@ -89,15 +89,36 @@ def main(offset, plot):
     # set constant head
     xx = np.where(mask_boundary_condition == 1)[0]
     yy = np.where(mask_boundary_condition == 1)[1]
-    headsx = np.linspace(np.nanmin(constant_head), gw_heads_interpolated[xx[-1], yy[-1]], np.max(xx)+1)
+    # headsx = np.linspace(np.nanmin(constant_head), gw_heads_interpolated[xx[-1], yy[-1]], np.max(xx)+1)
+    headsx = np.linspace(np.nanmin(constant_head) - 8, np.nanmin(constant_head) + 8, np.max(xx) - 15)
+    headsy = np.linspace(np.nanmin(constant_head) - 8, np.nanmin(constant_head) + 5, np.max(yy) - 218)
     boundary_condition = np.empty_like(mask_boundary_condition)
+    _constant_headx = []
+    _topographyx = []
+    _constant_heady = []
+    _topographyy = []
     for x, y in zip(xx, yy):
-        if y < 219 and x >= 19 and x <= 230:
-            boundary_condition[x, y] = headsx[x]
+        # if y < 219 and x >= 19 and x <= 230:
+        if y <= 219 and x >= 16:
+            boundary_condition[x, y] = headsx[x - 16]
             if boundary_condition[x, y] >= topography[x, y]:
-                boundary_condition[x, y] = gw_heads_interpolated[x, y]
+                boundary_condition[x, y] = gw_heads_interpolated[x, y] - 1
+            _constant_headx.append(boundary_condition[x, y])
+            _topographyx.append(topography[x, y])
+        elif y > 219 and x < 16:
+            boundary_condition[x, y] = headsy[y - 219]
+            if boundary_condition[x, y] >= topography[x, y]:
+                boundary_condition[x, y] = gw_heads_interpolated[x, y] - 1
+            _constant_heady.append(boundary_condition[x, y])
+            _topographyy.append(topography[x, y])
+        elif y > 219 and x >= 16:
+            boundary_condition[x, y] = headsy[y - 219]
+            if boundary_condition[x, y] >= topography[x, y]:
+                boundary_condition[x, y] = gw_heads_interpolated[x, y] - 1
+            _constant_heady.append(boundary_condition[x, y])
+            _topographyy.append(topography[x, y])
         else:
-            boundary_condition[x, y] = gw_heads_interpolated[x, y]
+            boundary_condition[x, y] = gw_heads_interpolated[x, y] - 1
 
     # write boundary condtions to netcdf
     params_file = base_path / "boundary_conditions.nc"
@@ -141,7 +162,7 @@ def main(offset, plot):
         v = f.create_variable(
             "constant_head", ("x", "y"), np.int32, compression="gzip", compression_opts=1
         )
-        v[:, :] = boundary_condition[:, :] - offset
+        v[:, :] = boundary_condition[:, :]
         v.attrs.update(long_name="constant head boundary condition", units="m a.s.l.")
 
         v = f.create_variable(
@@ -195,6 +216,25 @@ def main(offset, plot):
     file = base_path_figs / "average_recharge.png"
     fig.savefig(file, dpi=300)
     plt.close(fig)
+
+    fig, axes = plt.subplots(figsize=(6, 3))
+    axes.plot(range(len(_constant_headx)), _constant_headx, label="constant head", color="black", linestyle="-")
+    axes.plot(range(len(_topographyx)), _topographyx, label="topography", color="grey", linestyle="-")
+    axes.set_ylabel("elevation [m.a.s.l.]")
+    fig.tight_layout()
+    file = Path(__file__).parent / "figures" / "constant_head_xx.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+    fig, axes = plt.subplots(figsize=(6, 3))
+    axes.plot(range(len(_constant_heady)), _constant_heady, label="constant head", color="black", linestyle="-")
+    axes.plot(range(len(_topographyy)), _topographyy, label="topography", color="grey", linestyle="-")
+    axes.set_ylabel("elevation [m.a.s.l.]")
+    fig.tight_layout()
+    file = Path(__file__).parent / "figures" / "constant_head_yy.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
 
     return
 

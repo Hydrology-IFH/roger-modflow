@@ -17,6 +17,80 @@ except:
     sys.path.append(fpth)
     import flopy
 
+def fudge_hydraulic_conductivities(ds_params, fudge_parameters, model_run=0):
+    # Create the node property flow package with hydraulic conducitivities
+    hydraulic_conductivities_layer1 = ds_params['kf'].isel(layer=0).values
+    hydraulic_conductivities_layer2 = ds_params['kf'].isel(layer=1).values
+    hydraulic_conductivities_layer3 = ds_params['kf'].isel(layer=2).values
+    hydraulic_conductivities_layer4 = ds_params['kf'].isel(layer=3).values
+    
+    # fudge parameters
+    mask1 = (hydraulic_conductivities_layer1 <= 1e-5)
+    mask2 = (hydraulic_conductivities_layer2 <= 1e-5)
+    mask3 = (hydraulic_conductivities_layer3 <= 1e-5)
+    mask4 = (hydraulic_conductivities_layer4 <= 1e-5)  
+    hydraulic_conductivities_layer1[mask1] = hydraulic_conductivities_layer1[mask1] * 2000
+    hydraulic_conductivities_layer2[mask2] = hydraulic_conductivities_layer2[mask2] * 2000
+    hydraulic_conductivities_layer3[mask3] = hydraulic_conductivities_layer3[mask3] * 2000
+    hydraulic_conductivities_layer4[mask4] = hydraulic_conductivities_layer4[mask4] * 2000
+
+    mask2 = (topography < 500) & (hydraulic_conductivities_layer2 > 10)
+    mask3 = (topography < 500) & (hydraulic_conductivities_layer3 > 10)
+    mask4 = (topography < 500) & (hydraulic_conductivities_layer4 > 10)
+
+    mask5 = (topography < 500) & (hydraulic_conductivities_layer2 > 1) & (hydraulic_conductivities_layer2 <= 10)
+    mask6 = (topography < 500) & (hydraulic_conductivities_layer3 > 1) & (hydraulic_conductivities_layer3 <= 10)
+    mask7 = (topography < 500) & (hydraulic_conductivities_layer4 > 1) & (hydraulic_conductivities_layer4 <= 10)
+
+    mask8 = (topography < 500) & (hydraulic_conductivities_layer2 > 0.01) & (hydraulic_conductivities_layer2 <= 1)
+    mask9 = (topography < 500) & (hydraulic_conductivities_layer3 > 0.01) & (hydraulic_conductivities_layer3 <= 1)
+    mask10 = (topography < 500) & (hydraulic_conductivities_layer4 > 0.01) & (hydraulic_conductivities_layer4 <= 1)
+
+    mask11 = (topography >= 500) & (hydraulic_conductivities_layer2 > 1) & (hydraulic_conductivities_layer2 <= 10)
+    mask12 = (topography >= 500) & (hydraulic_conductivities_layer3 > 1) & (hydraulic_conductivities_layer3 <= 10)
+    mask13 = (topography >= 500) & (hydraulic_conductivities_layer4 > 1) & (hydraulic_conductivities_layer4 <= 10)
+
+    mask14 = (topography >= 500) & (hydraulic_conductivities_layer2 > 0.01) & (hydraulic_conductivities_layer2 <= 1)
+    mask15 = (topography >= 500) & (hydraulic_conductivities_layer3 > 0.01) & (hydraulic_conductivities_layer3 <= 1)
+    mask16 = (topography >= 500) & (hydraulic_conductivities_layer4 > 0.01) & (hydraulic_conductivities_layer4 <= 1)      
+
+    # fudge parameters in the Rhine valley
+    hydraulic_conductivities_layer2[mask2] = hydraulic_conductivities_layer2[mask2] * fudge_parameters['r10_2'].values[model_run]
+    hydraulic_conductivities_layer3[mask3] = hydraulic_conductivities_layer3[mask3] * fudge_parameters['r10_3'].values[model_run]
+    hydraulic_conductivities_layer4[mask4] = hydraulic_conductivities_layer4[mask4] * fudge_parameters['r10_4'].values[model_run]
+
+    hydraulic_conductivities_layer2[mask5] = hydraulic_conductivities_layer2[mask5] * fudge_parameters['r110_2'].values[model_run]
+    hydraulic_conductivities_layer3[mask6] = hydraulic_conductivities_layer3[mask6] * fudge_parameters['r110_3'].values[model_run]
+    hydraulic_conductivities_layer4[mask7] = hydraulic_conductivities_layer4[mask7] * fudge_parameters['r110_4'].values[model_run]
+
+    hydraulic_conductivities_layer2[mask8] = hydraulic_conductivities_layer2[mask8] * fudge_parameters['r0011_2'].values[model_run]
+    hydraulic_conductivities_layer3[mask9] = hydraulic_conductivities_layer3[mask9] * fudge_parameters['r0011_3'].values[model_run]
+    hydraulic_conductivities_layer4[mask10] = hydraulic_conductivities_layer4[mask10] * fudge_parameters['r0011_4'].values[model_run]
+
+    # fudge parameters in the Dreisam valley
+    yy = 190
+    xx = 362
+    hydraulic_conductivities_layer2[yy:, xx:] = np.where(mask2[yy:, xx:], hydraulic_conductivities_layer2[yy:, xx:] * fudge_parameters['z10'].values[model_run], hydraulic_conductivities_layer2[yy:, xx:])
+    hydraulic_conductivities_layer3[yy:, xx:] = np.where(mask3[yy:, xx:], hydraulic_conductivities_layer3[yy:, xx:] * fudge_parameters['z10'].values[model_run], hydraulic_conductivities_layer3[yy:, xx:])  
+    hydraulic_conductivities_layer4[yy:, xx:] = np.where(mask4[yy:, xx:], hydraulic_conductivities_layer4[yy:, xx:] * fudge_parameters['z10'].values[model_run], hydraulic_conductivities_layer4[yy:, xx:])    
+
+    hydraulic_conductivities_layer2[:, xx:] = np.where(mask5[:, xx:], hydraulic_conductivities_layer2[:, xx:] * fudge_parameters['z0011'].values[model_run], hydraulic_conductivities_layer2[:, xx:])
+    hydraulic_conductivities_layer3[:, xx:] = np.where(mask6[:, xx:], hydraulic_conductivities_layer3[:, xx:] * fudge_parameters['z0011'].values[model_run], hydraulic_conductivities_layer3[:, xx:])  
+    hydraulic_conductivities_layer4[:, xx:] = np.where(mask7[:, xx:], hydraulic_conductivities_layer4[:, xx:] * fudge_parameters['z0011'].values[model_run], hydraulic_conductivities_layer4[:, xx:])  
+
+    # fudge parameters in the mountain
+    hydraulic_conductivities_layer2[mask11] = hydraulic_conductivities_layer2[mask11] * fudge_parameters['m110'].values[model_run]
+    hydraulic_conductivities_layer3[mask12] = hydraulic_conductivities_layer3[mask12] * fudge_parameters['m110'].values[model_run]
+    hydraulic_conductivities_layer4[mask13] = hydraulic_conductivities_layer4[mask13] * fudge_parameters['m110'].values[model_run]
+
+    hydraulic_conductivities_layer2[mask14] = hydraulic_conductivities_layer2[mask14] * fudge_parameters['m0011'].values[model_run]
+    hydraulic_conductivities_layer3[mask15] = hydraulic_conductivities_layer3[mask15] * fudge_parameters['m0011'].values[model_run]
+    hydraulic_conductivities_layer4[mask16] = hydraulic_conductivities_layer4[mask16] * fudge_parameters['m0011'].values[model_run]
+    hydraulic_conductivities_layer = [hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4]
+
+    return hydraulic_conductivities_layer
+
+
 base_path = Path(__file__).parent
 # directory of figures
 base_path_figs = base_path / "figures"
@@ -40,6 +114,10 @@ modflow_config = {
 # load observed groundwater heads (average values of the observation wells)
 path = base_path / "observations" / "observed_groundwater_heads_average.csv"
 observed_groundwater_heads = pd.read_csv(path, sep=";", skiprows=0)
+
+# load fudge parameters
+path = base_path / "fudge_parameters_modflow.csv"
+fudge_parameters = pd.read_csv(path, sep=";", skiprows=1)
 
 # load MODFLOW parameters
 path = Path(__file__).parent / "parameters_modflow.nc"
@@ -331,6 +409,28 @@ for i, hydraulic_conductivities_layer in enumerate(hydraulic_conductivities_laye
     plt.ylabel('Distance in y-direction [m]')
     plt.tight_layout()
     file = base_path_figs / f"hydraulic_conductivity_layer_{i}.png"
+    fig.savefig(file, dpi=300)
+    plt.close(fig)
+    print(f"Kf Layer {i} (Min., Max.): ", np.nanmin(hydraulic_conductivities_layer), np.nanmax(hydraulic_conductivities_layer))
+    hydraulic_conductivities_layer[~mask] = 0
+    print(f"Kf Layer {i} (Number of no data): ", np.isnan(hydraulic_conductivities_layer).sum())
+    print(np.unique(hydraulic_conductivities_layer))
+
+hydraulic_conductivities_layers_fudged = fudge_hydraulic_conductivities(ds_params, fudge_parameters, model_run=0)
+for i, hydraulic_conductivities_layer in enumerate(hydraulic_conductivities_layers_fudged):
+    i = i + 1
+    fig, axes = plt.subplots(figsize=(4, 4))
+    bounds = [0.00000001, 0.0000001, 0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1]
+    norm = mpl.colors.BoundaryNorm(bounds, mpl.colormaps["Oranges"].N)
+    hydraulic_conductivities_layer[~mask] = np.nan
+    plt.imshow(hydraulic_conductivities_layer/(24*60*60), extent=grid_extent, cmap='Oranges', aspect='equal', norm=norm)
+    cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
+    cbar.set_ticks(ticks=bounds, labels=[r'$10^{-8}$', r'$10^{-7}$', r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$', r'$10^{-1}$'])
+    plt.grid(zorder=0)
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
+    plt.tight_layout()
+    file = base_path_figs / f"hydraulic_conductivity_layer_fudged_{i}.png"
     fig.savefig(file, dpi=300)
     plt.close(fig)
     print(f"Kf Layer {i} (Min., Max.): ", np.nanmin(hydraulic_conductivities_layer), np.nanmax(hydraulic_conductivities_layer))

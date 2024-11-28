@@ -31,7 +31,7 @@ modflow_config = {
     'ny': 777,
     'nz': 4,
 }
-grid_extent = (0, modflow_config['ny'] * modflow_config['dy'], 0, modflow_config['nx']*modflow_config['dx'])
+grid_extent = (0, 777*modflow_config['dy'], 0, 621*modflow_config['dx'])
 
 # load MODFLOW parameters
 path = Path(__file__).parent / "parameters_modflow.nc"
@@ -67,20 +67,20 @@ sim = flopy.mf6.MFSimulation.load(
     verbosity_level=0,
 )
 
-ml = sim.get_model(f"dmn_run_0")
+ml = sim.get_model(f"dmn_run_289")
 
 # load the netcdf file
-output_file = base_path / "output" / model_type / "modflow_output_run_0.nc"
+output_file = base_path / "output" / model_type / "modflow_output_run_289.nc"
 ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
 
 x = np.cumsum(ds_mf.delr.values)
 y = np.cumsum(ds_mf.delc.values)
 yr = y[::-1]
 
-ll_levels = [[180, 185, 200, 300, 400, 500, 600],
-             [180, 185, 200, 300, 400, 500, 600],
-             [180, 185, 200, 300, 400, 500, 600],
-             [180, 185, 200, 300, 400, 500, 600]]
+ll_levels = [[200, 220, 300, 400, 500, 600],
+             [200, 220, 300, 400, 500, 600],
+             [200, 220, 300, 400, 500, 600],
+             [200, 220, 300, 400, 500, 600]]
 
 for layer in range(4):
     fig, axes = plt.subplots(figsize=(4, 4))

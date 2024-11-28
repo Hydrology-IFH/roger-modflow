@@ -87,9 +87,7 @@ def main(model_run, plot):
             gradient_vals = head_gradient.flatten()[np.isfinite(head_gradient.flatten())]
             constant_head_initial_vals = head.flatten()[np.isfinite(head.flatten())]
             constant_head_new_vals = constant_head_initial_vals - gradient_vals
-            constant_head_new_vals[constant_head_new_vals >= topography_vals] = topography_vals[constant_head_new_vals >= topography_vals] - 2
-            constant_head_new = head + head_gradient
-            constant_head_new_vals[constant_head_new_vals >= topography_vals] = topography_vals[constant_head_new_vals >= topography_vals] - 2
+            constant_head_new_vals[constant_head_new_vals >= topography_vals] = topography_vals[constant_head_new_vals >= topography_vals] - 1
 
             fig, axes = plt.subplots(figsize=(6, 3))
             axes.plot(range(len(topography_vals)), topography_vals, label="constant head initial", color="black", linestyle="--", alpha=0.5)

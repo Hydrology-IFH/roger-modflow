@@ -9,15 +9,15 @@ import click
 def main(nsamples):
     base_path = Path(__file__).parent
 
-    bounds = {"r10_2": [2, 50], 
+    bounds = {"r10_2": [0.1, 5], 
               "r110_2": [0.1, 5], 
-              "r0011_2": [2, 50],
+              "r0011_2": [1, 50],
               "r10_3": [0.1, 5], 
-              "r110_3": [2, 10], 
-              "r0011_3": [2, 50],
+              "r110_3": [1, 10], 
+              "r0011_3": [1, 50],
               "r10_4": [0.1, 5], 
-              "r110_4": [2, 10], 
-              "r0011_4": [2, 50],
+              "r110_4": [1, 10], 
+              "r0011_4": [1, 50],
               "z10": [0.1, 5], 
               "z0011": [20, 40],  
               "m0011": [30, 70], 
@@ -48,7 +48,7 @@ def main(nsamples):
     df_params.loc[0, "r10_2"] = 2.5
     df_params.loc[0, "r10_3"] = 2.5
     df_params.loc[0, "r10_4"] = 4
-    df_params.loc[0, "z10"] = 0.7
+    df_params.loc[0, "z10"] = 0.78
     df_params.loc[0, "z0011"] = 30.
     df_params.loc[0, "m0011"] = 50.
     df_params["complete"] = 0
