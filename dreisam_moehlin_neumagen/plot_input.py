@@ -18,11 +18,12 @@ except:
     import flopy
 
 def fudge_hydraulic_conductivities(ds_params, fudge_parameters, model_run=0):
-    # Create the node property flow package with hydraulic conducitivities
     hydraulic_conductivities_layer1 = ds_params['kf'].isel(layer=0).values
     hydraulic_conductivities_layer2 = ds_params['kf'].isel(layer=1).values
     hydraulic_conductivities_layer3 = ds_params['kf'].isel(layer=2).values
     hydraulic_conductivities_layer4 = ds_params['kf'].isel(layer=3).values
+
+    mask_zarten_valley = (ds_params['mask_upper_dreisam'].values == 1)
     
     # fudge parameters
     mask1 = (hydraulic_conductivities_layer1 <= 1e-5)
@@ -68,15 +69,13 @@ def fudge_hydraulic_conductivities(ds_params, fudge_parameters, model_run=0):
     hydraulic_conductivities_layer4[mask10] = hydraulic_conductivities_layer4[mask10] * fudge_parameters['r0011_4'].values[model_run]
 
     # fudge parameters in the Dreisam valley
-    yy = 190
-    xx = 362
-    hydraulic_conductivities_layer2[yy:, xx:] = np.where(mask2[yy:, xx:], hydraulic_conductivities_layer2[yy:, xx:] * fudge_parameters['z10'].values[model_run], hydraulic_conductivities_layer2[yy:, xx:])
-    hydraulic_conductivities_layer3[yy:, xx:] = np.where(mask3[yy:, xx:], hydraulic_conductivities_layer3[yy:, xx:] * fudge_parameters['z10'].values[model_run], hydraulic_conductivities_layer3[yy:, xx:])  
-    hydraulic_conductivities_layer4[yy:, xx:] = np.where(mask4[yy:, xx:], hydraulic_conductivities_layer4[yy:, xx:] * fudge_parameters['z10'].values[model_run], hydraulic_conductivities_layer4[yy:, xx:])    
+    hydraulic_conductivities_layer2[mask2 & mask_zarten_valley] = np.where(mask2 & mask_zarten_valley, hydraulic_conductivities_layer2 * fudge_parameters['z10'].values[model_run], hydraulic_conductivities_layer2)[(mask2 & mask_zarten_valley)]
+    hydraulic_conductivities_layer3[mask3 & mask_zarten_valley] = np.where(mask3 & mask_zarten_valley, hydraulic_conductivities_layer3 * fudge_parameters['z10'].values[model_run], hydraulic_conductivities_layer3)[(mask3 & mask_zarten_valley)]  
+    hydraulic_conductivities_layer4[mask4 & mask_zarten_valley] = np.where(mask4 & mask_zarten_valley, hydraulic_conductivities_layer4 * fudge_parameters['z10'].values[model_run], hydraulic_conductivities_layer4)[(mask4 & mask_zarten_valley)]    
 
-    hydraulic_conductivities_layer2[:, xx:] = np.where(mask5[:, xx:], hydraulic_conductivities_layer2[:, xx:] * fudge_parameters['z0011'].values[model_run], hydraulic_conductivities_layer2[:, xx:])
-    hydraulic_conductivities_layer3[:, xx:] = np.where(mask6[:, xx:], hydraulic_conductivities_layer3[:, xx:] * fudge_parameters['z0011'].values[model_run], hydraulic_conductivities_layer3[:, xx:])  
-    hydraulic_conductivities_layer4[:, xx:] = np.where(mask7[:, xx:], hydraulic_conductivities_layer4[:, xx:] * fudge_parameters['z0011'].values[model_run], hydraulic_conductivities_layer4[:, xx:])  
+    hydraulic_conductivities_layer2[mask5 & mask_zarten_valley] = np.where(mask5 & mask_zarten_valley, hydraulic_conductivities_layer2 * fudge_parameters['z0011'].values[model_run], hydraulic_conductivities_layer2)[(mask5 & mask_zarten_valley)]
+    hydraulic_conductivities_layer3[mask6 & mask_zarten_valley] = np.where(mask6 & mask_zarten_valley, hydraulic_conductivities_layer3 * fudge_parameters['z0011'].values[model_run], hydraulic_conductivities_layer3)[(mask6 & mask_zarten_valley)]  
+    hydraulic_conductivities_layer4[mask7 & mask_zarten_valley] = np.where(mask7 & mask_zarten_valley, hydraulic_conductivities_layer4 * fudge_parameters['z0011'].values[model_run], hydraulic_conductivities_layer4)[(mask7 & mask_zarten_valley)]  
 
     # fudge parameters in the mountain
     hydraulic_conductivities_layer2[mask11] = hydraulic_conductivities_layer2[mask11] * fudge_parameters['m110'].values[model_run]
@@ -136,6 +135,7 @@ elevation_bottom_layers = [elevation_bottom_layer1, elevation_bottom_layer2, ele
 
 # derive the model domain from the topography
 mask = np.isfinite(topography)
+mask_zarten_valley = (ds_params['mask_upper_dreisam'].values == 1)
 grid_extent = (0, modflow_config['ny']*modflow_config['dy'], modflow_config['nx']*modflow_config['dx'], 0)
 
 basin = np.empty_like(topography)
@@ -469,8 +469,6 @@ for i, fudge_regions_layer in enumerate(hydraulic_conductivities_layers):
 
 for i, fudge_regions_layer in enumerate(hydraulic_conductivities_layers):
     i = i + 1
-    yy = 190
-    xx = 362
     fig, axes = plt.subplots(figsize=(4, 4))
     bounds = [0, 100.1, 200.1, 300.1, 400.1, 500.1, 600.1, 700.1, 800.1]
     norm = mpl.colors.BoundaryNorm(bounds, mpl.colormaps["Dark2"].N)
@@ -484,8 +482,8 @@ for i, fudge_regions_layer in enumerate(hydraulic_conductivities_layers):
     fudge_regions_layer = np.where(mask1, 100, fudge_regions_layer)
     fudge_regions_layer = np.where(mask2, 200, fudge_regions_layer)
     fudge_regions_layer = np.where(mask3, 300, fudge_regions_layer)
-    fudge_regions_layer[yy:, xx:] = np.where(mask1[yy:, xx:], 400, fudge_regions_layer[yy:, xx:])
-    fudge_regions_layer[:, xx:] = np.where(mask3[:, xx:], 500, fudge_regions_layer[:, xx:])
+    fudge_regions_layer[mask1 & mask_zarten_valley] = np.where(mask1 & mask_zarten_valley, 400, fudge_regions_layer)[mask1 & mask_zarten_valley]
+    fudge_regions_layer[mask3 & mask_zarten_valley] = np.where(mask3 & mask_zarten_valley, 500, fudge_regions_layer)[mask3 & mask_zarten_valley]
     # fudge_regions_layer[:, 200:] = np.where(mask3[:, 200:], 500, fudge_regions_layer[:, 200:])
     fudge_regions_layer = np.where(mask4, 600, fudge_regions_layer)
     fudge_regions_layer = np.where(mask5, 700, fudge_regions_layer)

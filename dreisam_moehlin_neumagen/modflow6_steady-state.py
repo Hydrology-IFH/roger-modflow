@@ -73,7 +73,7 @@ class ModFlowSimulation:
 
         # Create the Flopy simulation object
         sim = flopy.mf6.MFSimulation(
-            sim_name=name, exe_name="mf6", version="mf6", sim_ws=self.working_directory
+            sim_name=name, exe_name="mf6", version="mf6", sim_ws=self.working_directory,
         )
 
         # Create the Flopy temporal discretization object
@@ -106,6 +106,7 @@ class ModFlowSimulation:
         # set Schoenberg to inactive
         mask_schoenberg = (ds_params['mask_schoenberg'].values == 1)
         mask = np.where(mask_schoenberg, False, mask)
+        mask_zarten_valley = (ds_params['mask_upper_dreisam'].values == 1)  # load mask of the Zarten valley
         domain = np.empty_like(topography)
         domain[mask] = 1
         domain[~mask] = -1
@@ -123,8 +124,11 @@ class ModFlowSimulation:
             length_units="METERS",
             top=topography,
             botm=elevation_bottom_layers,
-            idomain=domain_layers
+            idomain=domain_layers,
         )
+
+        # mf.dis.sr = SpatialReference(delr=delRArray,delc=delCArray, xul=GloRefBox[0], yul= GloRefBox[3],epsg=32718)
+
         # Create the initial conditions package
         initial_conditions_layer1 = (topography - elevation_bottom_layer1) * 0.9 + elevation_bottom_layer1
         initial_conditions_layer2 = (elevation_bottom_layer1 - elevation_bottom_layer2) * 0.9 + elevation_bottom_layer2
@@ -169,7 +173,7 @@ class ModFlowSimulation:
         mask15 = (topography >= 500) & (hydraulic_conductivities_layer3 > 0.01) & (hydraulic_conductivities_layer3 <= 1)
         mask16 = (topography >= 500) & (hydraulic_conductivities_layer4 > 0.01) & (hydraulic_conductivities_layer4 <= 1)      
 
-        # fudge parameters in the Rhine valley
+        # fudge parameters in the Rhine aquifer
         hydraulic_conductivities_layer2[mask2] = hydraulic_conductivities_layer2[mask2] * fudge_parameters['r10_2'].values[model_run]
         hydraulic_conductivities_layer3[mask3] = hydraulic_conductivities_layer3[mask3] * fudge_parameters['r10_3'].values[model_run]
         hydraulic_conductivities_layer4[mask4] = hydraulic_conductivities_layer4[mask4] * fudge_parameters['r10_4'].values[model_run]
@@ -182,16 +186,14 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer3[mask9] = hydraulic_conductivities_layer3[mask9] * fudge_parameters['r0011_3'].values[model_run]
         hydraulic_conductivities_layer4[mask10] = hydraulic_conductivities_layer4[mask10] * fudge_parameters['r0011_4'].values[model_run]
 
-        # fudge parameters in the Dreisam valley
-        yy = 190
-        xx = 362
-        hydraulic_conductivities_layer2[yy:, xx:] = np.where(mask2[yy:, xx:], hydraulic_conductivities_layer2[yy:, xx:] * fudge_parameters['z10'].values[model_run], hydraulic_conductivities_layer2[yy:, xx:])
-        hydraulic_conductivities_layer3[yy:, xx:] = np.where(mask3[yy:, xx:], hydraulic_conductivities_layer3[yy:, xx:] * fudge_parameters['z10'].values[model_run], hydraulic_conductivities_layer3[yy:, xx:])  
-        hydraulic_conductivities_layer4[yy:, xx:] = np.where(mask4[yy:, xx:], hydraulic_conductivities_layer4[yy:, xx:] * fudge_parameters['z10'].values[model_run], hydraulic_conductivities_layer4[yy:, xx:])    
+        # fudge parameters in the Zarten aquifer
+        hydraulic_conductivities_layer2[mask2 & mask_zarten_valley] = np.where(mask2 & mask_zarten_valley, hydraulic_conductivities_layer2 * fudge_parameters['z10'].values[model_run], hydraulic_conductivities_layer2)[(mask2 & mask_zarten_valley)]
+        hydraulic_conductivities_layer3[mask3 & mask_zarten_valley] = np.where(mask3 & mask_zarten_valley, hydraulic_conductivities_layer3 * fudge_parameters['z10'].values[model_run], hydraulic_conductivities_layer3)[(mask3 & mask_zarten_valley)]  
+        hydraulic_conductivities_layer4[mask4 & mask_zarten_valley] = np.where(mask4 & mask_zarten_valley, hydraulic_conductivities_layer4 * fudge_parameters['z10'].values[model_run], hydraulic_conductivities_layer4)[(mask4 & mask_zarten_valley)]    
 
-        hydraulic_conductivities_layer2[:, xx:] = np.where(mask5[:, xx:], hydraulic_conductivities_layer2[:, xx:] * fudge_parameters['z0011'].values[model_run], hydraulic_conductivities_layer2[:, xx:])
-        hydraulic_conductivities_layer3[:, xx:] = np.where(mask6[:, xx:], hydraulic_conductivities_layer3[:, xx:] * fudge_parameters['z0011'].values[model_run], hydraulic_conductivities_layer3[:, xx:])  
-        hydraulic_conductivities_layer4[:, xx:] = np.where(mask7[:, xx:], hydraulic_conductivities_layer4[:, xx:] * fudge_parameters['z0011'].values[model_run], hydraulic_conductivities_layer4[:, xx:])  
+        hydraulic_conductivities_layer2[mask5 & mask_zarten_valley] = np.where(mask5 & mask_zarten_valley, hydraulic_conductivities_layer2 * fudge_parameters['z0011'].values[model_run], hydraulic_conductivities_layer2)[(mask5 & mask_zarten_valley)]
+        hydraulic_conductivities_layer3[mask6 & mask_zarten_valley] = np.where(mask6 & mask_zarten_valley, hydraulic_conductivities_layer3 * fudge_parameters['z0011'].values[model_run], hydraulic_conductivities_layer3)[(mask6 & mask_zarten_valley)]  
+        hydraulic_conductivities_layer4[mask7 & mask_zarten_valley] = np.where(mask7 & mask_zarten_valley, hydraulic_conductivities_layer4 * fudge_parameters['z0011'].values[model_run], hydraulic_conductivities_layer4)[(mask7 & mask_zarten_valley)]  
 
         # fudge parameters in the mountain
         hydraulic_conductivities_layer2[mask11] = hydraulic_conductivities_layer2[mask11] * fudge_parameters['m110'].values[model_run]
@@ -201,7 +203,6 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer2[mask14] = hydraulic_conductivities_layer2[mask14] * fudge_parameters['m0011'].values[model_run]
         hydraulic_conductivities_layer3[mask15] = hydraulic_conductivities_layer3[mask15] * fudge_parameters['m0011'].values[model_run]
         hydraulic_conductivities_layer4[mask16] = hydraulic_conductivities_layer4[mask16] * fudge_parameters['m0011'].values[model_run]
-        
         hydraulic_conductivities_layers = [hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4]
         npf = flopy.mf6.modflow.mfgwfnpf.ModflowGwfnpf(
             gwf, pname="npf", icelltype=0, k=hydraulic_conductivities_layers, save_flows=True, wetdry=0.5
@@ -490,22 +491,6 @@ def main(model_run):
     
     modflow_interface.finalize()
     print("MODFLOW (steady-state) finalized")
-
-    # check whether groundwater table is above surface
-    path = Path(__file__).parent / "parameters_modflow.nc"
-    ds_params = xr.open_dataset(path, engine="h5netcdf")
-    topography = ds_params['elevations'].isel(z=0).values
-    mask = np.isfinite(topography)
-    # set Schoenberg to inactive
-    mask_schoenberg = (ds_params['mask_schoenberg'].values == 1)
-    mask = np.where(mask_schoenberg, False, mask)
-    topography[~mask] = np.nan
-    fhead = base_path / "output" / "steady-state" / f"dmn_run_{model_run}.hds"
-    hds = flopy.utils.HeadFile(fhead)
-    head = hds.get_data()[0, :, :]
-    head[~mask] = np.nan
-    if (head > topography + 10).any():
-        complete = 0
 
     # update the fudge parameters if the parameter set produces a useful simulation
     path = base_path / "fudge_parameters_modflow.csv"

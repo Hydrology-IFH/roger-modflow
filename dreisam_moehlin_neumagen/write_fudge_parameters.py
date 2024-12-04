@@ -11,17 +11,17 @@ def main(nsamples):
 
     bounds = {"r10_2": [0.1, 5], 
               "r110_2": [0.1, 5], 
-              "r0011_2": [1, 50],
+              "r0011_2": [1, 100],
               "r10_3": [0.1, 5], 
               "r110_3": [1, 10], 
-              "r0011_3": [1, 50],
+              "r0011_3": [1, 100],
               "r10_4": [0.1, 5], 
               "r110_4": [1, 10], 
-              "r0011_4": [1, 50],
+              "r0011_4": [1, 100],
               "z10": [0.1, 5], 
               "z0011": [20, 40],  
-              "m0011": [30, 70], 
-              "m110": [20, 40],
+              "m0011": [5, 70], 
+              "m110": [2, 40],
     }
 
     nrows = nsamples
@@ -39,16 +39,16 @@ def main(nsamples):
         df_params.loc[:, param] = values.flatten()
 
     df_params.iloc[0, :] = 1.
-    df_params.loc[0, "r0011_2"] = 30.
-    df_params.loc[0, "r0011_3"] = 30.
-    df_params.loc[0, "r0011_4"] = 20.
+    df_params.loc[0, "r0011_2"] = 50.
+    df_params.loc[0, "r0011_3"] = 50.
+    df_params.loc[0, "r0011_4"] = 50.
     df_params.loc[0, "r110_2"] = 5.
     df_params.loc[0, "r110_3"] = 5.
     df_params.loc[0, "r110_4"] = 5.
     df_params.loc[0, "r10_2"] = 2.5
     df_params.loc[0, "r10_3"] = 2.5
-    df_params.loc[0, "r10_4"] = 4
-    df_params.loc[0, "z10"] = 0.78
+    df_params.loc[0, "r10_4"] = 3.0
+    df_params.loc[0, "z10"] = 1.5
     df_params.loc[0, "z0011"] = 30.
     df_params.loc[0, "m0011"] = 50.
     df_params["complete"] = 0
