@@ -31,7 +31,7 @@ def main(model_run):
         with xr.open_dataset(base_path / "parameters_modflow.nc") as ds:
             spatial_ref = ds.spatial_ref
             xcoords = ds.x.values
-            ycoords = ds.y.values
+            ycoords = ds.y.values[::-1]
 
         # export groundwater head to netcdf
         fhead = base_path / "output" / "steady-state" / f"dmn_run_{model_run}.hds"
@@ -46,13 +46,13 @@ def main(model_run):
                 modflow_version=f"{ml.version}",
             )
         coords = {
-                "x": ("x", xcoords),  # x
-                "y": ("y", ycoords),  # y
+                "lon": ("on", xcoords),  # x
+                "lat": ("lat", ycoords),  # y
                 "layer": ("layer", nlayers),
                 "Time": ("Time", [1]),
             }
         data_vars=dict(
-                head=(["Time", "layer", "y", "x"], np.where(hds.get_data()[np.newaxis, ...] > 10000, np.nan, hds.get_data()[np.newaxis, ...])),
+                head=(["Time", "layer", "lat", "lon"], np.where(hds.get_data()[np.newaxis, :, :, :] > 10000, np.nan, hds.get_data()[np.newaxis, :, :, :])),
             )
 
         ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
