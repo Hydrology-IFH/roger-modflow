@@ -13,6 +13,7 @@ with h5netcdf.File(path, "a", decode_vlen_strings=False) as f:
     elevation_bottom_layer3 = var_obj[3, :, :]
     elevation_bottom_layer4 = var_obj[4, :, :]
 
+    elevation_bottom_layer2[elevation_bottom_layer2 <= 100] = 100
     elevation_bottom_layer3[elevation_bottom_layer3 <= 100] = 100
     elevation_bottom_layer4[elevation_bottom_layer4 <= 100] = 100
     topography[topography <= elevation_bottom_layer1] = elevation_bottom_layer1[topography <= elevation_bottom_layer1]

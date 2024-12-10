@@ -7,9 +7,9 @@ import xarray as xr
 import yaml
 from flopy.utils import Raster
 import click
-import flopy
+import matplotlib as mpl
 
-@click.option("-mr", "--model-run", type=int, default=0)
+@click.option("-mr", "--model-run", type=int, default=2106)
 @click.command("main", short_help="Run MODFLOW in steady-state mode")
 def main(model_run):
     # run installed version of flopy or add local path
@@ -78,8 +78,8 @@ def main(model_run):
     output_file = base_path / "output" / model_type / f"modflow_output_run_{model_run}.nc"
     ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
 
-    x = np.cumsum(ds_mf.x.values - ds_mf.x.values[0])
-    y = np.cumsum(ds_mf.y.values - ds_mf.y.values[-1])
+    x = np.cumsum(ds_mf.lon.values - ds_mf.lon.values[0])
+    y = np.cumsum(ds_mf.lat.values - ds_mf.lat.values[-1])
     yr = y[::-1]
 
     ll_levels = [[200, 220, 300, 400, 500, 600],
@@ -221,7 +221,7 @@ def main(model_run):
         thickness[mask1] = np.nan
         thickness[~mask] = np.nan
         fig, axes = plt.subplots(figsize=(4, 4))
-        plt.imshow(thickness, extent=grid_extent, cmap='viridis', aspect='equal')
+        plt.imshow(thickness, extent=grid_extent, cmap='viridis', aspect='equal', vmin=5, vmax=25)
         plt.colorbar(label='thickness [m]', shrink=0.5)
         plt.grid(zorder=0)
         plt.xlabel('Distance in x-direction [m]')
@@ -236,8 +236,12 @@ def main(model_run):
         hydraulic_conductivity[mask1] = np.nan
         hydraulic_conductivity[~mask] = np.nan
         fig, axes = plt.subplots(figsize=(4, 4))
-        plt.imshow(hydraulic_conductivity, extent=grid_extent, cmap='Oranges', aspect='equal')
-        plt.colorbar(label=r'$k_f$ [m/day]', shrink=0.5)
+        bounds = [0.00000001, 0.0000001, 0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1]
+        norm = mpl.colors.BoundaryNorm(bounds, mpl.colormaps["Oranges"].N)
+        hydraulic_conductivity[~mask] = np.nan
+        plt.imshow(hydraulic_conductivity/(24*60*60), extent=grid_extent, cmap='Oranges', aspect='equal', norm=norm)
+        cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
+        cbar.set_ticks(ticks=bounds, labels=[r'$10^{-8}$', r'$10^{-7}$', r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$', r'$10^{-1}$'])
         plt.grid(zorder=0)
         plt.xlabel('Distance in x-direction [m]')
         plt.ylabel('Distance in y-direction [m]')
