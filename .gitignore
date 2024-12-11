@@ -27,6 +27,7 @@ zbud6
 *.uzf
 *.gri
 *.grd
+*.drn
 *.stdout
 *.DS_Store
 output.nc

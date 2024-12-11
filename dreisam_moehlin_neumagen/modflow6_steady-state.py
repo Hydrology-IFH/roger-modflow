@@ -106,7 +106,11 @@ class ModFlowSimulation:
         # set Schoenberg to inactive
         mask_schoenberg = (ds_params['mask_schoenberg'].values == 1)
         mask = np.where(mask_schoenberg, False, mask)
-        mask_zarten_valley = (ds_params['mask_upper_dreisam'].values == 1)  # load mask of the Zarten valley
+        mask_upper_dreisam = (ds_params['mask_upper_dreisam'].values == 1)
+        mask_upper_moehlin = (ds_params['mask_upper_moehlin'].values == 1)
+        mask_neumagen = (ds_params['mask_neumagen'].values == 1)
+        mask_valleys_black_forest = mask_upper_dreisam | mask_upper_moehlin | mask_neumagen
+        mask_drainage_area = (ds_params['mask_drainage'].values == 1)
         domain = np.empty_like(topography)
         domain[mask] = 1
         domain[~mask] = -1
@@ -173,7 +177,7 @@ class ModFlowSimulation:
         mask15 = (topography >= 500) & (hydraulic_conductivities_layer3 > 0.01) & (hydraulic_conductivities_layer3 <= 1)
         mask16 = (topography >= 500) & (hydraulic_conductivities_layer4 > 0.01) & (hydraulic_conductivities_layer4 <= 1)      
 
-        hydraulic_conductivities_layer1[topography < 500] = hydraulic_conductivities_layer1[topography < 500] * 10
+        hydraulic_conductivities_layer1[topography < 500] = hydraulic_conductivities_layer1[topography < 500] * fudge_parameters['l_1'].values[model_run]
 
         # fudge parameters in the Rhine aquifer
         hydraulic_conductivities_layer2[mask2] = hydraulic_conductivities_layer2[mask2] * fudge_parameters['r10_2'].values[model_run]
@@ -189,22 +193,22 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer4[mask10] = hydraulic_conductivities_layer4[mask10] * fudge_parameters['r0011_4'].values[model_run]
 
         # fudge parameters in the Zarten aquifer
-        hydraulic_conductivities_layer2[mask2 & mask_zarten_valley] = np.where(mask2 & mask_zarten_valley, hydraulic_conductivities_layer2 * fudge_parameters['z10'].values[model_run], hydraulic_conductivities_layer2)[(mask2 & mask_zarten_valley)]
-        hydraulic_conductivities_layer3[mask3 & mask_zarten_valley] = np.where(mask3 & mask_zarten_valley, hydraulic_conductivities_layer3 * fudge_parameters['z10'].values[model_run], hydraulic_conductivities_layer3)[(mask3 & mask_zarten_valley)]  
-        hydraulic_conductivities_layer4[mask4 & mask_zarten_valley] = np.where(mask4 & mask_zarten_valley, hydraulic_conductivities_layer4 * fudge_parameters['z10'].values[model_run], hydraulic_conductivities_layer4)[(mask4 & mask_zarten_valley)]    
+        hydraulic_conductivities_layer2[mask2 & mask_valleys_black_forest] = np.where(mask2 & mask_valleys_black_forest, hydraulic_conductivities_layer2 * fudge_parameters['z10'].values[model_run], hydraulic_conductivities_layer2)[(mask2 & mask_valleys_black_forest)]
+        hydraulic_conductivities_layer3[mask3 & mask_valleys_black_forest] = np.where(mask3 & mask_valleys_black_forest, hydraulic_conductivities_layer3 * fudge_parameters['z10'].values[model_run], hydraulic_conductivities_layer3)[(mask3 & mask_valleys_black_forest)]  
+        hydraulic_conductivities_layer4[mask4 & mask_valleys_black_forest] = np.where(mask4 & mask_valleys_black_forest, hydraulic_conductivities_layer4 * fudge_parameters['z10'].values[model_run], hydraulic_conductivities_layer4)[(mask4 & mask_valleys_black_forest)]    
 
-        hydraulic_conductivities_layer2[mask8 & mask_zarten_valley] = np.where(mask8 & mask_zarten_valley, hydraulic_conductivities_layer2 * fudge_parameters['z0011'].values[model_run], hydraulic_conductivities_layer2)[(mask8 & mask_zarten_valley)]
-        hydraulic_conductivities_layer3[mask9 & mask_zarten_valley] = np.where(mask9 & mask_zarten_valley, hydraulic_conductivities_layer3 * fudge_parameters['z0011'].values[model_run], hydraulic_conductivities_layer3)[(mask9 & mask_zarten_valley)]  
-        hydraulic_conductivities_layer4[mask10 & mask_zarten_valley] = np.where(mask10 & mask_zarten_valley, hydraulic_conductivities_layer4 * fudge_parameters['z0011'].values[model_run], hydraulic_conductivities_layer4)[(mask10 & mask_zarten_valley)]  
+        hydraulic_conductivities_layer2[mask8 & mask_valleys_black_forest] = np.where(mask8 & mask_valleys_black_forest, hydraulic_conductivities_layer2 * fudge_parameters['z0011'].values[model_run], hydraulic_conductivities_layer2)[(mask8 & mask_valleys_black_forest)]
+        hydraulic_conductivities_layer3[mask9 & mask_valleys_black_forest] = np.where(mask9 & mask_valleys_black_forest, hydraulic_conductivities_layer3 * fudge_parameters['z0011'].values[model_run], hydraulic_conductivities_layer3)[(mask9 & mask_valleys_black_forest)]  
+        hydraulic_conductivities_layer4[mask10 & mask_valleys_black_forest] = np.where(mask10 & mask_valleys_black_forest, hydraulic_conductivities_layer4 * fudge_parameters['z0011'].values[model_run], hydraulic_conductivities_layer4)[(mask10 & mask_valleys_black_forest)]  
 
         # fudge parameters in the mountain
         hydraulic_conductivities_layer2[mask11] = hydraulic_conductivities_layer2[mask11] * fudge_parameters['m110'].values[model_run]
-        hydraulic_conductivities_layer3[mask12] = hydraulic_conductivities_layer3[mask12] * fudge_parameters['m110'].values[model_run]
-        hydraulic_conductivities_layer4[mask13] = hydraulic_conductivities_layer4[mask13] * fudge_parameters['m110'].values[model_run]
+        hydraulic_conductivities_layer3[mask12] = hydraulic_conductivities_layer3[mask12] * fudge_parameters['m110'].values[model_run] * 0.66
+        hydraulic_conductivities_layer4[mask13] = hydraulic_conductivities_layer4[mask13] * fudge_parameters['m110'].values[model_run] * 0.33
 
         hydraulic_conductivities_layer2[mask14] = hydraulic_conductivities_layer2[mask14] * fudge_parameters['m0011'].values[model_run]
-        hydraulic_conductivities_layer3[mask15] = hydraulic_conductivities_layer3[mask15] * fudge_parameters['m0011'].values[model_run]
-        hydraulic_conductivities_layer4[mask16] = hydraulic_conductivities_layer4[mask16] * fudge_parameters['m0011'].values[model_run]
+        hydraulic_conductivities_layer3[mask15] = hydraulic_conductivities_layer3[mask15] * fudge_parameters['m0011'].values[model_run] * 0.66
+        hydraulic_conductivities_layer4[mask16] = hydraulic_conductivities_layer4[mask16] * fudge_parameters['m0011'].values[model_run] * 0.33
         hydraulic_conductivities_layers = [hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4]
         npf = flopy.mf6.modflow.mfgwfnpf.ModflowGwfnpf(
             gwf, pname="npf", icelltype=0, k=hydraulic_conductivities_layers, save_flows=True, wetdry=0.5
@@ -263,6 +267,25 @@ class ModFlowSimulation:
         # Recharge package
         recharge = ds_bc['recharge'].values / 1000  # convert mm/day to m/day
         rcha = flopy.mf6.ModflowGwfrcha(gwf, recharge=recharge, fixed_cell=True)
+
+        # Create the drainage package
+        index = np.where(mask_drainage_area)
+        rows_drainage = index[0]
+        cols_drainage = index[1]
+
+        drn_spd = []
+        for ii in range(0, len(rows_drainage)):
+            elev_drn = topography[rows_drainage[ii], cols_drainage[ii]] - 0.5 * (topography[rows_drainage[ii], cols_drainage[ii]] - elevation_bottom_layer1[rows_drainage[ii], cols_drainage[ii]])
+            drn_spd.append(((0, rows_drainage[ii], cols_drainage[ii]), elev_drn, 100.0))
+
+        drn = flopy.mf6.ModflowGwfdrn(
+            gwf,
+            pname="drn",
+            maxbound=len(drn_spd),
+            boundnames=False,
+            mover=False,
+            stress_period_data=drn_spd,
+        )
 
         # # create streamflow routing package
         # # Prepare the reach data
@@ -331,6 +354,8 @@ class ModFlowSimulation:
 
         wel = flopy.mf6.ModflowGwfwel(
             gwf,
+            pname="wel",
+            maxbound=len(wel_rec),
             stress_period_data=wel_rec,
         )
 
@@ -499,8 +524,8 @@ def main(model_run):
     fudge_parameters = pd.read_csv(path, sep=";", skiprows=1)
     fudge_parameters.loc[fudge_parameters.index[model_run], "complete"] = complete
     fudge_parameters.columns = [
-        ["[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", ""],
-        ["r10_2", "r110_2", "r0011_2", "r10_3", "r110_3", "r0011_3", "r10_4", "r110_4", "r0011_4", "z10", "z0011", "m0011", "m110", "complete"],
+        ["[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", ""],
+        ["l_1", "r10_2", "r110_2", "r0011_2", "r10_3", "r110_3", "r0011_3", "r10_4", "r110_4", "r0011_4", "z10", "z0011", "m0011", "m110", "complete"],
     ]
     fudge_parameters.to_csv(path, index=False, sep=";")
     return

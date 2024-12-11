@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import click
 
 @click.option("-mr", "--model-run", type=int, default=0)
-@click.command("main", short_help="Run MODFLOW in steady-state mode")
+@click.command("main", short_help="Evaluate the steady-state simulation")
 def main(model_run):
     base_path = Path(__file__).parent
 
@@ -32,7 +32,7 @@ def main(model_run):
     src = rasterio.open(str(base_path / "input" / "groundwater_heads_interpolated_50m.tif"))
     gw_heads_interpolated = src.read(1)
 
-    grid_extent = (0, 777*50, 0, 621*50)
+    grid_extent = (0, 777*50, 621*50, 0)
     fig, axes = plt.subplots(figsize=(4, 4))
     gw_heads_interpolated[~mask] = np.nan
     plt.imshow(gw_heads_interpolated, cmap='terrain', aspect='equal')

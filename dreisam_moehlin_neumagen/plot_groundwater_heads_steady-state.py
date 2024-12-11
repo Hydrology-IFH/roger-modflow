@@ -9,7 +9,7 @@ from flopy.utils import Raster
 import click
 import matplotlib as mpl
 
-@click.option("-mr", "--model-run", type=int, default=2106)
+@click.option("-mr", "--model-run", type=int, default=0)
 @click.command("main", short_help="Run MODFLOW in steady-state mode")
 def main(model_run):
     # run installed version of flopy or add local path
@@ -36,7 +36,7 @@ def main(model_run):
         'ny': 777,
         'nz': 4,
     }
-    grid_extent = (0, 777*modflow_config['dy'], 0, 621*modflow_config['dx'])
+    grid_extent = (0, 777*modflow_config['dy'], 621*modflow_config['dx'], 0)
 
     # load MODFLOW parameters
     path = Path(__file__).parent / "parameters_modflow.nc"
@@ -129,7 +129,7 @@ def main(model_run):
         plt.close("all")
 
         fig, axes = plt.subplots(figsize=(4, 4))
-        y = np.arange(0, modflow_config['nx']*modflow_config['dx'], modflow_config['dx'])[::-1]
+        y = np.arange(0, modflow_config['nx']*modflow_config['dx'], modflow_config['dx'])
         x = np.arange(0, modflow_config['ny']*modflow_config['dy'], modflow_config['dy'])
         X, Y = np.meshgrid(x, y)
         Z = ds_mf['head'].isel(Time=0, layer=layer).values

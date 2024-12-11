@@ -1,6 +1,7 @@
 #!/bin/bash
 
 python add_schoenberg_mask.py
+python add_drainage_mask.py
 python add_subcatchment_masks.py
 python modify_elevations.py
 python modify_hydraulic_conductivity_and_specific_yield_of_layer1.py

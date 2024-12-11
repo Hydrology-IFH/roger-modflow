@@ -8,7 +8,7 @@ import flopy
 
 @click.option("-mr", "--model-run", type=int, default=0)
 @click.option("--plot", type=int, is_flag=True, help="Print more output.")
-@click.command("main", short_help="Run MODFLOW in steady-state mode")
+@click.command("main", short_help="Evaluate the constant head boundary condition")
 def main(model_run, plot):
     try:
         path = Path(__file__).parent / "parameters_modflow.nc"
