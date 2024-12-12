@@ -274,9 +274,10 @@ class ModFlowSimulation:
         cols_drainage = index[1]
 
         drn_spd = []
-        for ii in range(0, len(rows_drainage)):
-            elev_drn = topography[rows_drainage[ii], cols_drainage[ii]] - 0.5 * (topography[rows_drainage[ii], cols_drainage[ii]] - elevation_bottom_layer1[rows_drainage[ii], cols_drainage[ii]])
-            drn_spd.append(((0, rows_drainage[ii], cols_drainage[ii]), elev_drn, 100.0))
+        for layer in range(0, nlay):
+            for ii in range(0, len(rows_drainage)):
+                elev_drn = topography[rows_drainage[ii], cols_drainage[ii]] - 0.5 * (topography[rows_drainage[ii], cols_drainage[ii]] - elevation_bottom_layer1[rows_drainage[ii], cols_drainage[ii]])
+                drn_spd.append(((layer, rows_drainage[ii], cols_drainage[ii]), elev_drn, 10000.0))
 
         drn = flopy.mf6.ModflowGwfdrn(
             gwf,

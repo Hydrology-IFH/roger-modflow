@@ -47,10 +47,10 @@ def main(nsamples):
     df_params.loc[0, "r110_2"] = 5.
     df_params.loc[0, "r110_3"] = 5.
     df_params.loc[0, "r110_4"] = 5.
-    df_params.loc[0, "r10_2"] = 2.5
-    df_params.loc[0, "r10_3"] = 2.5
-    df_params.loc[0, "r10_4"] = 2.0
-    df_params.loc[0, "z10"] = 0.5
+    df_params.loc[0, "r10_2"] = 2.2
+    df_params.loc[0, "r10_3"] = 2.2
+    df_params.loc[0, "r10_4"] = 2.2
+    df_params.loc[0, "z10"] = 3.0
     df_params.loc[0, "z0011"] = 25.
     df_params.loc[0, "m0011"] = 50.
     df_params.loc[0, "m110"] = 5.

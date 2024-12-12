@@ -29,6 +29,7 @@ def main(model_run):
 
         # load spatial reference and coordinates
         with xr.open_dataset(base_path / "parameters_modflow.nc") as ds:
+            topography = ds['elevations'].isel(z=0).values
             spatial_ref = ds.spatial_ref
             xcoords = ds.x.values
             ycoords = ds.y.values[::-1]
@@ -53,11 +54,14 @@ def main(model_run):
             }
         data_vars=dict(
                 head=(["Time", "layer", "lat", "lon"], np.where(hds.get_data()[np.newaxis, :, :, :] > 10000, np.nan, hds.get_data()[np.newaxis, :, :, :])),
+                depth=(["Time", "layer", "lat", "lon"], np.where(hds.get_data()[np.newaxis, :, :, :] > 10000, np.nan, np.where(topography[np.newaxis, np.newaxis, :, :] - hds.get_data()[np.newaxis, :, :, :] > 0, topography[np.newaxis, np.newaxis, :, :] - hds.get_data()[np.newaxis, :, :, :], 0))),
             )
 
         ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
         ds["head"].attrs["units"] = "m a.s.l."
         ds["head"].attrs["long_name"] = "Groundwater head"
+        ds["depth"].attrs["units"] = "m"
+        ds["depth"].attrs["long_name"] = "Groundwater depth"
         # create spatial reference
         ds = ds.geo.write_crs("EPSG:25832")
         ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
@@ -75,7 +79,6 @@ def main(model_run):
         #         mask = (hds_data_layer > 1200) | (hds_data_layer < -100)
         #         hds_data_layer[mask] = np.nan
         #         np.savetxt(file, hds_data_layer, delimiter=";")
-
 
     except:
         pass

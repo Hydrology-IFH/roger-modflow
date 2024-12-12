@@ -24,7 +24,7 @@ def main(model_run):
     mask = np.where(mask_schoenberg, False, mask)
 
     # load observed groundwater heads (average values of the observation wells)
-    path = base_path / "observations" / "observed_groundwater_heads_average.csv"
+    path = base_path / "observations" / "observed_groundwater_heads_avg.csv"
     observed_groundwater_heads = pd.read_csv(path, sep=";", skiprows=0)
 
     # load interpolated groundwater heads
