@@ -6,7 +6,7 @@ import rasterio
 import matplotlib.pyplot as plt
 import click
 
-@click.option("-mr", "--model-run", type=int, default=0)
+@click.option("-mr", "--model-run", type=int, default=432)
 @click.command("main", short_help="Evaluate the steady-state simulation")
 def main(model_run):
     base_path = Path(__file__).parent
@@ -63,7 +63,6 @@ def main(model_run):
     rows = observed_groundwater_heads.iloc[:, -2].values  # row IDs of the observation wells
     cols = observed_groundwater_heads.iloc[:, -3].values  # column IDs of the observation wells
 
-
     # load the netcdf file
     output_file = base_path / "output" / "steady-state" / f"modflow_output_run_{model_run}.nc"
     ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
@@ -72,6 +71,12 @@ def main(model_run):
 
     # extract the simulated groundwater heads at the location of the observation wells
     sim = groundwater_heads[rows, cols].flatten()
+
+    interp = gw_heads_interpolated[rows, cols].flatten()
+    observed_groundwater_heads["sim-obs"] = sim - obs
+    observed_groundwater_heads["sim-int"] = sim - interp
+    observed_groundwater_heads["int-obs"] = interp - obs
+    observed_groundwater_heads.to_csv(base_path / "observations" / "observed_groundwater_heads_avg_.csv", sep=";", index=False)
 
     # calculate mean error
     print(np.mean(sim - obs))
@@ -101,13 +106,13 @@ def main(model_run):
 
     grid_extent = (0, 777*50, 621*50, 0)
     fig, axes = plt.subplots(figsize=(4, 4))
-    plt.imshow(gw_heads_interpolated - groundwater_heads[:, :], cmap='PuOr', aspect='equal', vmin=-10, vmax=10, extent=grid_extent)
+    plt.imshow(groundwater_heads[:, :] - gw_heads_interpolated, cmap='PuOr', aspect='equal', vmin=-10, vmax=10, extent=grid_extent)
     plt.colorbar(label='[m]', shrink=0.45)
     plt.grid(zorder=0)
     plt.xlabel('Distance in x-direction [m]')
     plt.ylabel('Distance in y-direction [m]')
     plt.tight_layout()
-    file = Path(__file__).parent / "figures" / "steady-state" / f"difference_int_sim_{model_run}.png"
+    file = Path(__file__).parent / "figures" / "steady-state" / f"difference_sim_{model_run}_int.png"
     fig.savefig(file, dpi=300)
     plt.close(fig)
 

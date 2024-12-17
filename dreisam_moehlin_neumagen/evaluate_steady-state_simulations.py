@@ -28,7 +28,7 @@ df_params_metrics["RBIAS"] = np.nan
 df_params_metrics["r"] = np.nan
 
 # load observed groundwater heads (average values of the observation wells)
-path = base_path / "observations" / "observed_groundwater_heads_average.csv"
+path = base_path / "observations" / "observed_groundwater_heads_avg.csv"
 observed_groundwater_heads = pd.read_csv(path, sep=";", skiprows=0)
 
 # load observed groundwater heads
@@ -36,7 +36,7 @@ obs = observed_groundwater_heads.iloc[:, -1].values  # observed groundwater head
 rows = observed_groundwater_heads.iloc[:, -2].values  # row IDs of the observation wells
 cols = observed_groundwater_heads.iloc[:, -3].values  # column IDs of the observation wells
 
-for model_run in range(0, 301):
+for model_run in range(0, 641):
     # complete = df_params_metrics.loc[model_run, "complete"]
     # # skip if steady-state simulation did not converged
     # if complete == 1:
