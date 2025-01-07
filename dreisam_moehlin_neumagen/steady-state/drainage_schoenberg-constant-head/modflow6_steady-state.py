@@ -260,15 +260,15 @@ class ModFlowSimulation:
             elif (constant_head <= elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer4[rows_bc[ii], cols_bc[ii]]):
                 layer = 3
             chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), constant_head))
-            if (constant_head > elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]):
-                layer = 1
-                chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]))
-            if (constant_head > elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]]):
-                layer = 2
-                chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]))
-            if (constant_head > elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]):
-                layer = 3
-                chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]))
+            # if (constant_head > elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]):
+            #     layer = 1
+            #     chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]))
+            # if (constant_head > elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]]):
+            #     layer = 2
+            #     chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]]))
+            # if (constant_head > elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]):
+            #     layer = 3
+            #     chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]))
 
         mask_boundary_condition_schoenberg = ds_bc['mask_schoenberg_bc'].values
         index = np.where(mask_boundary_condition_schoenberg == 1)

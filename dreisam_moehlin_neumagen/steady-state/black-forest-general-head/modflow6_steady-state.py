@@ -236,7 +236,7 @@ class ModFlowSimulation:
         rows_bc = index[0]
         cols_bc = index[1]
         for ii in range(0, len(rows_bc)):
-            constant_head = ds_bc['constant_head_black_forest'].values[rows_bc[ii], cols_bc[ii]]
+            constant_head = ds_bc['constant_head_black_forest'].values[rows_bc[ii], cols_bc[ii]] - fudge_parameters['offset'].values[model_run]
             width = 50
             if (constant_head <= topography[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]):
                 layer = 0

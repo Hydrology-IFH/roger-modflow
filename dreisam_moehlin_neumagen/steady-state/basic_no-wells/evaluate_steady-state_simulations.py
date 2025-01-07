@@ -14,9 +14,6 @@ ds_params = xr.open_dataset(path, engine="h5netcdf")
 topography = ds_params['elevations'].isel(z=0).values
 # derive the model domain from the topography
 mask = np.isfinite(topography)
-# set Schoenberg to inactive
-mask_schoenberg = (ds_params['mask_schoenberg'].values == 1)
-mask = np.where(mask_schoenberg, False, mask)
 
 # load the fudge parameters
 path = base_path / "fudge_parameters_modflow.csv"
@@ -36,7 +33,7 @@ rows = observed_groundwater_heads.iloc[:, -2].values  # row IDs of the observati
 cols = observed_groundwater_heads.iloc[:, -3].values  # column IDs of the observation wells
 obs = topography[rows, cols].flatten() - observed_groundwater_heads.iloc[:, -1].values  # observed groundwater depths
 
-for model_run in range(0, 1001):
+for model_run in range(0, 5000):
     # complete = df_params_metrics.loc[model_run, "complete"]
     # # skip if steady-state simulation did not converged
     # if complete == 1:
