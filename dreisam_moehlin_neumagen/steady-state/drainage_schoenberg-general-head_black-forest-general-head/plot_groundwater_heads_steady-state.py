@@ -57,11 +57,17 @@ def main(model_run):
     hydraulic_conductivities_layers = [hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4]
 
     mask = np.isfinite(topography)
+    # set Schoenberg to inactive
+    mask_schoenberg = (ds_params['mask_schoenberg'].values == 1)
+    mask = np.where(mask_schoenberg, False, mask)
+    # set black forest (fissured aquifers) to inactive
+    mask_black_forest = (topography >= 380)
+    mask = np.where(mask_black_forest, False, mask)
+
     domain = np.empty_like(topography)
     domain[mask] = 1
     domain[~mask] = -1
 
-    model_type = "steady-state"
     base_path_figs = base_path / "figures"
     sim = flopy.mf6.MFSimulation.load(
         sim_ws=base_path / "output",
@@ -80,10 +86,10 @@ def main(model_run):
     y = np.cumsum(ds_mf.lat.values - ds_mf.lat.values[-1])
     yr = y[::-1]
 
-    ll_levels = [[200, 225, 250, 350],
-                 [200, 225, 250, 350],
-                 [200, 225, 250, 350],
-                 [200, 225, 250, 350]]
+    ll_levels = [[200, 220, 240, 260, 280, 300],
+                 [200, 220, 240, 260, 280, 300],
+                 [200, 220, 240, 260, 280, 300],
+                 [200, 220, 240, 260, 280, 300]]
 
     for layer in range(4):
         fig, axes = plt.subplots(figsize=(4, 4))
@@ -210,7 +216,7 @@ def main(model_run):
         plt.ylabel('Distance in y-direction [m]')
         plt.tight_layout()
         i = layer + 1
-        file = base_path_figs / f"_gw_depth_steady_state_layer{i}_{model_run}.png"
+        file = base_path_figs / f"_gw_saturation_depth_steady_state_layer{i}_{model_run}.png"
         fig.savefig(file, dpi=300)
         plt.close("all")
         print(f"Layer {layer} (# GW table above surface): {np.sum(mask2)}")

@@ -23,6 +23,10 @@ def main(model_run):
     # set Schoenberg to inactive
     mask_schoenberg = (ds_params['mask_schoenberg'].values == 1)
     mask = np.where(mask_schoenberg, False, mask)
+    # set black forest (fissured aquifers) to inactive
+    mask_black_forest = (topography >= 380)
+    mask = np.where(mask_black_forest, False, mask)
+
 
     # load observed groundwater heads (average values of the observation wells)
     path = base_path / "observations" / "observed_groundwater_heads_avg.csv"
@@ -48,7 +52,8 @@ def main(model_run):
 
     fig, axes = plt.subplots(figsize=(4, 4))
     gw_depth_interpolated = topography - gw_heads_interpolated
-    plt.imshow(gw_depth_interpolated, cmap='viridis', aspect='equal', vmin=0, vmax=50)
+    gw_depth_interpolated[~mask] = np.nan
+    plt.imshow(gw_depth_interpolated, cmap='viridis', aspect='equal', vmin=0, vmax=20)
     plt.colorbar(label='[m]', shrink=0.5)
     plt.grid(zorder=0)
     plt.xlabel('x-direction')
@@ -69,7 +74,7 @@ def main(model_run):
     output_file = base_path / "output" / f"modflow_output_run_{model_run}.nc"
     ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
     groundwater_heads = ds_mf["head"].values[0, 1, ...]
-    groundwater_heads[groundwater_heads > topography] = topography[groundwater_heads > topography] - 1
+    groundwater_heads[groundwater_heads > topography] = topography[groundwater_heads > topography]
 
     # extract the simulated groundwater heads at the location of the observation wells
     sim_depths = topography[rows, cols].flatten() - groundwater_heads[rows, cols].flatten()
@@ -82,9 +87,9 @@ def main(model_run):
     observed_groundwater_heads.to_csv(base_path / "observations" / "observed_groundwater_heads_avg_.csv", sep=";", index=False)
 
     # calculate mean error
-    print(np.mean(sim - obs))
+    print(np.mean(sim_depths - obs_depths))
     # calculate mean absolute error
-    print(np.mean(np.abs(sim - obs)))
+    print(np.mean(np.abs(sim_depths - obs_depths)))
     print(sp.stats.spearmanr(sim_depths, obs_depths)[0])
 
     diff_sim_obs = sim - obs

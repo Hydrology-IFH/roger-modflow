@@ -57,7 +57,7 @@ def main(model_run):
     hydraulic_conductivities_layers = [hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4]
 
     mask = np.isfinite(topography)
-    mask = np.where(topography < 380, False, mask)
+    mask = np.where(topography < 600, False, mask)
     domain = np.empty_like(topography)
     domain[mask] = 1
     domain[~mask] = -1
@@ -81,14 +81,14 @@ def main(model_run):
     y = np.cumsum(ds_mf.lat.values - ds_mf.lat.values[-1])
     yr = y[::-1]
 
-    ll_levels = [[200, 220, 300, 400, 500, 600],
-                [200, 220, 300, 400, 500, 600],
-                [200, 220, 300, 400, 500, 600],
-                [200, 220, 300, 400, 500, 600]]
+    ll_levels = [[600, 800, 1100],
+                 [600, 800, 1100],
+                 [600, 800, 1100],
+                 [600, 800, 1100]]
 
     for layer in range(4):
         fig, axes = plt.subplots(figsize=(4, 4))
-        plt.imshow(ds_mf['head'].isel(Time=0, layer=layer).values, extent=grid_extent, cmap='viridis', aspect='equal', vmin=100, vmax=600)
+        plt.imshow(ds_mf['head'].isel(Time=0, layer=layer).values, extent=grid_extent, cmap='viridis', aspect='equal', vmin=600, vmax=1200)
         plt.colorbar(label='groundwater head \n[m a.s.l.]', shrink=0.5)
         plt.grid(zorder=0)
         plt.xlabel('Distance in x-direction [m]')

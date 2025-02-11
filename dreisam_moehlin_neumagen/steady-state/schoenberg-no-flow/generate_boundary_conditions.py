@@ -154,7 +154,7 @@ def main(offset, plot):
         v.attrs.update(long_name="location of constant head boundary condition of the porous aquifer", units="-")
 
         v = f.create_variable(
-            "constant_head_porous_aquifer", ("x", "y"), np.int32, compression="gzip", compression_opts=1
+            "constant_head_porous_aquifer", ("x", "y"), np.float32, compression="gzip", compression_opts=1
         )
         v[:, :] = constant_head_porous_aquifer[:, :] - offset
         v.attrs.update(long_name="constant head boundary condition of the porous aquifer", units="m a.s.l.")
@@ -166,7 +166,7 @@ def main(offset, plot):
         v.attrs.update(long_name="location of schoenberg boundary condition", units="-")
 
         v = f.create_variable(
-            "constant_head_schoenberg", ("x", "y"), np.int32, compression="gzip", compression_opts=1
+            "constant_head_schoenberg", ("x", "y"), np.float32, compression="gzip", compression_opts=1
         )
         v[:, :] = constant_head_schoenberg[:, :] - offset
         v.attrs.update(long_name="schoenberg boundary condition", units="m a.s.l.")

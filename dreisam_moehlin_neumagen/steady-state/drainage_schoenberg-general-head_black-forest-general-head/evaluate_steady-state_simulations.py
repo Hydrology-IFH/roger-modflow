@@ -36,7 +36,7 @@ rows = observed_groundwater_heads.iloc[:, -2].values  # row IDs of the observati
 cols = observed_groundwater_heads.iloc[:, -3].values  # column IDs of the observation wells
 obs = topography[rows, cols].flatten() - observed_groundwater_heads.iloc[:, -1].values  # observed groundwater depths
 
-for model_run in range(0, 1001):
+for model_run in range(0, 5000):
     # complete = df_params_metrics.loc[model_run, "complete"]
     # # skip if steady-state simulation did not converged
     # if complete == 1:

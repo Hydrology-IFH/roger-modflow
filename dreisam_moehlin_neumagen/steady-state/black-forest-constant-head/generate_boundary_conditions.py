@@ -59,9 +59,10 @@ def main(offset, plot):
 
     # load topography
     topography = ds_params['elevations'].isel(z=0).values
-    mask = np.isfinite(topography)
+    mask = np.isfinite(topography) & (topography > 600)
     topography[~mask] = np.nan
-    mask_black_forest = (topography >= 380)
+    topography = np.where(topography <= 600, np.nan, topography)
+    mask_black_forest = (topography > 600)
     grid_extent = (0, modflow_config['ny']*modflow_config['dy'], 0, modflow_config['nx']*modflow_config['dx'])
 
     basin = np.zeros((modflow_config['nx'], modflow_config['ny']))
@@ -83,14 +84,6 @@ def main(offset, plot):
     boundary = boundary[2:-2, 2:-2]
     topography[~mask] = np.nan
     # define location of boundary condition
-    mask_boundary_condition_porous_aquifer = np.where((boundary == 1) & (topography <= 240), 1, np.nan)
-    mask_boundary_condition_porous_aquifer[:, :163] = np.where((boundary == 1)[:, :163], 1, mask_boundary_condition_porous_aquifer[:, :163])
-    mask_boundary_condition_porous_aquifer[50:200, :180] = np.where((boundary == 1)[50:200, :180], 1, mask_boundary_condition_porous_aquifer[50:200, :180])
-
-    constant_head_porous_aquifer = np.where(mask_boundary_condition_porous_aquifer == 1, gw_heads_interpolated, np.nan)
-    _topography = np.where(mask_boundary_condition_porous_aquifer == 1, topography, np.nan)
-    constant_head_porous_aquifer_depth = _topography - constant_head_porous_aquifer
-    constant_head_porous_aquifer[constant_head_porous_aquifer_depth < 1] = _topography[constant_head_porous_aquifer_depth < 1] - 1
 
     black_forest = np.zeros((modflow_config['nx'], modflow_config['ny']))
     black_forest[mask_black_forest] = 1
@@ -108,7 +101,7 @@ def main(offset, plot):
     boundary_black_forest = boundary_black_forest[2:-2, 2:-2]
 
     mask_boundary_condition_black_forest = np.where((boundary_black_forest == 1), 1, np.nan)
-    mask_boundary_condition_black_forest = np.where((boundary == 1), np.nan, mask_boundary_condition_black_forest)   
+    mask_boundary_condition_black_forest = np.where((boundary == 1) & (topography > 800), np.nan, mask_boundary_condition_black_forest)   
 
     constant_head_black_forest = np.where((mask_boundary_condition_black_forest == 1), gw_heads_interpolated, np.nan)
     _topography = np.where(mask_boundary_condition_black_forest == 1, topography, np.nan)
@@ -149,25 +142,13 @@ def main(offset, plot):
         v[:] = 0
 
         v = f.create_variable(
-            "mask_porous_aquifer_bc", ("x", "y"), np.int32, compression="gzip", compression_opts=1
-        )
-        v[:, :] = mask_boundary_condition_porous_aquifer[:, :]
-        v.attrs.update(long_name="location of constant head boundary condition of the porous aquifer", units="-")
-
-        v = f.create_variable(
-            "constant_head_porous_aquifer", ("x", "y"), np.int32, compression="gzip", compression_opts=1
-        )
-        v[:, :] = constant_head_porous_aquifer[:, :] - offset
-        v.attrs.update(long_name="constant head boundary condition of the porous aquifer", units="m a.s.l.")
-
-        v = f.create_variable(
             "mask_black_forest_bc", ("x", "y"), np.int32, compression="gzip", compression_opts=1
         )
         v[:, :] = mask_boundary_condition_black_forest[:, :]
         v.attrs.update(long_name="location of the boundary condition of the fissured aquifer", units="-")
 
         v = f.create_variable(
-            "constant_head_black_forest", ("x", "y"), np.int32, compression="gzip", compression_opts=1
+            "constant_head_black_forest", ("x", "y"), np.float32, compression="gzip", compression_opts=1
         )
         v[:, :] = constant_head_black_forest[:, :] - offset
         v.attrs.update(long_name="boundary condition of the fissured auifer", units="m a.s.l.")
@@ -195,8 +176,7 @@ def main(offset, plot):
     # plt.close(fig)
 
     fig, axes = plt.subplots(figsize=(4, 4))
-    axes.scatter(np.where((boundary == 1))[1]*50, np.where((boundary == 1))[0]*50, s=0.5, c='k', alpha=0.5)
-    axes.scatter(np.where((mask_boundary_condition_porous_aquifer == 1))[1]*50, np.where((mask_boundary_condition_porous_aquifer== 1))[0]*50, s=0.5, c='grey')
+    # axes.scatter(np.where((boundary == 1))[1]*50, np.where((boundary == 1))[0]*50, s=0.5, c='k', alpha=0.5)
     axes.scatter(np.where((mask_boundary_condition_black_forest == 1))[1]*50, np.where((mask_boundary_condition_black_forest == 1))[0]*50, s=0.01, c='purple')
     # axes.scatter(np.where((mask_boundary_condition1 == 1))[1]*.05, np.where((mask_boundary_condition1 == 1))[0]*.05, s=0.5, c='purple')
     topography[~mask_black_forest] = np.nan

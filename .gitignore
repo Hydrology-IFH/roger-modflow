@@ -29,6 +29,7 @@ zbud6
 *.gri
 *.grd
 *.drn
+*.ghb
 *.stdout
 *.DS_Store
 output.nc

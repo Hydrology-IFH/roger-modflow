@@ -128,6 +128,8 @@ def main(offset, plot):
     boundary_black_forest[3:-1, 1:-3] = np.where(inner_boundary_black_forest[2:-2, 2:-2] - inner_boundary_black_forest[3:-1, 1:-3] < 0, 1, boundary_black_forest[3:-1, 1:-3])
     boundary_black_forest[1:-3, 3:-1] = np.where(inner_boundary_black_forest[2:-2, 2:-2] - inner_boundary_black_forest[1:-3, 3:-1] < 0, 1, boundary_black_forest[1:-3, 3:-1])
     boundary_black_forest = boundary_black_forest[2:-2, 2:-2]
+    boundary_black_forest = np.where(mask_schoenberg, np.nan, boundary_black_forest)
+
 
     mask_boundary_condition_black_forest = np.where((boundary_black_forest == 1), 1, np.nan)
     mask_boundary_condition_black_forest = np.where((boundary == 1), np.nan, mask_boundary_condition_black_forest)   
@@ -177,7 +179,7 @@ def main(offset, plot):
         v.attrs.update(long_name="location of constant head boundary condition of the porous aquifer", units="-")
 
         v = f.create_variable(
-            "constant_head_porous_aquifer", ("x", "y"), np.int32, compression="gzip", compression_opts=1
+            "constant_head_porous_aquifer", ("x", "y"), np.float32, compression="gzip", compression_opts=1
         )
         v[:, :] = constant_head_porous_aquifer[:, :] - offset
         v.attrs.update(long_name="constant head boundary condition of the porous aquifer", units="m a.s.l.")
@@ -189,7 +191,7 @@ def main(offset, plot):
         v.attrs.update(long_name="location of schoenberg boundary condition", units="-")
 
         v = f.create_variable(
-            "constant_head_schoenberg", ("x", "y"), np.int32, compression="gzip", compression_opts=1
+            "constant_head_schoenberg", ("x", "y"), np.float32, compression="gzip", compression_opts=1
         )
         v[:, :] = constant_head_schoenberg[:, :] - offset
         v.attrs.update(long_name="schoenberg boundary condition", units="m a.s.l.")
@@ -201,7 +203,7 @@ def main(offset, plot):
         v.attrs.update(long_name="location of the boundary condition of the fissured aquifer", units="-")
 
         v = f.create_variable(
-            "constant_head_black_forest", ("x", "y"), np.int32, compression="gzip", compression_opts=1
+            "constant_head_black_forest", ("x", "y"), np.float32, compression="gzip", compression_opts=1
         )
         v[:, :] = constant_head_black_forest[:, :] - offset
         v.attrs.update(long_name="boundary condition of the fissured auifer", units="m a.s.l.")

@@ -93,7 +93,7 @@ class ModFlowSimulation:
 
         mask = np.isfinite(topography)
         # set black forest (fissured aquifers) to active
-        mask_black_forest = (topography > 380)
+        mask_black_forest = (topography > 600)
         mask = np.where(~mask_black_forest, False, mask)
         mask_boundary_condition_black_forest = ds_bc['mask_black_forest_bc'].values
         mask = np.where(mask_boundary_condition_black_forest == 1, True, mask)
@@ -246,15 +246,6 @@ class ModFlowSimulation:
             elif (constant_head <= elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer4[rows_bc[ii], cols_bc[ii]]):
                 layer = 3
             chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), constant_head))
-            if (constant_head > elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]):
-                layer = 1
-                chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]))
-            if (constant_head > elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]]):
-                layer = 2
-                chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]]))
-            if (constant_head > elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]):
-                layer = 3
-                chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]))
 
         chd = flopy.mf6.modflow.mfgwfchd.ModflowGwfchd(
             gwf,
