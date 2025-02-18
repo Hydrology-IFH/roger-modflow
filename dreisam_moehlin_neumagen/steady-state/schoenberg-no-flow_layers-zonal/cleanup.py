@@ -66,11 +66,6 @@ def main(model_run):
     file = base_path / "output" / f"dmn_run_{model_run}.ims"
     os.remove(file)
 
-    base_path = Path(__file__).parent
-    file = base_path / "output" / f"dmn_run_{model_run}.drn"
-    os.remove(file)
-
-
     return
 
 

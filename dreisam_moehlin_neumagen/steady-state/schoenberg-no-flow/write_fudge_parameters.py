@@ -9,17 +9,16 @@ import click
 def main(nsamples):
     base_path = Path(__file__).parent
 
-    bounds = {"l_1": [0.5, 20], 
-              "rz10_23": [0.1, 5], 
-              "r110_23": [0.5, 50], 
-              "r0011_23": [0.5, 50],
-              "r10_4": [0.1, 5], 
-              "r110_4": [0.5, 50], 
-              "r0011_4": [0.5, 50],
-              "z0011": [0.5, 50],  
-              "m0011": [0.5, 50], 
-              "m110": [0.5, 10],
-              "rch": [0.5, 1.1],
+    bounds = {"-8": [10, 1000], 
+              "-7": [10, 1000], 
+              "-6": [10, 1000], 
+              "-5": [0.1, 100], 
+              "-4": [0.01, 10],
+              "1-3": [0.01, 2], 
+              "1.8-3": [0.01, 2], 
+              "3-3": [0.01, 2],  
+              "4-3": [0.01, 2], 
+              "rch": [0.75, 1.25],
     }
 
     nrows = nsamples
@@ -65,14 +64,25 @@ def main(nsamples):
     df_params.loc[24, "offset"] = 5.0
     df_params.loc[25, "offset"] = 10.0
     df_params.loc[26, "offset"] = 20.0
+    df_params.loc[27, "-8"] = 1000
+    df_params.loc[27, "-7"] = 2500
+    df_params.loc[27, "-6"] = 500
+    df_params.loc[27, "-5"] = 10
+    df_params.loc[27, "-4"] = 0.75
+    df_params.loc[27, "1-3"] = 0.5
+    df_params.loc[27, "1.8-3"] = 0.1
+    df_params.loc[27, "3-3"] = 1.2
+    df_params.loc[27, "4-3"] = 0.5
+    df_params.loc[27, "rch"] = 1.0
+    df_params.loc[27, "offset"] = 0.0
 
     df_params["complete"] = 0
-    df_params = df_params.loc[:, ["l_1", "rz10_23", "r110_23", "r0011_23",  "r10_4", "r110_4", "r0011_4", "z0011", "m0011", "m110", "rch", "offset", "complete"]]
+    df_params = df_params.loc[:, ["-8", "-7", "-6", "-5", "-4", "1-3", "1.8-3", "3-3", "4-3", "rch", "offset", "complete"]]
 
     # write parameters to csv
     df_params.columns = [
-        ["[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[m]",  ""],
-        ["l_1", "rz10_23", "r110_23", "r0011_23", "r10_4", "r110_4", "r0011_4", "z0011", "m0011", "m110", "rch", "offset", "complete"],
+        ["[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[m]",  ""],
+        ["-8", "-7", "-6", "-5", "-4", "1-3", "1.8-3", "3-3", "4-3", "rch", "offset", "complete"],
     ]
     df_params.to_csv(base_path / "fudge_parameters_modflow.csv", index=False, sep=";")
     return
