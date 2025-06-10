@@ -69,16 +69,17 @@ def main(model_run):
     output_file = base_path / "output" / f"modflow_output_run_{model_run}.nc"
     ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
     groundwater_heads = ds_mf["head"].values[0, 1, ...]
-    groundwater_heads[groundwater_heads > topography] = topography[groundwater_heads > topography] - 1
+    groundwater_heads[groundwater_heads > topography] = topography[groundwater_heads > topography]
 
     # extract the simulated groundwater heads at the location of the observation wells
     sim_depths = topography[rows, cols].flatten() - groundwater_heads[rows, cols].flatten()
     sim = groundwater_heads[rows, cols].flatten()
 
+    interp_heads = gw_heads_interpolated[rows, cols].flatten()
     interp_depths = topography[rows, cols].flatten() - gw_heads_interpolated[rows, cols].flatten()
-    observed_groundwater_heads["sim-obs"] = sim_depths - obs_depths
-    observed_groundwater_heads["sim-int"] = sim_depths - interp_depths
-    observed_groundwater_heads["int-obs"] = interp_depths - obs_depths
+    observed_groundwater_heads["sim-obs"] = sim - obs
+    observed_groundwater_heads["sim-int"] = sim - interp_heads
+    observed_groundwater_heads["int-obs"] = interp_heads - obs
     observed_groundwater_heads.to_csv(base_path / "observations" / "observed_groundwater_heads_avg_.csv", sep=";", index=False)
 
     # calculate mean error

@@ -47,7 +47,7 @@ def main(model_run):
                 modflow_version=f"{ml.version}",
             )
         coords = {
-                "lon": ("on", xcoords),  # x
+                "lon": ("lon", xcoords),  # x
                 "lat": ("lat", ycoords),  # y
                 "layer": ("layer", nlayers),
                 "Time": ("Time", [1]),

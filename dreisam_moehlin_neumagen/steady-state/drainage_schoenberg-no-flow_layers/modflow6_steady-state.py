@@ -309,7 +309,7 @@ class ModFlowSimulation:
             elev_drn = topography[rows_drainage[ii], cols_drainage[ii]] - 0.5 * (topography[rows_drainage[ii], cols_drainage[ii]] - elevation_bottom_layer1[rows_drainage[ii], cols_drainage[ii]])
             slope = 0.01
             length = 50
-            drainage_area = 0.3**2 * np.pi * 5  # drainage pipe with 0.3 m diameter with 10 m spacing
+            drainage_area = 0.3**2 * np.pi  # drainage pipe with 0.3 m diameter per grid cell
             kf = 0.1 * 86400
             conductance = kf * drainage_area * length * slope
             drn_spd.append(((0, rows_drainage[ii], cols_drainage[ii]), elev_drn, conductance))

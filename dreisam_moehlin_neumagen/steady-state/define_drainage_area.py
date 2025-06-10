@@ -20,11 +20,6 @@ def main():
 
     base_path = Path(__file__).parent
 
-    # load the config file
-    file_config = base_path / "config.yml"
-    with open(file_config, "r") as file:
-        roger_config = yaml.safe_load(file)
-
     res_modflow = 50  # spatial resolution of MODFLOW in meters
 
     modflow_config = {
@@ -55,7 +50,7 @@ def main():
 
     # plot the saturation depth
     saturation_depth = ds_mf['head'].isel(Time=0, layer=1).values - topography
-    saturation_depth[saturation_depth <= 0] = 0
+    saturation_depth[saturation_depth <= 5] = 0
     saturation_depth[~mask] = np.nan
     fig, axes = plt.subplots(figsize=(4, 4))
     plt.imshow(saturation_depth, extent=grid_extent, cmap='viridis_r', aspect='equal')
@@ -69,7 +64,7 @@ def main():
     plt.close("all")
 
     # add drainage mask to parameters_modflow.nc
-    mask_saturation = np.where(saturation_depth > 0, 1, 0)
+    mask_saturation = np.where(saturation_depth > 5, 1, 0)
     path = str(base_path / "parameters_modflow.nc")
     with h5netcdf.File(path, "a", decode_vlen_strings=False) as f:
         try:

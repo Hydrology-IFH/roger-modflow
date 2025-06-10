@@ -29,11 +29,14 @@ df_params_metrics["50AE"] = np.nan
 df_params_metrics["RBIAS"] = np.nan
 df_params_metrics["r_rank"] = np.nan
 df_params_metrics["r_lin"] = np.nan
+df_params_metrics["n_5m"] = np.nan
 
 
 # load observed groundwater heads (average values of the observation wells)
 path = base_path / "observations" / "observed_groundwater_heads_avg.csv"
 observed_groundwater_heads = pd.read_csv(path, sep=";", skiprows=0)
+observed_groundwater_heads = observed_groundwater_heads.iloc[:-2, :]
+n_obs = len(observed_groundwater_heads.index)
 
 # load observed groundwater heads
 rows = observed_groundwater_heads.iloc[:, -2].values  # row IDs of the observation wells
@@ -50,6 +53,7 @@ for model_run in range(0, 5000):
     # extract the simulated groundwater depths at the location of the observation wells
     sim = groundwater_heads[1, rows, cols].flatten()
     sim_depth = topography[rows, cols].flatten() - groundwater_heads[1, rows, cols].flatten()
+    sim_depth = np.where(sim_depth > 0, 0, sim_depth)
 
     # calculate mean error
     df_params_metrics.loc[model_run, "ME"] = np.mean(sim - obs)
@@ -60,12 +64,72 @@ for model_run in range(0, 5000):
     # calculate mean absolute error
     df_params_metrics.loc[model_run, "50AE"] = np.median(np.abs(sim - obs))
     # calculate relative bias
-    df_params_metrics.loc[model_run, "RBIAS"] = np.mean((sim - obs) / obs)
+    df_params_metrics.loc[model_run, "RBIAS"] = np.mean((sim_depth - obs_depth) / obs_depth)
     # calculate spearman correlation
     df_params_metrics.loc[model_run, "r_rank"] = sp.stats.spearmanr(sim_depth, obs_depth)[0]
     # calculate spearman correlation
     df_params_metrics.loc[model_run, "r_lin"] = sp.stats.pearsonr(sim_depth, obs_depth)[0]
+    # calculate number of cells with a bias less than 5m
+    df_params_metrics.loc[model_run, "n_5m"] = np.sum(np.abs(sim - obs) < 5) / n_obs
 
 # save the metrics
-path = base_path / "fudge_parameters_metrics.csv"
+path = base_path / "fudge_parameters_metrics_porous.csv"
+df_params_metrics.to_csv(path, sep=";", index=False)
+
+
+# load the fudge parameters
+path = base_path / "fudge_parameters_modflow.csv"
+fudge_parameters = pd.read_csv(path, sep=";", skiprows=1)
+df_params_metrics = fudge_parameters.copy()
+df_params_metrics["ME"] = np.nan
+df_params_metrics["50E"] = np.nan
+df_params_metrics["MAE"] = np.nan
+df_params_metrics["50AE"] = np.nan
+df_params_metrics["RBIAS"] = np.nan
+df_params_metrics["r_rank"] = np.nan
+df_params_metrics["r_lin"] = np.nan
+df_params_metrics["n_5m"] = np.nan
+
+
+# load observed groundwater heads (average values of the observation wells)
+path = base_path / "observations" / "observed_groundwater_heads_avg.csv"
+observed_groundwater_heads = pd.read_csv(path, sep=";", skiprows=0)
+n_obs = len(observed_groundwater_heads.index)
+
+# load observed groundwater heads
+rows = observed_groundwater_heads.iloc[:, -2].values  # row IDs of the observation wells
+cols = observed_groundwater_heads.iloc[:, -3].values  # column IDs of the observation wells
+obs = observed_groundwater_heads.iloc[:, -1].values # observed groundwater depths
+obs_depth = topography[rows, cols].flatten() - observed_groundwater_heads.iloc[:, -1].values  # observed groundwater depths
+
+for model_run in range(0, 5000):
+    # load the netcdf file
+    output_file = Path(f"/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen/steady-state/{base_path.name}/output") / f"modflow_output_run_{model_run}.nc"
+    ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
+    groundwater_heads = ds_mf["head"].values[0, ...]
+
+    # extract the simulated groundwater depths at the location of the observation wells
+    sim = groundwater_heads[1, rows, cols].flatten()
+    sim_depth = topography[rows, cols].flatten() - groundwater_heads[1, rows, cols].flatten()
+    sim_depth = np.where(sim_depth > 0, 0, sim_depth)
+
+    # calculate mean error
+    df_params_metrics.loc[model_run, "ME"] = np.mean(sim - obs)
+    # calculate mean error
+    df_params_metrics.loc[model_run, "50E"] = np.median(sim - obs)
+    # calculate mean absolute error
+    df_params_metrics.loc[model_run, "MAE"] = np.mean(np.abs(sim - obs))
+    # calculate mean absolute error
+    df_params_metrics.loc[model_run, "50AE"] = np.median(np.abs(sim - obs))
+    # calculate relative bias
+    df_params_metrics.loc[model_run, "RBIAS"] = np.mean((sim_depth - obs_depth) / obs_depth)
+    # calculate spearman correlation
+    df_params_metrics.loc[model_run, "r_rank"] = sp.stats.spearmanr(sim_depth, obs_depth)[0]
+    # calculate spearman correlation
+    df_params_metrics.loc[model_run, "r_lin"] = sp.stats.pearsonr(sim_depth, obs_depth)[0]
+    # calculate number of cells with a bias less than 5m
+    df_params_metrics.loc[model_run, "n_5m"] = np.sum(np.abs(sim - obs) < 5) / n_obs
+
+# save the metrics
+path = base_path / "fudge_parameters_metrics_porous-fissured.csv"
 df_params_metrics.to_csv(path, sep=";", index=False)

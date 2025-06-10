@@ -69,7 +69,7 @@ def main(model_run):
     output_file = base_path / "output" / f"modflow_output_run_{model_run}.nc"
     ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
     groundwater_heads = ds_mf["head"].values[0, 1, ...]
-    groundwater_heads[groundwater_heads > topography] = topography[groundwater_heads > topography] - 1
+    groundwater_heads[groundwater_heads > topography] = topography[groundwater_heads > topography]
 
     # extract the simulated groundwater heads at the location of the observation wells
     sim_depths = topography[rows, cols].flatten() - groundwater_heads[rows, cols].flatten()
@@ -168,9 +168,23 @@ def main(model_run):
     axes.plot(axes.get_xlim(), axes.get_ylim(), ls="--", c=".3", zorder=1, alpha=0.5)
     # axes.text(axes.get_xlim()[0] + 0.1, axes.get_ylim()[1] - 0.1, f"ME: {df_params_metrics.loc[model_run, 'ME']:.2f} m")
     fig.tight_layout()
+    file = Path(__file__).parent / "figures" / f"scatter_obs_sim{model_run}_.png"
+    fig.savefig(file, dpi=300)
+    plt.close(fig)
+
+    fig, axes = plt.subplots(figsize=(4, 4))
+    axes.scatter(obs_depths, sim_depths, marker='.', s=5, c='black')
+    axes.set_ylabel('Simulated groundwater depth [m]')
+    axes.set_xlabel('Observed groundwater depth [m]')
+    axes.set_xlim(0, 30)
+    axes.set_ylim(0, 30)
+    axes.plot(axes.get_xlim(), axes.get_ylim(), ls="--", c=".3", zorder=1, alpha=0.5)
+    # axes.text(axes.get_xlim()[0] + 0.1, axes.get_ylim()[1] - 0.1, f"ME: {df_params_metrics.loc[model_run, 'ME']:.2f} m")
+    fig.tight_layout()
     file = Path(__file__).parent / "figures" / f"scatter_obs_sim{model_run}.png"
     fig.savefig(file, dpi=300)
     plt.close(fig)
+
 
     fig, axes = plt.subplots(figsize=(4, 4))
     axes.scatter(range(len(diff_sim_obs)), diff_sim_obs, marker='.', s=5, c='black')

@@ -8,7 +8,7 @@ import datetime
 
 import click
 
-@click.option("-mr", "--model-run", type=int, default=0)
+@click.option("-mr", "--model-run", type=int, default=27)
 @click.command("main")
 def main(model_run):
     try:
@@ -37,7 +37,7 @@ def main(model_run):
         # export groundwater head to netcdf
         fhead = base_path / "output" / f"dmn_run_{model_run}.hds"
         hds = flopy.utils.HeadFile(fhead)
-
+        
         # create xarray dataset
         attrs = dict(
                 date_created=datetime.datetime.today().isoformat(),
@@ -47,7 +47,7 @@ def main(model_run):
                 modflow_version=f"{ml.version}",
             )
         coords = {
-                "lon": ("on", xcoords),  # x
+                "lon": ("lon", xcoords),  # x
                 "lat": ("lat", ycoords),  # y
                 "layer": ("layer", nlayers),
                 "Time": ("Time", [1]),

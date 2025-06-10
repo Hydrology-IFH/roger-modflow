@@ -163,7 +163,20 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer3[mask3] = hydraulic_conductivities_layer3[mask3] * 1000
         hydraulic_conductivities_layer4[mask4] = hydraulic_conductivities_layer4[mask4] * 1000
 
-        # fudge parameters
+        mask71 = ((hydraulic_conductivities_layer1_ == 1.9722222e-07) | (hydraulic_conductivities_layer1_ == 2.3055554e-07) | (hydraulic_conductivities_layer1_ == 5.7777777e-07)) & (topography > 300)
+        mask721 = (hydraulic_conductivities_layer2_ == 1.9722222e-07) & (topography <= 300)
+        mask731 = (hydraulic_conductivities_layer3_ == 1.9722222e-07) & (topography <= 300)
+        mask722 = (hydraulic_conductivities_layer2_ == 1.9722222e-07) & (topography > 300)
+        mask732 = (hydraulic_conductivities_layer3_ == 1.9722222e-07) & (topography > 300)
+        mask74 = (hydraulic_conductivities_layer4_ == 1.9722222e-07)
+
+        hydraulic_conductivities_layer1[mask71] = 3.9722222e-04 * 86400
+        hydraulic_conductivities_layer2[mask721] = 3.9722222e-05 * 86400
+        hydraulic_conductivities_layer3[mask731] = 5.9722222e-06 * 86400
+        hydraulic_conductivities_layer2[mask722] = 3.9722222e-04 * 86400
+        hydraulic_conductivities_layer3[mask732] = 1.e-04 * 86400
+        hydraulic_conductivities_layer4[mask74] = 1.9722222e-05 * 86400
+
         hydraulic_conductivities_layer1 = hydraulic_conductivities_layer1 * fudge_parameters['c1'].values[model_run]
         hydraulic_conductivities_layer2 = hydraulic_conductivities_layer2 * fudge_parameters['c2'].values[model_run]
         hydraulic_conductivities_layer3 = hydraulic_conductivities_layer3 * fudge_parameters['c3'].values[model_run]
@@ -249,7 +262,7 @@ class ModFlowSimulation:
             elev_drn = topography[rows_drainage[ii], cols_drainage[ii]] - 0.5 * (topography[rows_drainage[ii], cols_drainage[ii]] - elevation_bottom_layer1[rows_drainage[ii], cols_drainage[ii]])
             slope = 0.01
             length = 50
-            drainage_area = 0.3**2 * np.pi * 5  # drainage pipe with 0.3 m diameter with 10 m spacing
+            drainage_area = 0.3**2 * np.pi  # drainage pipe with 0.3 m diameter per grid cell
             kf = 0.1 * 86400
             conductance = kf * drainage_area * length * slope
             drn_spd.append(((0, rows_drainage[ii], cols_drainage[ii]), elev_drn, conductance))

@@ -109,11 +109,6 @@ class ModFlowSimulation:
         mask = np.where(mask_schoenberg, False, mask)
         mask_boundary_condition_schoenberg = ds_bc['mask_schoenberg_bc'].values
         mask = np.where(mask_boundary_condition_schoenberg, True, mask)
-        # mask_upper_dreisam = (ds_params['mask_upper_dreisam'].values == 1)
-        # mask_upper_moehlin = (ds_params['mask_upper_moehlin'].values == 1)
-        # mask_neumagen = (ds_params['mask_neumagen'].values == 1)
-        # mask_valleys_black_forest = mask_upper_dreisam | mask_upper_moehlin | mask_neumagen
-        mask_drainage_area = (ds_params['mask_drainage'].values == 1)
         domain = np.empty_like(topography)
         domain[mask] = 1
         domain[~mask] = -1
