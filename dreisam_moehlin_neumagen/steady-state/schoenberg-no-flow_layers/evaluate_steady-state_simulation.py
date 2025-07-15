@@ -7,7 +7,7 @@ import rasterio
 import matplotlib.pyplot as plt
 import click
 
-@click.option("-mr", "--model-run", type=int, default=0)
+@click.option("-mr", "--model-run", type=int, default=928)
 @click.command("main", short_help="Evaluate the steady-state simulation")
 def main(model_run):
     base_path = Path(__file__).parent
@@ -27,6 +27,7 @@ def main(model_run):
     # load observed groundwater heads (average values of the observation wells)
     path = base_path / "observations" / "observed_groundwater_heads_avg.csv"
     observed_groundwater_heads = pd.read_csv(path, sep=";", skiprows=0)
+    # observed_groundwater_heads = observed_groundwater_heads.iloc[:-2, :]
 
     # load interpolated groundwater heads
     base_path = Path(__file__).parent
@@ -89,7 +90,8 @@ def main(model_run):
 
     diff_sim_obs = sim - obs
     cm = plt.get_cmap('PuOr')
-    grid_extent = (0, 777*50, 621*50, 0)
+    cm.set_bad(color='grey')
+    grid_extent = (0, (777*50)/1000, (621*50)/1000, 0)
     fig, axes = plt.subplots(figsize=(4, 4))
     topography[~mask] = np.nan
     # wells_y = np.array([266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]) * 50
@@ -97,13 +99,13 @@ def main(model_run):
     # plt.scatter(wells_x, wells_y, marker='x', s=5, c='black')
     wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
     wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
-    plt.scatter(wells_obs_x, wells_obs_y, c=diff_sim_obs, s=5, cmap=cm, vmin=-5, vmax=5)
+    plt.scatter(wells_obs_x/1000, wells_obs_y/1000, c=diff_sim_obs, s=5, cmap=cm, vmin=-5, vmax=5)
     plt.colorbar(label='[m]', shrink=0.45)
     plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5, extent=grid_extent)
     plt.grid(zorder=0)
-    plt.xlabel('Distance in x-direction [m]')
-    plt.ylabel('Distance in y-direction [m]')
-    plt.tight_layout()
+    plt.xlabel('Distance in x-direction [km]')
+    plt.ylabel('Distance in y-direction [km]')
+    fig.tight_layout()
     file = Path(__file__).parent / "figures" / f"difference_sim_obs_{model_run}.png"
     fig.savefig(file, dpi=300)
     plt.close(fig)

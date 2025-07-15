@@ -84,11 +84,14 @@ class ModFlowSimulation:
 
         # Create the Flopy groundwater flow (gwf) model object
         model_nam_file = "{}.nam".format(name)
-        gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file)
+        gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file, newtonoptions="NEWTON UNDER_RELAXATION")
 
         # Create the Flopy iterative model solver (ims) Package object
-        ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", complexity="COMPLEX",
-                                                 outer_maximum=300, inner_maximum=750)
+        ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="all",
+                                                 complexity="COMPLEX",
+                                                 outer_maximum=50, inner_maximum=500,
+                                                 outer_dvclose=0.1, inner_dvclose=0.1,
+                                                 no_ptcrecord="NO_PTC_ALL")
 
         # Now that the overall simulation is set up, we can focus on building the groundwater flow model.  The groundwater flow model will be built by adding packages to it that describe the model characteristics.
         #
@@ -406,15 +409,13 @@ class ModFlowSimulation:
         if self.mf6.get_current_time() > self.end_time:
             raise StopIteration("MODFLOW used all iteration steps. Consider increasing `ndays`")
 
-        t0 = time()
-        self.mf6.prepare_solve(1)
-
         # limit the execution time of the numerical solver
         signal.signal(signal.SIGALRM, handler)
-        signal.alarm(60)  # Set the timeout duration to 60 seconds
+        signal.alarm(180)  # Set the timeout duration to 60 seconds
 
         complete = 0
         self.mf6.prepare_solve(1)
+        t0 = time()
         try:
             # convergence loop
             for _ in range(self.max_iter):

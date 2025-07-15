@@ -205,22 +205,22 @@ class ModFlowSimulation:
         reaches.iloc[:, 12] = reaches.iloc[:, 12].astype(float)
         reaches.iloc[:, 13] = reaches.iloc[:, 13].astype(int)
 
-        # increase the hydraulic conductivities of the reach cell by a factor of 5
+        # increase the hydraulic conductivities of the reach cell by a factor of 10
         for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):
             if z == 0:
-                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 5
+                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 10
             elif z == 1:
-                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 5
-                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * 5
+                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 10
+                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * 10
             elif z == 2:
-                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 5
-                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * 5
-                hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * 5
+                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 10
+                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * 10
+                hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * 10
             elif z == 3:
-                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 5
-                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * 5
-                hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * 5
-                hydraulic_conductivities_layer4[x, y] = hydraulic_conductivities_layer4[x, y] * 5
+                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 10
+                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * 10
+                hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * 10
+                hydraulic_conductivities_layer4[x, y] = hydraulic_conductivities_layer4[x, y] * 10
 
         # set the Manning’s roughness coefficient depending on the streambed gradient
         cond1 = (reaches['rgrd'] <= 0.0006)
@@ -239,13 +239,13 @@ class ModFlowSimulation:
         # set the hydraulic conductivities of the streambed using the kf of the reach cell and decrease by a factor of 0.0005
         for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):
             if z == 0:
-                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer1[x, y] * 0.0005
+                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer1[x, y] * 2.0*10e-5
             elif z == 1:
-                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer2[x, y] * 0.0005
+                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer2[x, y] * 2.0*10e-5
             elif z == 2:
-                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer3[x, y] * 0.0005
+                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer3[x, y] * 2.0*10e-5
             elif z == 3:
-                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer4[x, y] * 0.0005
+                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer4[x, y] * 2.0*10e-5
 
         cond = np.isnan(reaches['rwid'])
         reaches.loc[cond, 'rwid'] = 1.0  # set width to 1 m where it is NaN

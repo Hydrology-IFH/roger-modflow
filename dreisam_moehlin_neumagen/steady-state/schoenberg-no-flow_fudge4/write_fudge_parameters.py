@@ -4,15 +4,15 @@ import pandas as pd
 import click
 
 
-@click.option("-ns", "--nsamples", type=int, default=5000)
+@click.option("-ns", "--nsamples", type=int, default=10000)
 @click.command("main")
 def main(nsamples):
     base_path = Path(__file__).parent
 
-    bounds = {"c1": [0.01, 100], 
-              "c2": [0.01, 100], 
-              "c3": [0.01, 100], 
-              "c4": [0.01, 100], 
+    bounds = {"c1": [0.1, 10], 
+              "c2": [0.1, 10], 
+              "c3": [0.1, 10], 
+              "c4": [0.1, 10], 
               "rch": [0.75, 1.25],
     }
 

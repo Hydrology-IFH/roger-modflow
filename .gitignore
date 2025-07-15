@@ -59,3 +59,4 @@ forcing.nc
 
 dreisam_moehlin_neumagen/steady-state/input/dem_dreisam_moehlin_neumagen_50m.tif
 dreisam_moehlin_neumagen/steady-state/input/streamflow_routing/
+fudge_parameters_modflow.csv
