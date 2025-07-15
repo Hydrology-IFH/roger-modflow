@@ -5,7 +5,6 @@ import click
 @click.option("-mr", "--model-run", type=int, default=0)
 @click.command("main")
 def main(model_run):
-
     base_path = Path(__file__).parent
     file = base_path / "output" / f"dmn_run_{model_run}.dis.grb"
     os.remove(file)
@@ -69,6 +68,15 @@ def main(model_run):
     base_path = Path(__file__).parent
     file = base_path / "output" / f"dmn_run_{model_run}.drn"
     os.remove(file)
+
+    base_path = Path(__file__).parent
+    file = base_path / "output" / f"dmn_run_{model_run}.sfr"
+    os.remove(file)
+
+    base_path = Path(__file__).parent
+    file = base_path / "output" / f"dmn_run_{model_run}.sfr.obs"
+    os.remove(file)
+
     return
 
 

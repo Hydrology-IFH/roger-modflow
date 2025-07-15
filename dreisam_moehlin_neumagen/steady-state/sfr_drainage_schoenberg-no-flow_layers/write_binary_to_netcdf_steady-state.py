@@ -8,7 +8,7 @@ import datetime
 
 import click
 
-@click.option("-mr", "--model-run", type=int, default=0)
+@click.option("-mr", "--model-run", type=int, default=27)
 @click.command("main")
 def main(model_run):
     try:
@@ -27,6 +27,7 @@ def main(model_run):
         ml = sim.get_model(f"dmn_run_{model_run}")
         nlayers = np.arange(ml.modelgrid.nlay)
 
+
         # load spatial reference and coordinates
         with xr.open_dataset(base_path / "parameters_modflow.nc") as ds:
             topography = ds['elevations'].isel(z=0).values
@@ -37,6 +38,13 @@ def main(model_run):
         # export groundwater head to netcdf
         fhead = base_path / "output" / f"dmn_run_{model_run}.hds"
         hds = flopy.utils.HeadFile(fhead)
+
+        fbudget = base_path / "output" / f"dmn_run_{model_run}.cbc"
+        cbb = flopy.utils.CellBudgetFile(fbudget)
+
+        flowja = ml.oc.output.budget().get_data(text="FLOW-JA-FACE", kstpkper=(0, 0))[0]
+        grb_file = base_path / "output" / f"dmn_run_{model_run}.dis.grb"
+        residual = flopy.mf6.utils.get_residuals(flowja, grb_file=grb_file)
 
         # create xarray dataset
         attrs = dict(
@@ -55,6 +63,8 @@ def main(model_run):
         data_vars=dict(
                 head=(["Time", "layer", "lat", "lon"], np.where(hds.get_data()[np.newaxis, :, :, :] > 10000, np.nan, hds.get_data()[np.newaxis, :, :, :])),
                 depth=(["Time", "layer", "lat", "lon"], np.where(hds.get_data()[np.newaxis, :, :, :] > 10000, np.nan, np.where(topography[np.newaxis, np.newaxis, :, :] - hds.get_data()[np.newaxis, :, :, :] > 0, topography[np.newaxis, np.newaxis, :, :] - hds.get_data()[np.newaxis, :, :, :], 0))),
+                flow_residual=(["Time", "layer", "lat", "lon"], residual[np.newaxis, :, :, :]),
+                specific_discharge=(["Time", "layer", "lat", "lon"], cbb.get_data(text="DATA-SPDIS", kstpkper=(0, 0), full3D=True)[0].filled(fill_value=np.nan)[np.newaxis, :, :, :]),
             )
 
         ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
@@ -62,6 +72,10 @@ def main(model_run):
         ds["head"].attrs["long_name"] = "Groundwater head"
         ds["depth"].attrs["units"] = "m"
         ds["depth"].attrs["long_name"] = "Groundwater depth"
+        ds["flow_residual"].attrs["units"] = "m/day"
+        ds["flow_residual"].attrs["long_name"] = "Flow residuals"
+        ds["specific_discharge"].attrs["units"] = "m/day"
+        ds["specific_discharge"].attrs["long_name"] = "Groundwater flux"
         # create spatial reference
         ds = ds.geo.write_crs("EPSG:25832")
         ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc

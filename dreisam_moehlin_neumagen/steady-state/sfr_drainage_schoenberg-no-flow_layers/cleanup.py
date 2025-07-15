@@ -19,7 +19,7 @@ def main(model_run):
     os.remove(file)
 
     base_path = Path(__file__).parent
-    file = base_path / "output" / f"dmn_run_{model_run}.cbb"
+    file = base_path / "output" / f"dmn_run_{model_run}.cbc"
     os.remove(file)
 
     base_path = Path(__file__).parent
@@ -68,6 +68,14 @@ def main(model_run):
 
     base_path = Path(__file__).parent
     file = base_path / "output" / f"dmn_run_{model_run}.drn"
+    os.remove(file)
+
+    base_path = Path(__file__).parent
+    file = base_path / "output" / f"dmn_run_{model_run}.sfr"
+    os.remove(file)
+
+    base_path = Path(__file__).parent
+    file = base_path / "output" / f"dmn_run_{model_run}.sfr.obs"
     os.remove(file)
 
     return

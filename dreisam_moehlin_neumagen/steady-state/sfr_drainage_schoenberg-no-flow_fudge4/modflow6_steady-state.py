@@ -85,11 +85,14 @@ class ModFlowSimulation:
 
         # Create the Flopy groundwater flow (gwf) model object
         model_nam_file = "{}.nam".format(name)
-        gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file)
+        gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file, newtonoptions="NEWTON UNDER RELAXATION")
 
         # Create the Flopy iterative model solver (ims) Package object
-        ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", complexity="COMPLEX",
-                                                 outer_maximum=300, inner_maximum=750)
+        ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="all",
+                                                 complexity="COMPLEX",
+                                                 outer_maximum=50, inner_maximum=500,
+                                                 outer_dvclose=0.1, inner_dvclose=0.1,
+                                                 no_ptcrecord="NO_PTC_ALL")
 
         # Now that the overall simulation is set up, we can focus on building the groundwater flow model.  The groundwater flow model will be built by adding packages to it that describe the model characteristics.
         #
@@ -164,24 +167,139 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer3[mask3] = hydraulic_conductivities_layer3[mask3] * 1000
         hydraulic_conductivities_layer4[mask4] = hydraulic_conductivities_layer4[mask4] * 1000
 
-        mask71 = ((hydraulic_conductivities_layer1_ == 1.9722222e-07) | (hydraulic_conductivities_layer1_ == 2.3055554e-07) | (hydraulic_conductivities_layer1_ == 5.7777777e-07)) & (topography > 300)
-        mask721 = (hydraulic_conductivities_layer2_ == 1.9722222e-07) & (topography <= 300)
-        mask731 = (hydraulic_conductivities_layer3_ == 1.9722222e-07) & (topography <= 300)
-        mask722 = (hydraulic_conductivities_layer2_ == 1.9722222e-07) & (topography > 300)
-        mask732 = (hydraulic_conductivities_layer3_ == 1.9722222e-07) & (topography > 300)
+        mask81 = (hydraulic_conductivities_layer1_ == 1.1574075e-08) | (hydraulic_conductivities_layer1_ == 2.7777778e-08)
+        mask71 = ((hydraulic_conductivities_layer1_ == 1.9722222e-07) | (hydraulic_conductivities_layer1_ == 2.3055554e-07) | (hydraulic_conductivities_layer1_ == 5.7777777e-07))
+        mask721 = (hydraulic_conductivities_layer2_ == 1.9722222e-07)
+        mask731 = (hydraulic_conductivities_layer3_ == 1.9722222e-07)
+        mask722 = (hydraulic_conductivities_layer2_ == 1.9722222e-07)
+        mask732 = (hydraulic_conductivities_layer3_ == 1.9722222e-07)
         mask74 = (hydraulic_conductivities_layer4_ == 1.9722222e-07)
 
-        hydraulic_conductivities_layer1[mask71] = 3.9722222e-04 * 86400
-        hydraulic_conductivities_layer2[mask721] = 3.9722222e-05 * 86400
-        hydraulic_conductivities_layer3[mask731] = 5.9722222e-06 * 86400
-        hydraulic_conductivities_layer2[mask722] = 3.9722222e-04 * 86400
-        hydraulic_conductivities_layer3[mask732] = 1.e-04 * 86400
-        hydraulic_conductivities_layer4[mask74] = 1.9722222e-05 * 86400
+        hydraulic_conductivities_layer1[mask81] = hydraulic_conductivities_layer1[mask81] * 500
+        hydraulic_conductivities_layer1[mask71] = hydraulic_conductivities_layer1[mask71] * 50
+        hydraulic_conductivities_layer2[mask721] = hydraulic_conductivities_layer1[mask721] * 50
+        hydraulic_conductivities_layer3[mask731] = hydraulic_conductivities_layer1[mask731] * 50
+        hydraulic_conductivities_layer2[mask722] = hydraulic_conductivities_layer1[mask722] * 50
+        hydraulic_conductivities_layer3[mask732] = hydraulic_conductivities_layer1[mask732] * 50
+        hydraulic_conductivities_layer4[mask74] = hydraulic_conductivities_layer1[mask74] * 50
 
         hydraulic_conductivities_layer1 = hydraulic_conductivities_layer1 * fudge_parameters['c1'].values[model_run]
         hydraulic_conductivities_layer2 = hydraulic_conductivities_layer2 * fudge_parameters['c2'].values[model_run]
         hydraulic_conductivities_layer3 = hydraulic_conductivities_layer3 * fudge_parameters['c3'].values[model_run]
         hydraulic_conductivities_layer4 = hydraulic_conductivities_layer4 * fudge_parameters['c4'].values[model_run]
+
+        # prepare SFR data
+        reaches = pd.read_csv(base_path.parent / 'input' / 'sfr_packagedata.csv', sep=';')
+        reaches.iloc[:, 0] = reaches.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
+        reaches.iloc[:, 1] = reaches.iloc[:, 1].astype(int) - 1
+        reaches.iloc[:, 2] = reaches.iloc[:, 2].astype(int) - 1  # convert to zero-based indexing
+        reaches.iloc[:, 3] = reaches.iloc[:, 3].astype(int) - 1  # convert to zero-based indexing
+        reaches.iloc[:, 4] = reaches.iloc[:, 4].astype(float) 
+        reaches.iloc[:, 5] = reaches.iloc[:, 5].astype(int)
+        reaches.iloc[:, 6] = reaches.iloc[:, 6].astype(float)
+        reaches.iloc[:, 7] = reaches.iloc[:, 7].astype(float)
+        reaches.iloc[:, 8] = reaches.iloc[:, 8].astype(float)
+        reaches.iloc[:, 9] = reaches.iloc[:, 9].astype(float)
+        reaches.iloc[:, 10] = reaches.iloc[:, 10].astype(float)
+        reaches.iloc[:, 11] = reaches.iloc[:, 11].astype(int)
+        reaches.iloc[:, 12] = reaches.iloc[:, 12].astype(float)
+        reaches.iloc[:, 13] = reaches.iloc[:, 13].astype(int)
+
+        # increase the hydraulic conductivities of the reach cell by a factor of 5
+        for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):
+            if z == 0:
+                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 5
+            elif z == 1:
+                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 5
+                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * 5
+            elif z == 2:
+                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 5
+                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * 5
+                hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * 5
+            elif z == 3:
+                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 5
+                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * 5
+                hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * 5
+                hydraulic_conductivities_layer4[x, y] = hydraulic_conductivities_layer4[x, y] * 5
+
+        # set the Manning’s roughness coefficient depending on the streambed gradient
+        cond1 = (reaches['rgrd'] <= 0.0006)
+        cond2 = (reaches['rgrd'] > 0.0006) & (reaches['rgrd'] <= 0.0025)
+        cond3 = (reaches['rgrd'] > 0.0025) & (reaches['rgrd'] <= 0.01)
+        cond4 = (reaches['rgrd'] > 0.01) & (reaches['rgrd'] <= 0.04)
+        cond5 = (reaches['rgrd'] > 0.04) & (reaches['rgrd'] <= 0.07)
+        cond6 = (reaches['rgrd'] > 0.07)
+        reaches.loc[cond1, 'man'] = 1/50
+        reaches.loc[cond2, 'man'] = 1/30
+        reaches.loc[cond3, 'man'] = 1/25
+        reaches.loc[cond4, 'man'] = 1/20
+        reaches.loc[cond5, 'man'] = 1/15
+        reaches.loc[cond6, 'man'] = 1/10    
+
+        # set the hydraulic conductivities of the streambed using the kf of the reach cell and decrease by a factor of 0.0005
+        for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):
+            if z == 0:
+                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer1[x, y] * 0.0005
+            elif z == 1:
+                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer2[x, y] * 0.0005
+            elif z == 2:
+                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer3[x, y] * 0.0005
+            elif z == 3:
+                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer4[x, y] * 0.0005
+
+        cond = np.isnan(reaches['rwid'])
+        reaches.loc[cond, 'rwid'] = 1.0  # set width to 1 m where it is NaN
+        cond_widht0 = (reaches.loc[:, 'rwid'] <= 1.0)
+        reaches.loc[cond_widht0, 'rwid'] = 1.0  # set width to 1 m if it is smaller than 1 m
+
+        diversions = pd.read_csv(base_path.parent / 'input' / 'sfr_diversions.csv', sep=';')
+        diversions.iloc[:, 0] = diversions.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
+        diversions.iloc[:, 1] = diversions.iloc[:, 1].astype(int) - 1
+        diversions.iloc[:, 2] = diversions.iloc[:, 2].astype(int) - 1  # convert to zero-based indexing
+        diversions.iloc[:, 3] = diversions.iloc[:, 3].astype(str)
+        diversiondata = []
+        for i in range(len(diversions)):
+            diversion = diversions.iloc[i, :].to_list()
+            diversiondata.append(diversion)
+
+        # condition of diversions
+        cond_diversions = reaches.iloc[:, 0].isin(diversions.iloc[:, 0])
+        reaches.loc[cond_diversions, 'ustrf'] = 1.0
+        reaches.loc[cond_diversions, 'ndv'] = 1
+        reaches.loc[cond_diversions, 'ncon'] = reaches.loc[cond_diversions, 'ncon'] + 1
+        cond_diversions1 = reaches.iloc[:, 0].isin(diversions.iloc[:, 2])
+        reaches.loc[cond_diversions1, 'ustrf'] = 0.0
+        reaches.loc[cond_diversions1, 'ncon'] = reaches.loc[cond_diversions1, 'ncon'] + 1
+
+        packagedata = []
+        for i in range(len(reaches)):
+            reach = []
+            for j in range(len(reaches.columns)-1):
+                reach.append(reaches.iloc[i, j])
+            packagedata.append(reach)
+        
+        nstrm = len(packagedata)  # number of reaches
+
+        connections = pd.read_csv(base_path.parent / 'input' / 'sfr_connectiondata.csv', sep=';', header=None)
+        for i in range(len(diversions)):
+            rno_up = diversions.iloc[i, 0]
+            rno_down = diversions.iloc[i, 2] 
+            connections.iloc[rno_up, -1] = -(diversions.iloc[i, 2] + 1) # set diversion number
+            connections.iloc[rno_down, -1] = diversions.iloc[i, 0] + 1
+
+        connectiondata = []
+        for i in range(len(connections)):
+            _connection = []
+            connection = connections.iloc[i, :].values
+            cond = np.isfinite(connection)
+            connection = connection[cond]
+            cond_pos = (connection > 0)
+            connection_up = connection[cond_pos] - 1  # convert to zero-based indexing
+            _connection.extend(connection_up.astype(int))
+            cond_neg = (connection < 0)
+            connection_down = connection[cond_neg] + 1  # convert to zero-based indexing
+            _connection.extend(connection_down.astype(int))
+            connectiondata.append(_connection)
 
         hydraulic_conductivities_layers = [hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4]
         npf = flopy.mf6.modflow.mfgwfnpf.ModflowGwfnpf(
@@ -253,8 +371,30 @@ class ModFlowSimulation:
         # Recharge package (Neumann boundary condition i.e. second type)
         recharge = ds_bc['recharge'].values / 1000  # convert mm/day to m/day
         rcha = flopy.mf6.ModflowGwfrcha(gwf, recharge=recharge * fudge_parameters['rch'].values[model_run], fixed_cell=True)
+        
+        # streamflow routing package (SFR)
+        obs_dict = {
+            (f"{name}_sfr.obs.csv", "binary"): [
+                ("falkensteig_stage", "stage", (23614,)),
+                ("ebnet_stage", "stage", (23888,)),  
+                ("ehrenkirchen_stage", "stage", (22337,)), 
+                ("muenstertal_stage", "stage", (14854,)),
+                ("falkensteig_flow", "downstream-flow", (23614,)),
+                ("ebnet_flow", "downstream-flow", (23888,)),
+                ("ehrenkirchen_flow", "downstream-flow", (22337,)),
+                ("muenstertal_flow", "downstream-flow", (14854,)),
+            ]
+        }
+        sfr = flopy.mf6.modflow.mfgwfsfr.ModflowGwfsfr(gwf, pname="sfr",
+            time_conversion=86400, length_conversion=1.0, nreaches=nstrm, packagedata=packagedata, 
+            connectiondata=connectiondata, diversions=diversiondata, print_stage=True,
+            maximum_depth_change=0.001, maximum_iterations=500, observations=obs_dict)
 
         # Create the drainage package (Neumann boundary condition i.e. second type)
+        for x, y in zip(reaches.iloc[:, 2], reaches.iloc[:, 3]):
+            if mask_drainage_area[x, y]:
+                mask_drainage_area[x, y] = False  # set drainage area to inactive if there is a reach
+
         index = np.where(mask_drainage_area)
         rows_drainage = index[0]
         cols_drainage = index[1]
@@ -276,15 +416,6 @@ class ModFlowSimulation:
             mover=False,
             stress_period_data=drn_spd,
         )
-        
-        src_path = base_path / "output" / "model.sfr"
-        dest_path = base_path / "output" / f"{name}.sfr"
-        shutil.copy(src_path, dest_path)
-
-        # sfr = flopy.mf6.modflow.mfgwfsfr.ModflowGwfsfr(gwf, pname="sfr",
-        #     time_conversion=86400, nreaches=nstrm, packagedata=reaches, 
-        #     connectiondata=connection, diversions=divsersions,
-        #     save_flows=True)
 
         # Create the well package (Neumann boundary condition i.e. second type)
         # pumping rate in m3/day
@@ -392,15 +523,13 @@ class ModFlowSimulation:
         if self.mf6.get_current_time() > self.end_time:
             raise StopIteration("MODFLOW used all iteration steps. Consider increasing `ndays`")
 
-        t0 = time()
-        self.mf6.prepare_solve(1)
-
         # limit the execution time of the numerical solver
         signal.signal(signal.SIGALRM, handler)
         signal.alarm(60)  # Set the timeout duration to 60 seconds
 
         complete = 0
         self.mf6.prepare_solve(1)
+        t0 = time()
         try:
             # convergence loop
             for _ in range(self.max_iter):

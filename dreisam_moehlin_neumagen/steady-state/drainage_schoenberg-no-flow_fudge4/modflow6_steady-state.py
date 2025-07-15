@@ -74,7 +74,7 @@ class ModFlowSimulation:
 
         # Create the Flopy simulation object
         sim = flopy.mf6.MFSimulation(
-            sim_name=name, exe_name="mf6", version="mf6", sim_ws=self.working_directory,
+            sim_name=name, exe_name="mf6", version="mf6", sim_ws=self.working_directory
         )
 
         # Create the Flopy temporal discretization object
@@ -84,11 +84,14 @@ class ModFlowSimulation:
 
         # Create the Flopy groundwater flow (gwf) model object
         model_nam_file = "{}.nam".format(name)
-        gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file)
+        gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file, newtonoptions="NEWTON UNDER_RELAXATION")
 
         # Create the Flopy iterative model solver (ims) Package object
-        ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", complexity="COMPLEX",
-                                                 outer_maximum=300, inner_maximum=750)
+        ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="all",
+                                                 complexity="COMPLEX",
+                                                 outer_maximum=50, inner_maximum=500,
+                                                 outer_dvclose=0.1, inner_dvclose=0.1,
+                                                 no_ptcrecord="NO_PTC_ALL")
 
         # Now that the overall simulation is set up, we can focus on building the groundwater flow model.  The groundwater flow model will be built by adding packages to it that describe the model characteristics.
         #
@@ -163,19 +166,21 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer3[mask3] = hydraulic_conductivities_layer3[mask3] * 1000
         hydraulic_conductivities_layer4[mask4] = hydraulic_conductivities_layer4[mask4] * 1000
 
-        mask71 = ((hydraulic_conductivities_layer1_ == 1.9722222e-07) | (hydraulic_conductivities_layer1_ == 2.3055554e-07) | (hydraulic_conductivities_layer1_ == 5.7777777e-07)) & (topography > 300)
-        mask721 = (hydraulic_conductivities_layer2_ == 1.9722222e-07) & (topography <= 300)
-        mask731 = (hydraulic_conductivities_layer3_ == 1.9722222e-07) & (topography <= 300)
-        mask722 = (hydraulic_conductivities_layer2_ == 1.9722222e-07) & (topography > 300)
-        mask732 = (hydraulic_conductivities_layer3_ == 1.9722222e-07) & (topography > 300)
+        mask81 = (hydraulic_conductivities_layer1_ == 1.1574075e-08) | (hydraulic_conductivities_layer1_ == 2.7777778e-08)
+        mask71 = ((hydraulic_conductivities_layer1_ == 1.9722222e-07) | (hydraulic_conductivities_layer1_ == 2.3055554e-07) | (hydraulic_conductivities_layer1_ == 5.7777777e-07))
+        mask721 = (hydraulic_conductivities_layer2_ == 1.9722222e-07)
+        mask731 = (hydraulic_conductivities_layer3_ == 1.9722222e-07)
+        mask722 = (hydraulic_conductivities_layer2_ == 1.9722222e-07)
+        mask732 = (hydraulic_conductivities_layer3_ == 1.9722222e-07)
         mask74 = (hydraulic_conductivities_layer4_ == 1.9722222e-07)
 
-        hydraulic_conductivities_layer1[mask71] = 3.9722222e-04 * 86400
-        hydraulic_conductivities_layer2[mask721] = 3.9722222e-05 * 86400
-        hydraulic_conductivities_layer3[mask731] = 5.9722222e-06 * 86400
-        hydraulic_conductivities_layer2[mask722] = 3.9722222e-04 * 86400
-        hydraulic_conductivities_layer3[mask732] = 1.e-04 * 86400
-        hydraulic_conductivities_layer4[mask74] = 1.9722222e-05 * 86400
+        hydraulic_conductivities_layer1[mask81] = hydraulic_conductivities_layer1[mask81] * 500
+        hydraulic_conductivities_layer1[mask71] = hydraulic_conductivities_layer1[mask71] * 50
+        hydraulic_conductivities_layer2[mask721] = hydraulic_conductivities_layer1[mask721] * 50
+        hydraulic_conductivities_layer3[mask731] = hydraulic_conductivities_layer1[mask731] * 50
+        hydraulic_conductivities_layer2[mask722] = hydraulic_conductivities_layer1[mask722] * 50
+        hydraulic_conductivities_layer3[mask732] = hydraulic_conductivities_layer1[mask732] * 50
+        hydraulic_conductivities_layer4[mask74] = hydraulic_conductivities_layer1[mask74] * 50
 
         hydraulic_conductivities_layer1 = hydraulic_conductivities_layer1 * fudge_parameters['c1'].values[model_run]
         hydraulic_conductivities_layer2 = hydraulic_conductivities_layer2 * fudge_parameters['c2'].values[model_run]
@@ -382,15 +387,13 @@ class ModFlowSimulation:
         if self.mf6.get_current_time() > self.end_time:
             raise StopIteration("MODFLOW used all iteration steps. Consider increasing `ndays`")
 
-        t0 = time()
-        self.mf6.prepare_solve(1)
-
         # limit the execution time of the numerical solver
         signal.signal(signal.SIGALRM, handler)
-        signal.alarm(60)  # Set the timeout duration to 60 seconds
+        signal.alarm(180)  # Set the timeout duration to 60 seconds
 
         complete = 0
         self.mf6.prepare_solve(1)
+        t0 = time()
         try:
             # convergence loop
             for _ in range(self.max_iter):

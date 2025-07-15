@@ -7,7 +7,7 @@ import rasterio
 import matplotlib.pyplot as plt
 import click
 
-@click.option("-mr", "--model-run", type=int, default=928)
+@click.option("-mr", "--model-run", type=int, default=27)
 @click.command("main", short_help="Evaluate the steady-state simulation")
 def main(model_run):
     base_path = Path(__file__).parent
@@ -23,6 +23,12 @@ def main(model_run):
     # set Schoenberg to inactive
     mask_schoenberg = (ds_params['mask_schoenberg'].values == 1)
     mask = np.where(mask_schoenberg, False, mask)
+
+    elevation_bottom_layer1 = ds_params['elevations'].isel(z=1).values
+    elevation_bottom_layer2 = ds_params['elevations'].isel(z=2).values
+    elevation_bottom_layer3 = ds_params['elevations'].isel(z=3).values
+    elevation_bottom_layer4 = ds_params['elevations'].isel(z=4).values
+    elevation_bottom_layers = [elevation_bottom_layer1, elevation_bottom_layer2, elevation_bottom_layer3, elevation_bottom_layer4]
 
     # load observed groundwater heads (average values of the observation wells)
     path = base_path / "observations" / "observed_groundwater_heads_avg.csv"
@@ -197,6 +203,79 @@ def main(model_run):
     file = Path(__file__).parent / "figures" / f"scatter_diff_obs_sim{model_run}.png"
     fig.savefig(file, dpi=300)
     plt.close(fig)
+
+
+    for layer in range(4):
+        fig, axes = plt.subplots(figsize=(4, 4))
+        plt.imshow(ds_mf['head'].isel(Time=0, layer=layer).values, extent=grid_extent, cmap='viridis', aspect='equal')
+        plt.colorbar(label='groundwater head \n[m a.s.l.]', shrink=0.5)
+        plt.grid(zorder=0)
+        plt.xlabel('Distance in x-direction [m]')
+        plt.ylabel('Distance in y-direction [m]')
+        plt.tight_layout()
+        i = layer + 1
+        file = Path(__file__).parent / "figures" / f"gw_head_steady_state_layer{i}_grid_{model_run}.png"
+        fig.savefig(file, dpi=300)
+        plt.close("all")
+
+        fig, axes = plt.subplots(figsize=(4, 4))
+        elevation_bottom_layer = elevation_bottom_layers[layer]
+        gw_thickness = ds_mf['head'].isel(Time=0, layer=layer).values - elevation_bottom_layer
+        gw_thickness[gw_thickness <= 0] = 0
+        plt.imshow(gw_thickness, extent=grid_extent, cmap='viridis', aspect='equal')
+        plt.colorbar(label='groundwater thickness [m]', shrink=0.5)
+        plt.grid(zorder=0)
+        plt.xlabel('Distance in x-direction [m]')
+        plt.ylabel('Distance in y-direction [m]')
+        plt.tight_layout()
+        i = layer + 1
+        file = Path(__file__).parent / "figures" / f"gw_thickness_steady_state_layer{i}_grid_{model_run}.png"
+        fig.savefig(file, dpi=300)
+        plt.close("all")
+
+        fig, axes = plt.subplots(figsize=(4, 4))
+        gw_depth = topography - ds_mf['head'].isel(Time=0, layer=layer).values
+        plt.imshow(gw_depth, extent=grid_extent, cmap='viridis', aspect='equal')
+        plt.colorbar(label='groundwater depth [m]', shrink=0.5)
+        plt.grid(zorder=0)
+        plt.xlabel('Distance in x-direction [m]')
+        plt.ylabel('Distance in y-direction [m]')
+        plt.tight_layout()
+        i = layer + 1
+        file = Path(__file__).parent / "figures" / f"gw_depth_steady_state_layer{i}_grid_{model_run}.png"
+        fig.savefig(file, dpi=300)
+        plt.close("all")
+
+        fig, axes = plt.subplots(figsize=(4, 4))
+        flow_residuals = ds_mf['flow_residual'].isel(Time=0, layer=layer).values
+        minmax = np.nanmax(np.abs(flow_residuals))
+        plt.imshow(flow_residuals, extent=grid_extent, cmap='PuOr', aspect='equal', vmin=-minmax, vmax=minmax)
+        plt.colorbar(label='groundwater flow residuals [m/day]', shrink=0.5)
+        plt.grid(zorder=0)
+        plt.xlabel('Distance in x-direction [m]')
+        plt.ylabel('Distance in y-direction [m]')
+        plt.tight_layout()
+        i = layer + 1
+        file = Path(__file__).parent / "figures" / f"gw_flow_residuals_steady_state_layer{i}_grid_{model_run}.png"
+        fig.savefig(file, dpi=300)
+        plt.close("all")
+
+        print(f"Layer {layer} flow residual (min, max): {np.nanmin(flow_residuals):.2f}, {np.nanmax(flow_residuals):.2f} m/day")
+
+        fig, axes = plt.subplots(figsize=(4, 4))
+        specific_discharge = ds_mf['specific_discharge'].isel(Time=0, layer=layer).values
+        minmax = np.nanmax(np.abs(specific_discharge))
+        plt.imshow(specific_discharge, extent=grid_extent, cmap='PuOr', aspect='equal', vmin=-minmax, vmax=minmax)
+        plt.colorbar(label='groundwater specific discharge [m/day]', shrink=0.5)
+        plt.grid(zorder=0)
+        plt.xlabel('Distance in x-direction [m]')
+        plt.ylabel('Distance in y-direction [m]')
+        plt.tight_layout()
+        i = layer + 1
+        file = Path(__file__).parent / "figures" / f"gw_specific_discharge_steady_state_layer{i}_grid_{model_run}.png"
+        fig.savefig(file, dpi=300)
+        plt.close("all")
+
     return
 
 if __name__ == "__main__":

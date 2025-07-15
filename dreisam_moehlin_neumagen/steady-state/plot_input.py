@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import rasterio
+import scipy as sp
 import yaml
 
 # run installed version of flopy or add local path
@@ -434,12 +435,12 @@ for i, hydraulic_conductivities_layer in enumerate(hydraulic_conductivities_laye
 for i, hydraulic_conductivities_layer in enumerate(hydraulic_conductivities_layers):
     i = i + 1
     fig, axes = plt.subplots(figsize=(4, 4))
-    bounds = [0.00000001, 0.0000001, 0.000001, 0.00001, 0.0001, 0.001]
+    bounds = [10e-8, 10e-7, 10e-6, 10e-5, 10e-4, 10e-3, 10e-2]
     norm = mpl.colors.BoundaryNorm(bounds, mpl.colormaps["Oranges"].N)
     hydraulic_conductivities_layer[~mask] = np.nan
     plt.imshow(hydraulic_conductivities_layer/(24*60*60), extent=grid_extent, cmap='Oranges', aspect='equal', norm=norm)
     cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
-    cbar.set_ticks(ticks=bounds, labels=[r'$10^{-8}$', r'$10^{-7}$', r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$'])
+    cbar.set_ticks(ticks=bounds, labels=[r'$10^{-8}$', r'$10^{-7}$', r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$'])
     plt.grid(zorder=0)
     plt.xlabel('Distance in x-direction [m]')
     plt.ylabel('Distance in y-direction [m]')
@@ -464,11 +465,30 @@ for i, hydraulic_conductivities_layer in enumerate(hydraulic_conductivities_laye
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
+for i, hydraulic_conductivities_layer in enumerate(hydraulic_conductivities_layers):
+    fig, axes = plt.subplots(figsize=(4, 4))
+    hydraulic_conductivities_layer[~mask] = np.nan
+    sigma = [2.0, 2.0]
+    hydraulic_conductivities_layer_smooth = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer, sigma, mode='constant')
+    print(f"Kf Layer {i} (smoothed)")
+    print(np.unique(hydraulic_conductivities_layer_smooth[mask]/(24*60*60)))
+    plt.imshow(hydraulic_conductivities_layer_smooth/(24*60*60), extent=grid_extent, cmap='Oranges', aspect='equal')
+    cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
+    # cbar.set_ticks(ticks=bounds, labels=[r'$10^{-8}$', r'$10^{-7}$', r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$', r'$10^{-1}$'])
+    plt.grid(zorder=0)
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
+    plt.tight_layout()
+    file = base_path_figs / f"hydraulic_conductivity_layer_{i}_smoothed_.png"
+    fig.savefig(file, dpi=300)
+    plt.close(fig)
+
+
 hydraulic_conductivities_layers_fudged = fudge_hydraulic_conductivities(ds_params, fudge_parameters, model_run=0)
 for i, hydraulic_conductivities_layer in enumerate(hydraulic_conductivities_layers_fudged):
     i = i + 1
     fig, axes = plt.subplots(figsize=(4, 4))
-    bounds = [0.00000001, 0.0000001, 0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1]
+    bounds = [10e-8, 10e-7, 10e-6, 10e-5, 10e-4, 10e-3, 10e-2, 10e-1]
     norm = mpl.colors.BoundaryNorm(bounds, mpl.colormaps["Oranges"].N)
     hydraulic_conductivities_layer[~mask] = np.nan
     plt.imshow(hydraulic_conductivities_layer/(24*60*60), extent=grid_extent, cmap='Oranges', aspect='equal', norm=norm)
