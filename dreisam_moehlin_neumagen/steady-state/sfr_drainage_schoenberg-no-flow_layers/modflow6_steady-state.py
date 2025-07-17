@@ -267,20 +267,6 @@ class ModFlowSimulation:
                 hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * xx
                 hydraulic_conductivities_layer4[x, y] = hydraulic_conductivities_layer4[x, y] * xx
 
-        # smooth transition between fissured and porous aquifers
-        hydraulic_conductivities_layer1[np.isnan(hydraulic_conductivities_layer1)] = 0
-        hydraulic_conductivities_layer2[np.isnan(hydraulic_conductivities_layer2)] = 0
-        hydraulic_conductivities_layer3[np.isnan(hydraulic_conductivities_layer3)] = 0
-        hydraulic_conductivities_layer4[np.isnan(hydraulic_conductivities_layer4)] = 0
-        hydraulic_conductivities_layer1 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [1.0, 1.0], mode='constant')
-        hydraulic_conductivities_layer2 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.0, 1.0], mode='constant')
-        hydraulic_conductivities_layer3 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.0, 1.0], mode='constant')
-        hydraulic_conductivities_layer4 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.0, 1.0], mode='constant')
-        hydraulic_conductivities_layer1[~mask] = np.nan
-        hydraulic_conductivities_layer2[~mask] = np.nan
-        hydraulic_conductivities_layer3[~mask] = np.nan
-        hydraulic_conductivities_layer4[~mask] = np.nan
-
         # set the Manning’s roughness coefficient depending on the streambed gradient
         cond1 = (reaches['rgrd'] <= 0.0006)
         cond2 = (reaches['rgrd'] > 0.0006) & (reaches['rgrd'] <= 0.0025)
