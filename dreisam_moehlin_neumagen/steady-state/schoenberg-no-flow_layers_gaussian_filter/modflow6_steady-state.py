@@ -233,6 +233,20 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer2[mask432] = hydraulic_conductivities_layer2[mask432] * fudge_parameters['4-3_2'].values[model_run]
         hydraulic_conductivities_layer3[mask433] = hydraulic_conductivities_layer3[mask433] * fudge_parameters['4-3_3'].values[model_run]
 
+        # smooth transition between fissured and porous aquifers
+        hydraulic_conductivities_layer1[np.isnan(hydraulic_conductivities_layer1)] = 0
+        hydraulic_conductivities_layer2[np.isnan(hydraulic_conductivities_layer2)] = 0
+        hydraulic_conductivities_layer3[np.isnan(hydraulic_conductivities_layer3)] = 0
+        hydraulic_conductivities_layer4[np.isnan(hydraulic_conductivities_layer4)] = 0
+        hydraulic_conductivities_layer1 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [1.0, 1.0], mode='constant')
+        hydraulic_conductivities_layer2 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.0, 1.0], mode='constant')
+        hydraulic_conductivities_layer3 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.0, 1.0], mode='constant')
+        hydraulic_conductivities_layer4 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.0, 1.0], mode='constant')
+        hydraulic_conductivities_layer1[~mask] = np.nan
+        hydraulic_conductivities_layer2[~mask] = np.nan
+        hydraulic_conductivities_layer3[~mask] = np.nan
+        hydraulic_conductivities_layer4[~mask] = np.nan
+
         hydraulic_conductivities_layers = [hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4]
         npf = flopy.mf6.modflow.mfgwfnpf.ModflowGwfnpf(
             gwf, pname="npf", icelltype=0, k=hydraulic_conductivities_layers, save_flows=True, wetdry=0.5
