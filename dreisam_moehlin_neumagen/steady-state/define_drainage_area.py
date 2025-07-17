@@ -28,7 +28,7 @@ def main():
         'ny': 777,
         'nz': 4,
     }
-    grid_extent = (0, 777*modflow_config['dy'], 0, 621*modflow_config['dx'])
+    grid_extent = (0, 777*modflow_config['dy'], 621*modflow_config['dx'], 0)
 
     # load MODFLOW parameters
     path = Path(__file__).parent / "parameters_modflow.nc"
@@ -42,15 +42,16 @@ def main():
     domain[mask] = 1
     domain[~mask] = -1
 
-
     # load the netcdf file
     output_file = base_path / "input" / "modflow_output_run_for_drainage_areas.nc"
     ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
 
     # plot the saturation depth
     saturation_depth = ds_mf['head'].isel(Time=0, layer=1).values - topography
-    saturation_depth[saturation_depth <= 5] = 0
+    saturation_depth[saturation_depth < 0.3] = np.nan
     saturation_depth[~mask] = np.nan
+    saturation_depth[:, 400:] = np.nan
+    saturation_depth[500:, :] = np.nan
     fig, axes = plt.subplots(figsize=(4, 4))
     plt.imshow(saturation_depth, extent=grid_extent, cmap='viridis_r', aspect='equal')
     plt.colorbar(label='groundwater above surface [m]', shrink=0.5)
@@ -63,8 +64,8 @@ def main():
     plt.close("all")
 
     # add drainage mask to parameters_modflow.nc
-    mask_saturation = np.where(saturation_depth > 5, 1, 0)
-    path = str(base_path / "parameters_modflow.nc")
+    mask_saturation = np.where(saturation_depth > 0.3, 1, 0)
+    path = str(base_path / "input" / "parameters_modflow.nc")
     with h5netcdf.File(path, "a", decode_vlen_strings=False) as f:
         try:
             v = f.create_variable("mask_drainage", ("y", "x"), int, compression="gzip", compression_opts=1)

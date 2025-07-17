@@ -84,14 +84,14 @@ class ModFlowSimulation:
 
         # Create the Flopy groundwater flow (gwf) model object
         model_nam_file = "{}.nam".format(name)
-        gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file, newtonoptions="NEWTON UNDER_RELAXATION")
+        gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file, save_flows=True, newtonoptions="NEWTON")
 
         # Create the Flopy iterative model solver (ims) Package object
         ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="all",
-                                                 complexity="COMPLEX",
-                                                 outer_maximum=50, inner_maximum=500,
+                                                 no_ptcrecord="NO_PTC_ALL",
+                                                 outer_maximum=50, inner_maximum=200,
                                                  outer_dvclose=0.1, inner_dvclose=0.1,
-                                                 no_ptcrecord="NO_PTC_ALL")
+                                                 linear_acceleration="BICGSTAB")
 
         # Now that the overall simulation is set up, we can focus on building the groundwater flow model.  The groundwater flow model will be built by adding packages to it that describe the model characteristics.
         #
@@ -138,10 +138,10 @@ class ModFlowSimulation:
         )
 
         # Create the initial conditions package
-        initial_conditions_layer1 = (topography - elevation_bottom_layer1) * 0.5 + elevation_bottom_layer1
-        initial_conditions_layer2 = (elevation_bottom_layer1 - elevation_bottom_layer2) * 0.5 + elevation_bottom_layer2
-        initial_conditions_layer3 = (elevation_bottom_layer2 - elevation_bottom_layer3) * 0.5 + elevation_bottom_layer3
-        initial_conditions_layer4 = (elevation_bottom_layer3 - elevation_bottom_layer4) * 0.5 + elevation_bottom_layer4
+        initial_conditions_layer1 = (topography - elevation_bottom_layer1) * 0.75 + elevation_bottom_layer1
+        initial_conditions_layer2 = (elevation_bottom_layer1 - elevation_bottom_layer2) * 0.75 + elevation_bottom_layer2
+        initial_conditions_layer3 = (elevation_bottom_layer2 - elevation_bottom_layer3) * 0.75 + elevation_bottom_layer3
+        initial_conditions_layer4 = (elevation_bottom_layer3 - elevation_bottom_layer4) * 0.75 + elevation_bottom_layer4
         initial_conditions_layers = [initial_conditions_layer1, initial_conditions_layer2, initial_conditions_layer3, initial_conditions_layer4]
         ic = flopy.mf6.modflow.mfgwfic.ModflowGwfic(gwf, pname="ic", strt=initial_conditions_layers)
 
@@ -175,12 +175,12 @@ class ModFlowSimulation:
         mask74 = (hydraulic_conductivities_layer4_ == 1.9722222e-07)
 
         hydraulic_conductivities_layer1[mask81] = hydraulic_conductivities_layer1[mask81] * 500
-        hydraulic_conductivities_layer1[mask71] = hydraulic_conductivities_layer1[mask71] * 50
-        hydraulic_conductivities_layer2[mask721] = hydraulic_conductivities_layer1[mask721] * 50
+        hydraulic_conductivities_layer1[mask71] = hydraulic_conductivities_layer1[mask71] * 75
+        hydraulic_conductivities_layer2[mask721] = hydraulic_conductivities_layer1[mask721] * 60
         hydraulic_conductivities_layer3[mask731] = hydraulic_conductivities_layer1[mask731] * 50
-        hydraulic_conductivities_layer2[mask722] = hydraulic_conductivities_layer1[mask722] * 50
+        hydraulic_conductivities_layer2[mask722] = hydraulic_conductivities_layer1[mask722] * 60
         hydraulic_conductivities_layer3[mask732] = hydraulic_conductivities_layer1[mask732] * 50
-        hydraulic_conductivities_layer4[mask74] = hydraulic_conductivities_layer1[mask74] * 50
+        hydraulic_conductivities_layer4[mask74] = hydraulic_conductivities_layer1[mask74] * 40
 
         hydraulic_conductivities_layer1 = hydraulic_conductivities_layer1 * fudge_parameters['c1'].values[model_run]
         hydraulic_conductivities_layer2 = hydraulic_conductivities_layer2 * fudge_parameters['c2'].values[model_run]
@@ -236,15 +236,6 @@ class ModFlowSimulation:
             elif (constant_head <= elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer4[rows_bc[ii], cols_bc[ii]]):
                 layer = 3
             chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), constant_head))
-            if (constant_head > elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]):
-                layer = 1
-                chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]))
-            if (constant_head > elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]]):
-                layer = 2
-                chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]]))
-            if (constant_head > elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]):
-                layer = 3
-                chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]))
 
         chd = flopy.mf6.modflow.mfgwfchd.ModflowGwfchd(
             gwf,

@@ -7,7 +7,7 @@ import rasterio
 import matplotlib.pyplot as plt
 import click
 
-@click.option("-mr", "--model-run", type=int, default=27)
+@click.option("-mr", "--model-run", type=int, default=5)
 @click.command("main", short_help="Evaluate the steady-state simulation")
 def main(model_run):
     base_path = Path(__file__).parent
@@ -235,7 +235,7 @@ def main(model_run):
 
         fig, axes = plt.subplots(figsize=(4, 4))
         gw_depth = topography - ds_mf['head'].isel(Time=0, layer=layer).values
-        plt.imshow(gw_depth, extent=grid_extent, cmap='viridis', aspect='equal')
+        plt.imshow(gw_depth, extent=grid_extent, cmap='viridis', aspect='equal', vmin=0, vmax=20)
         plt.colorbar(label='groundwater depth [m]', shrink=0.5)
         plt.grid(zorder=0)
         plt.xlabel('Distance in x-direction [m]')
@@ -248,6 +248,8 @@ def main(model_run):
 
         fig, axes = plt.subplots(figsize=(4, 4))
         flow_residuals = ds_mf['flow_residual'].isel(Time=0, layer=layer).values
+        mask1 = (flow_residuals <= 10) & (flow_residuals >= -10)
+        flow_residuals[mask1] = np.nan
         minmax = np.nanmax(np.abs(flow_residuals))
         plt.imshow(flow_residuals, extent=grid_extent, cmap='PuOr', aspect='equal', vmin=-minmax, vmax=minmax)
         plt.colorbar(label='groundwater flow residuals [m/day]', shrink=0.5)

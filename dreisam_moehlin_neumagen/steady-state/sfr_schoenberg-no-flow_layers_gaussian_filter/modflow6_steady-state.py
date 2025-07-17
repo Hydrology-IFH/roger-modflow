@@ -85,14 +85,14 @@ class ModFlowSimulation:
 
         # Create the Flopy groundwater flow (gwf) model object
         model_nam_file = "{}.nam".format(name)
-        gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file, save_flows=True, newtonoptions="NEWTON UNDER RELAXATION")
+        gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file, save_flows=True, newtonoptions="NEWTON")
 
         # Create the Flopy iterative model solver (ims) Package object
         ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="all",
-                                                 complexity="COMPLEX",
-                                                 outer_maximum=50, inner_maximum=500,
+                                                 no_ptcrecord="NO_PTC_ALL",
+                                                 outer_maximum=50, inner_maximum=200,
                                                  outer_dvclose=0.1, inner_dvclose=0.1,
-                                                 no_ptcrecord="NO_PTC_ALL")
+                                                 linear_acceleration="BICGSTAB")
 
         # Now that the overall simulation is set up, we can focus on building the groundwater flow model.  The groundwater flow model will be built by adding packages to it that describe the model characteristics.
         #
@@ -135,10 +135,10 @@ class ModFlowSimulation:
         )
 
         # Create the initial conditions package
-        initial_conditions_layer1 = (topography - elevation_bottom_layer1) * 0.5 + elevation_bottom_layer1
-        initial_conditions_layer2 = (elevation_bottom_layer1 - elevation_bottom_layer2) * 0.5 + elevation_bottom_layer2
+        initial_conditions_layer1 = (topography - elevation_bottom_layer1) * 0.75 + elevation_bottom_layer1
+        initial_conditions_layer2 = (elevation_bottom_layer1 - elevation_bottom_layer2) * 0.75 + elevation_bottom_layer2
         initial_conditions_layer3 = (elevation_bottom_layer2 - elevation_bottom_layer3) * 0.75 + elevation_bottom_layer3
-        initial_conditions_layer4 = (elevation_bottom_layer3 - elevation_bottom_layer4) * 1.0 + elevation_bottom_layer4
+        initial_conditions_layer4 = (elevation_bottom_layer3 - elevation_bottom_layer4) * 0.75 + elevation_bottom_layer4
         initial_conditions_layers = [initial_conditions_layer1, initial_conditions_layer2, initial_conditions_layer3, initial_conditions_layer4]
         ic = flopy.mf6.modflow.mfgwfic.ModflowGwfic(gwf, pname="ic", strt=initial_conditions_layers)
 
@@ -250,21 +250,23 @@ class ModFlowSimulation:
         reaches.iloc[:, 12] = reaches.iloc[:, 12].astype(float)
         reaches.iloc[:, 13] = reaches.iloc[:, 13].astype(int)
 
+        # increase the hydraulic conductivities of the reach cell by a factor of xx
+        xx = 3.2
         for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):
             if z == 0:
-                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 10
+                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * xx
             elif z == 1:
-                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 10
-                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * 10
+                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * xx
+                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * xx
             elif z == 2:
-                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 10
-                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * 10
-                hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * 10
+                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * xx
+                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * xx
+                hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * xx
             elif z == 3:
-                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 10
-                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * 10
-                hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * 10
-                hydraulic_conductivities_layer4[x, y] = hydraulic_conductivities_layer4[x, y] * 10
+                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * xx
+                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * xx
+                hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * xx
+                hydraulic_conductivities_layer4[x, y] = hydraulic_conductivities_layer4[x, y] * xx
 
         # smooth transition between fissured and porous aquifers
         hydraulic_conductivities_layer1[np.isnan(hydraulic_conductivities_layer1)] = 0
@@ -280,6 +282,7 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer3[~mask] = np.nan
         hydraulic_conductivities_layer4[~mask] = np.nan
 
+        # set the Manning’s roughness coefficient depending on the streambed gradient
         cond1 = (reaches['rgrd'] <= 0.0006)
         cond2 = (reaches['rgrd'] > 0.0006) & (reaches['rgrd'] <= 0.0025)
         cond3 = (reaches['rgrd'] > 0.0025) & (reaches['rgrd'] <= 0.01)
@@ -291,17 +294,19 @@ class ModFlowSimulation:
         reaches.loc[cond3, 'man'] = 1/25
         reaches.loc[cond4, 'man'] = 1/20
         reaches.loc[cond5, 'man'] = 1/15
-        reaches.loc[cond6, 'man'] = 1/10    
+        reaches.loc[cond6, 'man'] = 1/10
 
+        # set the hydraulic conductivities of the streambed using the kf of the reach cell and decrease by a factor of xxx
+        xxx = 10e-3
         for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):
             if z == 0:
-                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer1[x, y] * 2.0*10e-5
+                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer1[x, y] * xxx
             elif z == 1:
-                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer2[x, y] * 2.0*10e-5
+                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer2[x, y] * xxx
             elif z == 2:
-                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer3[x, y] * 2.0*10e-5
+                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer3[x, y] * xxx
             elif z == 3:
-                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer4[x, y] * 2.0*10e-5
+                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer4[x, y] * xxx
 
         cond = np.isnan(reaches['rwid'])
         reaches.loc[cond, 'rwid'] = 1.0  # set width to 1 m where it is NaN
@@ -327,9 +332,6 @@ class ModFlowSimulation:
         cond_diversions1 = reaches.iloc[:, 0].isin(diversions.iloc[:, 2])
         reaches.loc[cond_diversions1, 'ustrf'] = 0.0
         reaches.loc[cond_diversions1, 'ncon'] = reaches.loc[cond_diversions1, 'ncon'] + 1
-        # cond_diversions2 = reaches.iloc[:, 0].isin(diversions.iloc[:, 0] + 1)
-        # reaches.loc[cond_diversions2, 'ustrf'] = 0.8
-
         packagedata = []
         for i in range(len(reaches)):
             reach = []
@@ -409,15 +411,6 @@ class ModFlowSimulation:
             elif (constant_head <= elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer4[rows_bc[ii], cols_bc[ii]]):
                 layer = 3
             chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), constant_head))
-            if (constant_head > elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]):
-                layer = 1
-                chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]))
-            if (constant_head > elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]]):
-                layer = 2
-                chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]]))
-            if (constant_head > elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]):
-                layer = 3
-                chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]))
 
         chd = flopy.mf6.modflow.mfgwfchd.ModflowGwfchd(
             gwf,
@@ -554,7 +547,7 @@ class ModFlowSimulation:
 
         # limit the execution time of the numerical solver
         signal.signal(signal.SIGALRM, handler)
-        signal.alarm(180)  # Set the timeout duration to 60 seconds
+        signal.alarm(120)  # Set the timeout duration to 60 seconds
 
         complete = 0
         self.mf6.prepare_solve(1)

@@ -19,7 +19,7 @@ def main(nsamples):
 
 
     bounds = {"-8_1": [500, 1000], 
-              "-7_1": [50, 100], 
+              "-7_1": [60, 100], 
               "-6_1": [10, 100], 
               "-5_1": [0.1, 10],
               "-7_2": [50, 100], 
@@ -39,7 +39,7 @@ def main(nsamples):
               "-7_4": [30, 100], 
               "-5_4": [0.1, 10], 
               "-4_4": [5, 10],
-              "1.8-3_4": [0.1, 5], 
+              "1.8-3_4": [0.1, 5],
               "rch": [0.75, 1.25],
     }
 
@@ -59,10 +59,10 @@ def main(nsamples):
 
     df_params.iloc[:27, :] = 1.
     df_params.loc[:27, "-8_1"] = 500.
-    df_params.loc[:27, "-7_1"] = 50.
-    df_params.loc[:27, "-7_2"] = 50.
+    df_params.loc[:27, "-7_1"] = 75.
+    df_params.loc[:27, "-7_2"] = 60.
     df_params.loc[:27, "-7_3"] = 50.
-    df_params.loc[:27, "-7_4"] = 50.
+    df_params.loc[:27, "-7_4"] = 40.
     df_params["offset"] = 0.
     df_params.loc[0, "rch"] = 1.5
     df_params.loc[1, "rch"] = 1.4
