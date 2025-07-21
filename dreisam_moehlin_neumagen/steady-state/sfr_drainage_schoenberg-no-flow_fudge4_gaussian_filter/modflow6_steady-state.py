@@ -188,6 +188,14 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer3 = hydraulic_conductivities_layer3 * fudge_parameters['c3'].values[model_run]
         hydraulic_conductivities_layer4 = hydraulic_conductivities_layer4 * fudge_parameters['c4'].values[model_run]
 
+        hydraulic_conductivities_layer1[mask81] = 2.77 * 10e-7 * 86400
+        hydraulic_conductivities_layer1[mask71] = 4.9 * 10e-6 * 86400
+        hydraulic_conductivities_layer2[mask721] = 3.9 * 10e-6 * 86400
+        hydraulic_conductivities_layer3[mask731] = 2.9 * 10e-6 * 86400
+        hydraulic_conductivities_layer2[mask722] = 3.9 * 10e-6 * 86400
+        hydraulic_conductivities_layer3[mask732] = 2.9 * 10e-6 * 86400
+        hydraulic_conductivities_layer4[mask74] = 1.9 * 10e-6 * 86400
+
         # prepare SFR data
         reaches = pd.read_csv(base_path.parent / 'input' / 'sfr_packagedata.csv', sep=';')
         reaches.iloc[:, 0] = reaches.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
