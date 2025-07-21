@@ -9,30 +9,29 @@ import click
 def main(nsamples):
     base_path = Path(__file__).parent
 
-
-    bounds = {"-8_1": [500, 1000], 
-              "-7_1": [60, 100], 
-              "-6_1": [10, 100], 
-              "-5_1": [0.1, 10],
-              "-7_2": [50, 100], 
-              "-5_2": [0.1, 10], 
-              "-4_2": [0.1, 10],
-              "1-3_2": [0.1, 5], 
-              "1.8-3_2": [0.1, 5], 
-              "3-3_2": [0.1, 5],  
-              "4-3_2": [0.1, 5],
-              "-7_3": [30, 100], 
-              "-5_3": [0.1, 10], 
-              "-4_3": [0.1, 10],
-              "1-3_3": [0.1, 5], 
-              "1.8-3_3": [0.1, 5], 
-              "3-3_3": [0.1, 5],  
-              "4-3_3": [0.1, 5],
-              "-7_4": [30, 100], 
-              "-5_4": [0.1, 10], 
-              "-4_4": [5, 10],
-              "1.8-3_4": [0.1, 5],
-              "rch": [0.75, 1.25],
+    bounds = {"-8_1": [400, 600], 
+              "-7_1": [70, 80], 
+              "-6_1": [0.9, 10], 
+              "-5_1": [0.9, 10],
+              "-7_2": [50, 60], 
+              "-5_2": [0.9, 10], 
+              "-4_2": [0.5, 1.5],
+              "1-3_2": [0.5, 1.5], 
+              "1.8-3_2": [0.5, 1.5], 
+              "3-3_2": [0.5, 1.5],  
+              "4-3_2": [0.5, 1.5],
+              "-7_3": [50, 60], 
+              "-5_3": [0.5, 1.5], 
+              "-4_3": [0.5, 1.5],
+              "1-3_3": [0.5, 1.5], 
+              "1.8-3_3": [0.5, 1.5], 
+              "3-3_3": [0.5, 1.5],  
+              "4-3_3": [0.5, 1.5],
+              "-7_4": [30, 50], 
+              "-5_4": [0.5, 1.5], 
+              "-4_4": [0.5, 1.5],
+              "1.8-3_4": [0.5, 1.5],
+              "rch": [0.95, 1.05],
     }
 
     nrows = nsamples
@@ -49,24 +48,25 @@ def main(nsamples):
         # write parameters to dataframe
         df_params.loc[:, param] = values.flatten()
 
-    df_params.iloc[:27, :] = 1.
-    df_params.loc[:27, "-8_1"] = 500.
-    df_params.loc[:27, "-7_1"] = 75.
-    df_params.loc[:27, "-7_2"] = 60.
-    df_params.loc[:27, "-7_3"] = 50.
-    df_params.loc[:27, "-7_4"] = 40.
     df_params["offset"] = 0.
-    df_params.loc[0, "rch"] = 1.5
-    df_params.loc[1, "rch"] = 1.4
-    df_params.loc[2, "rch"] = 1.3
-    df_params.loc[3, "rch"] = 1.2
-    df_params.loc[4, "rch"] = 1.1
+
+    df_params.iloc[:26, :] = 1.
+    df_params.loc[:25, "-8_1"] = 500.
+    df_params.loc[:25, "-7_1"] = 75.
+    df_params.loc[:25, "-7_2"] = 60.
+    df_params.loc[:25, "-7_3"] = 50.
+    df_params.loc[:25, "-7_4"] = 40.
+    df_params.loc[0, "rch"] = 1.25
+    df_params.loc[1, "rch"] = 1.2
+    df_params.loc[2, "rch"] = 1.15
+    df_params.loc[3, "rch"] = 1.1
+    df_params.loc[4, "rch"] = 1.05
     df_params.loc[5, "rch"] = 1.0
-    df_params.loc[6, "rch"] = 0.9
-    df_params.loc[7, "rch"] = 0.8
-    df_params.loc[8, "rch"] = 0.7
-    df_params.loc[9, "rch"] = 0.6
-    df_params.loc[10, "rch"] = 0.5
+    df_params.loc[6, "rch"] = 0.95
+    df_params.loc[7, "rch"] = 0.9
+    df_params.loc[8, "rch"] = 0.85
+    df_params.loc[9, "rch"] = 0.8
+    df_params.loc[10, "rch"] = 0.75
     df_params.loc[11, "offset"] = 0.1
     df_params.loc[12, "offset"] = 0.2
     df_params.loc[13, "offset"] = 0.3
@@ -82,7 +82,6 @@ def main(nsamples):
     df_params.loc[23, "offset"] = 2.5
     df_params.loc[24, "offset"] = 5.0
     df_params.loc[25, "offset"] = 10.0
-    df_params.loc[26, "offset"] = 20.0
 
     # constrain parameters by upper layers (i.e. kf of lower layer is equal or less than kf of upper layer)
     cond = (df_params["-7_3"] >= df_params["-7_2"])
@@ -117,7 +116,7 @@ def main(nsamples):
     df_params = df_params.loc[:, ["-8_1", "-7_1", "-6_1", "-5_1", 
                                   "-7_2", "-5_2","-4_2", "1-3_2", "1.8-3_2", "3-3_2", "4-3_2",  
                                   "-7_3", "-5_3","-4_3", "1-3_3", "1.8-3_3", "3-3_3", "4-3_3",
-                                  "-7_4", "-5_4","-4_4", "1.8-3_4",  
+                                  "-7_4", "-5_4","-4_4", "1.8-3_4",
                                   "rch", "offset", "complete"]]
 
     # write parameters to csv
@@ -130,7 +129,7 @@ def main(nsamples):
         ["-8_1", "-7_1", "-6_1", "-5_1", 
          "-7_2", "-5_2", "-4_2", "1-3_2", "1.8-3_2", "3-3_2", "4-3_2",  
          "-7_3", "-5_3", "-4_3", "1-3_3", "1.8-3_3", "3-3_3", "4-3_3",
-         "-7_4", "-5_4", "-4_4", "1.8-3_4",  
+         "-7_4", "-5_4", "-4_4", "1.8-3_4",
          "rch", "offset", "complete"],
     ]
     df_params.to_csv(base_path / "fudge_parameters_modflow.csv", index=False, sep=";")

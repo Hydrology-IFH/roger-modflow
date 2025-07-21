@@ -35,6 +35,10 @@ def main(model_run):
     observed_groundwater_heads = pd.read_csv(path, sep=";", skiprows=0)
     # observed_groundwater_heads = observed_groundwater_heads.iloc[:-2, :]
 
+    # load observed streamflow
+    path = base_path / "observations" / "observed_streamflow.csv"
+    observed_streamflow = pd.read_csv(path, sep=";", skiprows=0, index_col=0)
+
     # load interpolated groundwater heads
     base_path = Path(__file__).parent
     src = rasterio.open(str(base_path.parent / "input" / "groundwater_heads_interpolated_50m.tif"))
@@ -71,6 +75,42 @@ def main(model_run):
     obs_depths = topography[rows, cols].flatten() - observed_groundwater_heads.iloc[:, -1].values  # observed groundwater depths
     obs = observed_groundwater_heads.iloc[:, -1].values
 
+    dict_obs_stage_id = {
+            "FALKENSTEIG_STAGE": 23614,
+            "EBNET_STAGE": 23888,  
+            "EHRENKIRCHEN_STAGE": 22337, 
+            "MUENSTERTAL_STAGE": 14854,
+    }
+
+    dict_obs_flow_id = {
+            "FALKENSTEIG_FLOW": 23614,
+            "EBNET_FLOW": 23888,
+            "EHRENKIRCHEN_FLOW": 22337,
+            "MUENSTERTAL_FLOW": 14854,
+    }
+
+    dict_obs_stage_id_inv = {v: k for k, v in dict_obs_stage_id.items()}
+    dict_obs_flow_id_inv = {v: k for k, v in dict_obs_flow_id.items()}
+
+    reaches = pd.read_csv(base_path.parent / 'input' / 'sfr_packagedata.csv', sep=';')
+    
+    output_file = base_path / "output" / f"dmn_run_{model_run}_sfr.obs.csv"
+    df_sfr_ = pd.read_csv(output_file, sep=",")
+
+    df_sfr = pd.DataFrame(index=["falkensteig", "ebnet", "ehrenkirchen", "muenstertal"], columns=["rno", "layer", "x", "y", "rlen", "rwid", "rtp" "rgrd", "man", "rhk", "stage_depth", "flow"])
+    df_sfr["rno"] = [23614, 23888, 22337, 14854]
+    for rno in df_sfr["rno"].values:
+        df_sfr.loc[df_sfr["rno"] == rno, "layer"] = reaches.loc[reaches["rno"] == rno, "k"].values[0]
+        df_sfr.loc[df_sfr["rno"] == rno, "x"] = reaches.loc[reaches["rno"] == rno, "i"].values[0]
+        df_sfr.loc[df_sfr["rno"] == rno, "y"] = reaches.loc[reaches["rno"] == rno, "j"].values[0]
+        df_sfr.loc[df_sfr["rno"] == rno, "rlen"] = reaches.loc[reaches["rno"] == rno, "rlen"].values[0]
+        df_sfr.loc[df_sfr["rno"] == rno, "rwid"] = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
+        df_sfr.loc[df_sfr["rno"] == rno, "rtp"] = reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
+        df_sfr.loc[df_sfr["rno"] == rno, "rgrd"] = reaches.loc[reaches["rno"] == rno, "rgrd"].values[0]
+        stage_depth = df_sfr_.loc[0, dict_obs_stage_id_inv[rno]] - reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
+        df_sfr.loc[df_sfr["rno"] == rno, "stage_depth"] = stage_depth
+        flow = (df_sfr_.loc[0, dict_obs_flow_id_inv[rno]] * (-1)) / 86400
+        df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * stage_depth
 
     # load the netcdf file
     output_file = base_path / "output" / f"modflow_output_run_{model_run}.nc"
