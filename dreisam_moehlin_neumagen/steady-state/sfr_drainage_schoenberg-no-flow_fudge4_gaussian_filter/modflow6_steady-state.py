@@ -175,14 +175,6 @@ class ModFlowSimulation:
         mask732 = (hydraulic_conductivities_layer3_ == 1.9722222e-07)
         mask74 = (hydraulic_conductivities_layer4_ == 1.9722222e-07)
 
-        hydraulic_conductivities_layer1[mask81] = hydraulic_conductivities_layer1[mask81] * 500
-        hydraulic_conductivities_layer1[mask71] = hydraulic_conductivities_layer1[mask71] * 75
-        hydraulic_conductivities_layer2[mask721] = hydraulic_conductivities_layer1[mask721] * 60
-        hydraulic_conductivities_layer3[mask731] = hydraulic_conductivities_layer1[mask731] * 50
-        hydraulic_conductivities_layer2[mask722] = hydraulic_conductivities_layer1[mask722] * 60
-        hydraulic_conductivities_layer3[mask732] = hydraulic_conductivities_layer1[mask732] * 50
-        hydraulic_conductivities_layer4[mask74] = hydraulic_conductivities_layer1[mask74] * 40
-
         hydraulic_conductivities_layer1 = hydraulic_conductivities_layer1 * fudge_parameters['c1'].values[model_run]
         hydraulic_conductivities_layer2 = hydraulic_conductivities_layer2 * fudge_parameters['c2'].values[model_run]
         hydraulic_conductivities_layer3 = hydraulic_conductivities_layer3 * fudge_parameters['c3'].values[model_run]
