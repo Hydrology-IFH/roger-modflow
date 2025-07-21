@@ -82,7 +82,7 @@ def main(model_run):
             "MUENSTERTAL_STAGE": 14854,
     }
 
-    dict_obs_flow_id = {
+    dict_obs_stage_depth_id = {
             "FALKENSTEIG_FLOW": 23614,
             "EBNET_FLOW": 23888,
             "EHRENKIRCHEN_FLOW": 22337,
@@ -90,7 +90,7 @@ def main(model_run):
     }
 
     dict_obs_stage_id_inv = {v: k for k, v in dict_obs_stage_id.items()}
-    dict_obs_flow_id_inv = {v: k for k, v in dict_obs_flow_id.items()}
+    dict_obs_stage_depth_id_inv = {v: k for k, v in dict_obs_stage_depth_id.items()}
 
     reaches = pd.read_csv(base_path.parent / 'input' / 'sfr_packagedata.csv', sep=';')
     
@@ -107,10 +107,11 @@ def main(model_run):
         df_sfr.loc[df_sfr["rno"] == rno, "rwid"] = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "rtp"] = reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "rgrd"] = reaches.loc[reaches["rno"] == rno, "rgrd"].values[0]
+        stage_width = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
         stage_depth = df_sfr_.loc[0, dict_obs_stage_id_inv[rno]] - reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "stage_depth"] = stage_depth
-        flow = (df_sfr_.loc[0, dict_obs_flow_id_inv[rno]] * (-1)) / 86400
-        df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * stage_depth
+        flow = (df_sfr_.loc[0, dict_obs_stage_depth_id_inv[rno]] * (-1)) / 86400
+        df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * stage_depth * stage_width
 
     # load the netcdf file
     output_file = base_path / "output" / f"modflow_output_run_{model_run}.nc"

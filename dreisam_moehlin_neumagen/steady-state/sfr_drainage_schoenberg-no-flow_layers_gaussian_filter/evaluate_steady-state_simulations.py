@@ -51,7 +51,7 @@ dict_obs_stage_id = {
         "MUENSTERTAL_STAGE": 14854,
 }
 
-dict_obs_flow_id = {
+dict_obs_stage_depth_id = {
         "FALKENSTEIG_FLOW": 23614,
         "EBNET_FLOW": 23888,
         "EHRENKIRCHEN_FLOW": 22337,
@@ -59,7 +59,7 @@ dict_obs_flow_id = {
 }
 
 dict_obs_stage_id_inv = {v: k for k, v in dict_obs_stage_id.items()}
-dict_obs_flow_id_inv = {v: k for k, v in dict_obs_flow_id.items()}
+dict_obs_stage_depth_id_inv = {v: k for k, v in dict_obs_stage_depth_id.items()}
 
 # load the SFR reaches
 reaches = pd.read_csv(base_path.parent / 'input' / 'sfr_packagedata.csv', sep=';')
@@ -119,17 +119,18 @@ for model_run in range(0, 5000):
             df_sfr.loc[df_sfr["rno"] == rno, "rwid"] = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
             df_sfr.loc[df_sfr["rno"] == rno, "rtp"] = reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
             df_sfr.loc[df_sfr["rno"] == rno, "rgrd"] = reaches.loc[reaches["rno"] == rno, "rgrd"].values[0]
+            stage_width = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
             stage_depth = df_sfr_.loc[0, dict_obs_stage_id_inv[rno]] - reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
             df_sfr.loc[df_sfr["rno"] == rno, "stage_depth"] = stage_depth
-            flow = (df_sfr_.loc[0, dict_obs_flow_id_inv[rno]] * (-1)) / 86400
-            df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * stage_depth
+            flow = (df_sfr_.loc[0, dict_obs_stage_depth_id_inv[rno]] * (-1)) / 86400
+            df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * stage_depth * stage_width
 
-        sim_flow = df_sfr["flow"].values
-        obs_flow = observed_streamflow["Qavg"].values
+        sim_water_depth = df_sfr["stage_depth"].values
+        obs_water_depth = observed_streamflow["WDavg"].values
 
-        df_params_metrics.loc[model_run, "MAE_sfr"] = np.mean(np.abs(sim_flow - obs_flow))
-        df_params_metrics.loc[model_run, "ME_sfr"] = np.mean(sim_flow - obs_flow)
-        df_params_metrics.loc[model_run, "RBIAS_sfr"] = np.mean((sim_flow - obs_flow) / obs_flow)
+        df_params_metrics.loc[model_run, "MAE_sfr"] = np.mean(np.abs(sim_stage_depth - obs_stage_depth))
+        df_params_metrics.loc[model_run, "ME_sfr"] = np.mean(sim_stage_depth - obs_stage_depth)
+        df_params_metrics.loc[model_run, "RBIAS_sfr"] = np.mean((sim_stage_depth - obs_stage_depth) / obs_stage_depth)
 
 # save the metrics
 path = base_path / "fudge_parameters_metrics_porous.csv"
@@ -212,17 +213,18 @@ for model_run in range(0, 5000):
             df_sfr.loc[df_sfr["rno"] == rno, "rwid"] = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
             df_sfr.loc[df_sfr["rno"] == rno, "rtp"] = reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
             df_sfr.loc[df_sfr["rno"] == rno, "rgrd"] = reaches.loc[reaches["rno"] == rno, "rgrd"].values[0]
+            stage_width = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
             stage_depth = df_sfr_.loc[0, dict_obs_stage_id_inv[rno]] - reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
             df_sfr.loc[df_sfr["rno"] == rno, "stage_depth"] = stage_depth
-            flow = (df_sfr_.loc[0, dict_obs_flow_id_inv[rno]] * (-1)) / 86400
-            df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * stage_depth
+            flow = (df_sfr_.loc[0, dict_obs_stage_depth_id_inv[rno]] * (-1)) / 86400
+            df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * stage_depth * stage_width
 
-        sim_flow = df_sfr["flow"].values
-        obs_flow = observed_streamflow["Qavg"].values
+        sim_stage_depth = df_sfr["flow"].values
+        obs_stage_depth = observed_streamflow["Qavg"].values
 
-        df_params_metrics.loc[model_run, "MAE_sfr"] = np.mean(np.abs(sim_flow - obs_flow))
-        df_params_metrics.loc[model_run, "ME_sfr"] = np.mean(sim_flow - obs_flow)
-        df_params_metrics.loc[model_run, "RBIAS_sfr"] = np.mean((sim_flow - obs_flow) / obs_flow)
+        df_params_metrics.loc[model_run, "MAE_sfr"] = np.mean(np.abs(sim_stage_depth - obs_stage_depth))
+        df_params_metrics.loc[model_run, "ME_sfr"] = np.mean(sim_stage_depth - obs_stage_depth)
+        df_params_metrics.loc[model_run, "RBIAS_sfr"] = np.mean((sim_stage_depth - obs_stage_depth) / obs_stage_depth)
 
 
 # save the metrics
