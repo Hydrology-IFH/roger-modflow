@@ -297,7 +297,6 @@ class ModFlowSimulation:
         reaches.loc[cond6, 'man'] = 1/10
 
         # set the hydraulic conductivities of the streambed using the kf of the reach cell and decrease by a factor of xxx
-        xxx = 10e-3
         for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):
             if z == 0:
                 reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer1[x, y] * fudge_parameters['rhk'].values[model_run]

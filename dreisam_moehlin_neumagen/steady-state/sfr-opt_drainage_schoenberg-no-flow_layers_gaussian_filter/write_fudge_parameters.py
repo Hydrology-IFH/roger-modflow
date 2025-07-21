@@ -15,23 +15,23 @@ def main(nsamples):
               "-5_1": [0.9, 10],
               "-7_2": [50, 60], 
               "-5_2": [0.9, 10], 
-              "-4_2": [0.5, 1.5],
-              "1-3_2": [0.5, 1.5], 
-              "1.8-3_2": [0.5, 1.5], 
-              "3-3_2": [0.5, 1.5],  
-              "4-3_2": [0.5, 1.5],
+              "-4_2": [0.5, 2.5],
+              "1-3_2": [0.5, 2.5], 
+              "1.8-3_2": [0.5, 2.5], 
+              "3-3_2": [0.5, 2.5],  
+              "4-3_2": [0.5, 2.5],
               "-7_3": [50, 60], 
-              "-5_3": [0.5, 1.5], 
-              "-4_3": [0.5, 1.5],
-              "1-3_3": [0.5, 1.5], 
-              "1.8-3_3": [0.5, 1.5], 
-              "3-3_3": [0.5, 1.5],  
-              "4-3_3": [0.5, 1.5],
+              "-5_3": [0.5, 2.5], 
+              "-4_3": [0.5, 2.5],
+              "1-3_3": [0.5, 2.5], 
+              "1.8-3_3": [0.5, 2.5], 
+              "3-3_3": [0.5, 2.5],  
+              "4-3_3": [0.5, 2.5],
               "-7_4": [30, 50], 
-              "-5_4": [0.5, 1.5], 
-              "-4_4": [0.5, 1.5],
-              "1.8-3_4": [0.5, 1.5],
-              "rhk": [10e-4, 10e-2],
+              "-5_4": [0.5, 2.5], 
+              "-4_4": [0.5, 2.5],
+              "1.8-3_4": [0.5, 2.5],
+              "rhk": [90e-4, 20e-3],
               "rch": [0.95, 1.05],
     }
 
@@ -50,14 +50,14 @@ def main(nsamples):
         df_params.loc[:, param] = values.flatten()
 
     df_params["offset"] = 0.
-    df_params.iloc[:26, :] = 1.
+    df_params.iloc[:30, :] = 1.
     df_params.loc[:25, "rhk"] = 10e-3
 
-    df_params.loc[:25, "-8_1"] = 500.
-    df_params.loc[:25, "-7_1"] = 75.
-    df_params.loc[:25, "-7_2"] = 60.
-    df_params.loc[:25, "-7_3"] = 50.
-    df_params.loc[:25, "-7_4"] = 40.
+    df_params.loc[:29, "-8_1"] = 500.
+    df_params.loc[:29, "-7_1"] = 75.
+    df_params.loc[:29, "-7_2"] = 60.
+    df_params.loc[:29, "-7_3"] = 50.
+    df_params.loc[:29, "-7_4"] = 40.
     df_params.loc[0, "rch"] = 1.25
     df_params.loc[1, "rch"] = 1.2
     df_params.loc[2, "rch"] = 1.15
@@ -84,6 +84,10 @@ def main(nsamples):
     df_params.loc[23, "offset"] = 2.5
     df_params.loc[24, "offset"] = 5.0
     df_params.loc[25, "offset"] = 10.0
+    df_params.loc[26, "rhk"] = 90e-4
+    df_params.loc[27, "rhk"] = 95e-4
+    df_params.loc[28, "rhk"] = 15e-3
+    df_params.loc[29, "rhk"] = 20e-3
 
     # constrain parameters by upper layers (i.e. kf of lower layer is equal or less than kf of upper layer)
     cond = (df_params["-7_3"] >= df_params["-7_2"])
