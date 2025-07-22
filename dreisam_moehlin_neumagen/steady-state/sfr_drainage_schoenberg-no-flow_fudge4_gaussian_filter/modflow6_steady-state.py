@@ -206,7 +206,7 @@ class ModFlowSimulation:
         reaches.iloc[:, 13] = reaches.iloc[:, 13].astype(int)
 
         # increase the hydraulic conductivities of the reach cell by a factor of xx
-        xx = 3.2
+        xx = 2.5
         for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):
             if z == 0:
                 hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * xx
