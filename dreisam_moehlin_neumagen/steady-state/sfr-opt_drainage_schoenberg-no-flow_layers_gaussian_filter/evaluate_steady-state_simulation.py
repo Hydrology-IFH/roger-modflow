@@ -107,10 +107,11 @@ def main(model_run):
         df_sfr.loc[df_sfr["rno"] == rno, "rwid"] = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "rtp"] = reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "rgrd"] = reaches.loc[reaches["rno"] == rno, "rgrd"].values[0]
+        rwidth = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
         stage_depth = df_sfr_.loc[0, dict_obs_stage_id_inv[rno]] - reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "stage_depth"] = stage_depth
         flow = (df_sfr_.loc[0, dict_obs_flow_id_inv[rno]] * (-1)) / 86400
-        df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * stage_depth
+        df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * stage_depth * rwidth
 
     # load the netcdf file
     output_file = base_path / "output" / f"modflow_output_run_{model_run}.nc"

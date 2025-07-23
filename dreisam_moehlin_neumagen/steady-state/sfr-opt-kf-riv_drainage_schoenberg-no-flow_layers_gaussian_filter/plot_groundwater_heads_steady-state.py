@@ -10,7 +10,7 @@ import scipy
 import click
 import matplotlib as mpl
 
-@click.option("-mr", "--model-run", type=int, default=5)
+@click.option("-mr", "--model-run", type=int, default=50)
 @click.command("main", short_help="Run MODFLOW in steady-state mode")
 def main(model_run):
     # run installed version of flopy or add local path
@@ -40,7 +40,7 @@ def main(model_run):
         'ny': 777,
         'nz': 4,
     }
-    grid_extent = (0, 777*modflow_config['dy'], 621*modflow_config['dx'], 0)
+    grid_extent = (0, (777*modflow_config['dy']) / 1000, (621*modflow_config['dx']) / 1000, 0)
 
     # load MODFLOW parameters
     path = Path(__file__).parent / "parameters_modflow.nc"
@@ -169,23 +169,36 @@ def main(model_run):
     reaches.iloc[:, 12] = reaches.iloc[:, 12].astype(float)
     reaches.iloc[:, 13] = reaches.iloc[:, 13].astype(int)
 
+    cond = np.isnan(reaches['rwid'])
+    reaches.loc[cond, 'rwid'] = 1.0  # set width to 1 m where it is NaN
+    cond_widht0 = (reaches.loc[:, 'rwid'] <= 1.0)
+    reaches.loc[cond_widht0, 'rwid'] = 1.0  # set width to 1 m if it is smaller than 1 m
+
+    rwid = np.empty_like(topography)
+    rwid[:, :] = np.nan
+    rlen = np.empty_like(topography)
+    rlen[:, :] = np.nan
+
     # increase the hydraulic conductivities of the reach cell by a factor of xx
-    xx = 3.0
     for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):
+        rwid[x, y] = reaches.loc[rno, 'rwid']
+        rlen[x, y] = reaches.loc[rno, 'rlen']
         if z == 0:
-            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * xx
+            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * fudge_parameters['kf_riv'].values[model_run]
         elif z == 1:
-            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * xx
-            hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * xx
+            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * fudge_parameters['kf_riv'].values[model_run]
+            hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * fudge_parameters['kf_riv'].values[model_run]
         elif z == 2:
-            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * xx
-            hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * xx
-            hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * xx
+            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * fudge_parameters['kf_riv'].values[model_run]
+            hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * fudge_parameters['kf_riv'].values[model_run]
+            hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * fudge_parameters['kf_riv'].values[model_run]
         elif z == 3:
-            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * xx
-            hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * xx
-            hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * xx
-            hydraulic_conductivities_layer4[x, y] = hydraulic_conductivities_layer4[x, y] * xx
+            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * fudge_parameters['kf_riv'].values[model_run]
+            hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * fudge_parameters['kf_riv'].values[model_run]
+            hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * fudge_parameters['kf_riv'].values[model_run]
+            hydraulic_conductivities_layer4[x, y] = hydraulic_conductivities_layer4[x, y] * fudge_parameters['kf_riv'].values[model_run]
+
+    rarea = rlen * rwid
 
     # smooth transition between fissured and porous aquifers
     hydraulic_conductivities_layer1[np.isnan(hydraulic_conductivities_layer1)] = 0
@@ -217,6 +230,54 @@ def main(model_run):
     # load the netcdf file
     output_file = base_path / "output" / f"modflow_output_run_{model_run}.nc"
     ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
+
+
+    # plot the groundwater-surface water interaction
+    gw_sw = np.nanmean(ds_mf['gw_sw'].isel(Time=0).values, axis=0) / 86400
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(gw_sw * (-1), extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-0.01, vmax=0.01)
+    plt.colorbar(label='GW-SW flux \n[$m^3$/s]', shrink=0.42)
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
+    plt.tight_layout()
+    file = base_path_figs / f"gw-sw_steady_state_grid_{model_run}_m3_s.png"
+    fig.savefig(file, dpi=600)
+    plt.close("all")
+
+    minmax = np.nanmax(np.abs(gw_sw))
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(gw_sw * (-1), extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-minmax, vmax=minmax)
+    plt.colorbar(label='GW-SW flux \n[$m^3$/s]', shrink=0.42)
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
+    plt.tight_layout()
+    file = base_path_figs / f"gw-sw_steady_state_grid_{model_run}_m3_s_.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+    gw_sw = np.nanmean(ds_mf['gw_sw'].isel(Time=0).values, axis=0) / rarea
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(gw_sw * (-1), extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-10, vmax=10)
+    plt.colorbar(label='GW-SW flux \n[mm/day]', shrink=0.42)
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
+    plt.tight_layout()
+    file = base_path_figs / f"gw-sw_steady_state_grid_{model_run}_mm_day.png"
+    fig.savefig(file, dpi=600)
+    plt.close("all")
+
+    minmax = np.nanmax(np.abs(gw_sw))
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(gw_sw * (-1), extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-minmax, vmax=minmax)
+    plt.colorbar(label='GW-SW flux \n[mm/day]', shrink=0.42)
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
+    plt.tight_layout()
+    file = base_path_figs / f"gw-sw_steady_state_grid_{model_run}_mm_day_.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+
 
     x = np.cumsum(ds_mf.lon.values - ds_mf.lon.values[0])
     y = np.cumsum(ds_mf.lat.values - ds_mf.lat.values[-1])

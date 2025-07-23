@@ -7,7 +7,7 @@ import rasterio
 import matplotlib.pyplot as plt
 import click
 
-@click.option("-mr", "--model-run", type=int, default=5)
+@click.option("-mr", "--model-run", type=int, default=50)
 @click.command("main", short_help="Evaluate the steady-state simulation")
 def main(model_run):
     base_path = Path(__file__).parent
@@ -33,7 +33,7 @@ def main(model_run):
     # load observed groundwater heads (average values of the observation wells)
     path = base_path / "observations" / "observed_groundwater_heads_avg.csv"
     observed_groundwater_heads = pd.read_csv(path, sep=";", skiprows=0)
-    # observed_groundwater_heads = observed_groundwater_heads.iloc[:-2, :]
+    observed_groundwater_heads = observed_groundwater_heads.iloc[:-2, :]
 
     # load observed streamflow
     path = base_path / "observations" / "observed_streamflow.csv"
@@ -44,7 +44,7 @@ def main(model_run):
     src = rasterio.open(str(base_path.parent / "input" / "groundwater_heads_interpolated_50m.tif"))
     gw_heads_interpolated = src.read(1)
 
-    grid_extent = (0, 777*50, 621*50, 0)
+    grid_extent = (0, (777*50) / 1000, (621*50) / 1000, 0)
     fig, axes = plt.subplots(figsize=(4, 4))
     gw_heads_interpolated[~mask] = np.nan
     plt.imshow(gw_heads_interpolated, cmap='terrain', aspect='equal')
@@ -97,7 +97,7 @@ def main(model_run):
     output_file = base_path / "output" / f"dmn_run_{model_run}_sfr.obs.csv"
     df_sfr_ = pd.read_csv(output_file, sep=",")
 
-    df_sfr = pd.DataFrame(index=["falkensteig", "ebnet", "ehrenkirchen", "muenstertal"], columns=["rno", "layer", "x", "y", "rlen", "rwid", "rtp" "rgrd", "man", "rhk", "stage_depth", "flow"])
+    df_sfr = pd.DataFrame(index=["falkensteig", "ebnet", "ehrenkirchen", "muenstertal"], columns=["rno", "layer", "x", "y", "rlen", "rwid", "rtp" "rgrd", "man", "rhk", "water_depth", "flow"])
     df_sfr["rno"] = [23614, 23888, 22337, 14854]
     for rno in df_sfr["rno"].values:
         df_sfr.loc[df_sfr["rno"] == rno, "layer"] = reaches.loc[reaches["rno"] == rno, "k"].values[0]
@@ -107,10 +107,16 @@ def main(model_run):
         df_sfr.loc[df_sfr["rno"] == rno, "rwid"] = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "rtp"] = reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "rgrd"] = reaches.loc[reaches["rno"] == rno, "rgrd"].values[0]
+        rwidth = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
         stage_depth = df_sfr_.loc[0, dict_obs_stage_id_inv[rno]] - reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
-        df_sfr.loc[df_sfr["rno"] == rno, "stage_depth"] = stage_depth
+        df_sfr.loc[df_sfr["rno"] == rno, "water_depth"] = stage_depth
         flow = (df_sfr_.loc[0, dict_obs_flow_id_inv[rno]] * (-1)) / 86400
-        df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * stage_depth
+        df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * stage_depth * rwidth
+
+    sim_water_depth = df_sfr["water_depth"].values
+    sim_water_depth[sim_water_depth < 0] = 0
+    obs_water_depth = observed_streamflow["WDavg"].values
+    diff_sim_obs_water_depth = sim_water_depth - obs_water_depth
 
     # load the netcdf file
     output_file = base_path / "output" / f"modflow_output_run_{model_run}.nc"
@@ -120,6 +126,7 @@ def main(model_run):
 
     # extract the simulated groundwater heads at the location of the observation wells
     sim_depths = topography[rows, cols].flatten() - groundwater_heads[rows, cols].flatten()
+    sim_depths = np.where(sim_depths < 0, 0, sim_depths)
     sim = groundwater_heads[rows, cols].flatten()
 
     interp_depths = topography[rows, cols].flatten() - gw_heads_interpolated[rows, cols].flatten()
@@ -127,6 +134,22 @@ def main(model_run):
     observed_groundwater_heads["sim-int"] = sim_depths - interp_depths
     observed_groundwater_heads["int-obs"] = interp_depths - obs_depths
     observed_groundwater_heads.to_csv(base_path / "observations" / "observed_groundwater_heads_avg_.csv", sep=";", index=False)
+
+
+    fig, axes = plt.subplots(figsize=(4, 4))
+    topography[~mask] = np.nan
+    gauge_obs_y = observed_streamflow["y"].values * 50  # row IDs of the observation wells
+    gauge_obs_x = observed_streamflow["x"].values * 50  # column IDs of the observation wells
+    plt.scatter(gauge_obs_x/1000, gauge_obs_y/1000, c=diff_sim_obs_water_depth, s=5, cmap='RdBu', vmin=-1, vmax=1)
+    plt.colorbar(label='[m]', shrink=0.45)
+    plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5, extent=grid_extent)
+    plt.grid(zorder=0)
+    plt.xlabel('Distance in x-direction [km]')
+    plt.ylabel('Distance in y-direction [km]')
+    fig.tight_layout()
+    file = Path(__file__).parent / "figures" / f"difference_sim_obs_water_depth_{model_run}.png"
+    fig.savefig(file, dpi=300)
+    plt.close(fig)
 
     # calculate mean error
     print(np.mean(sim - obs))
@@ -156,7 +179,7 @@ def main(model_run):
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
-    grid_extent = (0, 777*50, 621*50, 0)
+    grid_extent = (0, (777*50) / 1000, (621*50) / 1000, 0)
     fig, axes = plt.subplots(figsize=(4, 4))
     plt.imshow(groundwater_heads[:, :] - gw_heads_interpolated, cmap='PuOr', aspect='equal', vmin=-10, vmax=10, extent=grid_extent)
     plt.colorbar(label='[m]', shrink=0.45)
@@ -168,7 +191,7 @@ def main(model_run):
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
-    grid_extent = (0, 777*50, 621*50, 0)
+    grid_extent = (0, (777*50) / 1000, (621*50) / 1000, 0)
     fig, axes = plt.subplots(figsize=(4, 4))
     topography[~mask] = np.nan
     wells_y = np.array([266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]) * 50
@@ -187,7 +210,7 @@ def main(model_run):
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
-    grid_extent = (0, 777*50, 621*50, 0)
+    grid_extent = (0, (777*50) / 1000, (621*50) / 1000, 0)
     fig, axes = plt.subplots(figsize=(4, 4))
     topography[~mask] = np.nan
     wells_y = np.array([266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]) * 50
@@ -203,6 +226,19 @@ def main(model_run):
     plt.ylabel('Distance in y-direction [m]')
     plt.tight_layout()
     file = Path(__file__).parent / "figures" / "observed_groundwater_heads.png"
+    fig.savefig(file, dpi=300)
+    plt.close(fig)
+
+    fig, axes = plt.subplots(figsize=(4, 4))
+    axes.scatter(obs_water_depth, sim_water_depth, marker='.', s=8, c='black')
+    axes.set_ylabel('Simulated water depth [m]')
+    axes.set_xlabel('Observed water depth [m]')
+    axes.set_xlim(-0.1, 1)
+    axes.set_ylim(-0.1, 1)
+    axes.plot(axes.get_xlim(), axes.get_ylim(), ls="--", c=".3", zorder=1, alpha=0.5)
+    # axes.text(axes.get_xlim()[0] + 0.1, axes.get_ylim()[1] - 0.1, f"ME: {df_params_metrics.loc[model_run, 'ME']:.2f} m")
+    fig.tight_layout()
+    file = Path(__file__).parent / "figures" / f"scatter_obs_sim_water_depth{model_run}.png"
     fig.savefig(file, dpi=300)
     plt.close(fig)
 

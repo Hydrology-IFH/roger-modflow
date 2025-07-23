@@ -150,47 +150,47 @@ mask_zarten_brugga = (ds_params['mask_zarten_brugga'].values == 1)
 mask_zarten_gravel_north = (ds_params['mask_zarten_gravel_north'].values == 1)
 mask_staufen_gravel = (ds_params['mask_staufen_gravel'].values == 1)
 mask_gravel = mask_zarten_brugga | mask_zarten_gravel_north | mask_staufen_gravel
-grid_extent = (0, modflow_config['ny']*modflow_config['dy'], 0, modflow_config['nx']*modflow_config['dx'])
+grid_extent = (0, (modflow_config['ny']*modflow_config['dy']) / 1000, 0, (modflow_config['nx']*modflow_config['dx']) / 1000)
 
 basin = np.empty_like(topography)
 basin[mask] = 1
 fig, axes = plt.subplots(figsize=(4, 4))
 plt.imshow(basin, extent=grid_extent, cmap='Greys', aspect='equal')
 plt.grid(zorder=0)
-plt.xlabel('Distance in x-direction [m]')
-plt.ylabel('Distance in y-direction [m]')
+plt.xlabel('Distance in x-direction [km]')
+plt.ylabel('Distance in y-direction [km]')
 plt.tight_layout()
 file = base_path_figs / "basin.png"
 fig.savefig(file, dpi=300)
 plt.close(fig)
 
-grid_extent = (0, modflow_config['ny']*modflow_config['dy'], modflow_config['nx']*modflow_config['dx'], 0)
+grid_extent = (0, (modflow_config['ny']*modflow_config['dy']) / 1000, (modflow_config['nx']*modflow_config['dx']) / 1000, 0)
 fig, axes = plt.subplots(figsize=(4, 4))
 topography[~mask] = np.nan
 plt.imshow(topography, extent=grid_extent, cmap='terrain', aspect='equal')
 plt.colorbar(label='[m a.s.l.]', shrink=0.5)
 plt.grid(zorder=0)
-plt.xlabel('Distance in x-direction [m]')
-plt.ylabel('Distance in y-direction [m]')
+plt.xlabel('Distance in x-direction [km]')
+plt.ylabel('Distance in y-direction [km]')
 plt.tight_layout()
 file = base_path_figs / "topography.png"
 fig.savefig(file, dpi=300)
 plt.close(fig)
 
-grid_extent = (0, modflow_config['ny']*modflow_config['dy'], modflow_config['nx']*modflow_config['dx'], 0)
+grid_extent = (0, (modflow_config['ny']*modflow_config['dy']) / 1000, (modflow_config['nx']*modflow_config['dx']) / 1000, 0)
 fig, axes = plt.subplots(figsize=(4, 4))
 topography[~mask] = np.nan
 plt.imshow(np.where(topography < 300, np.nan, topography), extent=grid_extent, cmap='terrain', aspect='equal')
 plt.colorbar(label='[m a.s.l.]', shrink=0.5)
 plt.grid(zorder=0)
-plt.xlabel('Distance in x-direction [m]')
-plt.ylabel('Distance in y-direction [m]')
+plt.xlabel('Distance in x-direction [km]')
+plt.ylabel('Distance in y-direction [km]')
 plt.tight_layout()
 file = base_path_figs / "topography_mountains.png"
 fig.savefig(file, dpi=300)
 plt.close(fig)
 
-grid_extent = (0, modflow_config['ny']*modflow_config['dy'], modflow_config['nx']*modflow_config['dx'], 0)
+grid_extent = (0, (modflow_config['ny']*modflow_config['dy']) / 1000, (modflow_config['nx']*modflow_config['dx']) / 1000, 0)
 fig, axes = plt.subplots(figsize=(4, 4))
 topography[~mask] = np.nan
 wells_y = [266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]
@@ -208,30 +208,37 @@ plt.close(fig)
 
 fig, axes = plt.subplots(figsize=(4, 4))
 topography[~mask] = np.nan
-wells_y = np.array([266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]) * 50
-wells_x = np.array([66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496]) * 50
+wells_y = np.array([266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264, 124]) * (50/1000)
+wells_x = np.array([66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496, 222]) * (50/1000)
 plt.scatter(wells_x, wells_y, marker='^', s=5, c='black')
-wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+wells_obs_y = observed_groundwater_heads["Zelle_y"].values * (50/1000)  # row IDs of the observation wells
+wells_obs_x = observed_groundwater_heads["Zelle_x"].values * (50/1000)  # column IDs of the observation wells
 plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=5, c='purple')
+stage_x = np.array([591, 430, 191, 218]) * (50/1000)
+stage_y = np.array([309, 207, 360, 487]) * (50/1000)
+plt.scatter(stage_x, stage_y, marker='.', s=5, c='orange')
 plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5, extent=grid_extent)
 plt.colorbar(label='[m a.s.l.]', shrink=0.45)
 plt.grid(zorder=0)
-plt.xlabel('Distance in x-direction [m]')
-plt.ylabel('Distance in y-direction [m]')
+plt.xlabel('Distance in x-direction [km]')
+plt.ylabel('Distance in y-direction [km]')
 plt.tight_layout()
 file = base_path_figs / "topography_and_wells_observations.png"
 fig.savefig(file, dpi=300)
 plt.close(fig)
 
+
 fig, axes = plt.subplots(figsize=(4, 4))
 topography[~mask] = np.nan
-wells_y = np.array([266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264])
-wells_x = np.array([66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496])
+wells_y = np.array([266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264, 124])
+wells_x = np.array([66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496, 222])
 plt.scatter(wells_x, wells_y, marker='^', s=5, c='black')
 wells_obs_y = observed_groundwater_heads["Zelle_y"].values # row IDs of the observation wells
 wells_obs_x = observed_groundwater_heads["Zelle_x"].values  # column IDs of the observation wells
 plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=5, c='purple')
+stage_x = np.array([591, 430, 191, 218]) * (50/1000)
+stage_y = np.array([309, 207, 360, 487]) * (50/1000)
+plt.scatter(stage_x, stage_y, marker='.', s=5, c='orange')
 plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5)
 plt.colorbar(label='[m a.s.l.]', shrink=0.45)
 plt.grid(zorder=0)
@@ -243,7 +250,7 @@ fig.savefig(file, dpi=300)
 plt.close(fig)
 
 
-grid_extent = (0, modflow_config['ny']*modflow_config['dy'], modflow_config['nx']*modflow_config['dx'], 0)
+grid_extent = (0, (modflow_config['ny']*modflow_config['dy']) / 1000, (modflow_config['nx']*modflow_config['dx']) / 1000, 0)
 fig, axes = plt.subplots(figsize=(4, 4))
 topography[~mask] = np.nan
 topography_schoenberg = topography.copy()
@@ -268,8 +275,8 @@ plt.close(fig)
 # plt.scatter(85*50, (178-62)*50, marker='x', s=20, c='black')  # location of the extraction well 3
 # fig.colorbar(cb , ax=axes, label='[m a.s.l.]', shrink=0.5)
 # axes.grid(zorder=0)
-# axes.set_xlabel('Distance in x-direction [m]')
-# axes.set_ylabel('Distance in y-direction [m]')
+# axes.set_xlabel('Distance in x-direction [km]')
+# axes.set_ylabel('Distance in y-direction [km]')
 # plt.tight_layout()
 # file = base_path_figs / "topography_well_locations.png"
 # fig.savefig(file, dpi=300)
@@ -285,8 +292,8 @@ plt.close(fig)
 # plt.imshow(topography1, extent=grid_extent1, cmap='terrain', aspect='equal')
 # plt.colorbar(label='[m a.s.l.]', shrink=0.34)
 # plt.grid(zorder=0)
-# plt.xlabel('Distance in x-direction [m]')
-# plt.ylabel('Distance in y-direction [m]')
+# plt.xlabel('Distance in x-direction [km]')
+# plt.ylabel('Distance in y-direction [km]')
 # fig.tight_layout()
 # file = base_path_figs / "topography1.png"
 # fig.savefig(file, dpi=300)
@@ -300,8 +307,8 @@ for i, elevation_bottom_layer in enumerate(elevation_bottom_layers):
     plt.imshow(elevation_bottom_layer, extent=grid_extent, cmap='viridis', vmin=0, vmax=1200, aspect='equal')
     plt.colorbar(label='[m a.s.l.]', shrink=0.5)
     plt.grid(zorder=0)
-    plt.xlabel('Distance in x-direction [m]')
-    plt.ylabel('Distance in y-direction [m]')
+    plt.xlabel('Distance in x-direction [km]')
+    plt.ylabel('Distance in y-direction [km]')
     plt.tight_layout()
     file = base_path_figs / f"elevation_bottom_layer_{i}.png"
     fig.savefig(file, dpi=300)
@@ -312,8 +319,8 @@ elevation_bottom_layer[~mask] = np.nan
 plt.imshow(elevation_bottom_layer, extent=grid_extent, cmap='viridis', vmin=0, vmax=250, aspect='equal')
 plt.colorbar(label='[m a.s.l.]', shrink=0.5)
 plt.grid(zorder=0)
-plt.xlabel('Distance in x-direction [m]')
-plt.ylabel('Distance in y-direction [m]')
+plt.xlabel('Distance in x-direction [km]')
+plt.ylabel('Distance in y-direction [km]')
 plt.tight_layout()
 file = base_path_figs / f"elevation_bottom_layer_{i}.png"
 fig.savefig(file, dpi=300)
@@ -329,8 +336,8 @@ plt.close(fig)
 #     plt.imshow(initial_conditions_layer, extent=grid_extent, cmap='viridis', aspect='equal')
 #     plt.colorbar(label='groundwater head [m a.s.l.]', shrink=0.5)
 #     plt.grid(zorder=0)
-#     plt.xlabel('Distance in x-direction [m]')
-#     plt.ylabel('Distance in y-direction [m]')
+#     plt.xlabel('Distance in x-direction [km]')
+#     plt.ylabel('Distance in y-direction [km]')
 #     plt.tight_layout()
 #     file = base_path_figs / f"initial_conditions_{i}.png"
 #     fig.savefig(file, dpi=300)
@@ -346,8 +353,8 @@ plt.close(fig)
 # fig, axes = plt.subplots(figsize=(4, 4))
 # plt.imshow(boundary_condition1, extent=grid_extent, cmap='Greys', vmin=0, vmax=1, aspect='equal')
 # plt.grid(zorder=0)
-# plt.xlabel('Distance in x-direction [m]')
-# plt.ylabel('Distance in y-direction [m]')
+# plt.xlabel('Distance in x-direction [km]')
+# plt.ylabel('Distance in y-direction [km]')
 # plt.tight_layout()
 # file = base_path_figs / "boundary_condition.png"
 # fig.savefig(file, dpi=300)
@@ -365,8 +372,8 @@ plt.close(fig)
 # # fig.colorbar(cb, ax=axes, label='[m a.s.l.]', shrink=0.5)
 # axes.imshow(river_reach_arr, extent=grid_extent, cmap='Blues', vmin=0, vmax=1, aspect='equal')
 # axes.grid(zorder=0)
-# axes.set_xlabel('Distance in x-direction [m]')
-# axes.set_ylabel('Distance in y-direction [m]')
+# axes.set_xlabel('Distance in x-direction [km]')
+# axes.set_ylabel('Distance in y-direction [km]')
 # fig.tight_layout()
 # file = base_path_figs / "river_reach.png"
 # fig.savefig(file, dpi=300)
@@ -376,8 +383,8 @@ plt.close(fig)
 # plt.imshow(boundary_condition1, extent=grid_extent, cmap='Greys', vmin=0, vmax=1, aspect='equal')
 # axes.imshow(river_reach_arr, extent=grid_extent, cmap='Blues', vmin=0, vmax=1.5, aspect='equal')
 # plt.grid(zorder=0)
-# plt.xlabel('Distance in x-direction [m]')
-# plt.ylabel('Distance in y-direction [m]')
+# plt.xlabel('Distance in x-direction [km]')
+# plt.ylabel('Distance in y-direction [km]')
 # plt.tight_layout()
 # file = base_path_figs / "boundary_condition_and_river_reach.png"
 # fig.savefig(file, dpi=300)
@@ -390,8 +397,8 @@ axes.scatter(river_reach['j'].values*modflow_config['dx'], (np.max(river_reach['
 cb = axes.imshow(topography, extent=grid_extent, cmap='terrain', aspect='equal')
 fig.colorbar(cb, ax=axes, label='[m a.s.l.]', shrink=0.5)
 axes.grid(zorder=0)
-axes.set_xlabel('Distance in x-direction [m]')
-axes.set_ylabel('Distance in y-direction [m]')
+axes.set_xlabel('Distance in x-direction [km]')
+axes.set_ylabel('Distance in y-direction [km]')
 fig.tight_layout()
 file = base_path_figs / "river_reach_.png"
 fig.savefig(file, dpi=300)
@@ -427,6 +434,97 @@ hydraulic_conductivities_layer2 = ds_params['kf'].isel(layer=1).values
 hydraulic_conductivities_layer3 = ds_params['kf'].isel(layer=2).values
 hydraulic_conductivities_layer4 = ds_params['kf'].isel(layer=3).values
 hydraulic_conductivities_layers = [hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4]
+
+
+mask_reach = np.zeros_like(topography, dtype=bool)
+mask_reach[:, :] = False
+
+reaches = pd.read_csv(base_path / 'input' / 'sfr_packagedata.csv', sep=';')
+reaches.iloc[:, 0] = reaches.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
+reaches.iloc[:, 1] = reaches.iloc[:, 1].astype(int) - 1
+reaches.iloc[:, 2] = reaches.iloc[:, 2].astype(int) - 1  # convert to zero-based indexing
+reaches.iloc[:, 3] = reaches.iloc[:, 3].astype(int) - 1  # convert to zero-based indexing
+reaches.iloc[:, 4] = reaches.iloc[:, 4].astype(float) 
+reaches.iloc[:, 5] = reaches.iloc[:, 5].astype(int)
+reaches.iloc[:, 6] = reaches.iloc[:, 6].astype(float)
+reaches.iloc[:, 7] = reaches.iloc[:, 7].astype(float)
+reaches.iloc[:, 8] = reaches.iloc[:, 8].astype(float)
+reaches.iloc[:, 9] = reaches.iloc[:, 9].astype(float)
+reaches.iloc[:, 10] = reaches.iloc[:, 10].astype(float)
+reaches.iloc[:, 11] = reaches.iloc[:, 11].astype(int)
+reaches.iloc[:, 12] = reaches.iloc[:, 12].astype(float)
+reaches.iloc[:, 13] = reaches.iloc[:, 13].astype(int)
+
+cond = np.isnan(reaches['rwid'])
+reaches.loc[cond, 'rwid'] = 1.0  # set width to 1 m where it is NaN
+cond_widht0 = (reaches.loc[:, 'rwid'] <= 1.0)
+reaches.loc[cond_widht0, 'rwid'] = 1.0  # set width to 1 m if it is smaller than 1 m
+
+# set the Manning’s roughness coefficient depending on the streambed gradient
+cond1 = (reaches['rgrd'] <= 0.0006)
+cond2 = (reaches['rgrd'] > 0.0006) & (reaches['rgrd'] <= 0.0025)
+cond3 = (reaches['rgrd'] > 0.0025) & (reaches['rgrd'] <= 0.01)
+cond4 = (reaches['rgrd'] > 0.01) & (reaches['rgrd'] <= 0.04)
+cond5 = (reaches['rgrd'] > 0.04) & (reaches['rgrd'] <= 0.07)
+cond6 = (reaches['rgrd'] > 0.07)
+reaches.loc[cond1, 'man'] = 1/50
+reaches.loc[cond2, 'man'] = 1/30
+reaches.loc[cond3, 'man'] = 1/25
+reaches.loc[cond4, 'man'] = 1/20
+reaches.loc[cond5, 'man'] = 1/15
+reaches.loc[cond6, 'man'] = 1/10   
+
+elev_diff = np.empty_like(topography)
+elev_diff[:, :] = np.nan
+rhk = np.empty_like(topography)
+rhk[:, :] = np.nan
+man = np.empty_like(topography)
+man[:, :] = np.nan
+reach_layer = np.empty_like(topography)
+reach_layer[:, :] = np.nan
+rwid = np.empty_like(topography)
+rwid[:, :] = np.nan
+kf_reach_cell = np.empty_like(topography)
+kf_reach_cell[:, :] = np.nan
+for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):
+    mask_reach[x, y] = True
+    elev_diff[x, y] = reaches.loc[rno, 'rtp'] - topography[x, y]
+    man[x, y] = reaches.loc[rno, 'man']
+    reach_layer[x, y] = z + 1
+    # if z == 0:
+    #     hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 5
+    # elif z == 1:
+    #     hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 5
+    #     hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * 5
+    # elif z == 2:
+    #     hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 5
+    #     hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * 5
+    #     hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * 5
+    # elif z == 3:
+    #     hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 5
+    #     hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * 5
+    #     hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * 5
+    #     hydraulic_conductivities_layer4[x, y] = hydraulic_conductivities_layer4[x, y] * 5 
+
+# set the hydraulic conductivities of the streambed using the kf of the reach cell and decrease by a factor of 0.0005
+for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):
+    if z == 0:
+        reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer1[x, y] * 10e-3
+        kf_reach_cell[x, y] = hydraulic_conductivities_layer1[x, y] / 86400
+    elif z == 1:
+        reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer2[x, y] * 10e-3
+        kf_reach_cell[x, y] = hydraulic_conductivities_layer2[x, y] / 86400
+    elif z == 2:
+        reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer3[x, y] * 10e-3
+        kf_reach_cell[x, y] = hydraulic_conductivities_layer3[x, y] / 86400
+    elif z == 3:
+        reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer4[x, y] * 10e-3
+        kf_reach_cell[x, y] = hydraulic_conductivities_layer3[x, y] / 86400
+    rhk[x, y] = reaches.loc[rno, 'rhk'] / 86400
+    rwid[x, y] = reaches.loc[rno, 'rwid']
+    man[x, y] = reaches.loc[rno, 'man']
+
+
 for i, hydraulic_conductivities_layer in enumerate(hydraulic_conductivities_layers):
     i = i + 1
     print(f"Kf Layer {i}")
@@ -442,8 +540,8 @@ for i, hydraulic_conductivities_layer in enumerate(hydraulic_conductivities_laye
     cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
     cbar.set_ticks(ticks=bounds, labels=[r'$10^{-8}$', r'$10^{-7}$', r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$'])
     plt.grid(zorder=0)
-    plt.xlabel('Distance in x-direction [m]')
-    plt.ylabel('Distance in y-direction [m]')
+    plt.xlabel('Distance in x-direction [km]')
+    plt.ylabel('Distance in y-direction [km]')
     plt.tight_layout()
     file = base_path_figs / f"hydraulic_conductivity_layer_{i}.png"
     fig.savefig(file, dpi=300)
@@ -458,8 +556,8 @@ for i, hydraulic_conductivities_layer in enumerate(hydraulic_conductivities_laye
     cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
     # cbar.set_ticks(ticks=bounds, labels=[r'$10^{-8}$', r'$10^{-7}$', r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$', r'$10^{-1}$'])
     plt.grid(zorder=0)
-    plt.xlabel('Distance in x-direction [m]')
-    plt.ylabel('Distance in y-direction [m]')
+    plt.xlabel('Distance in x-direction [km]')
+    plt.ylabel('Distance in y-direction [km]')
     plt.tight_layout()
     file = base_path_figs / f"hydraulic_conductivity_layer_{i}_.png"
     fig.savefig(file, dpi=300)
@@ -468,7 +566,7 @@ for i, hydraulic_conductivities_layer in enumerate(hydraulic_conductivities_laye
 for i, hydraulic_conductivities_layer in enumerate(hydraulic_conductivities_layers):
     fig, axes = plt.subplots(figsize=(4, 4))
     hydraulic_conductivities_layer[~mask] = np.nan
-    sigma = [2.0, 2.0]
+    sigma = [1.0, 1.0]
     hydraulic_conductivities_layer_smooth = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer, sigma, mode='constant')
     print(f"Kf Layer {i} (smoothed)")
     print(np.unique(hydraulic_conductivities_layer_smooth[mask]/(24*60*60)))
@@ -476,10 +574,28 @@ for i, hydraulic_conductivities_layer in enumerate(hydraulic_conductivities_laye
     cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
     # cbar.set_ticks(ticks=bounds, labels=[r'$10^{-8}$', r'$10^{-7}$', r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$', r'$10^{-1}$'])
     plt.grid(zorder=0)
-    plt.xlabel('Distance in x-direction [m]')
-    plt.ylabel('Distance in y-direction [m]')
+    plt.xlabel('Distance in x-direction [km]')
+    plt.ylabel('Distance in y-direction [km]')
     plt.tight_layout()
     file = base_path_figs / f"hydraulic_conductivity_layer_{i}_smoothed_.png"
+    fig.savefig(file, dpi=300)
+    plt.close(fig)
+
+for i, hydraulic_conductivities_layer in enumerate(hydraulic_conductivities_layers):
+    fig, axes = plt.subplots(figsize=(4, 4))
+    hydraulic_conductivities_layer[~mask] = np.nan
+    sigma = [2.5, 2.5]
+    hydraulic_conductivities_layer_smooth = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer, sigma, mode='constant')
+    print(f"Kf Layer {i} (smoothed)")
+    print(np.unique(hydraulic_conductivities_layer_smooth[mask]/(24*60*60)))
+    plt.imshow(hydraulic_conductivities_layer_smooth/(24*60*60), extent=grid_extent, cmap='Oranges', aspect='equal')
+    cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
+    # cbar.set_ticks(ticks=bounds, labels=[r'$10^{-8}$', r'$10^{-7}$', r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$', r'$10^{-1}$'])
+    plt.grid(zorder=0)
+    plt.xlabel('Distance in x-direction [km]')
+    plt.ylabel('Distance in y-direction [km]')
+    plt.tight_layout()
+    file = base_path_figs / f"hydraulic_conductivity_layer_{i}_smoothed__.png"
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
@@ -495,8 +611,8 @@ for i, hydraulic_conductivities_layer in enumerate(hydraulic_conductivities_laye
     cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
     cbar.set_ticks(ticks=bounds, labels=[r'$10^{-8}$', r'$10^{-7}$', r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$', r'$10^{-1}$'])
     plt.grid(zorder=0)
-    plt.xlabel('Distance in x-direction [m]')
-    plt.ylabel('Distance in y-direction [m]')
+    plt.xlabel('Distance in x-direction [km]')
+    plt.ylabel('Distance in y-direction [km]')
     plt.tight_layout()
     file = base_path_figs / f"hydraulic_conductivity_layer_fudged_{i}.png"
     fig.savefig(file, dpi=300)
@@ -511,8 +627,8 @@ for i, hydraulic_conductivities_layer in enumerate(hydraulic_conductivities_laye
     cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
     cbar.set_ticks(ticks=bounds, labels=[r'$10^{-8}$', r'$10^{-7}$', r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$', r'$10^{-1}$'])
     plt.grid(zorder=0)
-    plt.xlabel('Distance in x-direction [m]')
-    plt.ylabel('Distance in y-direction [m]')
+    plt.xlabel('Distance in x-direction [km]')
+    plt.ylabel('Distance in y-direction [km]')
     plt.tight_layout()
     file = base_path_figs / f"hydraulic_conductivity_layer_fudged_{i}_.png"
     fig.savefig(file, dpi=300)
@@ -543,12 +659,12 @@ for i, hydraulic_conductivities_layer in enumerate(hydraulic_conductivities_laye
 # fudge_regions_layer = np.where(np.isin(fudge_regions_layer, [100, 200, 300, 400, 500, 600, 700, 800, 900]), fudge_regions_layer, np.nan)
 # plt.imshow(fudge_regions_layer, cmap='Oranges', aspect='equal', extent=grid_extent)
 # cbar = plt.colorbar(label='', shrink=0.45)
-# wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-# wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+# wells_obs_y = observed_groundwater_heads["Zelle_y"].values * (50/1000)  # row IDs of the observation wells
+# wells_obs_x = observed_groundwater_heads["Zelle_x"].values * (50/1000)  # column IDs of the observation wells
 # plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=2, c='black')
 # plt.grid(zorder=0)
-# plt.xlabel('Distance in x-direction [m]')
-# plt.ylabel('Distance in y-direction [m]')
+# plt.xlabel('Distance in x-direction [km]')
+# plt.ylabel('Distance in y-direction [km]')
 # plt.tight_layout()
 # file = base_path_figs / f"fudge_regions_layer{i}.png"
 # fig.savefig(file, dpi=300)
@@ -568,12 +684,12 @@ fudge_regions_layer_r4 = np.where(np.isin(fudge_regions_layer, [99.]), fudge_reg
 plt.imshow(fudge_regions_layer_r4, cmap='Dark2', aspect='equal', norm=norm, extent=grid_extent)
 cbar = plt.colorbar(label='', shrink=0.45)
 cbar.set_ticks(ticks=[50, 150, 250, 350, 450, 550, 650, 750], labels=['r-4', 'r-5', 'r-6', 'g-4', 'z-4', 'z-5', 'm-4', 'm-6'])
-wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+wells_obs_y = observed_groundwater_heads["Zelle_y"].values * (50/1000)  # row IDs of the observation wells
+wells_obs_x = observed_groundwater_heads["Zelle_x"].values * (50/1000)  # column IDs of the observation wells
 plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=2, c='black')
 plt.grid(zorder=0)
-plt.xlabel('Distance in x-direction [m]')
-plt.ylabel('Distance in y-direction [m]')
+plt.xlabel('Distance in x-direction [km]')
+plt.ylabel('Distance in y-direction [km]')
 plt.tight_layout()
 file = base_path_figs / f"fudge_regions_layer{i}_r4.png"
 fig.savefig(file, dpi=300)
@@ -592,12 +708,12 @@ fudge_regions_layer_r5 = np.where(np.isin(fudge_regions_layer, [199.]), fudge_re
 plt.imshow(fudge_regions_layer_r5, cmap='Dark2', aspect='equal', norm=norm, extent=grid_extent)
 cbar = plt.colorbar(label='', shrink=0.45)
 cbar.set_ticks(ticks=[50, 150, 250, 350, 450, 550, 650, 750], labels=['r-4', 'r-5', 'r-6', 'g-4', 'z-4', 'z-5', 'm-4', 'm-6'])
-wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+wells_obs_y = observed_groundwater_heads["Zelle_y"].values * (50/1000)  # row IDs of the observation wells
+wells_obs_x = observed_groundwater_heads["Zelle_x"].values * (50/1000)  # column IDs of the observation wells
 plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=2, c='black')
 plt.grid(zorder=0)
-plt.xlabel('Distance in x-direction [m]')
-plt.ylabel('Distance in y-direction [m]')
+plt.xlabel('Distance in x-direction [km]')
+plt.ylabel('Distance in y-direction [km]')
 plt.tight_layout()
 file = base_path_figs / f"fudge_regions_layer{i}_r5.png"
 fig.savefig(file, dpi=300)
@@ -616,12 +732,12 @@ fudge_regions_layer_r6 = np.where(np.isin(fudge_regions_layer, [299.]), fudge_re
 plt.imshow(fudge_regions_layer_r6, cmap='Dark2', aspect='equal', norm=norm, extent=grid_extent)
 cbar = plt.colorbar(label='', shrink=0.45)
 cbar.set_ticks(ticks=[50, 150, 250, 350, 450, 550, 650, 750], labels=['r-4', 'r-5', 'r-6', 'g-4', 'z-4', 'z-5', 'm-4', 'm-6'])
-wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+wells_obs_y = observed_groundwater_heads["Zelle_y"].values * (50/1000)  # row IDs of the observation wells
+wells_obs_x = observed_groundwater_heads["Zelle_x"].values * (50/1000)  # column IDs of the observation wells
 plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=2, c='black')
 plt.grid(zorder=0)
-plt.xlabel('Distance in x-direction [m]')
-plt.ylabel('Distance in y-direction [m]')
+plt.xlabel('Distance in x-direction [km]')
+plt.ylabel('Distance in y-direction [km]')
 plt.tight_layout()
 file = base_path_figs / f"fudge_regions_layer{i}_r6.png"
 fig.savefig(file, dpi=300)
@@ -640,12 +756,12 @@ fudge_regions_layer_g4 = np.where(np.isin(fudge_regions_layer, [399.]), fudge_re
 plt.imshow(fudge_regions_layer_g4, cmap='Dark2', aspect='equal', norm=norm, extent=grid_extent)
 cbar = plt.colorbar(label='', shrink=0.45)
 cbar.set_ticks(ticks=[50, 150, 250, 350, 450, 550, 650, 750], labels=['r-4', 'r-5', 'r-6', 'g-4', 'z-4', 'z-5', 'm-4', 'm-6'])
-wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+wells_obs_y = observed_groundwater_heads["Zelle_y"].values * (50/1000)  # row IDs of the observation wells
+wells_obs_x = observed_groundwater_heads["Zelle_x"].values * (50/1000)  # column IDs of the observation wells
 plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=2, c='black')
 plt.grid(zorder=0)
-plt.xlabel('Distance in x-direction [m]')
-plt.ylabel('Distance in y-direction [m]')
+plt.xlabel('Distance in x-direction [km]')
+plt.ylabel('Distance in y-direction [km]')
 plt.tight_layout()
 file = base_path_figs / f"fudge_regions_layer{i}_g4.png"
 fig.savefig(file, dpi=300)
@@ -664,12 +780,12 @@ fudge_regions_layer_z4 = np.where(np.isin(fudge_regions_layer, [499.]), fudge_re
 plt.imshow(fudge_regions_layer_z4, cmap='Dark2', aspect='equal', norm=norm, extent=grid_extent)
 cbar = plt.colorbar(label='', shrink=0.45)
 cbar.set_ticks(ticks=[50, 150, 250, 350, 450, 550, 650, 750], labels=['r-4', 'r-5', 'r-6', 'g-4', 'z-4', 'z-5', 'm-4', 'm-6'])
-wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+wells_obs_y = observed_groundwater_heads["Zelle_y"].values * (50/1000)  # row IDs of the observation wells
+wells_obs_x = observed_groundwater_heads["Zelle_x"].values * (50/1000)  # column IDs of the observation wells
 plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=2, c='black')
 plt.grid(zorder=0)
-plt.xlabel('Distance in x-direction [m]')
-plt.ylabel('Distance in y-direction [m]')
+plt.xlabel('Distance in x-direction [km]')
+plt.ylabel('Distance in y-direction [km]')
 plt.tight_layout()
 file = base_path_figs / f"fudge_regions_layer{i}_z4.png"
 fig.savefig(file, dpi=300)
@@ -688,12 +804,12 @@ fudge_regions_layer_z5 = np.where(np.isin(fudge_regions_layer, [599.]), fudge_re
 plt.imshow(fudge_regions_layer_z5, cmap='Dark2', aspect='equal', norm=norm, extent=grid_extent)
 cbar = plt.colorbar(label='', shrink=0.45)
 cbar.set_ticks(ticks=[50, 150, 250, 350, 450, 550, 650, 750], labels=['r-4', 'r-5', 'r-6', 'g-4', 'z-4', 'z-5', 'm-4', 'm-6'])
-wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+wells_obs_y = observed_groundwater_heads["Zelle_y"].values * (50/1000)  # row IDs of the observation wells
+wells_obs_x = observed_groundwater_heads["Zelle_x"].values * (50/1000)  # column IDs of the observation wells
 plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=2, c='black')
 plt.grid(zorder=0)
-plt.xlabel('Distance in x-direction [m]')
-plt.ylabel('Distance in y-direction [m]')
+plt.xlabel('Distance in x-direction [km]')
+plt.ylabel('Distance in y-direction [km]')
 plt.tight_layout()
 file = base_path_figs / f"fudge_regions_layer{i}_z5.png"
 fig.savefig(file, dpi=300)
@@ -712,12 +828,12 @@ fudge_regions_layer_m4 = np.where(np.isin(fudge_regions_layer, [699.]), fudge_re
 plt.imshow(fudge_regions_layer_m4, cmap='Dark2', aspect='equal', norm=norm, extent=grid_extent)
 cbar = plt.colorbar(label='', shrink=0.45)
 cbar.set_ticks(ticks=[50, 150, 250, 350, 450, 550, 650, 750], labels=['r-4', 'r-5', 'r-6', 'g-4', 'z-4', 'z-5', 'm-4', 'm-6'])
-wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+wells_obs_y = observed_groundwater_heads["Zelle_y"].values * (50/1000)  # row IDs of the observation wells
+wells_obs_x = observed_groundwater_heads["Zelle_x"].values * (50/1000)  # column IDs of the observation wells
 plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=2, c='black')
 plt.grid(zorder=0)
-plt.xlabel('Distance in x-direction [m]')
-plt.ylabel('Distance in y-direction [m]')
+plt.xlabel('Distance in x-direction [km]')
+plt.ylabel('Distance in y-direction [km]')
 plt.tight_layout()
 file = base_path_figs / f"fudge_regions_layer{i}_m4.png"
 fig.savefig(file, dpi=300)
@@ -736,12 +852,12 @@ fudge_regions_layer_m6 = np.where(np.isin(fudge_regions_layer, [799.]), fudge_re
 plt.imshow(fudge_regions_layer_m6, cmap='Dark2', aspect='equal', norm=norm, extent=grid_extent)
 cbar = plt.colorbar(label='', shrink=0.45)
 cbar.set_ticks(ticks=[50, 150, 250, 350, 450, 550, 650, 750], labels=['r-4', 'r-5', 'r-6', 'g-4', 'z-4', 'z-5', 'm-4', 'm-6'])
-wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+wells_obs_y = observed_groundwater_heads["Zelle_y"].values * (50/1000)  # row IDs of the observation wells
+wells_obs_x = observed_groundwater_heads["Zelle_x"].values * (50/1000)  # column IDs of the observation wells
 plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=2, c='black')
 plt.grid(zorder=0)
-plt.xlabel('Distance in x-direction [m]')
-plt.ylabel('Distance in y-direction [m]')
+plt.xlabel('Distance in x-direction [km]')
+plt.ylabel('Distance in y-direction [km]')
 plt.tight_layout()
 file = base_path_figs / f"fudge_regions_layer{i}_m6.png"
 fig.savefig(file, dpi=300)
@@ -765,12 +881,12 @@ plt.close(fig)
 # plt.imshow(fudge_regions_layer, cmap='viridis', aspect='equal', norm=norm, extent=grid_extent, interpolation='nearest')
 # cbar = plt.colorbar(label='', shrink=0.45)
 # cbar.set_ticks(ticks=[50, 150, 250, 350, 450, 550, 650, 750], labels=['r-4', 'r-5', 'r-6', 'g-4', 'z-4', 'z-5', 'm-4', 'm-6'])
-# wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-# wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+# wells_obs_y = observed_groundwater_heads["Zelle_y"].values * (50/1000)  # row IDs of the observation wells
+# wells_obs_x = observed_groundwater_heads["Zelle_x"].values * (50/1000)  # column IDs of the observation wells
 # plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=2, c='black')
 # plt.grid(zorder=0)
-# plt.xlabel('Distance in x-direction [m]')
-# plt.ylabel('Distance in y-direction [m]')
+# plt.xlabel('Distance in x-direction [km]')
+# plt.ylabel('Distance in y-direction [km]')
 # plt.tight_layout()
 # file = base_path_figs / f"fudge_regions_layer{i}.png"
 # fig.savefig(file, dpi=300)
@@ -808,11 +924,11 @@ fudge_regions_layer = np.where(mask9, 799, fudge_regions_layer)
 plt.imshow(fudge_regions_layer, cmap='PuBuGn', aspect='equal', norm=norm, extent=grid_extent, interpolation='nearest')
 cbar = plt.colorbar(label='$k_f$ [$m$ $s^{-1}$]', shrink=0.42)
 cbar.set_ticks(ticks=[150, 250, 350, 450, 550, 650, 750], labels=['1.9 x $10^{-7}$', '1.8 x $10^{-5}$', '1.8 x $10^{-4}$', '1.8 x $10^{-3}$', '2 x $10^{-3}$', '3 x $10^{-3}$', '4 x $10^{-3}$'])
-wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+wells_obs_y = observed_groundwater_heads["Zelle_y"].values * (50/1000)  # row IDs of the observation wells
+wells_obs_x = observed_groundwater_heads["Zelle_x"].values * (50/1000)  # column IDs of the observation wells
 plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=2, c='black')
-plt.xlabel('Distance in x-direction [m]')
-plt.ylabel('Distance in y-direction [m]')
+plt.xlabel('Distance in x-direction [km]')
+plt.ylabel('Distance in y-direction [km]')
 plt.tight_layout()
 file = base_path_figs / f"fudge_regions_layer{i}.png"
 fig.savefig(file, dpi=300)
@@ -847,11 +963,11 @@ fudge_regions_layer = np.where(mask9, 799, fudge_regions_layer)
 plt.imshow(fudge_regions_layer, cmap='PuBuGn', aspect='equal', norm=norm, extent=grid_extent, interpolation='nearest')
 cbar = plt.colorbar(label='$k_f$ [$m$ $s^{-1}$]', shrink=0.42)
 cbar.set_ticks(ticks=[150, 250, 350, 450, 550, 650, 750], labels=['1.9 x $10^{-7}$', '1.8 x $10^{-5}$', '1.8 x $10^{-4}$', '1.8 x $10^{-3}$', '2 x $10^{-3}$', '3 x $10^{-3}$', '4 x $10^{-3}$'])
-wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+wells_obs_y = observed_groundwater_heads["Zelle_y"].values * (50/1000)  # row IDs of the observation wells
+wells_obs_x = observed_groundwater_heads["Zelle_x"].values * (50/1000)  # column IDs of the observation wells
 plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=2, c='black')
-plt.xlabel('Distance in x-direction [m]')
-plt.ylabel('Distance in y-direction [m]')
+plt.xlabel('Distance in x-direction [km]')
+plt.ylabel('Distance in y-direction [km]')
 plt.tight_layout()
 file = base_path_figs / f"fudge_regions_layer{i}.png"
 fig.savefig(file, dpi=300)
@@ -886,11 +1002,11 @@ fudge_regions_layer = np.where(mask9, 799, fudge_regions_layer)
 plt.imshow(fudge_regions_layer, cmap="PuBuGn", aspect='equal', norm=norm, extent=grid_extent, interpolation='nearest')
 cbar = plt.colorbar(label='$k_f$ [$m$ $s^{-1}$]', shrink=0.42)
 cbar.set_ticks(ticks=[150, 250, 350, 450, 550, 650, 750], labels=['1.9 x $10^{-7}$', '1.8 x $10^{-5}$', '1.8 x $10^{-4}$', '1.8 x $10^{-3}$', '2 x $10^{-3}$', '3 x $10^{-3}$', '4 x $10^{-3}$'])
-wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+wells_obs_y = observed_groundwater_heads["Zelle_y"].values * (50/1000)  # row IDs of the observation wells
+wells_obs_x = observed_groundwater_heads["Zelle_x"].values * (50/1000)  # column IDs of the observation wells
 plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=2, c='black')
-plt.xlabel('Distance in x-direction [m]')
-plt.ylabel('Distance in y-direction [m]')
+plt.xlabel('Distance in x-direction [km]')
+plt.ylabel('Distance in y-direction [km]')
 plt.tight_layout()
 file = base_path_figs / f"fudge_regions_layer{i}.png"
 fig.savefig(file, dpi=300)
@@ -928,11 +1044,11 @@ plt.imshow(fudge_regions_zone1, cmap='Oranges', aspect='equal', norm=norm, exten
 cbar = plt.colorbar(label='$k_f$ [$m$ $s^{-1}$]', shrink=0.38)
 cbar.set_ticks(ticks=[150, 250, 350, 450, 550, 650, 750], labels=['1.9 x $10^{-7}$', '1.8 x $10^{-5}$', '1.8 x $10^{-4}$', '1.8 x $10^{-3}$', '2 x $10^{-3}$', '3 x $10^{-3}$', '4 x $10^{-3}$'])
 axes.imshow(fudge_regions_zone2, cmap='Blues', aspect='equal', norm=norm, extent=grid_extent, interpolation='nearest')
-wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+wells_obs_y = observed_groundwater_heads["Zelle_y"].values * (50/1000)  # row IDs of the observation wells
+wells_obs_x = observed_groundwater_heads["Zelle_x"].values * (50/1000)  # column IDs of the observation wells
 plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=2, c='magenta')
-plt.xlabel('Distance in x-direction [m]')
-plt.ylabel('Distance in y-direction [m]')
+plt.xlabel('Distance in x-direction [km]')
+plt.ylabel('Distance in y-direction [km]')
 plt.tight_layout()
 file = base_path_figs / f"fudge_regions_layer{i}_zonal1.png"
 fig.savefig(file, dpi=300)
@@ -970,11 +1086,11 @@ plt.imshow(fudge_regions_zone2, cmap='Blues', aspect='equal', norm=norm, extent=
 cbar = plt.colorbar(label='$k_f$ [$m$ $s^{-1}$]', shrink=0.38)
 cbar.set_ticks(ticks=[150, 250, 350, 450, 550, 650, 750], labels=['1.9 x $10^{-7}$', '1.8 x $10^{-5}$', '1.8 x $10^{-4}$', '1.8 x $10^{-3}$', '2 x $10^{-3}$', '3 x $10^{-3}$', '4 x $10^{-3}$'])
 axes.imshow(fudge_regions_zone1, cmap='Oranges', aspect='equal', norm=norm, extent=grid_extent, interpolation='nearest')
-wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+wells_obs_y = observed_groundwater_heads["Zelle_y"].values * (50/1000)  # row IDs of the observation wells
+wells_obs_x = observed_groundwater_heads["Zelle_x"].values * (50/1000)  # column IDs of the observation wells
 plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=2, c='magenta')
-plt.xlabel('Distance in x-direction [m]')
-plt.ylabel('Distance in y-direction [m]')
+plt.xlabel('Distance in x-direction [km]')
+plt.ylabel('Distance in y-direction [km]')
 plt.tight_layout()
 file = base_path_figs / f"fudge_regions_layer{i}_zonal2.png"
 fig.savefig(file, dpi=300)
@@ -1012,11 +1128,11 @@ plt.imshow(fudge_regions_zone2, cmap='Blues', aspect='equal', norm=norm, extent=
 cbar = plt.colorbar(label='$k_f$ [$m$ $s^{-1}$]', shrink=0.38)
 cbar.set_ticks(ticks=[150, 250, 350, 450, 550, 650, 750], labels=['1.9 x $10^{-7}$', '1.8 x $10^{-5}$', '1.8 x $10^{-4}$', '1.8 x $10^{-3}$', '2 x $10^{-3}$', '3 x $10^{-3}$', '4 x $10^{-3}$'])
 axes.imshow(fudge_regions_zone1, cmap='Oranges', aspect='equal', norm=norm, extent=grid_extent, interpolation='nearest')
-wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+wells_obs_y = observed_groundwater_heads["Zelle_y"].values * (50/1000)  # row IDs of the observation wells
+wells_obs_x = observed_groundwater_heads["Zelle_x"].values * (50/1000)  # column IDs of the observation wells
 plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=2, c='magenta')
-plt.xlabel('Distance in x-direction [m]')
-plt.ylabel('Distance in y-direction [m]')
+plt.xlabel('Distance in x-direction [km]')
+plt.ylabel('Distance in y-direction [km]')
 plt.tight_layout()
 file = base_path_figs / f"fudge_regions_layer{i}_zonal.png"
 fig.savefig(file, dpi=300)
@@ -1054,11 +1170,11 @@ plt.imshow(fudge_regions_zone2, cmap='Blues', aspect='equal', norm=norm, extent=
 cbar = plt.colorbar(label='$k_f$ [$m$ $s^{-1}$]', shrink=0.38)
 cbar.set_ticks(ticks=[150, 250, 350, 450, 550, 650, 750], labels=['1.9 x $10^{-7}$', '1.8 x $10^{-5}$', '1.8 x $10^{-4}$', '1.8 x $10^{-3}$', '2 x $10^{-3}$', '3 x $10^{-3}$', '4 x $10^{-3}$'])
 axes.imshow(fudge_regions_zone1, cmap='Oranges', aspect='equal', norm=norm, extent=grid_extent, interpolation='nearest')
-wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+wells_obs_y = observed_groundwater_heads["Zelle_y"].values * (50/1000)  # row IDs of the observation wells
+wells_obs_x = observed_groundwater_heads["Zelle_x"].values * (50/1000)  # column IDs of the observation wells
 plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=2, c='magenta')
-plt.xlabel('Distance in x-direction [m]')
-plt.ylabel('Distance in y-direction [m]')
+plt.xlabel('Distance in x-direction [km]')
+plt.ylabel('Distance in y-direction [km]')
 plt.tight_layout()
 file = base_path_figs / f"fudge_regions_layer{i}_zonal.png"
 fig.savefig(file, dpi=300)
@@ -1085,12 +1201,12 @@ plt.close(fig)
 # plt.imshow(fudge_regions_layer, cmap='viridis', aspect='equal', norm=norm, extent=grid_extent, interpolation='nearest')
 # cbar = plt.colorbar(label='', shrink=0.45)
 # cbar.set_ticks(ticks=[150, 250, 350, 450], labels=['-7', '-5', '-4', '-3'])
-# wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-# wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+# wells_obs_y = observed_groundwater_heads["Zelle_y"].values * (50/1000)  # row IDs of the observation wells
+# wells_obs_x = observed_groundwater_heads["Zelle_x"].values * (50/1000)  # column IDs of the observation wells
 # plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=2, c='black')
 # plt.grid(zorder=0)
-# plt.xlabel('Distance in x-direction [m]')
-# plt.ylabel('Distance in y-direction [m]')
+# plt.xlabel('Distance in x-direction [km]')
+# plt.ylabel('Distance in y-direction [km]')
 # plt.tight_layout()
 # file = base_path_figs / f"fudge_regions_layer{i}.png"
 # fig.savefig(file, dpi=300)
@@ -1123,12 +1239,12 @@ plt.close(fig)
 # plt.imshow(fudge_regions_layer, cmap='viridis', aspect='equal', norm=norm, extent=grid_extent, interpolation='nearest')
 # cbar = plt.colorbar(label='', shrink=0.45)
 # cbar.set_ticks(ticks=[50, 150, 250, 350, 450, 550, 650, 750, 850], labels=['r-4', 'r-5', 'r-6', 'g-4', 'z-4', 'z-6', 'm-4', 'm-5', 'm-6'])
-# wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-# wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+# wells_obs_y = observed_groundwater_heads["Zelle_y"].values * (50/1000)  # row IDs of the observation wells
+# wells_obs_x = observed_groundwater_heads["Zelle_x"].values * (50/1000)  # column IDs of the observation wells
 # plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=2, c='black')
 # plt.grid(zorder=0)
-# plt.xlabel('Distance in x-direction [m]')
-# plt.ylabel('Distance in y-direction [m]')
+# plt.xlabel('Distance in x-direction [km]')
+# plt.ylabel('Distance in y-direction [km]')
 # plt.tight_layout()
 # file = base_path_figs / f"fudge_regions_layer{i}.png"
 # fig.savefig(file, dpi=300)
@@ -1161,12 +1277,12 @@ plt.close(fig)
 # plt.imshow(fudge_regions_layer, cmap='Dark2', aspect='equal', norm=norm, extent=grid_extent)
 # cbar = plt.colorbar(label='', shrink=0.45)
 # cbar.set_ticks(ticks=[50, 150, 250, 350, 450, 550, 650, 750, 850], labels=['r-4', 'r-5', 'r-6', 'g-4', 'z-4', 'z-6', 'm-4', 'm-5', 'm-6'])
-# wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-# wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+# wells_obs_y = observed_groundwater_heads["Zelle_y"].values * (50/1000)  # row IDs of the observation wells
+# wells_obs_x = observed_groundwater_heads["Zelle_x"].values * (50/1000)  # column IDs of the observation wells
 # plt.scatter(wells_obs_x, wells_obs_y, marker='.', s=2, c='black')
 # plt.grid(zorder=0)
-# plt.xlabel('Distance in x-direction [m]')
-# plt.ylabel('Distance in y-direction [m]')
+# plt.xlabel('Distance in x-direction [km]')
+# plt.ylabel('Distance in y-direction [km]')
 # plt.tight_layout()
 # file = base_path_figs / f"fudge_regions_layer{i}.png"
 # fig.savefig(file, dpi=300)
@@ -1265,8 +1381,8 @@ plt.close(fig)
 #     plt.imshow(specific_yield_layer, extent=grid_extent, cmap='Oranges', aspect='equal')
 #     plt.colorbar(label='$n$ [-]', shrink=0.5)
 #     plt.grid(zorder=0)
-#     plt.xlabel('Distance in x-direction [m]')
-#     plt.ylabel('Distance in y-direction [m]')
+#     plt.xlabel('Distance in x-direction [km]')
+#     plt.ylabel('Distance in y-direction [km]')
 #     plt.tight_layout()
 #     file = base_path_figs / f"specific_yield_layer_{i}.png"
 #     fig.savefig(file, dpi=300)
@@ -1284,8 +1400,8 @@ plt.close(fig)
 # plt.imshow(thickness_layer1, extent=grid_extent, cmap='viridis', aspect='equal')
 # plt.colorbar(label='[m]', shrink=0.5)
 # plt.grid(zorder=0)
-# plt.xlabel('Distance in x-direction [m]')
-# plt.ylabel('Distance in y-direction [m]')
+# plt.xlabel('Distance in x-direction [km]')
+# plt.ylabel('Distance in y-direction [km]')
 # plt.tight_layout()
 # file = base_path_figs / f"thickness_layer1.png"
 # fig.savefig(file, dpi=300)
@@ -1301,8 +1417,8 @@ plt.close(fig)
 # plt.imshow(thickness_layer2, extent=grid_extent, cmap='viridis', aspect='equal', vmin=5, vmax=25)
 # plt.colorbar(label='[m]', shrink=0.5)
 # plt.grid(zorder=0)
-# plt.xlabel('Distance in x-direction [m]')
-# plt.ylabel('Distance in y-direction [m]')
+# plt.xlabel('Distance in x-direction [km]')
+# plt.ylabel('Distance in y-direction [km]')
 # plt.tight_layout()
 # file = base_path_figs / f"thickness_layer2.png"
 # fig.savefig(file, dpi=300)
@@ -1318,8 +1434,8 @@ plt.close(fig)
 # plt.imshow(thickness_layer3, extent=grid_extent, cmap='viridis', aspect='equal', vmin=5, vmax=25)
 # plt.colorbar(label='[m]', shrink=0.5)
 # plt.grid(zorder=0)
-# plt.xlabel('Distance in x-direction [m]')
-# plt.ylabel('Distance in y-direction [m]')
+# plt.xlabel('Distance in x-direction [km]')
+# plt.ylabel('Distance in y-direction [km]')
 # plt.tight_layout()
 # file = base_path_figs / f"thickness_layer3.png"
 # fig.savefig(file, dpi=300)
@@ -1335,8 +1451,8 @@ plt.close(fig)
 # plt.imshow(thickness_layer4, extent=grid_extent, cmap='viridis', aspect='equal', vmin=5, vmax=25)
 # plt.colorbar(label='[m]', shrink=0.5)
 # plt.grid(zorder=0)
-# plt.xlabel('Distance in x-direction [m]')
-# plt.ylabel('Distance in y-direction [m]')
+# plt.xlabel('Distance in x-direction [km]')
+# plt.ylabel('Distance in y-direction [km]')
 # plt.tight_layout()
 # file = base_path_figs / f"thickness_layer4.png"
 # fig.savefig(file, dpi=300)
@@ -1350,7 +1466,7 @@ plt.close(fig)
 #     axes[layer].plot(x, z, ls='-', lw=1, color='black')
 #     axes[layer].set_xlim(0, x[-1])
 #     axes[layer].set_ylim(0, )
-# axes[-1].set_xlabel('Distance in x-direction [m]')
+# axes[-1].set_xlabel('Distance in x-direction [km]')
 # axes[0].set_ylabel('layer 1 \n aquifer thickness \n[m]')
 # axes[1].set_ylabel('layer 2 \n aquifer thickness \n[m]')
 # axes[2].set_ylabel('layer 3 \n aquifer thickness \n[m]')
@@ -1369,7 +1485,7 @@ plt.close(fig)
 # axes.plot(x, elevation_bottom_layer4[82, :-1], ls='-', lw=1, color='black', alpha=0.6)
 # axes.set_xlim(0, x[-1])
 # # axes.set_ylim(0, )
-# axes.set_xlabel('Distance in x-direction [m]')
+# axes.set_xlabel('Distance in x-direction [km]')
 # axes.set_ylabel('elevation \n[m a.s.l.]')
 # fig.tight_layout()
 # file = base_path_figs / "gw_layers_cross_section_west-east_layer.png"
@@ -1389,8 +1505,8 @@ plt.close(fig)
 #     plt.imshow(transmissivity_layer, extent=grid_extent, cmap='Oranges', aspect='equal')
 #     plt.colorbar(label='$T$ [$m^2$/s]', shrink=0.5)
 #     plt.grid(zorder=0)
-#     plt.xlabel('Distance in x-direction [m]')
-#     plt.ylabel('Distance in y-direction [m]')
+#     plt.xlabel('Distance in x-direction [km]')
+#     plt.ylabel('Distance in y-direction [km]')
 #     plt.tight_layout()
 #     file = base_path_figs / f"transmissivity_layer_{i}.png"
 #     fig.savefig(file, dpi=300)
@@ -1404,11 +1520,11 @@ plt.close(fig)
 # fig, axes = plt.subplots(2, 1, figsize=(4, 6))
 # ax1 = axes[0].imshow(data1, extent=grid_extent, aspect='equal', vmin=0, vmax=int(np.nanmax(data1)))
 # fig.colorbar(ax1, shrink=0.45, label='[m/s]')
-# axes[0].set_xlabel('Distance in y-direction [m]')
-# axes[0].set_ylabel('Distance in x-direction [m]')
+# axes[0].set_xlabel('Distance in y-direction [km]')
+# axes[0].set_ylabel('Distance in x-direction [km]')
 # ax2 = axes[1].imshow(hydraulic_conductivities_layer1, extent=grid_extent, aspect='equal', vmin=0, vmax=int(np.nanmax(data1)))
-# axes[1].set_xlabel('Distance in y-direction [m]')
-# axes[1].set_ylabel('Distance in x-direction [m]')
+# axes[1].set_xlabel('Distance in y-direction [km]')
+# axes[1].set_ylabel('Distance in x-direction [km]')
 # fig.colorbar(ax2, shrink=0.45, label='[m/s]')
 # fig.tight_layout()
 # file = base_path_figs / "kf_comparison_layer1.png"
@@ -1418,11 +1534,11 @@ plt.close(fig)
 # fig, axes = plt.subplots(2, 1, figsize=(4, 6))
 # ax1 = axes[0].imshow(data1, extent=grid_extent, aspect='equal', vmin=0, vmax=int(np.nanmax(data1)))
 # fig.colorbar(ax1, shrink=0.45, label='[m/s]')
-# axes[0].set_xlabel('Distance in y-direction [m]')
-# axes[0].set_ylabel('Distance in x-direction [m]')
+# axes[0].set_xlabel('Distance in y-direction [km]')
+# axes[0].set_ylabel('Distance in x-direction [km]')
 # ax2 = axes[1].imshow(hydraulic_conductivities_layer2, extent=grid_extent, aspect='equal', vmin=0, vmax=int(np.nanmax(data1)))
-# axes[1].set_xlabel('Distance in y-direction [m]')
-# axes[1].set_ylabel('Distance in x-direction [m]')
+# axes[1].set_xlabel('Distance in y-direction [km]')
+# axes[1].set_ylabel('Distance in x-direction [km]')
 # fig.colorbar(ax2, shrink=0.45, label='[m/s]')
 # fig.tight_layout()
 # file = base_path_figs / "kf_comparison_layer2.png"
@@ -1435,8 +1551,8 @@ plt.close(fig)
 # plt.imshow(data, extent=grid_extent, cmap='Oranges', aspect='equal')
 # plt.colorbar(label='$k_f$ [mm/hour]', shrink=0.5)
 # plt.grid(zorder=0)
-# plt.xlabel('Distance in x-direction [m]')
-# plt.ylabel('Distance in y-direction [m]')
+# plt.xlabel('Distance in x-direction [km]')
+# plt.ylabel('Distance in y-direction [km]')
 # plt.tight_layout()
 # file = base_path_figs / f"hydraulic_conductivity_layer_2_mmh.png"
 # fig.savefig(file, dpi=300)

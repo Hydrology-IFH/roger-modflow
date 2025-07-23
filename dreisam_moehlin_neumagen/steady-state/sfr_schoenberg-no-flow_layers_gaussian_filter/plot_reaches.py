@@ -9,7 +9,7 @@ import yaml
 import click
 import matplotlib as mpl
 
-@click.option("-mr", "--model-run", type=int, default=0)
+@click.option("-mr", "--model-run", type=int, default=5)
 @click.command("main", short_help="Run MODFLOW in steady-state mode")
 def main(model_run):
     # run installed version of flopy or add local path
@@ -114,33 +114,33 @@ def main(model_run):
         man[x, y] = reaches.loc[rno, 'man']
         reach_layer[x, y] = z + 1
         if z == 0:
-            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 10
+            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 5
         elif z == 1:
-            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 10
-            hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * 10
+            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 5
+            hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * 5
         elif z == 2:
-            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 10
-            hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * 10
-            hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * 10
+            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 5
+            hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * 5
+            hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * 5
         elif z == 3:
-            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 10
-            hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * 10
-            hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * 10
-            hydraulic_conductivities_layer4[x, y] = hydraulic_conductivities_layer4[x, y] * 10 
+            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * 5
+            hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * 5
+            hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * 5
+            hydraulic_conductivities_layer4[x, y] = hydraulic_conductivities_layer4[x, y] * 5 
 
     # set the hydraulic conductivities of the streambed using the kf of the reach cell and decrease by a factor of 0.0005
     for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):
         if z == 0:
-            reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer1[x, y] * 2.5*10e-5
+            reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer1[x, y] * 0.0005
             kf_reach_cell[x, y] = hydraulic_conductivities_layer1[x, y] / 86400
         elif z == 1:
-            reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer2[x, y] * 2.5*10e-5
+            reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer2[x, y] * 0.0005
             kf_reach_cell[x, y] = hydraulic_conductivities_layer2[x, y] / 86400
         elif z == 2:
-            reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer3[x, y] * 2.5*10e-5
+            reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer3[x, y] * 0.0005
             kf_reach_cell[x, y] = hydraulic_conductivities_layer3[x, y] / 86400
         elif z == 3:
-            reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer4[x, y] * 2.5*10e-5
+            reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer4[x, y] * 0.0005
             kf_reach_cell[x, y] = hydraulic_conductivities_layer3[x, y] / 86400
         rhk[x, y] = reaches.loc[rno, 'rhk'] / 86400
         rwid[x, y] = reaches.loc[rno, 'rwid']

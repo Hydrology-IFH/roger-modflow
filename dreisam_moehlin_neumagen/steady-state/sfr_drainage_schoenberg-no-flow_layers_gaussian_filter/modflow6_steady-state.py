@@ -438,7 +438,7 @@ class ModFlowSimulation:
         }
         sfr = flopy.mf6.modflow.mfgwfsfr.ModflowGwfsfr(gwf, pname="sfr",
             time_conversion=86400, length_conversion=1.0, nreaches=nstrm, packagedata=packagedata, 
-            connectiondata=connectiondata, diversions=diversiondata, print_stage=True,
+            connectiondata=connectiondata, diversions=diversiondata, save_flows=True,
             maximum_depth_change=0.001, maximum_iterations=500, observations=obs_dict)
 
         # Create the drainage package (Neumann boundary condition i.e. second type)
@@ -470,10 +470,10 @@ class ModFlowSimulation:
 
         # Create the well package (Neumann boundary condition i.e. second type)
         # pumping rate in m3/day
-        wells_q = [5727, 5822, 3494, 4315, 4525, 2899, 6401, 7024, 3160, 1117, 920, 1340, 729]
+        wells_q = [5727, 5822, 3494, 4315, 4525, 2899, 6401, 7024, 3160, 1117, 920, 1340, 729, 831]
         # location of the wells
-        wells_y = [266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]
-        wells_x = [66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496]
+        wells_y = [266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264, 124]
+        wells_x = [66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496, 222]
         wel_rec = []
         for i in range(len(wells_x)):
             if i <= 5:

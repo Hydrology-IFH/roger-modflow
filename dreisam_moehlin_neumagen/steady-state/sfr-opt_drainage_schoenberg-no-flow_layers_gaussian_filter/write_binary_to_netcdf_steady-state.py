@@ -5,10 +5,11 @@ import xarray as xr
 import geoxarray
 import numpy as np
 import datetime
+import flopy.utils.binaryfile as bf
 
 import click
 
-@click.option("-mr", "--model-run", type=int, default=27)
+@click.option("-mr", "--model-run", type=int, default=5)
 @click.command("main")
 def main(model_run):
     try:
@@ -65,6 +66,7 @@ def main(model_run):
                 depth=(["Time", "layer", "lat", "lon"], np.where(hds.get_data()[np.newaxis, :, :, :] > 10000, np.nan, np.where(topography[np.newaxis, np.newaxis, :, :] - hds.get_data()[np.newaxis, :, :, :] > 0, topography[np.newaxis, np.newaxis, :, :] - hds.get_data()[np.newaxis, :, :, :], 0))),
                 flow_residual=(["Time", "layer", "lat", "lon"], residual[np.newaxis, :, :, :]),
                 specific_discharge=(["Time", "layer", "lat", "lon"], cbb.get_data(text="DATA-SPDIS", kstpkper=(0, 0), full3D=True)[0].filled(fill_value=np.nan)[np.newaxis, :, :, :]),
+                gw_sw=(["Time", "layer", "lat", "lon"], cbb.get_data(text="SFR", kstpkper=(0, 0), full3D=True)[0].filled(fill_value=np.nan)[np.newaxis, :, :, :]),
             )
 
         ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
@@ -74,8 +76,10 @@ def main(model_run):
         ds["depth"].attrs["long_name"] = "Groundwater depth"
         ds["flow_residual"].attrs["units"] = "m/day"
         ds["flow_residual"].attrs["long_name"] = "Flow residuals"
-        ds["specific_discharge"].attrs["units"] = "m/day"
+        ds["specific_discharge"].attrs["units"] = "m3/day"
         ds["specific_discharge"].attrs["long_name"] = "Groundwater flux"
+        ds["gw_sw"].attrs["units"] = "m3/day"
+        ds["gw_sw"].attrs["long_name"] = "Groundwater-surface water flux"
         # create spatial reference
         ds = ds.geo.write_crs("EPSG:25832")
         ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc

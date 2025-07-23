@@ -27,6 +27,7 @@ df_params_metrics["50E"] = np.nan
 df_params_metrics["MAE"] = np.nan
 df_params_metrics["50AE"] = np.nan
 df_params_metrics["RBIAS"] = np.nan
+df_params_metrics["RABIAS"] = np.nan
 df_params_metrics["r_rank"] = np.nan
 df_params_metrics["r_lin"] = np.nan
 df_params_metrics["n_5m"] = np.nan
@@ -51,15 +52,15 @@ dict_obs_stage_id = {
         "MUENSTERTAL_STAGE": 14854,
 }
 
-dict_obs_stage_depth_id = {
-        "FALKENSTEIG_FLOW": 23614,
-        "EBNET_FLOW": 23888,
-        "EHRENKIRCHEN_FLOW": 22337,
-        "MUENSTERTAL_FLOW": 14854,
+dict_obs_water_depth_id = {
+        "FALKENSTEIG_water_depth": 23614,
+        "EBNET_water_depth": 23888,
+        "EHRENKIRCHEN_water_depth": 22337,
+        "MUENSTERTAL_water_depth": 14854,
 }
 
 dict_obs_stage_id_inv = {v: k for k, v in dict_obs_stage_id.items()}
-dict_obs_stage_depth_id_inv = {v: k for k, v in dict_obs_stage_depth_id.items()}
+dict_obs_water_depth_id_inv = {v: k for k, v in dict_obs_water_depth_id.items()}
 
 # load the SFR reaches
 reaches = pd.read_csv(base_path.parent / 'input' / 'sfr_packagedata.csv', sep=';')
@@ -94,6 +95,7 @@ for model_run in range(0, 5000):
         df_params_metrics.loc[model_run, "50AE"] = np.median(np.abs(sim - obs))
         # calculate relative bias
         df_params_metrics.loc[model_run, "RBIAS"] = np.mean((sim_depth - obs_depth) / obs_depth)
+        df_params_metrics.loc[model_run, "RABIAS"] = np.mean(np.abs((sim_depth - obs_depth) / obs_depth))
         # calculate spearman correlation
         df_params_metrics.loc[model_run, "r_rank"] = sp.stats.spearmanr(sim_depth, obs_depth)[0]
         # calculate spearman correlation
@@ -109,7 +111,7 @@ for model_run in range(0, 5000):
         output_file = base_path / "output" / f"dmn_run_{model_run}_sfr.obs.csv"
         df_sfr_ = pd.read_csv(output_file, sep=",")
 
-        df_sfr = pd.DataFrame(index=["falkensteig", "ebnet", "ehrenkirchen", "muenstertal"], columns=["rno", "layer", "x", "y", "rlen", "rwid", "rtp" "rgrd", "man", "rhk", "stage_depth", "flow"])
+        df_sfr = pd.DataFrame(index=["falkensteig", "ebnet", "ehrenkirchen", "muenstertal"], columns=["rno", "layer", "x", "y", "rlen", "rwid", "rtp" "rgrd", "man", "rhk", "water_depth", "flow"])
         df_sfr["rno"] = [23614, 23888, 22337, 14854]
         for rno in df_sfr["rno"].values:
             df_sfr.loc[df_sfr["rno"] == rno, "layer"] = reaches.loc[reaches["rno"] == rno, "k"].values[0]
@@ -119,18 +121,21 @@ for model_run in range(0, 5000):
             df_sfr.loc[df_sfr["rno"] == rno, "rwid"] = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
             df_sfr.loc[df_sfr["rno"] == rno, "rtp"] = reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
             df_sfr.loc[df_sfr["rno"] == rno, "rgrd"] = reaches.loc[reaches["rno"] == rno, "rgrd"].values[0]
-            stage_width = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
-            stage_depth = df_sfr_.loc[0, dict_obs_stage_id_inv[rno]] - reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
-            df_sfr.loc[df_sfr["rno"] == rno, "stage_depth"] = stage_depth
-            flow = (df_sfr_.loc[0, dict_obs_stage_depth_id_inv[rno]] * (-1)) / 86400
-            df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * stage_depth * stage_width
+            rwidth = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
+            water_depth = df_sfr_.loc[0, dict_obs_stage_id_inv[rno]] - reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
+            df_sfr.loc[df_sfr["rno"] == rno, "water_depth"] = water_depth
+            flow = (df_sfr_.loc[0, dict_obs_water_depth_id_inv[rno]] * (-1)) / 86400
+            df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * water_depth / rwidth
 
-        sim_water_depth = df_sfr["stage_depth"].values
+        sim_water_depth = df_sfr["water_depth"].values
         obs_water_depth = observed_streamflow["WDavg"].values
 
-        df_params_metrics.loc[model_run, "MAE_sfr"] = np.mean(np.abs(sim_stage_depth - obs_stage_depth))
-        df_params_metrics.loc[model_run, "ME_sfr"] = np.mean(sim_stage_depth - obs_stage_depth)
-        df_params_metrics.loc[model_run, "RBIAS_sfr"] = np.mean((sim_stage_depth - obs_stage_depth) / obs_stage_depth)
+        df_params_metrics.loc[model_run, "MAE_sfr"] = np.mean(np.abs(sim_water_depth - obs_water_depth))
+        df_params_metrics.loc[model_run, "ME_sfr"] = np.mean(sim_water_depth - obs_water_depth)
+        df_params_metrics.loc[model_run, "RBIAS_sfr"] = np.mean((sim_water_depth - obs_water_depth) / obs_water_depth)
+        df_params_metrics.loc[model_run, "RABIAS_sfr"] = np.mean(np.abs((sim_water_depth - obs_water_depth) / obs_water_depth))
+        df_params_metrics.loc[model_run, "E_multi"] = ((1 - df_params_metrics.loc[model_run, "r_rank"]) + ((41/45) * (df_params_metrics.loc[model_run, "RABIAS_sfr"]) + (4/45) * (df_params_metrics.loc[model_run, "RBIAS_sfr"]))) / 2
+
 
 # save the metrics
 path = base_path / "fudge_parameters_metrics_porous.csv"
@@ -147,6 +152,7 @@ df_params_metrics["50E"] = np.nan
 df_params_metrics["MAE"] = np.nan
 df_params_metrics["50AE"] = np.nan
 df_params_metrics["RBIAS"] = np.nan
+df_params_metrics["RABIAS"] = np.nan
 df_params_metrics["r_rank"] = np.nan
 df_params_metrics["r_lin"] = np.nan
 df_params_metrics["n_5m"] = np.nan
@@ -188,6 +194,7 @@ for model_run in range(0, 5000):
         df_params_metrics.loc[model_run, "50AE"] = np.median(np.abs(sim - obs))
         # calculate relative bias
         df_params_metrics.loc[model_run, "RBIAS"] = np.mean((sim_depth - obs_depth) / obs_depth)
+        df_params_metrics.loc[model_run, "RABIAS"] = np.mean(np.abs((sim_depth - obs_depth) / obs_depth))
         # calculate spearman correlation
         df_params_metrics.loc[model_run, "r_rank"] = sp.stats.spearmanr(sim_depth, obs_depth)[0]
         # calculate spearman correlation
@@ -203,7 +210,7 @@ for model_run in range(0, 5000):
         output_file = base_path / "output" / f"dmn_run_{model_run}_sfr.obs.csv"
         df_sfr_ = pd.read_csv(output_file, sep=",")
 
-        df_sfr = pd.DataFrame(index=["falkensteig", "ebnet", "ehrenkirchen", "muenstertal"], columns=["rno", "layer", "x", "y", "rlen", "rwid", "rtp" "rgrd", "man", "rhk", "stage_depth", "flow"])
+        df_sfr = pd.DataFrame(index=["falkensteig", "ebnet", "ehrenkirchen", "muenstertal"], columns=["rno", "layer", "x", "y", "rlen", "rwid", "rtp" "rgrd", "man", "rhk", "water_depth", "flow"])
         df_sfr["rno"] = [23614, 23888, 22337, 14854]
         for rno in df_sfr["rno"].values:
             df_sfr.loc[df_sfr["rno"] == rno, "layer"] = reaches.loc[reaches["rno"] == rno, "k"].values[0]
@@ -213,18 +220,20 @@ for model_run in range(0, 5000):
             df_sfr.loc[df_sfr["rno"] == rno, "rwid"] = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
             df_sfr.loc[df_sfr["rno"] == rno, "rtp"] = reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
             df_sfr.loc[df_sfr["rno"] == rno, "rgrd"] = reaches.loc[reaches["rno"] == rno, "rgrd"].values[0]
-            stage_width = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
-            stage_depth = df_sfr_.loc[0, dict_obs_stage_id_inv[rno]] - reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
-            df_sfr.loc[df_sfr["rno"] == rno, "stage_depth"] = stage_depth
-            flow = (df_sfr_.loc[0, dict_obs_stage_depth_id_inv[rno]] * (-1)) / 86400
-            df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * stage_depth * stage_width
+            rwidth = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
+            water_depth = df_sfr_.loc[0, dict_obs_stage_id_inv[rno]] - reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
+            df_sfr.loc[df_sfr["rno"] == rno, "water_depth"] = water_depth
+            flow = (df_sfr_.loc[0, dict_obs_water_depth_id_inv[rno]] * (-1)) / 86400
+            df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * water_depth / rwidth
 
-        sim_stage_depth = df_sfr["flow"].values
-        obs_stage_depth = observed_streamflow["Qavg"].values
+        sim_water_depth = df_sfr["water_depth"].values
+        obs_water_depth = observed_streamflow["WDavg"].values
 
-        df_params_metrics.loc[model_run, "MAE_sfr"] = np.mean(np.abs(sim_stage_depth - obs_stage_depth))
-        df_params_metrics.loc[model_run, "ME_sfr"] = np.mean(sim_stage_depth - obs_stage_depth)
-        df_params_metrics.loc[model_run, "RBIAS_sfr"] = np.mean((sim_stage_depth - obs_stage_depth) / obs_stage_depth)
+        df_params_metrics.loc[model_run, "MAE_sfr"] = np.mean(np.abs(sim_water_depth - obs_water_depth))
+        df_params_metrics.loc[model_run, "ME_sfr"] = np.mean(sim_water_depth - obs_water_depth)
+        df_params_metrics.loc[model_run, "RBIAS_sfr"] = np.mean((sim_water_depth - obs_water_depth) / obs_water_depth)
+        df_params_metrics.loc[model_run, "RABIAS_sfr"] = np.mean(np.abs((sim_water_depth - obs_water_depth) / obs_water_depth))
+        df_params_metrics.loc[model_run, "E_multi"] = ((1 - df_params_metrics.loc[model_run, "r_rank"]) + ((41/45) * (df_params_metrics.loc[model_run, "RABIAS_sfr"]) + (4/45) * (df_params_metrics.loc[model_run, "RBIAS_sfr"]))) / 2
 
 
 # save the metrics

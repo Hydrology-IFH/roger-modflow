@@ -170,7 +170,7 @@ def main(model_run):
     reaches.iloc[:, 13] = reaches.iloc[:, 13].astype(int)
 
     # increase the hydraulic conductivities of the reach cell by a factor of xx
-    xx = 3.0
+    xx = 3.2
     for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):
         if z == 0:
             hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * xx
@@ -203,6 +203,38 @@ def main(model_run):
 
     hydraulic_conductivities_layers = [hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4]
 
+    reaches = pd.read_csv(base_path.parent / 'input' / 'sfr_packagedata.csv', sep=';')
+    reaches.iloc[:, 0] = reaches.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
+    reaches.iloc[:, 1] = reaches.iloc[:, 1].astype(int) - 1
+    reaches.iloc[:, 2] = reaches.iloc[:, 2].astype(int) - 1  # convert to zero-based indexing
+    reaches.iloc[:, 3] = reaches.iloc[:, 3].astype(int) - 1  # convert to zero-based indexing
+    reaches.iloc[:, 4] = reaches.iloc[:, 4].astype(float) 
+    reaches.iloc[:, 5] = reaches.iloc[:, 5].astype(int)
+    reaches.iloc[:, 6] = reaches.iloc[:, 6].astype(float)
+    reaches.iloc[:, 7] = reaches.iloc[:, 7].astype(float)
+    reaches.iloc[:, 8] = reaches.iloc[:, 8].astype(float)
+    reaches.iloc[:, 9] = reaches.iloc[:, 9].astype(float)
+    reaches.iloc[:, 10] = reaches.iloc[:, 10].astype(float)
+    reaches.iloc[:, 11] = reaches.iloc[:, 11].astype(int)
+    reaches.iloc[:, 12] = reaches.iloc[:, 12].astype(float)
+    reaches.iloc[:, 13] = reaches.iloc[:, 13].astype(int)
+
+    cond = np.isnan(reaches['rwid'])
+    reaches.loc[cond, 'rwid'] = 1.0  # set width to 1 m where it is NaN
+    cond_widht0 = (reaches.loc[:, 'rwid'] <= 1.0)
+    reaches.loc[cond_widht0, 'rwid'] = 1.0  # set width to 1 m if it is smaller than 1 m
+
+    rwid = np.empty_like(topography)
+    rwid[:, :] = np.nan
+    rlen = np.empty_like(topography)
+    rlen[:, :] = np.nan
+
+    # set the hydraulic conductivities of the streambed using the kf of the reach cell and decrease by a factor of 0.0005
+    for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):
+        rwid[x, y] = reaches.loc[rno, 'rwid']
+        rlen[x, y] = reaches.loc[rno, 'rlen']
+    rarea = rlen * rwid
+    
     model_type = "steady-state"
     base_path_figs = base_path / "figures"
     sim = flopy.mf6.MFSimulation.load(
@@ -217,6 +249,63 @@ def main(model_run):
     # load the netcdf file
     output_file = base_path / "output" / f"modflow_output_run_{model_run}.nc"
     ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
+
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(rarea, extent=grid_extent, cmap='Oranges', aspect='equal', vmin=0, vmax=1000)
+    plt.colorbar(label='GW-SW flow area \n[$m^s$]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
+    plt.tight_layout()
+    file = base_path_figs / "reach_area.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+    # plot the groundwater-surface water interaction
+    gw_sw = np.nanmean(ds_mf['gw_sw'].isel(Time=0).values, axis=0) / 86400
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(gw_sw * (-1), extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-0.01, vmax=0.01)
+    plt.colorbar(label='GW-SW flux \n[$m^3$/s]', shrink=0.5)
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
+    plt.tight_layout()
+    file = base_path_figs / f"gw-sw_steady_state_grid_{model_run}_m3_s.png"
+    fig.savefig(file, dpi=600)
+    plt.close("all")
+
+    minmax = np.nanmax(np.abs(gw_sw))
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(gw_sw * (-1), extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-minmax, vmax=minmax)
+    plt.colorbar(label='GW-SW flux \n[$m^3$/s]', shrink=0.5)
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
+    plt.tight_layout()
+    file = base_path_figs / f"gw-sw_steady_state_grid_{model_run}_m3_s_.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+    gw_sw = np.nanmean(ds_mf['gw_sw'].isel(Time=0).values, axis=0) / rarea
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(gw_sw * (-1), extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-10, vmax=10)
+    plt.colorbar(label='GW-SW flux \n[mm/day]', shrink=0.5)
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
+    plt.tight_layout()
+    file = base_path_figs / f"gw-sw_steady_state_grid_{model_run}_mm_day.png"
+    fig.savefig(file, dpi=600)
+    plt.close("all")
+
+    minmax = np.nanmax(np.abs(gw_sw))
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(gw_sw * (-1), extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-minmax, vmax=minmax)
+    plt.colorbar(label='GW-SW flux \n[mm/day]', shrink=0.5)
+    plt.xlabel('Distance in x-direction [m]')
+    plt.ylabel('Distance in y-direction [m]')
+    plt.tight_layout()
+    file = base_path_figs / f"gw-sw_steady_state_grid_{model_run}_mm_day_.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
 
     x = np.cumsum(ds_mf.lon.values - ds_mf.lon.values[0])
     y = np.cumsum(ds_mf.lat.values - ds_mf.lat.values[-1])
