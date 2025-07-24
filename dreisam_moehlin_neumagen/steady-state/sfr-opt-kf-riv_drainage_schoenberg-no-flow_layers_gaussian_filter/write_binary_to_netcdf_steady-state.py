@@ -9,7 +9,7 @@ import flopy.utils.binaryfile as bf
 
 import click
 
-@click.option("-mr", "--model-run", type=int, default=50)
+@click.option("-mr", "--model-run", type=int, default=184)
 @click.command("main")
 def main(model_run):
     try:
