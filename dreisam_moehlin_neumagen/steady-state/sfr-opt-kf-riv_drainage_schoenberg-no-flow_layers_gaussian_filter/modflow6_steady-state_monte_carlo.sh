@@ -5,8 +5,8 @@
 # python modify_elevations.py
 # python modify_hydraulic_conductivity_and_specific_yield_of_layer1.py
 # python generate_boundary_conditions.py
-python write_fudge_parameters.py
-for i in {0..10000}
+# python write_fudge_parameters.py
+for i in {182..10000}
 do
     python modflow6_steady-state.py --model-run $i
     python write_binary_to_netcdf_steady-state.py --model-run $i
