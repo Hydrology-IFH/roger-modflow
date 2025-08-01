@@ -1,25 +1,23 @@
-# Moehlin catchment
+# Dreisam-Moehlin-Neumagen catchment
 
-Simulation of the soil water and groundwater of the Moehlin catchment (Germany) using MODFLOW coupled with RoGeR. The models are coupled online (i.e. variables/boundary conditions are updated after every time step).
+Steady-state optimazation of different MODFLOW6 setups (i.e. different combinations of MODFLOW6 packages) of the Dreisam-Moehlin-Neumagen catchment.
 
-Short description of files and folders:
-- `input/`: contains precipitation data (`PREC.txt`; 10 minutes time steps), air temperature data (`TA.txt`; daily time steps) and potential evapotranspiration data (`PET.txt`; daily time steps).
-- `output/`: contains the model output
-- `figures/`: contains the figures
-- `elevation.tiff`: Topography of the hillslope
-- `config.yml`: File to set parameters and output variables of RoGeR
-- `write_parameters_to_csv_for_SVAT.py`: Generates model parameters (`parameters.csv`) and writes model parameter file of RoGeR with vertical fluxes only
-- `write_parameters_to_csv_for_ONED.py`: Generates model parameters (`parameters.csv`) and writes model parameter file of RoGeR with lateral fluxes (i.e. no transfer between grid cells)
-- `calculate_PET_for_climate_projections.py`: Calculates potential evapotranspiration from projected air temperature and projected solar radiation using the Makkink formula.
-- `parameters.csv`: Model parameters of RoGeR
-- `modflow6_steady-state.py`: Python script to run MODFLOW6 using xmipy for steady-state simulations
-- `roger-xxxx_modflow6_transient.py`: Python script to run RoGeR and MODFLOW6 using xmipy for transient simulations (`xxxx` represents the model structure either SVAT or ONED). SVAT means only vertical fluxes are considered. ONED includes lateral fluxes.
-- `export_binary_output_to_netcdf.py`: Writes the MODFLOW6 output into a single netCDF file
-- `plot_input_data.py`: Plots the topography and model parameters (e.g. hydraulic conductivity)
-- `plot_groundwater_heads.py`: Plots the groundwater head at different time steps
-- `plot_time_series.py`: Plots observed and simulated groundwater head time series and simulated recharge time series
-- `make_gif.py`: Animated visualisation of spatially distributed simulations of the groundwater recharge and groundwater head
-- `test_regrid.py`: Minimal working example for the spatial aggregation (from finer to coarser resolution and from coarser to finer resolution)
+## Topography
+
+## Hydraulic conductivities
+
+## Reacharge
+
+## Constant head
+
+## Wells
+
+## Drainage area
+
+## Groundwater - surface water interaction
+
+## Observations
+
 
 Workflow:
 1. Run `plot_input_data.py`
