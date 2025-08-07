@@ -9,7 +9,6 @@ from shapely.geometry import box
 import xarray as xr
 import flopy
 import sfrmaker
-from sfrmaker import StructuredGrid
 
 base_path = Path(__file__).parent
 
@@ -110,7 +109,7 @@ _domain[mask] = 1
 _domain[~mask] = 0
 
 # repair the geometries of the shapefile with river segment
-df = gpd.read_file(base_path / 'input' / 'streamflow_routing' / 'awgn_gew.shp')
+df = gpd.read_file(base_path / 'input' / 'streamflow_routing' / 'awgn_streams.shp')
 for i in range(len(df)):
     geom = df.geometry[i]
     if geom:
@@ -131,10 +130,10 @@ for i in range(len(df)):
         df.at[i, 'geometry'] = line
 
 # write the modified shapefile with reversed lines
-df.to_file(base_path / 'input' / 'streamflow_routing' / 'awgn_gew_repaired.shp', driver='ESRI Shapefile')
+df.to_file(base_path / 'input' / 'streamflow_routing' / 'awgn_streams_repaired.shp', driver='ESRI Shapefile')
 
 # load shapefile with river segments
-custom_segments = sfrmaker.Lines.from_shapefile(shapefile=base_path / 'input' / 'streamflow_routing' / 'awgn_gew_repaired.shp',
+custom_segments = sfrmaker.Lines.from_shapefile(shapefile=base_path / 'input' / 'streamflow_routing' / 'awgn_streams_repaired.shp',
                                              id_column='GEW_ID',  # arguments to sfrmaker.Lines.from_shapefile
                                              routing_column='VOR_GEW_ID',
                                              width1_column='width_up',
@@ -153,15 +152,16 @@ custom_segments.df.loc[cond2, 'width2'] = 1
 # # remove segments with no geometry
 # custom_segments.df = custom_segments.df[custom_segments.df.geometry.notnull()]
 # file_active_area = base_path.parent / 'input' / 'streamflow_routing' / 'active_area_grid.shp'
-# grid = StructuredGrid.from_modelgrid(flopy_grid, crs=25832, active_area=file_active_area)
+# grid = flopy.discretization.StructuredGrid.from_modelgrid(flopy_grid, crs=25832, active_area=file_active_area)
 # reach_data = custom_segments.intersect(grid)
 # custom_segments.make_routing_one_to_one()
 # custom_segments.write_shapefile(outshp=base_path / 'output' / 'flowlines.shp')  
 
 # make the data for the SFR package
+# add_outlets=[4328, 11391, 11157, 3766, 11151, 11279, 3878, 11279, 8118]
 file_active_area = base_path / 'input' / 'streamflow_routing' / 'active_area_grid.shp'
 sfrdata = custom_segments.to_sfr(grid=flopy_grid, model=gwf, active_area=file_active_area, 
-                                 model_length_units='meters', consolidate_conductance=True, add_outlets=[4328, 11391, 11157, 3766, 11151, 11279, 3878, 11279, 8118])
+                                 model_length_units='meters', consolidate_conductance=True)
 
 # reverse the reach numbers for each river segment
 # line_ids = np.unique(sfrdata.reach_data['line_id'].values).tolist()
@@ -213,5 +213,5 @@ for rno, i, j in zip(sfrdata.reach_data['rno'], sfrdata.reach_data['i'], sfrdata
 
 # write the SFR package  
 sfrdata.write_package(version='mf6', idomain=domain_layers)
-sfrdata.write_tables(str(base_path / "output" / "output"))
-sfrdata.write_shapefiles(str(base_path / "output" / "output"))
+sfrdata.write_tables(str(base_path / 'input' / 'streamflow_routing'))
+sfrdata.write_shapefiles(str(base_path / 'input' / 'streamflow_routing'))
