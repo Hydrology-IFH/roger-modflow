@@ -158,10 +158,9 @@ custom_segments.df.loc[cond2, 'width2'] = 1
 # custom_segments.write_shapefile(outshp=base_path / 'output' / 'flowlines.shp')  
 
 # make the data for the SFR package
-# add_outlets=[4328, 11391, 11157, 3766, 11151, 11279, 3878, 11279, 8118]
 file_active_area = base_path / 'input' / 'streamflow_routing' / 'active_area_grid.shp'
 sfrdata = custom_segments.to_sfr(grid=flopy_grid, model=gwf, active_area=file_active_area, 
-                                 model_length_units='meters', consolidate_conductance=True)
+                                 model_length_units='meters', consolidate_conductance=True, add_outlets=[20882, 23424, 25023, 24079, 24479, 25180, 24950, 21891, 24410])
 
 # reverse the reach numbers for each river segment
 # line_ids = np.unique(sfrdata.reach_data['line_id'].values).tolist()

@@ -85,14 +85,14 @@ class ModFlowSimulation:
 
         # Create the Flopy groundwater flow (gwf) model object
         model_nam_file = "{}.nam".format(name)
-        gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file, newtonoptions="NEWTON UNDER_RELAXATION")
+        gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file, newtonoptions="NEWTON")
 
         # Create the Flopy iterative model solver (ims) Package object
         ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="all",
-                                                 complexity="COMPLEX",
-                                                 outer_maximum=50, inner_maximum=500,
+                                                 no_ptcrecord="NO_PTC_ALL",
+                                                 outer_maximum=50, inner_maximum=200,
                                                  outer_dvclose=0.1, inner_dvclose=0.1,
-                                                 no_ptcrecord="NO_PTC_ALL")
+                                                 linear_acceleration="BICGSTAB")
 
         # Now that the overall simulation is set up, we can focus on building the groundwater flow model.  The groundwater flow model will be built by adding packages to it that describe the model characteristics.
         #
@@ -484,7 +484,7 @@ class ModFlowSimulation:
     def finalize(self):
         self.mf6.finalize()
 
-@click.option("-mr", "--model-run", type=int, default=27)
+@click.option("-mr", "--model-run", type=int, default=5)
 @click.command("main", short_help="Run MODFLOW in steady-state mode")
 def main(model_run):
     file_config = base_path / "config.yml"
