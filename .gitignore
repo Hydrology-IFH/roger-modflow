@@ -90,3 +90,4 @@ dreisam_moehlin_neumagen/steady-state/input/sfr_packagedata.txt
 dreisam_moehlin_neumagen/steady-state/input/sfr_packagedata_modified.csv
 dreisam_moehlin_neumagen/steady-state/input/sfr_packagedata_modified.gpkg
 dreisam_moehlin_neumagen/steady-state/input/streamflow_routing_sfr_segment_data.csv
+fudge_parameters_modflow.csv
