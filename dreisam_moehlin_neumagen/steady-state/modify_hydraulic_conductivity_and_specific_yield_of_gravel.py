@@ -1,5 +1,4 @@
 import h5netcdf
-import xarray as xr
 from pathlib import Path
 import numpy as np
 

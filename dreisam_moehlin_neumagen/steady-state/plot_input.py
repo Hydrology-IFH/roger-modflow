@@ -8,7 +8,6 @@ import pandas as pd
 import xarray as xr
 import rasterio
 import scipy as sp
-import yaml
 
 # run installed version of flopy or add local path
 try:

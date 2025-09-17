@@ -1,6 +1,4 @@
-import sys
 from pathlib import Path
-import flopy
 import xarray as xr
 import geoxarray
 import datetime

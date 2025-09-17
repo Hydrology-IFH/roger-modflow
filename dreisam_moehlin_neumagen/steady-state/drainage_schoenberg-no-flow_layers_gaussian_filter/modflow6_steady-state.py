@@ -456,12 +456,14 @@ class ModFlowSimulation:
         t0 = time()
         try:
             # convergence loop
-            for _ in range(self.max_iter):
-                has_converged = self.mf6.solve(1)
+            while (time.now() - t0).totalseconds() <= 180:
+                for _ in range(self.max_iter):
+                    has_converged = self.mf6.solve(1)
 
-                if has_converged:
-                    complete = 1
-                    break
+                    if has_converged:
+                        complete = 1
+                        break
+            
         except TimeoutError:
             has_converged = False
             print("MODFLOW numerical solver timed out")
@@ -471,8 +473,11 @@ class ModFlowSimulation:
 
         self.mf6.finalize_time_step()
 
-        if self.verbose:
+        if self.verbose and complete == 1:
             print(f'MODFLOW timestep {int(self.mf6.get_current_time())} converged in {round(time() - t0, 2)} seconds')
+
+        elif self.verbose and complete == 0:
+            print(f'MODFLOW timestep {int(self.mf6.get_current_time())} did not converge in {round(time() - t0, 2)} seconds')
         
         # If next step exists, prepare timestep. Otherwise the data set through the bmi
         # will be overwritten when preparing the next timestep.

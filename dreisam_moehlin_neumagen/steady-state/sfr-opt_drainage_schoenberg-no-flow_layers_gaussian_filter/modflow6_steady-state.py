@@ -234,9 +234,9 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer3[mask433] = hydraulic_conductivities_layer3[mask433] * fudge_parameters['4-3_3'].values[model_run]
 
         # prepare SFR data
-        reaches = pd.read_csv(base_path.parent / 'input' / 'sfr_packagedata.csv', sep=';')
+        reaches = pd.read_csv(base_path.parent / 'input' / 'sfr_packagedata_modified.csv', sep=';')
         reaches.iloc[:, 0] = reaches.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
-        reaches.iloc[:, 1] = reaches.iloc[:, 1].astype(int) - 1
+        reaches.iloc[:, 1] = reaches.iloc[:, 1].astype(int) - 1 # convert to zero-based indexing
         reaches.iloc[:, 2] = reaches.iloc[:, 2].astype(int) - 1  # convert to zero-based indexing
         reaches.iloc[:, 3] = reaches.iloc[:, 3].astype(int) - 1  # convert to zero-based indexing
         reaches.iloc[:, 4] = reaches.iloc[:, 4].astype(float) 
@@ -249,9 +249,11 @@ class ModFlowSimulation:
         reaches.iloc[:, 11] = reaches.iloc[:, 11].astype(int)
         reaches.iloc[:, 12] = reaches.iloc[:, 12].astype(float)
         reaches.iloc[:, 13] = reaches.iloc[:, 13].astype(int)
+        reaches.iloc[:, 15] = reaches.iloc[:, 15].astype(float)
+        reaches.iloc[:, 16] = reaches.iloc[:, 16].astype(int)
 
         # increase the hydraulic conductivities of the reach cell by a factor of xx
-        xx = 3.2
+        xx = 3.0
         for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):
             if z == 0:
                 hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * xx
@@ -282,30 +284,23 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer3[~mask] = np.nan
         hydraulic_conductivities_layer4[~mask] = np.nan
 
-        # set the Manning’s roughness coefficient depending on the streambed gradient
-        cond1 = (reaches['rgrd'] <= 0.0006)
-        cond2 = (reaches['rgrd'] > 0.0006) & (reaches['rgrd'] <= 0.0025)
-        cond3 = (reaches['rgrd'] > 0.0025) & (reaches['rgrd'] <= 0.01)
-        cond4 = (reaches['rgrd'] > 0.01) & (reaches['rgrd'] <= 0.04)
-        cond5 = (reaches['rgrd'] > 0.04) & (reaches['rgrd'] <= 0.07)
-        cond6 = (reaches['rgrd'] > 0.07)
-        reaches.loc[cond1, 'man'] = 1/50
-        reaches.loc[cond2, 'man'] = 1/30
-        reaches.loc[cond3, 'man'] = 1/25
-        reaches.loc[cond4, 'man'] = 1/20
-        reaches.loc[cond5, 'man'] = 1/15
-        reaches.loc[cond6, 'man'] = 1/10
+        # modify the manning's n and hydraulic conductivity of the streambed based on the fraction of channelisation
+        reaches['man'] = (1 - reaches['fc']) * reaches['man']
+        reaches['rhk'] = (1 - reaches['fc']) * reaches['rhk']
 
-        # set the hydraulic conductivities of the streambed using the kf of the reach cell and decrease by a factor of xxx
-        for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):
-            if z == 0:
-                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer1[x, y] * fudge_parameters['rhk'].values[model_run]
-            elif z == 1:
-                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer2[x, y] * fudge_parameters['rhk'].values[model_run]
-            elif z == 2:
-                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer3[x, y] * fudge_parameters['rhk'].values[model_run]
-            elif z == 3:
-                reaches.loc[rno, 'rhk'] = hydraulic_conductivities_layer4[x, y] * fudge_parameters['rhk'].values[model_run]
+        # modify the manning's n and hydraulic conductivity of the streambed based on the degree of alteration (5=partly, 6=strongly, 7=very strongly)
+        cond = (reaches['ss'] == 5)
+        reaches.loc[cond, 'rhk'] = 10e-5
+        cond = (reaches['ss'] == 6)
+        reaches.loc[cond, 'rhk'] = 10e-6
+        cond = (reaches['ss'] == 7)
+        reaches.loc[cond, 'rhk'] = 10e-7
+
+        # set lower limits for manning's n and hydraulic conductivity of the streambed
+        cond = (reaches['man'] <= 0.12)
+        reaches.loc[cond, 'man'] = 0.12
+        cond = (reaches['rhk'] <= 10e-9)
+        reaches.loc[cond, 'rhk'] = 10e-9
      
         cond = np.isnan(reaches['rwid'])
         reaches.loc[cond, 'rwid'] = 1.0  # set width to 1 m where it is NaN

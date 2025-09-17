@@ -12,6 +12,68 @@ import sfrmaker
 
 base_path = Path(__file__).parent
 
+#TODO: generate stream segments in QGIS ('Split with lines') by splitting the river network at confluences and outlets 
+# identify and assign the downstream segments
+path = base_path / "input" / "streamflow_routing" / "awgn_stream_segments.shp"
+stream_segments = gpd.read_file(path)
+records = []
+for idx, row in stream_segments.iterrows():
+    geom = row.geometry
+    # Handle both LineString and MultiLineString
+    if geom.geom_type == "LineString":
+        segs = [geom]
+    elif geom.geom_type == "MultiLineString":
+        segs = list(geom.geoms)
+    else:
+        continue
+
+    for seg in segs:
+        start = tuple(seg.coords[0])
+        end = tuple(seg.coords[-1])
+        records.append({"segment": idx + 1, "start": start, "end": end, "width_dn": row["width_dn"], "width_up": row["width_up"], "elev_dn": row["elev_dn"], "elev_up": row["elev_up"], "geometry": seg})
+
+gdf_segments = gpd.GeoDataFrame(records, crs=stream_segments.crs)
+nodes = set(gdf_segments["start"]).union(set(gdf_segments["end"]))
+node_list = list(nodes)
+node_id_map = {coord: i for i, coord in enumerate(node_list)}
+
+gdf_segments["to_node"] = gdf_segments["start"].map(node_id_map)
+gdf_segments["from_node"] = gdf_segments["end"].map(node_id_map)
+
+outlet_segment_ids = [137, 792, 603, 282, 806, 882, 463]
+from_node_to_segment = (
+    gdf_segments
+    .sort_values('width_dn')  # if you want a consistent rule for branches (lowest ID, etc.)
+    .groupby('from_node')['segment']
+    .apply(list)
+    .to_dict()
+)
+outlet_set = set(outlet_segment_ids)
+
+def find_downstream(row):
+    # Force None for outlets
+    if row['segment'] in outlet_set:
+        return None
+    # Candidates: all segments whose from_node is this segment's to_node
+    downstreams = from_node_to_segment.get(row['to_node'], [])
+    # Exclude self (in case of self loops)
+    downstreams = [sid for sid in downstreams if sid != row['segment']]
+    # Return the first (lowest, due to sort); change rule if needed
+    return downstreams[0] if downstreams else None
+
+gdf_segments['to_segment'] = gdf_segments.apply(find_downstream, axis=1)
+
+# fill NaN values in 'to_segment' with 0 (for outlets)
+gdf_segments['to_segment'] = gdf_segments['to_segment'].fillna(0).astype(int)
+
+# drop columns not needed anymore
+gdf_segments = gdf_segments.drop(columns=['start', 'end', 'to_node', 'from_node'])
+# reorder columns
+gdf_segments = gdf_segments[['segment', 'to_segment', 'width_dn', 'width_up', 'elev_dn', 'elev_up', 'geometry']]
+# save the modified shapefile including downstream segments
+gdf_segments.to_file(base_path / "input" / "streamflow_routing" / "awgn_stream_segments_connected.shp", driver="ESRI Shapefile")
+gdf_segments.to_file(base_path / "input" / "streamflow_routing" / "awgn_stream_segments_connected.gpkg", driver="GPKG")
+
 path = base_path / "input" / "boundary_conditions.nc"
 ds_bc = xr.open_dataset(path, engine="h5netcdf")
 
@@ -109,7 +171,7 @@ _domain[mask] = 1
 _domain[~mask] = 0
 
 # repair the geometries of the shapefile with river segment
-df = gpd.read_file(base_path / 'input' / 'streamflow_routing' / 'awgn_streams.shp')
+df = gpd.read_file(base_path / 'input' / 'streamflow_routing' / 'awgn_stream_segments_connected.shp')
 for i in range(len(df)):
     geom = df.geometry[i]
     if geom:
@@ -122,25 +184,26 @@ for i in range(len(df)):
     geom = df.geometry[i]
     if shapely.is_valid(geom):  # check if the geometry is valid
         line = shapely.wkt.loads(str(geom)).reverse()  # reverse the line direction
+        # line = shapely.wkt.loads(str(geom))
         df.at[i, 'geometry'] = line
     else:
         print(f"Invalid geometry at index {i}: {geom}")
         geom_repaired = shapely.make_valid(geom, method="structure", keep_collapsed=True)
         line = shapely.wkt.loads(str(geom_repaired)).reverse()  # reverse the line direction
+        # line = shapely.wkt.loads(str(geom_repaired))
         df.at[i, 'geometry'] = line
 
 # write the modified shapefile with reversed lines
-df.to_file(base_path / 'input' / 'streamflow_routing' / 'awgn_streams_repaired.shp', driver='ESRI Shapefile')
+df.to_file(base_path / 'input' / 'streamflow_routing' / 'awgn_stream_segments_connected_repaired.shp', driver='ESRI Shapefile')
 
 # load shapefile with river segments
-custom_segments = sfrmaker.Lines.from_shapefile(shapefile=base_path / 'input' / 'streamflow_routing' / 'awgn_streams_repaired.shp',
-                                             id_column='GEW_ID',  # arguments to sfrmaker.Lines.from_shapefile
-                                             routing_column='VOR_GEW_ID',
+custom_segments = sfrmaker.Lines.from_shapefile(shapefile=base_path / 'input' / 'streamflow_routing' / 'awgn_stream_segments_connected_repaired.shp',
+                                             id_column='segment',  # arguments to sfrmaker.Lines.from_shapefile
+                                             routing_column='to_segment',
                                              width1_column='width_up',
                                              width2_column='width_dn',
                                              up_elevation_column='elev_up',
                                              dn_elevation_column='elev_dn',
-                                             name_column='GEW_NAME',
                                              )
 
 
@@ -149,6 +212,7 @@ cond1 = custom_segments.df.width1 == 0
 cond2 = custom_segments.df.width2 == 0
 custom_segments.df.loc[cond1, 'width1'] = 1
 custom_segments.df.loc[cond2, 'width2'] = 1
+
 # # remove segments with no geometry
 # custom_segments.df = custom_segments.df[custom_segments.df.geometry.notnull()]
 # file_active_area = base_path.parent / 'input' / 'streamflow_routing' / 'active_area_grid.shp'
@@ -160,20 +224,7 @@ custom_segments.df.loc[cond2, 'width2'] = 1
 # make the data for the SFR package
 file_active_area = base_path / 'input' / 'streamflow_routing' / 'active_area_grid.shp'
 sfrdata = custom_segments.to_sfr(grid=flopy_grid, model=gwf, active_area=file_active_area, 
-                                 model_length_units='meters', consolidate_conductance=True, add_outlets=[20882, 23424, 25023, 24079, 24479, 25180, 24950, 21891, 24410])
-
-# reverse the reach numbers for each river segment
-# line_ids = np.unique(sfrdata.reach_data['line_id'].values).tolist()
-# for line_id in line_ids:
-#     cond = sfrdata.reach_data['line_id'] == line_id
-#     ids = sfrdata.reach_data.loc[cond, 'rno'].values
-    # values_rev = sfrdata.reach_data[cond].copy().values[::-1, :]
-    # values_rev[:, 0] = ids  # reverse the reach numbers
-    # sfrdata.reach_data.loc[cond, :] = values_rev
-    # sfrdata.reach_data.loc[cond, 'ireach'] = np.arange(1, len(ids) + 1)[::-1]
-# sfrdata.reach_data.sort_values(by='rno', ascending=True)
-# sfrdata._reset_routing()
-# sfrdata.set_outreaches()  # set the next downstream reach for each reach
+                                 model_length_units='meters', consolidate_conductance=True, one_reach_per_cell=False)
 
 # modify reach data
 cond = np.isnan(sfrdata.reach_data['width'])
@@ -214,3 +265,44 @@ for rno, i, j in zip(sfrdata.reach_data['rno'], sfrdata.reach_data['i'], sfrdata
 sfrdata.write_package(version='mf6', idomain=domain_layers)
 sfrdata.write_tables(str(base_path / 'input' / 'streamflow_routing'))
 sfrdata.write_shapefiles(str(base_path / 'input' / 'streamflow_routing'))
+
+# load model.sfr as text file
+with open(base_path / 'input' / 'model.sfr', 'r') as file:
+    lines = file.readlines()
+# find beginning and end of the packagedata block
+for i, line in enumerate(lines):
+    if line.strip().startswith('BEGIN Packagedata'):
+        start_index = i
+    if line.strip().startswith('END Packagedata'):
+        end_index = i
+        break
+
+# extract the packagedata block and write to csv file
+packagedata_lines = lines[start_index + 1:end_index]
+packagedata = []
+for line in packagedata_lines:
+    if line.strip() and not line.strip().startswith('#'):
+        parts = line.split()
+        reach = [int(parts[0]), int(parts[1]), int(parts[2]), int(parts[3]), float(parts[4]), float(parts[5]), float(parts[6]), float(parts[7]), int(parts[8]), float(parts[9]), float(parts[10]), int(parts[11]), float(parts[12]), int(parts[13]), int(parts[14])]
+        packagedata.append(reach)
+df_packagedata = pd.DataFrame(packagedata, columns=['rno', 'k', 'i', 'j', 'rlen', 'rwid', 'rgrd', 'rtp', 'rbth', 'rhk', 'man', 'ncon', 'ustrf', 'ndv', 'line_id'])
+file = base_path / 'input' / 'sfr_packagedata.csv'
+df_packagedata.to_csv(file, index=False, sep=';')
+
+for i, line in enumerate(lines):
+    if line.strip().startswith('BEGIN Connectiondata'):
+        start_index = i
+    if line.strip().startswith('END Connectiondata'):
+        end_index = i
+        break
+
+# extract the connectiondata block and write to csv file
+connectiondata_lines = lines[start_index + 1:end_index]
+connectiondata = []
+for line in connectiondata_lines:
+    if line.strip() and not line.strip().startswith('#'):
+        parts = line.split()
+        connectiondata.append(parts)
+df_connectiondata = pd.DataFrame(connectiondata)
+file = base_path / 'input' / 'sfr_connectiondata.csv'
+df_connectiondata.to_csv(file, index=False, header=False, sep=';')
