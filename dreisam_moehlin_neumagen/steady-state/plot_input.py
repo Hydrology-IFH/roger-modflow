@@ -120,6 +120,10 @@ modflow_config = {
 path = base_path / "observations" / "observed_groundwater_heads_avg.csv"
 observed_groundwater_heads = pd.read_csv(path, sep=";", skiprows=0)
 
+# load groundwater extraction data
+path = base_path / "input" / "groundwater_extraction.csv"
+groundwater_extraction = pd.read_csv(path, sep=";", skiprows=0)
+
 # load fudge parameters
 path = base_path / "fudge_parameters_modflow.csv"
 fudge_parameters = pd.read_csv(path, sep=";", skiprows=1)
@@ -192,8 +196,8 @@ plt.close(fig)
 grid_extent = (0, (modflow_config['ny']*modflow_config['dy']) / 1000, (modflow_config['nx']*modflow_config['dx']) / 1000, 0)
 fig, axes = plt.subplots(figsize=(4, 4))
 topography[~mask] = np.nan
-wells_y = [266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]
-wells_x = [66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496]
+wells_y = groundwater_extraction["cell_y"].values
+wells_x = groundwater_extraction["cell_x"].values
 plt.scatter(wells_x, wells_y, marker='x', s=5, c='black')
 plt.imshow(topography, cmap='terrain', aspect='equal')
 plt.colorbar(label='[m a.s.l.]', shrink=0.5)
@@ -207,8 +211,8 @@ plt.close(fig)
 
 fig, axes = plt.subplots(figsize=(4, 4))
 topography[~mask] = np.nan
-wells_y = np.array([266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264, 124]) * (50/1000)
-wells_x = np.array([66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496, 222]) * (50/1000)
+wells_y = groundwater_extraction["cell_y"].values * (50/1000)
+wells_x = groundwater_extraction["cell_x"].values * (50/1000)
 plt.scatter(wells_x, wells_y, marker='^', s=5, c='black')
 wells_obs_y = observed_groundwater_heads["Zelle_y"].values * (50/1000)  # row IDs of the observation wells
 wells_obs_x = observed_groundwater_heads["Zelle_x"].values * (50/1000)  # column IDs of the observation wells
@@ -229,8 +233,8 @@ plt.close(fig)
 
 fig, axes = plt.subplots(figsize=(4, 4))
 topography[~mask] = np.nan
-wells_y = np.array([266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264, 124])
-wells_x = np.array([66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496, 222])
+wells_y = groundwater_extraction["cell_y"].values
+wells_x = groundwater_extraction["cell_x"].values
 plt.scatter(wells_x, wells_y, marker='^', s=5, c='black')
 wells_obs_y = observed_groundwater_heads["Zelle_y"].values # row IDs of the observation wells
 wells_obs_x = observed_groundwater_heads["Zelle_x"].values  # column IDs of the observation wells

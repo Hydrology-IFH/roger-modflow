@@ -76,17 +76,17 @@ def main(model_run):
     obs = observed_groundwater_heads.iloc[:, -1].values
 
     dict_obs_stage_id = {
-            "FALKENSTEIG_STAGE": 23614,
-            "EBNET_STAGE": 23888,  
-            "EHRENKIRCHEN_STAGE": 22337, 
-            "MUENSTERTAL_STAGE": 14854,
+            "FALKENSTEIG_STAGE": 6843,
+            "EBNET_STAGE": 14313,  
+            "EHRENKIRCHEN_STAGE": 21376, 
+            "MUENSTERTAL_STAGE": 14528,
     }
 
     dict_obs_flow_id = {
-            "FALKENSTEIG_FLOW": 23614,
-            "EBNET_FLOW": 23888,
-            "EHRENKIRCHEN_FLOW": 22337,
-            "MUENSTERTAL_FLOW": 14854,
+            "FALKENSTEIG_FLOW": 6843,
+            "EBNET_FLOW": 14313,
+            "EHRENKIRCHEN_FLOW": 21376,
+            "MUENSTERTAL_FLOW": 14528,
     }
 
     dict_obs_stage_id_inv = {v: k for k, v in dict_obs_stage_id.items()}
@@ -98,7 +98,7 @@ def main(model_run):
     df_sfr_ = pd.read_csv(output_file, sep=",")
 
     df_sfr = pd.DataFrame(index=["falkensteig", "ebnet", "ehrenkirchen", "muenstertal"], columns=["rno", "layer", "x", "y", "rlen", "rwid", "rtp" "rgrd", "man", "rhk", "water_depth", "flow"])
-    df_sfr["rno"] = [23614, 23888, 22337, 14854]
+    df_sfr["rno"] = [6843, 14313, 21376, 14528]
     for rno in df_sfr["rno"].values:
         df_sfr.loc[df_sfr["rno"] == rno, "layer"] = reaches.loc[reaches["rno"] == rno, "k"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "x"] = reaches.loc[reaches["rno"] == rno, "i"].values[0]

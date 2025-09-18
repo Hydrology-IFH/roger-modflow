@@ -309,18 +309,22 @@ class ModFlowSimulation:
         recharge = ds_bc['recharge'].values / 1000  # convert mm/day to m/day
         rcha = flopy.mf6.ModflowGwfrcha(gwf, recharge=recharge * fudge_parameters['rch'].values[model_run], fixed_cell=True)
 
+        # load the groundwater extraction data
+        groundwater_extraction = pd.read_csv(base_path.parent / 'input' / 'groundwater_extraction.csv', sep=';')
         # Create the well package (Neumann boundary condition i.e. second type)
         # pumping rate in m3/day
-        wells_q = [5727, 5822, 3494, 4315, 4525, 2899, 6401, 7024, 3160, 1117, 920, 1340, 729, 831]
+        wells_q = groundwater_extraction["annual_average"].values.tolist()
         # location of the wells
-        wells_y = [266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264, 124]
-        wells_x = [66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496, 222]
+        groundwater_extraction["cell_y"] = groundwater_extraction["cell_y"].values - 1
+        groundwater_extraction["cell_x"] = groundwater_extraction["cell_x"].values - 1
+        groundwater_extraction["layer"] = groundwater_extraction["layer"].values - 1
+
+        wells_y = groundwater_extraction["cell_y"].values.tolist()
+        wells_x = groundwater_extraction["cell_x"].values.tolist()
+        wells_layer = groundwater_extraction["layer"].values.tolist()
         wel_rec = []
         for i in range(len(wells_x)):
-            if i <= 5:
-                wel_rec.append((1, wells_y[i], wells_x[i], -wells_q[i]))
-            else:
-                wel_rec.append((2, wells_y[i], wells_x[i], -wells_q[i]))  # extraction from layer 3
+            wel_rec.append((wells_layer[i], wells_y[i], wells_x[i], -wells_q[i]))
 
         wel = flopy.mf6.ModflowGwfwel(
             gwf,
