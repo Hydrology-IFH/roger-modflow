@@ -30,7 +30,7 @@ for idx, row in stream_segments.iterrows():
     for seg in segs:
         start = tuple(seg.coords[0])
         end = tuple(seg.coords[-1])
-        records.append({"segment": idx + 1, "start": start, "end": end, "width_dn": row["width_dn"], "width_up": row["width_up"], "elev_dn": row["elev_dn"], "elev_up": row["elev_up"], "geometry": seg})
+        records.append({"segment": row["id"], "start": start, "end": end, "width_dn": row["width_dn"], "width_up": row["width_up"], "elev_dn": row["elev_dn"], "elev_up": row["elev_up"], "geometry": seg})
 
 gdf_segments = gpd.GeoDataFrame(records, crs=stream_segments.crs)
 nodes = set(gdf_segments["start"]).union(set(gdf_segments["end"]))
