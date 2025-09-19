@@ -58,6 +58,7 @@ for idx, row in df_reaches.iterrows():
     gdf_reaches.loc[idx, "fc"] = fc
     gdf_reaches.loc[idx, "ss"] = ss
 
+df_reaches["rbth"] = 1.0
 df_reaches["rwid"] = df_reaches["rwid"] * 0.8
 gdf_reaches["rwid"] = df_reaches["rwid"]
 

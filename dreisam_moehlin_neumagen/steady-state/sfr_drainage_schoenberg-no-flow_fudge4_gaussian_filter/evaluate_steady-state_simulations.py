@@ -73,8 +73,8 @@ obs = observed_groundwater_heads.iloc[:, -1].values # observed groundwater depth
 obs_depth = topography[rows, cols].flatten() - observed_groundwater_heads.iloc[:, -1].values  # observed groundwater depths
 
 for model_run in range(0, 5000):
-    complete = df_params_metrics.loc[model_run, "complete"]
-    if complete == 1:
+    converged = df_params_metrics.loc[model_run, "converged"]
+    if converged == 1:
         # load the netcdf file
         output_file = Path(f"/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen/steady-state/{base_path.name}/output") / f"modflow_output_run_{model_run}.nc"
         ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
@@ -172,8 +172,8 @@ obs = observed_groundwater_heads.iloc[:, -1].values # observed groundwater depth
 obs_depth = topography[rows, cols].flatten() - observed_groundwater_heads.iloc[:, -1].values  # observed groundwater depths
 
 for model_run in range(0, 5000):
-    complete = df_params_metrics.loc[model_run, "complete"]
-    if complete == 1:
+    converged = df_params_metrics.loc[model_run, "converged"]
+    if converged == 1:
         # load the netcdf file
         output_file = Path(f"/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen/steady-state/{base_path.name}/output") / f"modflow_output_run_{model_run}.nc"
         ds_mf = xr.open_dataset(output_file, engine="h5netcdf")

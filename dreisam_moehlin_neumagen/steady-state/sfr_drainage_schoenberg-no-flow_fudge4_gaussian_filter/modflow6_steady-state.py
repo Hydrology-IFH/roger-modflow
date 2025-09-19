@@ -532,16 +532,17 @@ class ModFlowSimulation:
         signal.signal(signal.SIGALRM, handler)
         signal.alarm(120)  # Set the timeout duration to 60 seconds
 
-        complete = 0
+        converged = 0
         self.mf6.prepare_solve(1)
         t0 = time()
         try:
             # convergence loop
-            for _ in range(self.max_iter):
+            for i in range(self.max_iter):
                 has_converged = self.mf6.solve(1)
+                print(f"MODFLOW iteration {i+1} of {self.max_iter}. Convergence of numerical solution: {has_converged}")
 
                 if has_converged:
-                    complete = 1
+                    converged = 1
                     break
         except TimeoutError:
             has_converged = False
@@ -560,7 +561,7 @@ class ModFlowSimulation:
         if self.mf6.get_current_time() < self.end_time:
             self.prepare_time_step()
 
-        return complete
+        return converged
 
     def finalize(self):
         self.mf6.finalize()
@@ -595,7 +596,7 @@ def main(model_run):
         verbose=True
     )
     # run MODFLOW for one timestep
-    complete = modflow_interface.step()
+    converged = modflow_interface.step()
     
     modflow_interface.finalize()
     print("MODFLOW (steady-state) finalized")
@@ -603,12 +604,14 @@ def main(model_run):
     # update the fudge parameters if the parameter set produces a useful simulation
     path = base_path / "fudge_parameters_modflow.csv"
     fudge_parameters = pd.read_csv(path, sep=";", skiprows=1)
-    fudge_parameters.loc[fudge_parameters.index[model_run], "complete"] = complete
+    fudge_parameters.loc[fudge_parameters.index[model_run], "converged"] = converged
     fudge_parameters.columns = [
         ["[-]", "[-]", "[-]", "[-]", "[-]", "[m]",  ""],
-        ["c1", "c2", "c3", "c4", "rch", "offset", "complete"],
+        ["c1", "c2", "c3", "c4", "rch", "offset", "converged"],
     ]
     fudge_parameters.to_csv(path, index=False, sep=";")
+
+    print(f"converged: {converged}")
     return
 
 if __name__ == "__main__":

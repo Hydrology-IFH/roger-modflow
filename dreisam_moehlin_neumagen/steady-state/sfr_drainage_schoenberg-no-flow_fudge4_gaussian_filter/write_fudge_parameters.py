@@ -66,13 +66,13 @@ def main(nsamples):
     cond = (df_params["c4"] > df_params["c3"])
     df_params.loc[cond, "c4"] = df_params.loc[cond, "c3"]
 
-    df_params["complete"] = 0
-    df_params = df_params.loc[:, ["c1", "c2", "c3", "c4", "rch", "offset", "complete"]]
+    df_params["converged"] = 0
+    df_params = df_params.loc[:, ["c1", "c2", "c3", "c4", "rch", "offset", "converged"]]
 
     # write parameters to csv
     df_params.columns = [
         ["[-]", "[-]", "[-]", "[-]", "[-]", "[m]",  ""],
-        ["c1", "c2", "c3", "c4", "rch", "offset", "complete"],
+        ["c1", "c2", "c3", "c4", "rch", "offset", "converged"],
     ]
     df_params.to_csv(base_path / "fudge_parameters_modflow.csv", index=False, sep=";")
     return
