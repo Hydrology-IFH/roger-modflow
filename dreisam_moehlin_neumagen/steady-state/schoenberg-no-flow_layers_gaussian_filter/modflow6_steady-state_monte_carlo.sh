@@ -5,7 +5,7 @@
 # python modify_elevations.py
 # python modify_hydraulic_conductivity_and_specific_yield_of_layer1.py
 # python generate_boundary_conditions.py
-python write_fudge_parameters.py
+# python write_fudge_parameters.py
 for i in {228..10000}
 do
     converged=$(python modflow6_steady-state.py --model-run $i | grep "converged: " | awk '{print $NF}')
