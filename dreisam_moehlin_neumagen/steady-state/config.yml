@@ -1,0 +1,52 @@
+dx: 50
+dy: 50
+nx: 621
+ny: 777
+nz: 4
+
+outlet_rnos:
+  - 25088
+  - 24953
+  - 24971
+  - 25030
+  - 24810
+  - 24671
+  - 24973
+
+dict_obs_stage_rnos: 
+  FALKENSTEIG_STAGE: 6188
+  EBNET_STAGE: 13562
+  EHRENKIRCHEN_STAGE: 21130
+  MUENSTERTAL_STAGE: 14006
+
+dict_obs_flow_rnos:
+  FALKENSTEIG_FLOW: 6188
+  EBNET_FLOW: 13562
+  EHRENKIRCHEN_FLOW: 21130
+  MUENSTERTAL_FLOW: 14006
+
+sfr_obs:
+  falkensteig_stage:
+      - stage
+      - 6188
+  ebnet_stage:
+      - stage
+      - 13562
+  ehrenkirchen_stage:
+      - stage
+      - 21130
+  muenstertal_stage:
+      - stage
+      - 14006
+  falkensteig_flow:
+      - downstream-flow
+      - 6188
+  ebnet_flow:
+      - downstream-flow
+      - 13562
+  ehrenkirchen_flow:
+      - downstream-flow
+      - 21130
+  muenstertal_flow:
+      - downstream-flow
+      - 14006
