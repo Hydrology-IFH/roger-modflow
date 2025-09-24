@@ -5,7 +5,9 @@ import pandas as pd
 
 base_path = Path(__file__).parent
 
-path = base_path / "input" / "streamflow_routing_sfr_lines.shp"
+reach_outlet_ids = [25088, 24953, 24971, 25030, 24810, 24671, 24973]
+
+path = base_path / "input" / "sfr_lines.shp"
 gdf_reaches = gpd.read_file(path)
 
 start = []
@@ -30,11 +32,10 @@ for idx, row in gdf_reaches.iterrows():
         start.append(np.nan)
         end.append(np.nan)
 
-gdf_reaches['start'] = start
-gdf_reaches['end'] = end
+gdf_reaches["start"] = start
+gdf_reaches["end"] = end
 # drop rows with NaN coordinates
-gdf_reaches = gdf_reaches.dropna(subset=['start', 'end'])
-
+gdf_reaches = gdf_reaches.dropna(subset=["start", "end"])
 
 nodes = set(gdf_reaches["start"]).union(set(gdf_reaches["end"]))
 node_list = list(nodes)
@@ -43,47 +44,46 @@ node_id_map = {coord: i for i, coord in enumerate(node_list)}
 gdf_reaches["to_node"] = gdf_reaches["end"].map(node_id_map)
 gdf_reaches["from_node"] = gdf_reaches["start"].map(node_id_map)
 
-reach_outlet_ids = [25552, 25121, 25180, 25523, 25498, 25408, 24950, 24808, 25422]
 outlet_set = set(reach_outlet_ids)
 
 # Create a mapping: from_node -> list of segment_ids starting at that node
 from_node_map = (
     gdf_reaches
-    .groupby('from_node')['rno']
+    .groupby("from_node")["rno"]
     .apply(list)
     .to_dict()
 )
 
 # Downstream assignment function for "one-to-multiple"
 def find_downstream_reaches(row):
-    if row['rno'] in outlet_set:
+    if row["rno"] in outlet_set:
         return []  # outlets have no downstreams
-    # All segments that have from_node == this segment's to_node
-    downstream = from_node_map.get(row['to_node'], [])
+    # All segments that have from_node == this segment"s to_node
+    downstream = from_node_map.get(row["to_node"], [])
     # Remove self in case of loops
-    downstream = [sid for sid in downstream if sid != row['rno']]
+    downstream = [sid for sid in downstream if sid != row["rno"]]
     return downstream
 
 # Apply to every row
-gdf_reaches['downstream_reaches'] = gdf_reaches.apply(find_downstream_reaches, axis=1)
+gdf_reaches["downstream_reaches"] = gdf_reaches.apply(find_downstream_reaches, axis=1)
 
-file = base_path / 'input' / 'streamflow_routing' / 'sfr_diversions.gpkg'
+file = base_path / "input" / "sfr_diversions.gpkg"
 gdf_reaches.to_file(file, driver="GPKG")
 
 div_rno = []
 div_iconr = []
 
 for idx, row in gdf_reaches.iterrows():
-    if len(row['downstream_reaches']) > 1:
-        for reach in row['downstream_reaches']:
+    if len(row["downstream_reaches"]) > 1:
+        for reach in row["downstream_reaches"]:
             if reach != row["outreach"]:
                 div_rno.append(row["rno"])
                 div_iconr.append(reach)
 
-df_diversions = pd.DataFrame({'rno': div_rno, 'iconr': div_iconr})
+df_diversions = pd.DataFrame({"rno": div_rno, "iconr": div_iconr})
 df_diversions["idv"] = 1
 df_diversions["cprior"] = "FRACTION"
 # reorder columns
-df_diversions = df_diversions[['rno', 'idv', 'iconr', 'cprior']]
-file = base_path / 'input' / 'sfr_diversions.csv'
-df_diversions.to_csv(file, index=False, sep=';')
+df_diversions = df_diversions[["rno", "idv", "iconr", "cprior"]]
+file = base_path / "input" / "sfr_diversions.csv"
+df_diversions.to_csv(file, index=False, sep=";")

@@ -6,6 +6,7 @@ import scipy as sp
 import rasterio
 import matplotlib.pyplot as plt
 import click
+import yaml
 
 @click.option("-mr", "--model-run", type=int, default=50)
 @click.command("main", short_help="Evaluate the steady-state simulation")
@@ -13,8 +14,12 @@ def main(model_run):
     base_path = Path(__file__).parent
 
     # load MODFLOW parameters
-    path = Path(__file__).parent / "parameters_modflow.nc"
+    path = Path(__file__).parent.parent / "input" / "parameters_modflow.nc"
     ds_params = xr.open_dataset(path, engine="h5netcdf")
+
+    file_config = base_path.parent / "config.yml"
+    with open(file_config, "r") as file:
+        modflow_config = yaml.safe_load(file)
 
     # load the topography and elevation of the aquifer layers
     topography = ds_params['elevations'].isel(z=0).values
@@ -31,12 +36,12 @@ def main(model_run):
     elevation_bottom_layers = [elevation_bottom_layer1, elevation_bottom_layer2, elevation_bottom_layer3, elevation_bottom_layer4]
 
     # load observed groundwater heads (average values of the observation wells)
-    path = base_path / "observations" / "observed_groundwater_heads_avg.csv"
+    path = base_path.parent / "observations" / "observed_groundwater_heads_avg.csv"
     observed_groundwater_heads = pd.read_csv(path, sep=";", skiprows=0)
     observed_groundwater_heads = observed_groundwater_heads.iloc[:-2, :]
 
     # load observed streamflow
-    path = base_path / "observations" / "observed_streamflow.csv"
+    path = base_path.parent / "observations" / "observed_streamflow.csv"
     observed_streamflow = pd.read_csv(path, sep=";", skiprows=0, index_col=0)
 
     # load interpolated groundwater heads
@@ -75,30 +80,20 @@ def main(model_run):
     obs_depths = topography[rows, cols].flatten() - observed_groundwater_heads.iloc[:, -1].values  # observed groundwater depths
     obs = observed_groundwater_heads.iloc[:, -1].values
 
-    dict_obs_stage_id = {
-            "FALKENSTEIG_STAGE": 6843,
-            "EBNET_STAGE": 14313,  
-            "EHRENKIRCHEN_STAGE": 21376, 
-            "MUENSTERTAL_STAGE": 14528,
-    }
-
-    dict_obs_flow_id = {
-            "FALKENSTEIG_FLOW": 6843,
-            "EBNET_FLOW": 14313,
-            "EHRENKIRCHEN_FLOW": 21376,
-            "MUENSTERTAL_FLOW": 14528,
-    }
+    dict_obs_stage_id = modflow_config["dict_obs_stage_rnos"]
+    dict_obs_flow_id = modflow_config["dict_obs_flow_rnos"]
 
     dict_obs_stage_id_inv = {v: k for k, v in dict_obs_stage_id.items()}
     dict_obs_flow_id_inv = {v: k for k, v in dict_obs_flow_id.items()}
 
+    # load the SFR reaches
     reaches = pd.read_csv(base_path.parent / 'input' / 'sfr_packagedata.csv', sep=';')
     
     output_file = base_path / "output" / f"dmn_run_{model_run}_sfr.obs.csv"
     df_sfr_ = pd.read_csv(output_file, sep=",")
 
     df_sfr = pd.DataFrame(index=["falkensteig", "ebnet", "ehrenkirchen", "muenstertal"], columns=["rno", "layer", "x", "y", "rlen", "rwid", "rtp" "rgrd", "man", "rhk", "water_depth", "flow"])
-    df_sfr["rno"] = [6843, 14313, 21376, 14528]
+    df_sfr["rno"] = [key for key in dict_obs_stage_id.values()]
     for rno in df_sfr["rno"].values:
         df_sfr.loc[df_sfr["rno"] == rno, "layer"] = reaches.loc[reaches["rno"] == rno, "k"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "x"] = reaches.loc[reaches["rno"] == rno, "i"].values[0]
@@ -133,7 +128,7 @@ def main(model_run):
     observed_groundwater_heads["sim-obs"] = sim_depths - obs_depths
     observed_groundwater_heads["sim-int"] = sim_depths - interp_depths
     observed_groundwater_heads["int-obs"] = interp_depths - obs_depths
-    observed_groundwater_heads.to_csv(base_path / "observations" / "observed_groundwater_heads_avg_.csv", sep=";", index=False)
+    observed_groundwater_heads.to_csv(base_path.parent / "observations" / "observed_groundwater_heads_avg_.csv", sep=";", index=False)
 
 
     fig, axes = plt.subplots(figsize=(4, 4))

@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
 import h5netcdf
+import rasterio
 import click
 
 @click.command("main", short_help="Define drainage areas from MODFLOW output")
@@ -31,7 +32,7 @@ def main():
     grid_extent = (0, 777*modflow_config['dy'], 621*modflow_config['dx'], 0)
 
     # load MODFLOW parameters
-    path = Path(__file__).parent / "parameters_modflow.nc"
+    path = base_path / "input" / "parameters_modflow.nc"
     with xr.open_dataset(path, engine="h5netcdf") as ds_params:
         topography = ds_params['elevations'].isel(z=0).values
         mask_schoenberg = ds_params['mask_schoenberg'].values
@@ -46,12 +47,20 @@ def main():
     output_file = base_path / "input" / "modflow_output_run_for_drainage_areas.nc"
     ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
 
+    src = rasterio.open(str(base_path / "input" / "mask_former_tuniberg_wetland.tif"))
+    mask_former_wetland = src.read(1)
+    cond1 = (mask_former_wetland == 1)
+
+    src = rasterio.open(str(base_path / "input" / "land_use.tif"))
+    land_use = src.read(1)
+    cond2 = np.isin(land_use, [5, 7, 8])
+
+    cond = cond1 & cond2
     # plot the saturation depth
     saturation_depth = ds_mf['head'].isel(Time=0, layer=1).values - topography
-    saturation_depth[saturation_depth < 0.3] = np.nan
-    saturation_depth[~mask] = np.nan
-    saturation_depth[:, 400:] = np.nan
-    saturation_depth[500:, :] = np.nan
+    saturation_depth[~cond] = np.nan
+    cond = (saturation_depth < 0.01)
+    saturation_depth[cond] = np.nan 
     fig, axes = plt.subplots(figsize=(4, 4))
     plt.imshow(saturation_depth, extent=grid_extent, cmap='viridis_r', aspect='equal')
     plt.colorbar(label='groundwater above surface [m]', shrink=0.5)
@@ -64,7 +73,7 @@ def main():
     plt.close("all")
 
     # add drainage mask to parameters_modflow.nc
-    mask_saturation = np.where(saturation_depth > 0.3, 1, 0)
+    mask_saturation = np.where(saturation_depth >= 0.01, 1, 0)
     path = str(base_path / "input" / "parameters_modflow.nc")
     with h5netcdf.File(path, "a", decode_vlen_strings=False) as f:
         try:

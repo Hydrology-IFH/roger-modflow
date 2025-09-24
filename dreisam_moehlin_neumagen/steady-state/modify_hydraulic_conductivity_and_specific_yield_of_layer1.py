@@ -15,7 +15,7 @@ kf_layer1[np.isnan(kf_layer1)] = 0.001
 sy_layer1 = 0.462 + 0.045 * np.log(kf_layer1/86400)
 sy_layer1[sy_layer1 < 0.05] = 0.05
 
-path = str(base_path.parent / "parameters_modflow.nc")
+path = str(base_path.parent / "input" / "parameters_modflow.nc")
 with h5netcdf.File(path, "a", decode_vlen_strings=False) as f:
     var_obj = f.variables.get("kf")
     var_obj[0, :, :] = kf_layer1

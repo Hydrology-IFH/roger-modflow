@@ -30,7 +30,7 @@ def main(model_run):
 
 
         # load spatial reference and coordinates
-        with xr.open_dataset(base_path / "parameters_modflow.nc") as ds:
+        with xr.open_dataset(base_path.parent / "input" / "parameters_modflow.nc") as ds:
             topography = ds['elevations'].isel(z=0).values
             spatial_ref = ds.spatial_ref
             xcoords = ds.x.values

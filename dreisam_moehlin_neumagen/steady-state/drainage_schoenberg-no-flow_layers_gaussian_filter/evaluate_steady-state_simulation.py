@@ -13,7 +13,7 @@ def main(model_run):
     base_path = Path(__file__).parent
 
     # load MODFLOW parameters
-    path = Path(__file__).parent / "parameters_modflow.nc"
+    path = Path(__file__).parent.parent / "input" / "parameters_modflow.nc"
     ds_params = xr.open_dataset(path, engine="h5netcdf")
 
     # load the topography and elevation of the aquifer layers
@@ -25,7 +25,7 @@ def main(model_run):
     mask = np.where(mask_schoenberg, False, mask)
 
     # load observed groundwater heads (average values of the observation wells)
-    path = base_path / "observations" / "observed_groundwater_heads_avg.csv"
+    path = base_path.parent / "observations" / "observed_groundwater_heads_avg.csv"
     observed_groundwater_heads = pd.read_csv(path, sep=";", skiprows=0)
     # observed_groundwater_heads = observed_groundwater_heads.iloc[:-2, :]
 

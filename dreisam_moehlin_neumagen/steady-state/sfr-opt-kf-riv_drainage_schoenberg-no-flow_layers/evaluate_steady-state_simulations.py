@@ -3,12 +3,17 @@ import numpy as np
 import scipy as sp
 import xarray as xr
 import pandas as pd
+import yaml
 
 base_path = Path(__file__).parent
 
 # load MODFLOW parameters
-path = Path(__file__).parent / "parameters_modflow.nc"
+path = Path(__file__).parent.parent / "input" / "parameters_modflow.nc"
 ds_params = xr.open_dataset(path, engine="h5netcdf")
+
+file_config = base_path.parent / "config.yml"
+with open(file_config, "r") as file:
+    modflow_config = yaml.safe_load(file)
 
 # load the topography and elevation of the aquifer layers
 topography = ds_params['elevations'].isel(z=0).values
@@ -36,35 +41,22 @@ df_params_metrics["n_1m"] = np.nan
 
 
 # load observed groundwater heads (average values of the observation wells)
-path = base_path / "observations" / "observed_groundwater_heads_avg.csv"
+path = base_path.parent / "observations" / "observed_groundwater_heads_avg.csv"
 observed_groundwater_heads = pd.read_csv(path, sep=";", skiprows=0)
 observed_groundwater_heads = observed_groundwater_heads.iloc[:-2, :]
 n_obs = len(observed_groundwater_heads.index)
 
 # load observed streamflow
-path = base_path / "observations" / "observed_streamflow.csv"
+path = base_path.parent / "observations" / "observed_streamflow.csv"
 observed_streamflow = pd.read_csv(path, sep=";", skiprows=0, index_col=0)
 
-dict_obs_stage_id = {
-        "FALKENSTEIG_STAGE": 23614,
-        "EBNET_STAGE": 23888,  
-        "EHRENKIRCHEN_STAGE": 22337, 
-        "MUENSTERTAL_STAGE": 14854,
-}
-
-dict_obs_flow_id = {
-        "FALKENSTEIG_FLOW": 23614,
-        "EBNET_FLOW": 23888,
-        "EHRENKIRCHEN_FLOW": 22337,
-        "MUENSTERTAL_FLOW": 14854,
-}
-
+dict_obs_stage_id = modflow_config["dict_obs_stage_rnos"]
+dict_obs_flow_id = modflow_config["dict_obs_flow_rnos"]
 dict_obs_stage_id_inv = {v: k for k, v in dict_obs_stage_id.items()}
 dict_obs_flow_id_inv = {v: k for k, v in dict_obs_flow_id.items()}
 
 # load the SFR reaches
 reaches = pd.read_csv(base_path.parent / 'input' / 'sfr_packagedata.csv', sep=';')
-
 
 # load observed groundwater heads
 rows = observed_groundwater_heads.iloc[:, -2].values  # row IDs of the observation wells
@@ -72,7 +64,7 @@ cols = observed_groundwater_heads.iloc[:, -3].values  # column IDs of the observ
 obs = observed_groundwater_heads.iloc[:, -1].values # observed groundwater depths
 obs_depth = topography[rows, cols].flatten() - observed_groundwater_heads.iloc[:, -1].values  # observed groundwater depths
 
-for model_run in range(0, 144):
+for model_run in range(0, 10000):
     converged = df_params_metrics.loc[model_run, "converged"]
     if converged == 1:
         # load the netcdf file
@@ -171,7 +163,7 @@ cols = observed_groundwater_heads.iloc[:, -3].values  # column IDs of the observ
 obs = observed_groundwater_heads.iloc[:, -1].values # observed groundwater depths
 obs_depth = topography[rows, cols].flatten() - observed_groundwater_heads.iloc[:, -1].values  # observed groundwater depths
 
-for model_run in range(0, 5000):
+for model_run in range(0, 10000):
     converged = df_params_metrics.loc[model_run, "converged"]
     if converged == 1:
         # load the netcdf file

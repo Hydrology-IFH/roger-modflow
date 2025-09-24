@@ -32,6 +32,10 @@ def recalc_specific_yield(hydraulic_conductivity, specific_yield_min=0.05, speci
 
 base_path = Path(__file__).parent
 
+file_config = base_path.parent / "config.yml"
+with open(file_config, "r") as file:
+    modflow_config = yaml.safe_load(file)
+
 class ModFlowSimulation:
     def __init__(
         self,
@@ -57,10 +61,10 @@ class ModFlowSimulation:
         self.verbose = verbose
 
         # load MODFLOW parameters
-        path = Path(__file__).parent / "parameters_modflow.nc"
+        path = Path(__file__).parent.parent / "input" / "parameters_modflow.nc"
         ds_params = xr.open_dataset(path, engine="h5netcdf")
 
-        path = Path(__file__).parent / "boundary_conditions.nc"
+        path = Path(__file__).parent.parent / "input" / "boundary_conditions.nc"
         ds_bc = xr.open_dataset(path, engine="h5netcdf")
 
         path = base_path / "fudge_parameters_modflow.csv"
@@ -482,21 +486,7 @@ class ModFlowSimulation:
 
 @click.option("-mr", "--model-run", type=int, default=5)
 @click.command("main", short_help="Run MODFLOW in steady-state mode")
-def main(model_run):
-    file_config = base_path / "config.yml"
-    with open(file_config, "r") as file:
-        roger_config = yaml.safe_load(file)
-
-    res_modflow = 50  # spatial resolution of MODFLOW in meters
-
-    modflow_config = {
-        'dx': res_modflow,
-        'dy': res_modflow,
-        'nx': 621,
-        'ny': 777,
-        'nz': 4,
-    }
-    
+def main(model_run):    
     # initialize the MODFLOW model using XMI
     modflow_interface = ModFlowSimulation(
         f"dmn_run_{model_run}",

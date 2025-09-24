@@ -32,6 +32,10 @@ def recalc_specific_yield(hydraulic_conductivity, specific_yield_min=0.05, speci
 
 base_path = Path(__file__).parent
 
+file_config = base_path.parent / "config.yml"
+with open(file_config, "r") as file:
+    modflow_config = yaml.safe_load(file)
+
 class ModFlowSimulation:
     def __init__(
         self,
@@ -57,10 +61,10 @@ class ModFlowSimulation:
         self.verbose = verbose
 
         # load MODFLOW parameters
-        path = Path(__file__).parent / "parameters_modflow.nc"
+        path = Path(__file__).parent.parent / "input" / "parameters_modflow.nc"
         ds_params = xr.open_dataset(path, engine="h5netcdf")
 
-        path = Path(__file__).parent / "boundary_conditions.nc"
+        path = Path(__file__).parent.parent / "input" / "boundary_conditions.nc"
         ds_bc = xr.open_dataset(path, engine="h5netcdf")
 
         path = base_path / "fudge_parameters_modflow.csv"
@@ -406,17 +410,10 @@ class ModFlowSimulation:
         recharge = ds_bc['recharge'].values / 1000  # convert mm/day to m/day
         rcha = flopy.mf6.ModflowGwfrcha(gwf, recharge=recharge, fixed_cell=True, pname="rcha")
 
+        # streamflow routing package (SFR)
+        ls_obs = [(str(key), str(modflow_config['sfr_obs'][key][0]), (int(modflow_config['sfr_obs'][key][1]),)) for key in modflow_config['sfr_obs'].keys()]
         obs_dict = {
-            (f"{name}_sfr.obs.csv", "binary"): [
-                ("falkensteig_stage", "stage", (6843,)),
-                ("ebnet_stage", "stage", (14313,)),  
-                ("ehrenkirchen_stage", "stage", (21376,)), 
-                ("muenstertal_stage", "stage", (14528,)),
-                ("falkensteig_flow", "downstream-flow", (6843,)),
-                ("ebnet_flow", "downstream-flow", (14313,)),
-                ("ehrenkirchen_flow", "downstream-flow", (21376,)),
-                ("muenstertal_flow", "downstream-flow", (14528,)),
-            ]
+            (f"{name}_sfr.obs.csv", "binary"): ls_obs
         }
         sfr = flopy.mf6.modflow.mfgwfsfr.ModflowGwfsfr(gwf, pname="sfr",
             time_conversion=86400, length_conversion=1.0, nreaches=nstrm, packagedata=packagedata, 
@@ -597,21 +594,7 @@ class ModFlowSimulation:
 
 @click.option("-mr", "--model-run", type=int, default=5)
 @click.command("main", short_help="Run MODFLOW in steady-state mode")
-def main(model_run):
-    file_config = base_path / "config.yml"
-    with open(file_config, "r") as file:
-        roger_config = yaml.safe_load(file)
-
-    res_modflow = 50  # spatial resolution of MODFLOW in meters
-
-    modflow_config = {
-        'dx': res_modflow,
-        'dy': res_modflow,
-        'nx': 621,
-        'ny': 777,
-        'nz': 4,
-    }
-    
+def main(model_run):    
     # initialize the MODFLOW model using XMI
     modflow_interface = ModFlowSimulation(
         f"dmn_run_{model_run}",
