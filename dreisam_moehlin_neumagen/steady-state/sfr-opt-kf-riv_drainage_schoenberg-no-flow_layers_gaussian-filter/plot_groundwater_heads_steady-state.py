@@ -10,7 +10,7 @@ import scipy
 import click
 import matplotlib as mpl
 
-@click.option("-mr", "--model-run", type=int, default=50)
+@click.option("-mr", "--model-run", type=int, default=5)
 @click.command("main", short_help="Run MODFLOW in steady-state mode")
 def main(model_run):
     # run installed version of flopy or add local path
@@ -23,27 +23,17 @@ def main(model_run):
 
     base_path = Path(__file__).parent
 
-    # load the config file
-    file_config = base_path / "config.yml"
+    file_config = base_path.parent / "config.yml"
     with open(file_config, "r") as file:
-        roger_config = yaml.safe_load(file)
+        modflow_config = yaml.safe_load(file)
 
     path = base_path / "fudge_parameters_modflow.csv"
     fudge_parameters = pd.read_csv(path, sep=";", skiprows=1)
 
-    res_modflow = 50  # spatial resolution of MODFLOW in meters
-
-    modflow_config = {
-        'dx': res_modflow,
-        'dy': res_modflow,
-        'nx': 621,
-        'ny': 777,
-        'nz': 4,
-    }
     grid_extent = (0, (777*modflow_config['dy']) / 1000, (621*modflow_config['dx']) / 1000, 0)
 
     # load MODFLOW parameters
-    path = Path(__file__).parent / "parameters_modflow.nc"
+    path = Path(__file__).parent.parent / "input" / "parameters_modflow.nc"
     ds_params = xr.open_dataset(path, engine="h5netcdf")
 
     topography = ds_params['elevations'].isel(z=0).values

@@ -288,6 +288,9 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer3[~mask] = np.nan
         hydraulic_conductivities_layer4[~mask] = np.nan
 
+        # convert to m/day
+        reaches['rhk'] = reaches['rhk'] * 86400
+
         # modify the manning's n and hydraulic conductivity of the streambed based on the fraction of channelisation
         reaches['man'] = (1 - reaches['fc']) * reaches['man']
         reaches['rhk'] = (1 - reaches['fc']) * reaches['rhk']

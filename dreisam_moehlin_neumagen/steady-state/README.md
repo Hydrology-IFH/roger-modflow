@@ -3,6 +3,7 @@
 Steady-state optimisation of different MODFLOW6 setups (i.e. different combinations of MODFLOW6 packages) of the Dreisam-Moehlin-Neumagen catchment.
 
 ## Files
+- `config.yaml`: Configuration file (see in-file comments for more information)
 - `add_masks.py`: Add the masks (e.g. catchment mask) to the MODFLOW6 parameter file
 - `modify_elevations.py`: Ensure that bottom elevations of the layers do not overlap. Bottom elevations are adjusted in case of intersections. 
 - `modify_hydraulic_conductivity_and_specific_yield_of_layer1.py`: Replace hydarulic conductivities by hydraulic conductivities of the BK50 soil map.
@@ -14,9 +15,8 @@ Steady-state optimisation of different MODFLOW6 setups (i.e. different combinati
 - `assign_streambed_conductivity_and_manning_to_sfr_packagedata.py`: Assign values from `input/streambed_conductivity.tif` and `input/manning.tif` to `input/sfr_packagedata.csv`
 - `make_diversions.py`: Write file to consider diversions in SFR package.
 - `plot_input_data.py`:
-- `input/modflow_parameters.nc`:
-- `input/boundary_conditions.nc`:
-
+- `input/modflow_parameters.nc`: Contains hydrogeologic parameters as rasters (Topography, hydraulic conductivities, masks of specific regions)
+- `input/boundary_conditions.nc`: Contains boundary conditions as rasters
 
 ## Model structures
 The model structures are organised in folders (ordered by ascending complexity):
@@ -74,10 +74,10 @@ Drainge is considered for former wetlands close to Tuniberg. We assumed a single
 ## Groundwater - surface water interaction
 Surface waters are described by river network using Amtliche Digitale Wasserwirtschaftliches Gewässernetz (AWGN) geodataset provided by Landesanstalt fuer Umwelt Baden-Wuerttemberg (LUBW).
 
-- `input/streambed_conductivity.tif`: 
-- `input/streambed_structure.tif`: 
-- `input/fraction_of_channelisation.tif`: 
-- `input/manning.tif`: 
+- `input/streambed_conductivity.tif`: Streambed conductivity (m/s) as raster
+- `input/streambed_structure.tif`: Streambed structure as raster (4= ; 5= ; 6= ; 7=)
+- `input/fraction_of_channelisation.tif`: Fraction of channelisation as raster
+- `input/manning.tif`: Manning coefficient as raster
 
 ### Prepare data for streamflow routing (SFR package of MODFLOW)
 MODFLOW requires river reaches. However, river network data is not divided into reaches. In order to provide the required reach data the `sfrmaker` tool can be used. To calculate the river reach data, the `sfrmaker` tool requires the river network to divided into river segments and width and elevation information at the downstream and upstream nodes. The following steps describe the preparation of the data required by of SFR package of MODFLOW:

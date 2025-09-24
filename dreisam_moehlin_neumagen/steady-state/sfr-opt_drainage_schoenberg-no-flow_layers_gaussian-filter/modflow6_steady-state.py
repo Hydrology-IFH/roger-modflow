@@ -256,6 +256,9 @@ class ModFlowSimulation:
         reaches.iloc[:, 15] = reaches.iloc[:, 15].astype(float)
         reaches.iloc[:, 16] = reaches.iloc[:, 16].astype(int)
 
+        # convert to m/day
+        reaches['rhk'] = reaches['rhk'] * 86400
+
         # increase the hydraulic conductivities of the reach cell by a factor of xx
         xx = 3.0
         for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):

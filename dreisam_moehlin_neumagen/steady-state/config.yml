@@ -1,9 +1,14 @@
-dx: 50
-dy: 50
-nx: 621
-ny: 777
-nz: 4
+dx: 50  # grid spacing in x direction [m]
+dy: 50  # grid spacing in y direction [m]
+nx: 621  # number of grid cells in x direction
+ny: 777  # number of grid cells in y direction
+nz: 4   # number of grid layers
 
+
+# !this part below is only needed if SFR package is used!
+# identify outlet reach numbers by opening the shapefile "sfr_lines.shp" in QGIS
+# "sfr_lines.shp" is produced by "write_sfr_data.py"
+# Outlet reach numbers
 outlet_rnos:
   - 25088
   - 24953
@@ -13,6 +18,8 @@ outlet_rnos:
   - 24671
   - 24973
 
+# reach numbers of streamflow and water observation points
+# observation point can be identified by opening the shapefile "sfr_lines.shp" in QGIS
 dict_obs_stage_rnos: 
   FALKENSTEIG_STAGE: 6188
   EBNET_STAGE: 13562
