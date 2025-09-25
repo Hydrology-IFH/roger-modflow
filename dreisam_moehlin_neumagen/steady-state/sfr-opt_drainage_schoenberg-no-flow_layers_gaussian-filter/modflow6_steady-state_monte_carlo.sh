@@ -12,5 +12,5 @@ do
     python write_binary_to_netcdf_steady-state.py --model-run $i --converged $converged
     python cleanup.py --model-run $i
     progress=$i/10000
-    echo "Model run $i done ($progress)"
+    echo "Model run $i done ($progress; $converged)"
 done

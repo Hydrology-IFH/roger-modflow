@@ -23,27 +23,17 @@ def main(model_run):
 
     base_path = Path(__file__).parent
 
-    # load the config file
-    file_config = base_path / "config.yml"
+    file_config = base_path.parent / "config.yml"
     with open(file_config, "r") as file:
-        roger_config = yaml.safe_load(file)
+        modflow_config = yaml.safe_load(file)
 
     path = base_path / "fudge_parameters_modflow.csv"
     fudge_parameters = pd.read_csv(path, sep=";", skiprows=1)
 
-    res_modflow = 50  # spatial resolution of MODFLOW in meters
-
-    modflow_config = {
-        'dx': res_modflow,
-        'dy': res_modflow,
-        'nx': 621,
-        'ny': 777,
-        'nz': 4,
-    }
-    grid_extent = (0, 777*modflow_config['dy'], 621*modflow_config['dx'], 0)
+    grid_extent = (0, (777*modflow_config['dy']) / 1000, (621*modflow_config['dx']) / 1000, 0)
 
     # load MODFLOW parameters
-    path = Path(__file__).parent / "parameters_modflow.nc"
+    path = Path(__file__).parent.parent / "input" / "parameters_modflow.nc"
     ds_params = xr.open_dataset(path, engine="h5netcdf")
 
     topography = ds_params['elevations'].isel(z=0).values
@@ -169,23 +159,36 @@ def main(model_run):
     reaches.iloc[:, 12] = reaches.iloc[:, 12].astype(float)
     reaches.iloc[:, 13] = reaches.iloc[:, 13].astype(int)
 
+    cond = np.isnan(reaches['rwid'])
+    reaches.loc[cond, 'rwid'] = 1.0  # set width to 1 m where it is NaN
+    cond_widht0 = (reaches.loc[:, 'rwid'] <= 1.0)
+    reaches.loc[cond_widht0, 'rwid'] = 1.0  # set width to 1 m if it is smaller than 1 m
+
+    rwid = np.empty_like(topography)
+    rwid[:, :] = np.nan
+    rlen = np.empty_like(topography)
+    rlen[:, :] = np.nan
+
     # increase the hydraulic conductivities of the reach cell by a factor of xx
-    xx = 3.2
     for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):
+        rwid[x, y] = reaches.loc[rno, 'rwid']
+        rlen[x, y] = reaches.loc[rno, 'rlen']
         if z == 0:
-            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * xx
+            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * fudge_parameters['kf_riv'].values[model_run]
         elif z == 1:
-            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * xx
-            hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * xx
+            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * fudge_parameters['kf_riv'].values[model_run]
+            hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * fudge_parameters['kf_riv'].values[model_run]
         elif z == 2:
-            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * xx
-            hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * xx
-            hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * xx
+            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * fudge_parameters['kf_riv'].values[model_run]
+            hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * fudge_parameters['kf_riv'].values[model_run]
+            hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * fudge_parameters['kf_riv'].values[model_run]
         elif z == 3:
-            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * xx
-            hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * xx
-            hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * xx
-            hydraulic_conductivities_layer4[x, y] = hydraulic_conductivities_layer4[x, y] * xx
+            hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * fudge_parameters['kf_riv'].values[model_run]
+            hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * fudge_parameters['kf_riv'].values[model_run]
+            hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * fudge_parameters['kf_riv'].values[model_run]
+            hydraulic_conductivities_layer4[x, y] = hydraulic_conductivities_layer4[x, y] * fudge_parameters['kf_riv'].values[model_run]
+
+    rarea = rlen * rwid
 
     # smooth transition between fissured and porous aquifers
     hydraulic_conductivities_layer1[np.isnan(hydraulic_conductivities_layer1)] = 0
@@ -203,38 +206,6 @@ def main(model_run):
 
     hydraulic_conductivities_layers = [hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4]
 
-    reaches = pd.read_csv(base_path.parent / 'input' / 'sfr_packagedata.csv', sep=';')
-    reaches.iloc[:, 0] = reaches.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
-    reaches.iloc[:, 1] = reaches.iloc[:, 1].astype(int) - 1
-    reaches.iloc[:, 2] = reaches.iloc[:, 2].astype(int) - 1  # convert to zero-based indexing
-    reaches.iloc[:, 3] = reaches.iloc[:, 3].astype(int) - 1  # convert to zero-based indexing
-    reaches.iloc[:, 4] = reaches.iloc[:, 4].astype(float) 
-    reaches.iloc[:, 5] = reaches.iloc[:, 5].astype(int)
-    reaches.iloc[:, 6] = reaches.iloc[:, 6].astype(float)
-    reaches.iloc[:, 7] = reaches.iloc[:, 7].astype(float)
-    reaches.iloc[:, 8] = reaches.iloc[:, 8].astype(float)
-    reaches.iloc[:, 9] = reaches.iloc[:, 9].astype(float)
-    reaches.iloc[:, 10] = reaches.iloc[:, 10].astype(float)
-    reaches.iloc[:, 11] = reaches.iloc[:, 11].astype(int)
-    reaches.iloc[:, 12] = reaches.iloc[:, 12].astype(float)
-    reaches.iloc[:, 13] = reaches.iloc[:, 13].astype(int)
-
-    cond = np.isnan(reaches['rwid'])
-    reaches.loc[cond, 'rwid'] = 1.0  # set width to 1 m where it is NaN
-    cond_widht0 = (reaches.loc[:, 'rwid'] <= 1.0)
-    reaches.loc[cond_widht0, 'rwid'] = 1.0  # set width to 1 m if it is smaller than 1 m
-
-    rwid = np.empty_like(topography)
-    rwid[:, :] = np.nan
-    rlen = np.empty_like(topography)
-    rlen[:, :] = np.nan
-
-    # set the hydraulic conductivities of the streambed using the kf of the reach cell and decrease by a factor of 0.0005
-    for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):
-        rwid[x, y] = reaches.loc[rno, 'rwid']
-        rlen[x, y] = reaches.loc[rno, 'rlen']
-    rarea = rlen * rwid
-    
     model_type = "steady-state"
     base_path_figs = base_path / "figures"
     sim = flopy.mf6.MFSimulation.load(
@@ -250,24 +221,14 @@ def main(model_run):
     output_file = base_path / "output" / f"modflow_output_run_{model_run}.nc"
     ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
 
-    fig, axes = plt.subplots(figsize=(4, 4))
-    plt.imshow(rarea, extent=grid_extent, cmap='Oranges', aspect='equal', vmin=0, vmax=1000)
-    plt.colorbar(label='GW-SW flow area \n[$m^s$]', shrink=0.5)
-    plt.grid(zorder=0)
-    plt.xlabel('Distance in x-direction [m]')
-    plt.ylabel('Distance in y-direction [m]')
-    plt.tight_layout()
-    file = base_path_figs / "reach_area.png"
-    fig.savefig(file, dpi=300)
-    plt.close("all")
 
     # plot the groundwater-surface water interaction
     gw_sw = np.nanmean(ds_mf['gw_sw'].isel(Time=0).values, axis=0) / 86400
     fig, axes = plt.subplots(figsize=(4, 4))
     plt.imshow(gw_sw * (-1), extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-0.01, vmax=0.01)
-    plt.colorbar(label='GW-SW flux \n[$m^3$/s]', shrink=0.5)
-    plt.xlabel('Distance in x-direction [m]')
-    plt.ylabel('Distance in y-direction [m]')
+    plt.colorbar(label='GW-SW flux \n[$m^3$/s]', shrink=0.42)
+    plt.xlabel('Distance in x-direction [km]')
+    plt.ylabel('Distance in y-direction [km]')
     plt.tight_layout()
     file = base_path_figs / f"gw-sw_steady_state_grid_{model_run}_m3_s.png"
     fig.savefig(file, dpi=600)
@@ -276,9 +237,9 @@ def main(model_run):
     minmax = np.nanmax(np.abs(gw_sw))
     fig, axes = plt.subplots(figsize=(4, 4))
     plt.imshow(gw_sw * (-1), extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-minmax, vmax=minmax)
-    plt.colorbar(label='GW-SW flux \n[$m^3$/s]', shrink=0.5)
-    plt.xlabel('Distance in x-direction [m]')
-    plt.ylabel('Distance in y-direction [m]')
+    plt.colorbar(label='GW-SW flux \n[$m^3$/s]', shrink=0.42)
+    plt.xlabel('Distance in x-direction [km]')
+    plt.ylabel('Distance in y-direction [km]')
     plt.tight_layout()
     file = base_path_figs / f"gw-sw_steady_state_grid_{model_run}_m3_s_.png"
     fig.savefig(file, dpi=300)
@@ -287,9 +248,9 @@ def main(model_run):
     gw_sw = np.nanmean(ds_mf['gw_sw'].isel(Time=0).values, axis=0) / rarea
     fig, axes = plt.subplots(figsize=(4, 4))
     plt.imshow(gw_sw * (-1), extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-10, vmax=10)
-    plt.colorbar(label='GW-SW flux \n[mm/day]', shrink=0.5)
-    plt.xlabel('Distance in x-direction [m]')
-    plt.ylabel('Distance in y-direction [m]')
+    plt.colorbar(label='GW-SW flux \n[mm/day]', shrink=0.42)
+    plt.xlabel('Distance in x-direction [km]')
+    plt.ylabel('Distance in y-direction [km]')
     plt.tight_layout()
     file = base_path_figs / f"gw-sw_steady_state_grid_{model_run}_mm_day.png"
     fig.savefig(file, dpi=600)
@@ -298,13 +259,14 @@ def main(model_run):
     minmax = np.nanmax(np.abs(gw_sw))
     fig, axes = plt.subplots(figsize=(4, 4))
     plt.imshow(gw_sw * (-1), extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-minmax, vmax=minmax)
-    plt.colorbar(label='GW-SW flux \n[mm/day]', shrink=0.5)
-    plt.xlabel('Distance in x-direction [m]')
-    plt.ylabel('Distance in y-direction [m]')
+    plt.colorbar(label='GW-SW flux \n[mm/day]', shrink=0.42)
+    plt.xlabel('Distance in x-direction [km]')
+    plt.ylabel('Distance in y-direction [km]')
     plt.tight_layout()
     file = base_path_figs / f"gw-sw_steady_state_grid_{model_run}_mm_day_.png"
     fig.savefig(file, dpi=300)
     plt.close("all")
+
 
 
     x = np.cumsum(ds_mf.lon.values - ds_mf.lon.values[0])
@@ -321,8 +283,8 @@ def main(model_run):
         plt.imshow(ds_mf['head'].isel(Time=0, layer=layer).values, extent=grid_extent, cmap='viridis', aspect='equal', vmin=100, vmax=600)
         plt.colorbar(label='groundwater head \n[m a.s.l.]', shrink=0.5)
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"gw_head_steady_state_layer{i}_grid_{model_run}.png"
@@ -336,8 +298,8 @@ def main(model_run):
         plt.imshow(gw_thickness, extent=grid_extent, cmap='viridis', aspect='equal')
         plt.colorbar(label='groundwater thickness [m]', shrink=0.5)
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"gw_thickness_steady_state_layer{i}_grid_{model_run}.png"
@@ -349,8 +311,8 @@ def main(model_run):
         plt.imshow(gw_depth, extent=grid_extent, cmap='viridis', aspect='equal', vmin=0, vmax=20)
         plt.colorbar(label='groundwater depth [m]', shrink=0.5)
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"gw_depth_steady_state_layer{i}_grid_{model_run}.png"
@@ -358,16 +320,16 @@ def main(model_run):
         plt.close("all")
 
         fig, axes = plt.subplots(figsize=(4, 4))
-        y = np.arange(0, modflow_config['nx']*modflow_config['dx'], modflow_config['dx'])
-        x = np.arange(0, modflow_config['ny']*modflow_config['dy'], modflow_config['dy'])
+        y = np.arange(0, modflow_config['nx']*modflow_config['dx'], modflow_config['dx']) / 1000
+        x = np.arange(0, modflow_config['ny']*modflow_config['dy'], modflow_config['dy']) / 1000
         X, Y = np.meshgrid(x, y)
         Z = ds_mf['head'].isel(Time=0, layer=layer).values
         levels = ll_levels[layer]
         CS = axes.contour(X, Y, Z, levels, colors='black')
         axes.clabel(CS, inline=True, fontsize=8, colors='black')
-        axes.imshow(mask, extent=grid_extent, cmap='Greys', alpha=0.25)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        axes.imshow(topography, extent=grid_extent, cmap='terrain', alpha=0.25)
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.title(f"Groundwater head of layer {layer + 1} [m a.s.l.]", fontsize=8)
         plt.tight_layout()
         i = layer + 1
@@ -396,7 +358,7 @@ def main(model_run):
     #         axes[layer].plot(x, z4, ls='-', lw=1, color='grey')
     #         axes[layer].set_xlim(0, x[-1])
     #         axes[layer].set_ylabel('[m a.s.l.]')
-    #     axes[-1].set_xlabel('Distance in W-E direction [m]')
+    #     axes[-1].set_xlabel('Distance in W-E direction [km]')
     #     fig.tight_layout()
     #     file = base_path_figs / f"gw_head_x{yy}_cross_section_layer.png"
     #     fig.savefig(file, dpi=300)
@@ -420,7 +382,7 @@ def main(model_run):
     #         axes[layer].plot(x, z4, ls='-', lw=1, color='grey')
     #         axes[layer].set_xlim(0, x[-1])
     #         axes[layer].set_ylabel('[m a.s.l.]')
-    #     axes[-1].set_xlabel('Distance in N-S direction [m]')
+    #     axes[-1].set_xlabel('Distance in N-S direction [km]')
     #     fig.tight_layout()
     #     file = base_path_figs / f"gw_head_y{xx}_cross_section_layer.png"
     #     fig.savefig(file, dpi=300)
@@ -436,8 +398,8 @@ def main(model_run):
         cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
         cbar.set_ticks(ticks=bounds, labels=[r'$10^{-8}$', r'$10^{-7}$', r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$', r'$10^{-1}$'])
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"kf_layer{i}_{model_run}_fudged_.png"
@@ -448,8 +410,8 @@ def main(model_run):
         plt.imshow(hydraulic_conductivity/(24*60*60), extent=grid_extent, cmap='Oranges', aspect='equal')
         cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"kf_layer{i}_{model_run}_fudged.png"
@@ -467,8 +429,8 @@ def main(model_run):
         plt.imshow(thickness, extent=grid_extent, cmap='viridis', aspect='equal', vmin=5, vmax=25)
         plt.colorbar(label='thickness [m]', shrink=0.5)
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"__thickness_layer{i}_{model_run}.png"
@@ -485,8 +447,8 @@ def main(model_run):
         cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
         cbar.set_ticks(ticks=bounds, labels=[r'$10^{-8}$', r'$10^{-7}$', r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$', r'$10^{-1}$'])
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"__kf_layer{i}_{model_run}.png"
@@ -497,8 +459,8 @@ def main(model_run):
         plt.imshow(hydraulic_conductivity/(24*60*60), extent=grid_extent, cmap='Oranges', aspect='equal')
         cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"___kf_layer{i}_{model_run}.png"
@@ -516,8 +478,8 @@ def main(model_run):
         plt.imshow(gw_depth * (-1), extent=grid_extent, cmap='viridis_r', aspect='equal')
         plt.colorbar(label='groundwater above surface [m]', shrink=0.5)
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"_gw_depth_steady_state_layer{i}_{model_run}.png"
@@ -532,8 +494,8 @@ def main(model_run):
         plt.imshow(thickness, extent=grid_extent, cmap='viridis', aspect='equal', vmin=5, vmax=25)
         plt.colorbar(label='thickness [m]', shrink=0.5)
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"_thickness_layer{i}_{model_run}.png"
@@ -550,8 +512,8 @@ def main(model_run):
         cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
         cbar.set_ticks(ticks=bounds, labels=[r'$10^{-8}$', r'$10^{-7}$', r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$', r'$10^{-1}$'])
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"_kf_layer{i}_{model_run}.png"

@@ -227,8 +227,8 @@ def main(model_run):
     fig, axes = plt.subplots(figsize=(4, 4))
     plt.imshow(gw_sw * (-1), extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-0.01, vmax=0.01)
     plt.colorbar(label='GW-SW flux \n[$m^3$/s]', shrink=0.42)
-    plt.xlabel('Distance in x-direction [m]')
-    plt.ylabel('Distance in y-direction [m]')
+    plt.xlabel('Distance in x-direction [km]')
+    plt.ylabel('Distance in y-direction [km]')
     plt.tight_layout()
     file = base_path_figs / f"gw-sw_steady_state_grid_{model_run}_m3_s.png"
     fig.savefig(file, dpi=600)
@@ -238,8 +238,8 @@ def main(model_run):
     fig, axes = plt.subplots(figsize=(4, 4))
     plt.imshow(gw_sw * (-1), extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-minmax, vmax=minmax)
     plt.colorbar(label='GW-SW flux \n[$m^3$/s]', shrink=0.42)
-    plt.xlabel('Distance in x-direction [m]')
-    plt.ylabel('Distance in y-direction [m]')
+    plt.xlabel('Distance in x-direction [km]')
+    plt.ylabel('Distance in y-direction [km]')
     plt.tight_layout()
     file = base_path_figs / f"gw-sw_steady_state_grid_{model_run}_m3_s_.png"
     fig.savefig(file, dpi=300)
@@ -249,8 +249,8 @@ def main(model_run):
     fig, axes = plt.subplots(figsize=(4, 4))
     plt.imshow(gw_sw * (-1), extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-10, vmax=10)
     plt.colorbar(label='GW-SW flux \n[mm/day]', shrink=0.42)
-    plt.xlabel('Distance in x-direction [m]')
-    plt.ylabel('Distance in y-direction [m]')
+    plt.xlabel('Distance in x-direction [km]')
+    plt.ylabel('Distance in y-direction [km]')
     plt.tight_layout()
     file = base_path_figs / f"gw-sw_steady_state_grid_{model_run}_mm_day.png"
     fig.savefig(file, dpi=600)
@@ -260,8 +260,8 @@ def main(model_run):
     fig, axes = plt.subplots(figsize=(4, 4))
     plt.imshow(gw_sw * (-1), extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-minmax, vmax=minmax)
     plt.colorbar(label='GW-SW flux \n[mm/day]', shrink=0.42)
-    plt.xlabel('Distance in x-direction [m]')
-    plt.ylabel('Distance in y-direction [m]')
+    plt.xlabel('Distance in x-direction [km]')
+    plt.ylabel('Distance in y-direction [km]')
     plt.tight_layout()
     file = base_path_figs / f"gw-sw_steady_state_grid_{model_run}_mm_day_.png"
     fig.savefig(file, dpi=300)
@@ -283,8 +283,8 @@ def main(model_run):
         plt.imshow(ds_mf['head'].isel(Time=0, layer=layer).values, extent=grid_extent, cmap='viridis', aspect='equal', vmin=100, vmax=600)
         plt.colorbar(label='groundwater head \n[m a.s.l.]', shrink=0.5)
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"gw_head_steady_state_layer{i}_grid_{model_run}.png"
@@ -298,8 +298,8 @@ def main(model_run):
         plt.imshow(gw_thickness, extent=grid_extent, cmap='viridis', aspect='equal')
         plt.colorbar(label='groundwater thickness [m]', shrink=0.5)
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"gw_thickness_steady_state_layer{i}_grid_{model_run}.png"
@@ -311,8 +311,8 @@ def main(model_run):
         plt.imshow(gw_depth, extent=grid_extent, cmap='viridis', aspect='equal', vmin=0, vmax=20)
         plt.colorbar(label='groundwater depth [m]', shrink=0.5)
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"gw_depth_steady_state_layer{i}_grid_{model_run}.png"
@@ -320,16 +320,16 @@ def main(model_run):
         plt.close("all")
 
         fig, axes = plt.subplots(figsize=(4, 4))
-        y = np.arange(0, modflow_config['nx']*modflow_config['dx'], modflow_config['dx'])
-        x = np.arange(0, modflow_config['ny']*modflow_config['dy'], modflow_config['dy'])
+        y = np.arange(0, modflow_config['nx']*modflow_config['dx'], modflow_config['dx']) / 1000
+        x = np.arange(0, modflow_config['ny']*modflow_config['dy'], modflow_config['dy']) / 1000
         X, Y = np.meshgrid(x, y)
         Z = ds_mf['head'].isel(Time=0, layer=layer).values
         levels = ll_levels[layer]
         CS = axes.contour(X, Y, Z, levels, colors='black')
         axes.clabel(CS, inline=True, fontsize=8, colors='black')
-        axes.imshow(mask, extent=grid_extent, cmap='Greys', alpha=0.25)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        axes.imshow(topography, extent=grid_extent, cmap='terrain', alpha=0.25)
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.title(f"Groundwater head of layer {layer + 1} [m a.s.l.]", fontsize=8)
         plt.tight_layout()
         i = layer + 1
@@ -358,7 +358,7 @@ def main(model_run):
     #         axes[layer].plot(x, z4, ls='-', lw=1, color='grey')
     #         axes[layer].set_xlim(0, x[-1])
     #         axes[layer].set_ylabel('[m a.s.l.]')
-    #     axes[-1].set_xlabel('Distance in W-E direction [m]')
+    #     axes[-1].set_xlabel('Distance in W-E direction [km]')
     #     fig.tight_layout()
     #     file = base_path_figs / f"gw_head_x{yy}_cross_section_layer.png"
     #     fig.savefig(file, dpi=300)
@@ -382,7 +382,7 @@ def main(model_run):
     #         axes[layer].plot(x, z4, ls='-', lw=1, color='grey')
     #         axes[layer].set_xlim(0, x[-1])
     #         axes[layer].set_ylabel('[m a.s.l.]')
-    #     axes[-1].set_xlabel('Distance in N-S direction [m]')
+    #     axes[-1].set_xlabel('Distance in N-S direction [km]')
     #     fig.tight_layout()
     #     file = base_path_figs / f"gw_head_y{xx}_cross_section_layer.png"
     #     fig.savefig(file, dpi=300)
@@ -398,8 +398,8 @@ def main(model_run):
         cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
         cbar.set_ticks(ticks=bounds, labels=[r'$10^{-8}$', r'$10^{-7}$', r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$', r'$10^{-1}$'])
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"kf_layer{i}_{model_run}_fudged_.png"
@@ -410,8 +410,8 @@ def main(model_run):
         plt.imshow(hydraulic_conductivity/(24*60*60), extent=grid_extent, cmap='Oranges', aspect='equal')
         cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"kf_layer{i}_{model_run}_fudged.png"
@@ -429,8 +429,8 @@ def main(model_run):
         plt.imshow(thickness, extent=grid_extent, cmap='viridis', aspect='equal', vmin=5, vmax=25)
         plt.colorbar(label='thickness [m]', shrink=0.5)
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"__thickness_layer{i}_{model_run}.png"
@@ -447,8 +447,8 @@ def main(model_run):
         cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
         cbar.set_ticks(ticks=bounds, labels=[r'$10^{-8}$', r'$10^{-7}$', r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$', r'$10^{-1}$'])
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"__kf_layer{i}_{model_run}.png"
@@ -459,8 +459,8 @@ def main(model_run):
         plt.imshow(hydraulic_conductivity/(24*60*60), extent=grid_extent, cmap='Oranges', aspect='equal')
         cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"___kf_layer{i}_{model_run}.png"
@@ -478,8 +478,8 @@ def main(model_run):
         plt.imshow(gw_depth * (-1), extent=grid_extent, cmap='viridis_r', aspect='equal')
         plt.colorbar(label='groundwater above surface [m]', shrink=0.5)
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"_gw_depth_steady_state_layer{i}_{model_run}.png"
@@ -494,8 +494,8 @@ def main(model_run):
         plt.imshow(thickness, extent=grid_extent, cmap='viridis', aspect='equal', vmin=5, vmax=25)
         plt.colorbar(label='thickness [m]', shrink=0.5)
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"_thickness_layer{i}_{model_run}.png"
@@ -512,8 +512,8 @@ def main(model_run):
         cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
         cbar.set_ticks(ticks=bounds, labels=[r'$10^{-8}$', r'$10^{-7}$', r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$', r'$10^{-1}$'])
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('Distance in x-direction [km]')
+        plt.ylabel('Distance in y-direction [km]')
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"_kf_layer{i}_{model_run}.png"

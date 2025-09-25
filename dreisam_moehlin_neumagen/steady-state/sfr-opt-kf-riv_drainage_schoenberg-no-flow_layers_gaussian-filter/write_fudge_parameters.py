@@ -32,7 +32,7 @@ def main(nsamples):
               "-4_4": [0.5, 2.5],
               "1.8-3_4": [0.5, 2.5],
               "kf_riv": [1.0, 5],
-              "rhk": [0.0001, 1.0],
+              "rhk": [0.0001, 0.001],
               "rch": [0.95, 1.05],
     }
 
@@ -52,8 +52,8 @@ def main(nsamples):
 
     df_params["offset"] = 0.
     df_params.iloc[:34, :] = 1.
-    df_params.loc[:33, "kf_riv"] = 5
-    df_params.loc[:33, "rhk"] = 1
+    df_params.loc[:33, "kf_riv"] = 1
+    df_params.loc[:33, "rhk"] = 0.0001
 
     df_params.loc[:33, "-8_1"] = 500.
     df_params.loc[:33, "-7_1"] = 75.
@@ -90,10 +90,10 @@ def main(nsamples):
     df_params.loc[27, "kf_riv"] = 3
     df_params.loc[28, "kf_riv"] = 4
     df_params.loc[29, "kf_riv"] = 5
-    df_params.loc[30, "rhk"] = 1.2
-    df_params.loc[31, "rhk"] = 1.1
-    df_params.loc[32, "rhk"] = 0.9
-    df_params.loc[33, "rhk"] = 0.8
+    df_params.loc[30, "rhk"] = 0.0001
+    df_params.loc[31, "rhk"] = 0.0005
+    df_params.loc[32, "rhk"] = 0.001
+    df_params.loc[33, "rhk"] = 0.008
 
     # constrain parameters by upper layers (i.e. kf of lower layer is equal or less than kf of upper layer)
     cond = (df_params["-7_3"] >= df_params["-7_2"])
