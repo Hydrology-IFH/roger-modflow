@@ -55,7 +55,7 @@ class ModFlowSimulation:
         self.ncol = ncol
         self.rowsize = rowsize
         self.colsize = colsize
-        self.working_directory = os.path.join(folder, 'output')
+        self.working_directory = folder
         if not os.path.exists(self.working_directory):
             os.makedirs(self.working_directory)
         self.verbose = verbose
@@ -359,7 +359,7 @@ class ModFlowSimulation:
             raise ValueError(f'Platform {platform.system()} not recognized.')
 
         # modflow requires the real path (no symlinks etc.)
-        library_path = self.folder.parent.parent.parent / "bin" / libary_name
+        library_path = Path(__file__).parent.parent.parent.parent / "bin" / libary_name
         try:
             self.mf6 = XmiWrapper(str(library_path), working_directory=self.working_directory)
         except Exception as e:
@@ -368,7 +368,7 @@ class ModFlowSimulation:
             return self.bmi_return(success, self.working_directory)
 
         # modflow requires the real path (no symlinks etc.)
-        config_file = self.folder / 'output' / 'mfsim.nam'
+        config_file = Path(self.folder) / 'mfsim.nam'
         if not os.path.exists(config_file):
             raise FileNotFoundError(f"Config file {config_file} not found on disk. Did you create the model first (load_from_disk = False)?")
 
@@ -376,7 +376,7 @@ class ModFlowSimulation:
             # initialize the model
             self.mf6.initialize(str(config_file))
         except:
-            return self.bmi_return(success, str(self.folder / 'output'))
+            return self.bmi_return(success, str(self.folder))
 
         if self.verbose:
             print("MODFLOW model initialized")
@@ -436,12 +436,13 @@ class ModFlowSimulation:
         self.mf6.finalize()
 
 @click.option("-mr", "--model-run", type=int, default=5)
+@click.option("-td", "--tmp-dir", type=str, default=Path(__file__).parent / "output" )
 @click.command("main", short_help="Run MODFLOW in steady-state mode")
-def main(model_run):
+def main(model_run, tmp_dir):
     # initialize the MODFLOW model using XMI
     modflow_interface = ModFlowSimulation(
         f"dmn_run_{model_run}",
-        base_path,
+        tmp_dir,
         nlay=4,
         nrow=modflow_config['nx'],
         ncol=modflow_config['ny'],

@@ -10,8 +10,9 @@ import flopy.utils.binaryfile as bf
 import click
 
 @click.option("-mr", "--model-run", type=int, default=5)
+@click.option("-td", "--tmp-dir", type=str, default=Path(__file__).parent / "output" )
 @click.command("main")
-def main(model_run):
+def main(model_run, tmp_dir):
     try:
         print(sys.version)
         print(f"flopy version: {flopy.__version__}")
@@ -19,7 +20,7 @@ def main(model_run):
         base_path = Path(__file__).parent
 
         sim = flopy.mf6.MFSimulation.load(
-            sim_ws=base_path / "output",
+            sim_ws=tmp_dir,
             exe_name="mf6",
             version="mf6",
             verbosity_level=0,
@@ -37,14 +38,14 @@ def main(model_run):
             ycoords = ds.y.values[::-1]
 
         # export groundwater head to netcdf
-        fhead = base_path / "output" / f"dmn_run_{model_run}.hds"
+        fhead = Path(tmp_dir) / f"dmn_run_{model_run}.hds"
         hds = flopy.utils.HeadFile(fhead)
 
-        fbudget = base_path / "output" / f"dmn_run_{model_run}.cbc"
+        fbudget = Path(tmp_dir) / f"dmn_run_{model_run}.cbc"
         cbb = flopy.utils.CellBudgetFile(fbudget)
 
         flowja = ml.oc.output.budget().get_data(text="FLOW-JA-FACE", kstpkper=(0, 0))[0]
-        grb_file = base_path / "output" / f"dmn_run_{model_run}.dis.grb"
+        grb_file = Path(tmp_dir) / f"dmn_run_{model_run}.dis.grb"
         residual = flopy.mf6.utils.get_residuals(flowja, grb_file=grb_file)
 
         # create xarray dataset
@@ -78,7 +79,7 @@ def main(model_run):
         # create spatial reference
         ds = ds.geo.write_crs("EPSG:25832")
         ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
-        file = base_path / "output" / f"modflow_output_run_{model_run}.nc"
+        file = Path(tmp_dir) / f"modflow_output_run_{model_run}.nc"
         comp = dict(zlib=True, complevel=1)  # compress data to save storage
         encoding = {var: comp for var in ds.data_vars}
         ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)
@@ -87,7 +88,7 @@ def main(model_run):
         # if "steady-state" == "steady-state":
         #     hds_data = hds.get_data()
         #     for i in range(4):
-        #         file = base_path / "output" / "steady-state" / f"groundwater_heads_layer{i+1}.csv"
+        #         file = Path(tmp_dir) / "steady-state" / f"groundwater_heads_layer{i+1}.csv"
         #         hds_data_layer = hds_data[i, ...]
         #         mask = (hds_data_layer > 1200) | (hds_data_layer < -100)
         #         hds_data_layer[mask] = np.nan
