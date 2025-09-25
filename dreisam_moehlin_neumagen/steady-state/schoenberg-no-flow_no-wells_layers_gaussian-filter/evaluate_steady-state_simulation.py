@@ -7,7 +7,7 @@ import rasterio
 import matplotlib.pyplot as plt
 import click
 
-@click.option("-mr", "--model-run", type=int, default=928)
+@click.option("-mr", "--model-run", type=int, default=5)
 @click.command("main", short_help="Evaluate the steady-state simulation")
 def main(model_run):
     base_path = Path(__file__).parent
@@ -80,7 +80,7 @@ def main(model_run):
     observed_groundwater_heads["sim-obs"] = sim_depths - obs_depths
     observed_groundwater_heads["sim-int"] = sim_depths - interp_depths
     observed_groundwater_heads["int-obs"] = interp_depths - obs_depths
-    observed_groundwater_heads.to_csv(base_path / "observations" / "observed_groundwater_heads_avg_.csv", sep=";", index=False)
+    observed_groundwater_heads.to_csv(base_path.parent / "observations" / "observed_groundwater_heads_avg_.csv", sep=";", index=False)
 
     # calculate mean error
     print(np.mean(sim - obs))

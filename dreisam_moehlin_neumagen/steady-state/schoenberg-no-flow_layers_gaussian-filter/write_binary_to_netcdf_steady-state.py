@@ -65,7 +65,6 @@ def main(model_run):
                 head=(["Time", "layer", "lat", "lon"], np.where(hds.get_data()[np.newaxis, :, :, :] > 10000, np.nan, hds.get_data()[np.newaxis, :, :, :])),
                 depth=(["Time", "layer", "lat", "lon"], np.where(hds.get_data()[np.newaxis, :, :, :] > 10000, np.nan, np.where(topography[np.newaxis, np.newaxis, :, :] - hds.get_data()[np.newaxis, :, :, :] > 0, topography[np.newaxis, np.newaxis, :, :] - hds.get_data()[np.newaxis, :, :, :], 0))),
                 flow_residual=(["Time", "layer", "lat", "lon"], residual[np.newaxis, :, :, :]),
-                specific_discharge=(["Time", "layer", "lat", "lon"], cbb.get_data(text="DATA-SPDIS", kstpkper=(0, 0), full3D=True)[0].filled(fill_value=np.nan)[np.newaxis, :, :, :]),
             )
 
         ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
@@ -75,8 +74,7 @@ def main(model_run):
         ds["depth"].attrs["long_name"] = "Groundwater depth"
         ds["flow_residual"].attrs["units"] = "m/day"
         ds["flow_residual"].attrs["long_name"] = "Flow residuals"
-        ds["specific_discharge"].attrs["units"] = "m3/day"
-        ds["specific_discharge"].attrs["long_name"] = "Groundwater flux"
+
         # create spatial reference
         ds = ds.geo.write_crs("EPSG:25832")
         ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc

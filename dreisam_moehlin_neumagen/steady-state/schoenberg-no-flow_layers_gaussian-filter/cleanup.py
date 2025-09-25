@@ -19,7 +19,7 @@ def main(model_run):
     os.remove(file)
 
     base_path = Path(__file__).parent
-    file = base_path / "output" / f"dmn_run_{model_run}.cbb"
+    file = base_path / "output" / f"dmn_run_{model_run}.cbc"
     os.remove(file)
 
     base_path = Path(__file__).parent

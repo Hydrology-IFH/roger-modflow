@@ -316,17 +316,15 @@ class ModFlowSimulation:
         # Create the output control package
         headfile = "{}.hds".format(name)
         head_filerecord = [headfile]
-        budgetfile = "{}.cbb".format(name)
+        budgetfile = "{}.cbc".format(name)
         budget_filerecord = [budgetfile]
         saverecord = [("HEAD", "ALL"), ("BUDGET", "ALL")]
-        printrecord = [("HEAD", "ALL"), ("BUDGET", "ALL")]
         oc = flopy.mf6.modflow.mfgwfoc.ModflowGwfoc(
             gwf,
             pname="oc",
             saverecord=saverecord,
             head_filerecord=head_filerecord,
             budget_filerecord=budget_filerecord,
-            printrecord=printrecord,
         )
 
         # Create the MODFLOW 6 Input Files and Run the Model
