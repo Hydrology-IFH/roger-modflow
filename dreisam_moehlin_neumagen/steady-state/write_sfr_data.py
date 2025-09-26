@@ -214,19 +214,18 @@ packagedata = []
 for line in packagedata_lines:
     if line.strip() and not line.strip().startswith("#"):
         parts = line.split()
-        reach = [int(parts[0]), int(parts[1]), int(parts[2]), int(parts[3]), float(parts[4]), float(parts[5]), float(parts[6]), float(parts[7]), int(parts[8]), float(parts[9]), float(parts[10]), int(parts[11]), float(parts[12]), int(parts[13]), int(parts[14])]
+        reach = [int(parts[0]), int(parts[1]), int(parts[2]), int(parts[3]),  int(parts[8]), float(parts[9]), float(parts[10]), int(parts[11]), float(parts[12]), int(parts[13]), int(parts[14])]
         packagedata.append(reach)
-df_packagedata = pd.DataFrame(packagedata, columns=["rno", "k", "i", "j", "rlen", "rwid", "rgrd", "rtp", "rbth", "rhk", "man", "ncon", "ustrf", "ndv", "line_id"])
+df_packagedata = pd.DataFrame(packagedata, columns=["rno", "k", "i", "j", "rbth", "rhk", "man", "ncon", "ustrf", "ndv", "line_id"])
+df_packagedata.index = df_packagedata["rno"]
 
-# update the reach data with the values from the SFR package
-df_packagedata["rno"] = sfrdata.reach_data["rno"].astype(int)
-df_packagedata["k"] = sfrdata.reach_data["k"].astype(int)
-df_packagedata["i"] = sfrdata.reach_data["i"].astype(int)
-df_packagedata["j"] = sfrdata.reach_data["j"].astype(int)
-df_packagedata["rlen"] = sfrdata.reach_data["rchlen"].astype(float)
-df_packagedata["rwid"] = sfrdata.reach_data["width"].astype(float)
-df_packagedata["rgrd"] = sfrdata.reach_data["slope"].astype(float)
-df_packagedata["rtp"] = sfrdata.reach_data["strtop"].astype(float)
+df = sfrdata.reach_data.loc[:, ["rchlen", "width", "slope", "strtop"]]
+df.index = sfrdata.reach_data["rno"]
+df.columns = ["rlen", "rwid", "rgrd", "rtp"]
+df_packagedata = df_packagedata.join(df, how="left")
+
+# reorder columns
+df_packagedata = df_packagedata.loc[:, ["rno", "k", "i", "j", "rlen", "rwid", "rgrd", "rtp", "rbth",  "rhk", "man", "ncon", "ustrf", "ndv", "line_id"]]
 
 # write to csv file
 file = base_path / "input" / "sfr_packagedata.csv"
