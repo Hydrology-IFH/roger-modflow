@@ -55,7 +55,7 @@ def main(nsamples):
     df_params.loc[:25, "-7_1"] = 75.
     df_params.loc[:25, "-7_2"] = 60.
     df_params.loc[:25, "-7_3"] = 50.
-    df_params.loc[:25, "-7_4"] = 10.
+    df_params.loc[:25, "-7_4"] = 40.
     df_params.loc[0, "rch"] = 1.25
     df_params.loc[1, "rch"] = 1.2
     df_params.loc[2, "rch"] = 1.15

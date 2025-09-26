@@ -2,10 +2,15 @@ from pathlib import Path
 import numpy as np
 import geopandas as gpd
 import pandas as pd
+import yaml
 
 base_path = Path(__file__).parent
 
-reach_outlet_ids = [25088, 24953, 24971, 25030, 24810, 24671, 24973]
+file_config = base_path / "config.yml"
+with open(file_config, "r") as file:
+    modflow_config = yaml.safe_load(file)
+
+reach_outlet_ids = modflow_config["outlet_rnos"]
 
 path = base_path / "input" / "sfr_lines.shp"
 gdf_reaches = gpd.read_file(path)

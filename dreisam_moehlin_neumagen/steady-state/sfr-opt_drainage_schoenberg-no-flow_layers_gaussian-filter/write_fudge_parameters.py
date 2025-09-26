@@ -31,7 +31,7 @@ def main(nsamples):
               "-5_4": [0.5, 2.5], 
               "-4_4": [0.5, 2.5],
               "1.8-3_4": [0.5, 2.5],
-              "rhk": [0.0001, 1.0],
+              "rhk": [0.0001, 0.01],
               "rch": [0.95, 1.05],
     }
 
@@ -51,7 +51,7 @@ def main(nsamples):
 
     df_params["offset"] = 0.
     df_params.iloc[:30, :] = 1.
-    df_params.loc[:30, "rhk"] = 1
+    df_params.loc[:30, "rhk"] = 0.0005
 
     df_params.loc[:29, "-8_1"] = 500.
     df_params.loc[:29, "-7_1"] = 75.

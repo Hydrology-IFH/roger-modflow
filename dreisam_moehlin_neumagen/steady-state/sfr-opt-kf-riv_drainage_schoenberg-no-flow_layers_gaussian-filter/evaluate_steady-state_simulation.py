@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import click
 import yaml
 
-@click.option("-mr", "--model-run", type=int, default=50)
+@click.option("-mr", "--model-run", type=int, default=5)
 @click.command("main", short_help="Evaluate the steady-state simulation")
 def main(model_run):
     base_path = Path(__file__).parent
@@ -87,26 +87,31 @@ def main(model_run):
     dict_obs_flow_id_inv = {v: k for k, v in dict_obs_flow_id.items()}
 
     # load the SFR reaches
-    reaches = pd.read_csv(base_path.parent / 'input' / 'sfr_packagedata.csv', sep=';')
+    reaches = pd.read_csv(base_path.parent / 'input' / 'sfr_packagedata_modified.csv', sep=';')
     
     output_file = base_path / "output" / f"dmn_run_{model_run}_sfr.obs.csv"
     df_sfr_ = pd.read_csv(output_file, sep=",")
 
-    df_sfr = pd.DataFrame(index=["falkensteig", "ebnet", "ehrenkirchen", "muenstertal"], columns=["rno", "layer", "x", "y", "rlen", "rwid", "rtp" "rgrd", "man", "rhk", "water_depth", "flow"])
+    df_sfr = pd.DataFrame(index=["falkensteig", "ebnet", "ehrenkirchen", "muenstertal"], columns=["rno", "layer", "x", "y", "rlen", "rwid", "rtp", "rgrd", "man", "rhk", "water_depth", "flow"])
     df_sfr["rno"] = [key for key in dict_obs_stage_id.values()]
     for rno in df_sfr["rno"].values:
         df_sfr.loc[df_sfr["rno"] == rno, "layer"] = reaches.loc[reaches["rno"] == rno, "k"].values[0]
-        df_sfr.loc[df_sfr["rno"] == rno, "x"] = reaches.loc[reaches["rno"] == rno, "i"].values[0]
-        df_sfr.loc[df_sfr["rno"] == rno, "y"] = reaches.loc[reaches["rno"] == rno, "j"].values[0]
+        df_sfr.loc[df_sfr["rno"] == rno, "y"] = reaches.loc[reaches["rno"] == rno, "i"].values[0]
+        df_sfr.loc[df_sfr["rno"] == rno, "x"] = reaches.loc[reaches["rno"] == rno, "j"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "rlen"] = reaches.loc[reaches["rno"] == rno, "rlen"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "rwid"] = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "rtp"] = reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "rgrd"] = reaches.loc[reaches["rno"] == rno, "rgrd"].values[0]
+        df_sfr.loc[df_sfr["rno"] == rno, "rhk"] = reaches.loc[reaches["rno"] == rno, "rhk"].values[0]
+        df_sfr.loc[df_sfr["rno"] == rno, "man"] = reaches.loc[reaches["rno"] == rno, "man"].values[0]
         rwidth = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
         stage_depth = df_sfr_.loc[0, dict_obs_stage_id_inv[rno]] - reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "water_depth"] = stage_depth
         flow = (df_sfr_.loc[0, dict_obs_flow_id_inv[rno]] * (-1)) / 86400
         df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * stage_depth * rwidth
+
+    file = base_path / "output" / f"dmn_run_{model_run}_sfr.csv"
+    df_sfr.to_csv(file, sep=";")
 
     sim_water_depth = df_sfr["water_depth"].values
     sim_water_depth[sim_water_depth < 0] = 0

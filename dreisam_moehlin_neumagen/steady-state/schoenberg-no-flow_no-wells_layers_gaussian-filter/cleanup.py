@@ -2,65 +2,64 @@ from pathlib import Path
 import os
 import click
 
-@click.option("-mr", "--model-run", type=int, default=5)
-@click.option("-td", "--tmp-dir", type=str, default=Path(__file__).parent / "output" )
+@click.option("-mr", "--model-run", type=int, default=0)
 @click.command("main")
-def main(model_run, tmp_dir):
+def main(model_run):
 
-    
-    file = Path(tmp_dir) / f"dmn_run_{model_run}.dis.grb"
+    base_path = Path(__file__).parent
+    file = base_path / "output" / f"dmn_run_{model_run}.dis.grb"
     os.remove(file)
 
-    
-    file = Path(tmp_dir) / f"dmn_run_{model_run}.lst"
+    base_path = Path(__file__).parent
+    file = base_path / "output" / f"dmn_run_{model_run}.lst"
     os.remove(file)
 
-    
-    file = Path(tmp_dir) / f"dmn_run_{model_run}.sto"
+    base_path = Path(__file__).parent
+    file = base_path / "output" / f"dmn_run_{model_run}.sto"
     os.remove(file)
 
-    
-    file = Path(tmp_dir) / f"dmn_run_{model_run}.cbc"
+    base_path = Path(__file__).parent
+    file = base_path / "output" / f"dmn_run_{model_run}.cbc"
     os.remove(file)
 
-    
-    file = Path(tmp_dir) / f"dmn_run_{model_run}.npf"
+    base_path = Path(__file__).parent
+    file = base_path / "output" / f"dmn_run_{model_run}.npf"
     os.remove(file)
 
-    
-    file = Path(tmp_dir) / f"dmn_run_{model_run}.ic"
+    base_path = Path(__file__).parent
+    file = base_path / "output" / f"dmn_run_{model_run}.ic"
     os.remove(file)
 
-    
-    file = Path(tmp_dir) / f"dmn_run_{model_run}.rcha"
+    base_path = Path(__file__).parent
+    file = base_path / "output" / f"dmn_run_{model_run}.rcha"
     os.remove(file)
 
-    
-    file = Path(tmp_dir) / f"dmn_run_{model_run}.chd"
+    base_path = Path(__file__).parent
+    file = base_path / "output" / f"dmn_run_{model_run}.chd"
     os.remove(file)
 
-    
-    file = Path(tmp_dir) / f"dmn_run_{model_run}.dis"
+    base_path = Path(__file__).parent
+    file = base_path / "output" / f"dmn_run_{model_run}.dis"
     os.remove(file)
 
-    
-    file = Path(tmp_dir) / f"dmn_run_{model_run}.tdis"
+    base_path = Path(__file__).parent
+    file = base_path / "output" / f"dmn_run_{model_run}.tdis"
     os.remove(file)
 
-    
-    file = Path(tmp_dir) / f"dmn_run_{model_run}.oc"
+    base_path = Path(__file__).parent
+    file = base_path / "output" / f"dmn_run_{model_run}.oc"
     os.remove(file)
 
-    
-    file = Path(tmp_dir) / f"dmn_run_{model_run}.nam"
+    base_path = Path(__file__).parent
+    file = base_path / "output" / f"dmn_run_{model_run}.nam"
     os.remove(file)
 
-    
-    file = Path(tmp_dir) / f"dmn_run_{model_run}.hds"
+    base_path = Path(__file__).parent
+    file = base_path / "output" / f"dmn_run_{model_run}.hds"
     os.remove(file)
 
-    
-    file = Path(tmp_dir) / f"dmn_run_{model_run}.ims"
+    base_path = Path(__file__).parent
+    file = base_path / "output" / f"dmn_run_{model_run}.ims"
     os.remove(file)
     return
 

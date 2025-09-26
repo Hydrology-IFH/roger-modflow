@@ -309,6 +309,8 @@ class ModFlowSimulation:
         reaches.loc[cond, 'rhk'] = 10e-9
 
         # fudge streambed conductivity
+        reaches['rwid'] = reaches['rwid']
+        reaches['man'] = reaches['man'] * 1.0
         reaches['rhk'] = reaches['rhk'] * fudge_parameters['rhk'].values[model_run]
      
         cond = np.isnan(reaches['rwid'])

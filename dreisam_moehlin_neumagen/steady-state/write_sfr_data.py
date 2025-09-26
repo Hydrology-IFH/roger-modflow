@@ -142,6 +142,9 @@ cond = np.isnan(sfrdata.reach_data["width"])
 sfrdata.reach_data.loc[cond, "width"] = 1.0  # set width to 1 m where it is NaN
 cond_widht0 = (sfrdata.reach_data.loc[:, "width"] <= 1.0)
 sfrdata.reach_data.loc[cond_widht0, "width"] = 1.0  # set width to 1 m if it is smaller than 1 m
+cond_widht18 = (sfrdata.reach_data.loc[:, "width"] >= 18.0)
+sfrdata.reach_data.loc[cond_widht18, "width"] = 18.0  # set width to 18 m if it is larger than 18 m
+sfrdata.reach_data.loc[:, "width"] = sfrdata.reach_data.loc[:, "width"] * 0.8
 sfrdata.reach_data.loc[:, "strthick"] = 1  # set the stream thickness (in meters)
 sfrdata.reach_data.loc[:, "strhc1"] = 1.0  # set the streambed hydraulic conductivity (in meters per day)
 sfrdata.reach_data.loc[:, "thts"] = 0.035  # set the Manning"s roughness coefficient (dimensionless)
@@ -151,9 +154,17 @@ dem_file = base_path / "input" / "dem_5m.tif"
 sfrdata.set_streambed_top_elevations_from_dem(dem_file,
                                               elevation_units="meters",
                                               method="buffers",
-                                              smooth=False,
+                                              smooth=True,
                                               buffer_distance=100)
-sfrdata.update_slopes(default_slope=0.001, minimum_slope=0.0001, maximum_slope=0.99)  # update slopes based on the new streambed top elevations
+sfrdata.update_slopes(default_slope=0.001, minimum_slope=0.0001, maximum_slope=0.45)  # update slopes based on the new streambed top elevations
+
+cond = np.isnan(sfrdata.reach_data["width"])
+sfrdata.reach_data.loc[cond, "width"] = 1.0  # set width to 1 m where it is NaN
+cond_widht0 = (sfrdata.reach_data.loc[:, "width"] <= 1.0)
+sfrdata.reach_data.loc[cond_widht0, "width"] = 1.0  # set width to 1 m if it is smaller than 1 m
+cond_widht18 = (sfrdata.reach_data.loc[:, "width"] >= 18.0)
+sfrdata.reach_data.loc[cond_widht18, "width"] = 18.0  # set width to 18 m if it is larger than 18 m
+sfrdata.reach_data.loc[:, "width"] = sfrdata.reach_data.loc[:, "width"] * 0.8
 
 # assign the layer
 for rno, i, j in zip(sfrdata.reach_data["rno"], sfrdata.reach_data["i"], sfrdata.reach_data["j"]):
@@ -206,9 +217,22 @@ for line in packagedata_lines:
         reach = [int(parts[0]), int(parts[1]), int(parts[2]), int(parts[3]), float(parts[4]), float(parts[5]), float(parts[6]), float(parts[7]), int(parts[8]), float(parts[9]), float(parts[10]), int(parts[11]), float(parts[12]), int(parts[13]), int(parts[14])]
         packagedata.append(reach)
 df_packagedata = pd.DataFrame(packagedata, columns=["rno", "k", "i", "j", "rlen", "rwid", "rgrd", "rtp", "rbth", "rhk", "man", "ncon", "ustrf", "ndv", "line_id"])
+
+# update the reach data with the values from the SFR package
+df_packagedata["rno"] = sfrdata.reach_data["rno"].astype(int)
+df_packagedata["k"] = sfrdata.reach_data["k"].astype(int)
+df_packagedata["i"] = sfrdata.reach_data["i"].astype(int)
+df_packagedata["j"] = sfrdata.reach_data["j"].astype(int)
+df_packagedata["rlen"] = sfrdata.reach_data["rchlen"].astype(float)
+df_packagedata["rwid"] = sfrdata.reach_data["width"].astype(float)
+df_packagedata["rgrd"] = sfrdata.reach_data["slope"].astype(float)
+df_packagedata["rtp"] = sfrdata.reach_data["strtop"].astype(float)
+
+# write to csv file
 file = base_path / "input" / "sfr_packagedata.csv"
 df_packagedata.to_csv(file, index=False, sep=";")
 
+# write the connectiondata to csv file
 for i, line in enumerate(lines):
     if line.strip().startswith("BEGIN Connectiondata"):
         start_index = i

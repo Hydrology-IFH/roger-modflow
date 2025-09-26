@@ -59,8 +59,6 @@ for idx, row in df_reaches.iterrows():
     gdf_reaches.loc[idx, "ss"] = ss
 
 df_reaches["rbth"] = 1.0
-df_reaches["rwid"] = df_reaches["rwid"] * 0.8
-gdf_reaches["rwid"] = df_reaches["rwid"]
 
 file = base_path / "input" / "sfr_packagedata_modified.csv"
 df_reaches.to_csv(file, index=False, sep=";")

@@ -173,6 +173,7 @@ def main(model_run):
     output_file = base_path / "output" / f"modflow_output_run_{model_run}.nc"
     ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
 
+
     x = np.cumsum(ds_mf.lon.values - ds_mf.lon.values[0])
     y = np.cumsum(ds_mf.lat.values - ds_mf.lat.values[-1])
     yr = y[::-1]

@@ -7,7 +7,7 @@ import rasterio
 import matplotlib.pyplot as plt
 import click
 
-@click.option("-mr", "--model-run", type=int, default=5)
+@click.option("-mr", "--model-run", type=int, default=928)
 @click.command("main", short_help="Evaluate the steady-state simulation")
 def main(model_run):
     base_path = Path(__file__).parent

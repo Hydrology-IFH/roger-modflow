@@ -10,50 +10,50 @@ nz: 4   # number of grid layers
 # "sfr_lines.shp" is produced by "write_sfr_data.py"
 # Outlet reach numbers
 outlet_rnos:
-  - 25088
-  - 24953
-  - 24971
+  - 25089
+  - 24976
+  - 24993
   - 25030
-  - 24810
-  - 24671
-  - 24973
+  - 24831
+  - 24712
+  - 24994
 
 # reach numbers of streamflow and water observation points
 # observation point can be identified by opening the shapefile "sfr_lines.shp" in QGIS
 dict_obs_stage_rnos: 
-  FALKENSTEIG_STAGE: 6188
-  EBNET_STAGE: 13562
-  EHRENKIRCHEN_STAGE: 21130
-  MUENSTERTAL_STAGE: 14006
+  FALKENSTEIG_STAGE: 6695
+  EBNET_STAGE: 14068
+  EHRENKIRCHEN_STAGE: 21470
+  MUENSTERTAL_STAGE: 14511
 
 dict_obs_flow_rnos:
-  FALKENSTEIG_FLOW: 6188
-  EBNET_FLOW: 13562
-  EHRENKIRCHEN_FLOW: 21130
-  MUENSTERTAL_FLOW: 14006
+  FALKENSTEIG_FLOW: 6695
+  EBNET_FLOW: 14068
+  EHRENKIRCHEN_FLOW: 21470
+  MUENSTERTAL_FLOW: 14511
 
 sfr_obs:
   falkensteig_stage:
       - stage
-      - 6188
+      - 6695
   ebnet_stage:
       - stage
-      - 13562
+      - 14068
   ehrenkirchen_stage:
       - stage
-      - 21130
+      - 21470
   muenstertal_stage:
       - stage
-      - 14006
+      - 14511
   falkensteig_flow:
       - downstream-flow
-      - 6188
+      - 6695
   ebnet_flow:
       - downstream-flow
-      - 13562
+      - 14068
   ehrenkirchen_flow:
       - downstream-flow
-      - 21130
+      - 21470
   muenstertal_flow:
       - downstream-flow
-      - 14006
+      - 14511

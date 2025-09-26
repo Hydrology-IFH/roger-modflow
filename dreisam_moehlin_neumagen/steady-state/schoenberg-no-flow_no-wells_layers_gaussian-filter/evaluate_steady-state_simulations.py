@@ -46,7 +46,7 @@ cols = observed_groundwater_heads.iloc[:, -3].values  # column IDs of the observ
 obs = observed_groundwater_heads.iloc[:, -1].values # observed groundwater depths
 obs_depth = topography[rows, cols].flatten() - observed_groundwater_heads.iloc[:, -1].values  # observed groundwater depths
 
-for model_run in range(0, 5000):
+for model_run in range(0, 10000):
     # load the netcdf file
     output_file = Path(f"/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen/steady-state/{base_path.name}/output") / f"modflow_output_run_{model_run}.nc"
     ds_mf = xr.open_dataset(output_file, engine="h5netcdf")

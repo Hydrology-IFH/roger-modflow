@@ -11,10 +11,10 @@ import flopy
 @click.command("main", short_help="Evaluate the constant head boundary condition")
 def main(model_run, plot):
     try:
-        path = Path(__file__).parent / "parameters_modflow.nc"
+        path = Path(__file__).parent.parent / "input" / "parameters_modflow.nc"
         ds_params = xr.open_dataset(path, engine="h5netcdf")
 
-        path = Path(__file__).parent / "boundary_conditions.nc"
+        path = Path(__file__).parent.parent / "input" / "boundary_conditions.nc"
         ds_bc = xr.open_dataset(path, engine="h5netcdf")
 
         fhead = Path(__file__).parent  / "output" / f"dmn_run_{model_run}.hds"
@@ -76,7 +76,7 @@ def main(model_run, plot):
 
         ds_bc.close()
         # write the new boundary condition to the netcdf file
-        path = str(Path(__file__).parent / "boundary_conditions.nc")
+        path = str(Path(__file__).parent.parent / "input" / "boundary_conditions.nc")
         with h5netcdf.File(path, "a", decode_vlen_strings=False) as f:
             var_obj = f.variables.get("constant_head")
             var_obj[:, :] = constant_head_new
