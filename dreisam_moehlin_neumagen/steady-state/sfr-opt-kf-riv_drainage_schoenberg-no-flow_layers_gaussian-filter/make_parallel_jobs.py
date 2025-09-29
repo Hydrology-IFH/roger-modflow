@@ -10,14 +10,13 @@ subprocess.Popen("python write_fudge_parameters.py", shell=True)
 # make directories of parallel jobs
 for i in range(10):
     path_dir = base_path / f"batch_{i}"
-    if not os.path.exists(str(path_dir)):
-        os.mkdir(path_dir)
-        path_output = base_path / f"batch_{i}" / "output"
-        os.mkdir(path_output)
-        shutil.copy(base_path / "fudge_parameters_modflow.csv", path_dir / "fudge_parameters_modflow.csv")
-        shutil.copy(base_path / "modflow6_steady-state_.py", path_dir / "modflow6_steady-state.py")
-        shutil.copy(base_path / "write_binary_to_netcdf_steady-state.py", path_dir / "write_binary_to_netcdf_steady-state.py")
-        shutil.copy(base_path / "cleanup.py", path_dir / "cleanup.py")
+    os.mkdir(path_dir)
+    path_output = base_path / f"batch_{i}" / "output"
+    os.mkdir(path_output)
+    shutil.copy(base_path / "fudge_parameters_modflow.csv", path_dir / "fudge_parameters_modflow.csv")
+    shutil.copy(base_path / "modflow6_steady-state_.py", path_dir / "modflow6_steady-state.py")
+    shutil.copy(base_path / "write_binary_to_netcdf_steady-state.py", path_dir / "write_binary_to_netcdf_steady-state.py")
+    shutil.copy(base_path / "cleanup.py", path_dir / "cleanup.py")
 
 start = [0, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000]
 end = [999, 1999, 2999, 3999, 4999, 5999, 6999, 7999, 8999, 9999]

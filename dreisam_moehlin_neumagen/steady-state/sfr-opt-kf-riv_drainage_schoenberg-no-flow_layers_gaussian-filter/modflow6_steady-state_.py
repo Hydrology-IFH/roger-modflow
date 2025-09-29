@@ -32,7 +32,7 @@ def recalc_specific_yield(hydraulic_conductivity, specific_yield_min=0.05, speci
 
 base_path = Path(__file__).parent
 
-file_config = base_path.parent / "config.yml"
+file_config = base_path.parent.parent / "config.yml"
 with open(file_config, "r") as file:
     modflow_config = yaml.safe_load(file)
 
