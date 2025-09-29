@@ -173,3 +173,5 @@ dreisam_moehlin_neumagen/steady-state/input/streambed_conductivity_.tif
 dreisam_moehlin_neumagen/steady-state/input/streambed_structure.tif
 dreisam_moehlin_neumagen/steady-state/input/streambed_structure_.tif
 dreisam_moehlin_neumagen/steady-state/input/upstream_nodes.gpkg
+
+**/batch_*/**

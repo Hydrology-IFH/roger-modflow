@@ -22,7 +22,7 @@ for i in range(10):
 start = [0, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000]
 end = [999, 1999, 2999, 3999, 4999, 5999, 6999, 7999, 8999, 9999]
 for j in range(10):
-    path_dir = base_path / f"batch_{i}"
+    path_dir = base_path / f"batch_{j}"
     script_name = "modflow6_steady-state_monte_carlo"
     lines = []
     lines.append("#!/bin/bash\n")
@@ -40,7 +40,7 @@ for j in range(10):
     file.close()
     subprocess.Popen(f"chmod +x {file_path}", shell=True)
 
-    script_name = f"batch_{i}_slurm"
+    script_name = f"batch_{j}_slurm"
     lines = []
     lines.append("#!/bin/bash\n")
     lines.append("#SBATCH --time=72:00:00\n")
