@@ -28,7 +28,7 @@ for j in range(10):
     lines.append("#!/bin/bash\n")
     lines.append("for i in {%s..%s}\n" % (start[j], end[j]))
     lines.append("do\n")
-    lines.append("\tconverged=$(python modflow6_steady-state.py --model-run $i | grep 'converged: ' | awk '{print $NF}'\n")
+    lines.append("\tconverged=$(python modflow6_steady-state.py --model-run $i | grep 'converged: ' | awk '{print $NF}')\n")
     lines.append("\tpython write_binary_to_netcdf_steady-state.py --model-run $i --converged $converged\n")
     lines.append("\tpython cleanup.py --model-run $i\n")
     lines.append("\tprogress=$i/10000\n")
