@@ -10,9 +10,11 @@ subprocess.Popen("python write_fudge_parameters.py", shell=True)
 # make directories of parallel jobs
 for i in range(10):
     path_dir = base_path / f"batch_{i}"
-    os.mkdir(path_dir)
+    if not os.path.exists(path_dir):
+        os.mkdir(path_dir)
     path_output = base_path / f"batch_{i}" / "output"
-    os.mkdir(path_output)
+    if not os.path.exists(path_output):
+        os.mkdir(path_output)
     shutil.copy(base_path / "fudge_parameters_modflow.csv", path_dir / "fudge_parameters_modflow.csv")
     shutil.copy(base_path / "modflow6_steady-state_.py", path_dir / "modflow6_steady-state.py")
     shutil.copy(base_path / "write_binary_to_netcdf_steady-state.py", path_dir / "write_binary_to_netcdf_steady-state.py")
