@@ -33,7 +33,7 @@ for j in range(10):
     lines.append("\tpython write_binary_to_netcdf_steady-state.py --model-run $i --converged $converged\n")
     lines.append("\tpython cleanup.py --model-run $i\n")
     lines.append("\tprogress=$i/10000\n")
-    lines.append("\techo 'Model run $i done ($progress; $converged)'\n")
+    lines.append('\techo "Model run $i done ($progress; $converged)"\n')
     lines.append("done\n")
     file_path = path_dir / f"{script_name}.sh"
     file = open(file_path, "w")

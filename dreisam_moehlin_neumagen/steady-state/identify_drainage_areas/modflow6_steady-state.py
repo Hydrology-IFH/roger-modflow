@@ -55,7 +55,7 @@ class ModFlowSimulation:
         self.ncol = ncol
         self.rowsize = rowsize
         self.colsize = colsize
-        self.working_directory = os.path.join(folder, 'output')
+        self.working_directory = os.path.join(folder, "output")
         if not os.path.exists(self.working_directory):
             os.makedirs(self.working_directory)
         self.verbose = verbose
@@ -101,18 +101,18 @@ class ModFlowSimulation:
 
         # Create the discretization package
         # load elevation data of the layers
-        topography = ds_params['elevations'].isel(z=0).values
-        elevation_bottom_layer1 = ds_params['elevations'].isel(z=1).values
-        elevation_bottom_layer2 = ds_params['elevations'].isel(z=2).values
-        elevation_bottom_layer3 = ds_params['elevations'].isel(z=3).values
-        elevation_bottom_layer4 = ds_params['elevations'].isel(z=4).values
+        topography = ds_params["elevations"].isel(z=0).values
+        elevation_bottom_layer1 = ds_params["elevations"].isel(z=1).values
+        elevation_bottom_layer2 = ds_params["elevations"].isel(z=2).values
+        elevation_bottom_layer3 = ds_params["elevations"].isel(z=3).values
+        elevation_bottom_layer4 = ds_params["elevations"].isel(z=4).values
         elevation_bottom_layers = [elevation_bottom_layer1, elevation_bottom_layer2, elevation_bottom_layer3, elevation_bottom_layer4]
 
         mask = np.isfinite(topography)
         # set Schoenberg to inactive
-        mask_schoenberg = (ds_params['mask_schoenberg'].values == 1)
+        mask_schoenberg = (ds_params["mask_schoenberg"].values == 1)
         mask = np.where(mask_schoenberg, False, mask)
-        mask_boundary_condition_schoenberg = ds_bc['mask_schoenberg_bc'].values
+        mask_boundary_condition_schoenberg = ds_bc["mask_schoenberg_bc"].values
         mask = np.where(mask_boundary_condition_schoenberg, True, mask)
         domain = np.empty_like(topography)
         domain[mask] = 1
@@ -143,15 +143,15 @@ class ModFlowSimulation:
         ic = flopy.mf6.modflow.mfgwfic.ModflowGwfic(gwf, pname="ic", strt=initial_conditions_layers)
 
         # Create the node property flow package with hydraulic conducitivities
-        hydraulic_conductivities_layer1 = ds_params['kf'].isel(layer=0).values
-        hydraulic_conductivities_layer2 = ds_params['kf'].isel(layer=1).values
-        hydraulic_conductivities_layer3 = ds_params['kf'].isel(layer=2).values
-        hydraulic_conductivities_layer4 = ds_params['kf'].isel(layer=3).values
+        hydraulic_conductivities_layer1 = ds_params["kf"].isel(layer=0).values
+        hydraulic_conductivities_layer2 = ds_params["kf"].isel(layer=1).values
+        hydraulic_conductivities_layer3 = ds_params["kf"].isel(layer=2).values
+        hydraulic_conductivities_layer4 = ds_params["kf"].isel(layer=3).values
 
-        hydraulic_conductivities_layer1_ = ds_params['kf'].isel(layer=0).values / 86400
-        hydraulic_conductivities_layer2_ = ds_params['kf'].isel(layer=1).values / 86400
-        hydraulic_conductivities_layer3_ = ds_params['kf'].isel(layer=2).values / 86400
-        hydraulic_conductivities_layer4_ = ds_params['kf'].isel(layer=3).values / 86400
+        hydraulic_conductivities_layer1_ = ds_params["kf"].isel(layer=0).values / 86400
+        hydraulic_conductivities_layer2_ = ds_params["kf"].isel(layer=1).values / 86400
+        hydraulic_conductivities_layer3_ = ds_params["kf"].isel(layer=2).values / 86400
+        hydraulic_conductivities_layer4_ = ds_params["kf"].isel(layer=3).values / 86400
         
         # fudge parameters
         mask1 = (hydraulic_conductivities_layer1_ <= 10**-10)
@@ -238,10 +238,10 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer2[np.isnan(hydraulic_conductivities_layer2)] = 0
         hydraulic_conductivities_layer3[np.isnan(hydraulic_conductivities_layer3)] = 0
         hydraulic_conductivities_layer4[np.isnan(hydraulic_conductivities_layer4)] = 0
-        hydraulic_conductivities_layer1 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [1.0, 1.0], mode='constant')
-        hydraulic_conductivities_layer2 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.0, 1.0], mode='constant')
-        hydraulic_conductivities_layer3 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.0, 1.0], mode='constant')
-        hydraulic_conductivities_layer4 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.0, 1.0], mode='constant')
+        hydraulic_conductivities_layer1 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [1.0, 1.0], mode="constant")
+        hydraulic_conductivities_layer2 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.0, 1.0], mode="constant")
+        hydraulic_conductivities_layer3 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.0, 1.0], mode="constant")
+        hydraulic_conductivities_layer4 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.0, 1.0], mode="constant")
         hydraulic_conductivities_layer1[~mask] = np.nan
         hydraulic_conductivities_layer2[~mask] = np.nan
         hydraulic_conductivities_layer3[~mask] = np.nan
@@ -279,14 +279,14 @@ class ModFlowSimulation:
             iconvert=1, ss=specific_storage, sy=specific_yield,  steady_state=True)
 
         # Create the constant head package (Dirichlet boundary condition i.e. first type)
-        mask_boundary_condition_porous_aquifer = ds_bc['mask_porous_aquifer_bc'].values
+        mask_boundary_condition_porous_aquifer = ds_bc["mask_porous_aquifer_bc"].values
         index = np.where(mask_boundary_condition_porous_aquifer == 1)
         rows_bc = index[0]
         cols_bc = index[1]
 
         chd_rec = []
         for ii in range(0, len(rows_bc)):
-            constant_head = ds_bc['constant_head_porous_aquifer'].values[rows_bc[ii], cols_bc[ii]]
+            constant_head = ds_bc["constant_head_porous_aquifer"].values[rows_bc[ii], cols_bc[ii]]
             if (constant_head <= topography[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]):
                 layer = 0
             elif (constant_head <= elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]]):
@@ -306,11 +306,11 @@ class ModFlowSimulation:
         )
             
         # Recharge package (Neumann boundary condition i.e. second type)
-        recharge = ds_bc['recharge'].values / 1000  # convert mm/day to m/day
+        recharge = ds_bc["recharge"].values / 1000  # convert mm/day to m/day
         rcha = flopy.mf6.ModflowGwfrcha(gwf, recharge=recharge * 0.8, fixed_cell=True)
 
         # load the groundwater extraction data
-        groundwater_extraction = pd.read_csv(base_path.parent / 'input' / 'groundwater_extraction.csv', sep=';')
+        groundwater_extraction = pd.read_csv(base_path.parent / "input" / "groundwater_extraction.csv", sep=";")
         # Create the well package (Neumann boundary condition i.e. second type)
         # pumping rate in m3/day
         wells_q = groundwater_extraction["annual_average"].values.tolist()
@@ -359,7 +359,7 @@ class ModFlowSimulation:
         """
         parse libmf6.so and libmf6.dll stdout file
         """
-        fpth = os.path.join(model_ws, 'mfsim.stdout')
+        fpth = os.path.join(model_ws, "mfsim.stdout")
         if os.path.exists(fpth):
             lines = open(fpth).readlines()
         else:
@@ -371,14 +371,14 @@ class ModFlowSimulation:
         success = False
         
         
-        if platform.system() == 'Windows':
-            libary_name = 'libmf6.dll'
-        elif platform.system() == 'Linux':
-            libary_name = 'libmf6.so'
-        elif platform.system() == 'Darwin':
-            libary_name = 'libmf6.dylib'
+        if platform.system() == "Windows":
+            libary_name = "libmf6.dll"
+        elif platform.system() == "Linux":
+            libary_name = "libmf6.so"
+        elif platform.system() == "Darwin":
+            libary_name = "libmf6.dylib"
         else:
-            raise ValueError(f'Platform {platform.system()} not recognized.')
+            raise ValueError(f"Platform {platform.system()} not recognized.")
 
         # modflow requires the real path (no symlinks etc.)
         library_path = self.folder.parent.parent.parent / "bin" / libary_name
@@ -390,7 +390,7 @@ class ModFlowSimulation:
             return self.bmi_return(success, self.working_directory)
 
         # modflow requires the real path (no symlinks etc.)
-        config_file = self.folder / 'output' / 'mfsim.nam'
+        config_file = self.folder / "output" / "mfsim.nam"
         if not os.path.exists(config_file):
             raise FileNotFoundError(f"Config file {config_file} not found on disk. Did you create the model first (load_from_disk = False)?")
 
@@ -398,7 +398,7 @@ class ModFlowSimulation:
             # initialize the model
             self.mf6.initialize(str(config_file))
         except:
-            return self.bmi_return(success, str(self.folder / 'output'))
+            return self.bmi_return(success, str(self.folder / "output"))
 
         if self.verbose:
             print("MODFLOW model initialized")
@@ -445,7 +445,7 @@ class ModFlowSimulation:
         self.mf6.finalize_time_step()
 
         if self.verbose:
-            print(f'MODFLOW timestep {int(self.mf6.get_current_time())} converged in {round(time() - t0, 2)} seconds')
+            print(f"MODFLOW timestep {int(self.mf6.get_current_time())} converged in {round(time() - t0, 2)} seconds")
         
         # If next step exists, prepare timestep. Otherwise the data set through the bmi
         # will be overwritten when preparing the next timestep.
@@ -465,10 +465,10 @@ def main(model_run):
         f"dmn_run_{model_run}",
         base_path,
         nlay=4,
-        nrow=modflow_config['nx'],
-        ncol=modflow_config['ny'],
-        rowsize=modflow_config['dx'],
-        colsize=modflow_config['dy'],
+        nrow=modflow_config["nx"],
+        ncol=modflow_config["ny"],
+        rowsize=modflow_config["dx"],
+        colsize=modflow_config["dy"],
         model_run=0,
         verbose=True
     )

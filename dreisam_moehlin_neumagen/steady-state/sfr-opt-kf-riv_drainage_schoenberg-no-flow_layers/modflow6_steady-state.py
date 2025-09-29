@@ -55,7 +55,7 @@ class ModFlowSimulation:
         self.ncol = ncol
         self.rowsize = rowsize
         self.colsize = colsize
-        self.working_directory = os.path.join(folder, 'output')
+        self.working_directory = os.path.join(folder, "output")
         if not os.path.exists(self.working_directory):
             os.makedirs(self.working_directory)
         self.verbose = verbose
@@ -104,20 +104,20 @@ class ModFlowSimulation:
 
         # Create the discretization package
         # load elevation data of the layers
-        topography = ds_params['elevations'].isel(z=0).values
-        elevation_bottom_layer1 = ds_params['elevations'].isel(z=1).values
-        elevation_bottom_layer2 = ds_params['elevations'].isel(z=2).values
-        elevation_bottom_layer3 = ds_params['elevations'].isel(z=3).values
-        elevation_bottom_layer4 = ds_params['elevations'].isel(z=4).values
+        topography = ds_params["elevations"].isel(z=0).values
+        elevation_bottom_layer1 = ds_params["elevations"].isel(z=1).values
+        elevation_bottom_layer2 = ds_params["elevations"].isel(z=2).values
+        elevation_bottom_layer3 = ds_params["elevations"].isel(z=3).values
+        elevation_bottom_layer4 = ds_params["elevations"].isel(z=4).values
         elevation_bottom_layers = [elevation_bottom_layer1, elevation_bottom_layer2, elevation_bottom_layer3, elevation_bottom_layer4]
 
         mask = np.isfinite(topography)
         # set Schoenberg to inactive
-        mask_schoenberg = (ds_params['mask_schoenberg'].values == 1)
+        mask_schoenberg = (ds_params["mask_schoenberg"].values == 1)
         mask = np.where(mask_schoenberg, False, mask)
-        mask_boundary_condition_schoenberg = ds_bc['mask_schoenberg_bc'].values
+        mask_boundary_condition_schoenberg = ds_bc["mask_schoenberg_bc"].values
         mask = np.where(mask_boundary_condition_schoenberg, True, mask)
-        mask_drainage_area = (ds_params['mask_drainage'].values == 1)
+        mask_drainage_area = (ds_params["mask_drainage"].values == 1)
         domain = np.empty_like(topography)
         domain[mask] = 1
         domain[~mask] = -1
@@ -147,15 +147,15 @@ class ModFlowSimulation:
         ic = flopy.mf6.modflow.mfgwfic.ModflowGwfic(gwf, pname="ic", strt=initial_conditions_layers)
 
         # Create the node property flow package with hydraulic conducitivities
-        hydraulic_conductivities_layer1 = ds_params['kf'].isel(layer=0).values
-        hydraulic_conductivities_layer2 = ds_params['kf'].isel(layer=1).values
-        hydraulic_conductivities_layer3 = ds_params['kf'].isel(layer=2).values
-        hydraulic_conductivities_layer4 = ds_params['kf'].isel(layer=3).values
+        hydraulic_conductivities_layer1 = ds_params["kf"].isel(layer=0).values
+        hydraulic_conductivities_layer2 = ds_params["kf"].isel(layer=1).values
+        hydraulic_conductivities_layer3 = ds_params["kf"].isel(layer=2).values
+        hydraulic_conductivities_layer4 = ds_params["kf"].isel(layer=3).values
 
-        hydraulic_conductivities_layer1_ = ds_params['kf'].isel(layer=0).values / 86400
-        hydraulic_conductivities_layer2_ = ds_params['kf'].isel(layer=1).values / 86400
-        hydraulic_conductivities_layer3_ = ds_params['kf'].isel(layer=2).values / 86400
-        hydraulic_conductivities_layer4_ = ds_params['kf'].isel(layer=3).values / 86400
+        hydraulic_conductivities_layer1_ = ds_params["kf"].isel(layer=0).values / 86400
+        hydraulic_conductivities_layer2_ = ds_params["kf"].isel(layer=1).values / 86400
+        hydraulic_conductivities_layer3_ = ds_params["kf"].isel(layer=2).values / 86400
+        hydraulic_conductivities_layer4_ = ds_params["kf"].isel(layer=3).values / 86400
         
         # fudge parameters
         mask1 = (hydraulic_conductivities_layer1_ <= 10e-10)
@@ -206,39 +206,39 @@ class ModFlowSimulation:
         mask433 = (hydraulic_conductivities_layer3_ == 4.0000002e-03)
 
         # fudge parameters
-        hydraulic_conductivities_layer1[mask81] = hydraulic_conductivities_layer1[mask81] * fudge_parameters['-8_1'].values[model_run]
+        hydraulic_conductivities_layer1[mask81] = hydraulic_conductivities_layer1[mask81] * fudge_parameters["-8_1"].values[model_run]
 
-        hydraulic_conductivities_layer1[mask71] = hydraulic_conductivities_layer1[mask71] * fudge_parameters['-7_1'].values[model_run]
-        hydraulic_conductivities_layer2[mask72] = hydraulic_conductivities_layer2[mask72] * fudge_parameters['-7_2'].values[model_run]
-        hydraulic_conductivities_layer3[mask73] = hydraulic_conductivities_layer3[mask73] * fudge_parameters['-7_3'].values[model_run]
-        hydraulic_conductivities_layer4[mask74] = hydraulic_conductivities_layer4[mask74] * fudge_parameters['-7_4'].values[model_run]
+        hydraulic_conductivities_layer1[mask71] = hydraulic_conductivities_layer1[mask71] * fudge_parameters["-7_1"].values[model_run]
+        hydraulic_conductivities_layer2[mask72] = hydraulic_conductivities_layer2[mask72] * fudge_parameters["-7_2"].values[model_run]
+        hydraulic_conductivities_layer3[mask73] = hydraulic_conductivities_layer3[mask73] * fudge_parameters["-7_3"].values[model_run]
+        hydraulic_conductivities_layer4[mask74] = hydraulic_conductivities_layer4[mask74] * fudge_parameters["-7_4"].values[model_run]
 
-        hydraulic_conductivities_layer1[mask61] = hydraulic_conductivities_layer1[mask61] * fudge_parameters['-6_1'].values[model_run]
+        hydraulic_conductivities_layer1[mask61] = hydraulic_conductivities_layer1[mask61] * fudge_parameters["-6_1"].values[model_run]
 
-        hydraulic_conductivities_layer1[mask51] = hydraulic_conductivities_layer1[mask51] * fudge_parameters['-5_1'].values[model_run]
-        hydraulic_conductivities_layer2[mask52] = hydraulic_conductivities_layer2[mask52] * fudge_parameters['-5_2'].values[model_run]
-        hydraulic_conductivities_layer3[mask53] = hydraulic_conductivities_layer3[mask53] * fudge_parameters['-5_3'].values[model_run]
-        hydraulic_conductivities_layer4[mask54] = hydraulic_conductivities_layer4[mask54] * fudge_parameters['-5_4'].values[model_run]
+        hydraulic_conductivities_layer1[mask51] = hydraulic_conductivities_layer1[mask51] * fudge_parameters["-5_1"].values[model_run]
+        hydraulic_conductivities_layer2[mask52] = hydraulic_conductivities_layer2[mask52] * fudge_parameters["-5_2"].values[model_run]
+        hydraulic_conductivities_layer3[mask53] = hydraulic_conductivities_layer3[mask53] * fudge_parameters["-5_3"].values[model_run]
+        hydraulic_conductivities_layer4[mask54] = hydraulic_conductivities_layer4[mask54] * fudge_parameters["-5_4"].values[model_run]
 
-        hydraulic_conductivities_layer2[mask42] = hydraulic_conductivities_layer2[mask42] * fudge_parameters['-4_2'].values[model_run]
-        hydraulic_conductivities_layer3[mask43] = hydraulic_conductivities_layer3[mask43] * fudge_parameters['-4_3'].values[model_run]
-        hydraulic_conductivities_layer4[mask44] = hydraulic_conductivities_layer4[mask44] * fudge_parameters['-4_4'].values[model_run]
+        hydraulic_conductivities_layer2[mask42] = hydraulic_conductivities_layer2[mask42] * fudge_parameters["-4_2"].values[model_run]
+        hydraulic_conductivities_layer3[mask43] = hydraulic_conductivities_layer3[mask43] * fudge_parameters["-4_3"].values[model_run]
+        hydraulic_conductivities_layer4[mask44] = hydraulic_conductivities_layer4[mask44] * fudge_parameters["-4_4"].values[model_run]
 
-        hydraulic_conductivities_layer2[mask132] = hydraulic_conductivities_layer2[mask132] * fudge_parameters['1-3_2'].values[model_run]
-        hydraulic_conductivities_layer3[mask133] = hydraulic_conductivities_layer3[mask133] * fudge_parameters['1-3_3'].values[model_run]
+        hydraulic_conductivities_layer2[mask132] = hydraulic_conductivities_layer2[mask132] * fudge_parameters["1-3_2"].values[model_run]
+        hydraulic_conductivities_layer3[mask133] = hydraulic_conductivities_layer3[mask133] * fudge_parameters["1-3_3"].values[model_run]
 
-        hydraulic_conductivities_layer2[mask232] = hydraulic_conductivities_layer2[mask232] * fudge_parameters['1.8-3_2'].values[model_run]
-        hydraulic_conductivities_layer3[mask233] = hydraulic_conductivities_layer3[mask233] * fudge_parameters['1.8-3_3'].values[model_run]
-        hydraulic_conductivities_layer4[mask234] = hydraulic_conductivities_layer4[mask234] * fudge_parameters['1.8-3_4'].values[model_run]
+        hydraulic_conductivities_layer2[mask232] = hydraulic_conductivities_layer2[mask232] * fudge_parameters["1.8-3_2"].values[model_run]
+        hydraulic_conductivities_layer3[mask233] = hydraulic_conductivities_layer3[mask233] * fudge_parameters["1.8-3_3"].values[model_run]
+        hydraulic_conductivities_layer4[mask234] = hydraulic_conductivities_layer4[mask234] * fudge_parameters["1.8-3_4"].values[model_run]
 
-        hydraulic_conductivities_layer2[mask332] = hydraulic_conductivities_layer2[mask332] * fudge_parameters['3-3_2'].values[model_run]
-        hydraulic_conductivities_layer3[mask333] = hydraulic_conductivities_layer3[mask333] * fudge_parameters['3-3_3'].values[model_run]
+        hydraulic_conductivities_layer2[mask332] = hydraulic_conductivities_layer2[mask332] * fudge_parameters["3-3_2"].values[model_run]
+        hydraulic_conductivities_layer3[mask333] = hydraulic_conductivities_layer3[mask333] * fudge_parameters["3-3_3"].values[model_run]
 
-        hydraulic_conductivities_layer2[mask432] = hydraulic_conductivities_layer2[mask432] * fudge_parameters['4-3_2'].values[model_run]
-        hydraulic_conductivities_layer3[mask433] = hydraulic_conductivities_layer3[mask433] * fudge_parameters['4-3_3'].values[model_run]
+        hydraulic_conductivities_layer2[mask432] = hydraulic_conductivities_layer2[mask432] * fudge_parameters["4-3_2"].values[model_run]
+        hydraulic_conductivities_layer3[mask433] = hydraulic_conductivities_layer3[mask433] * fudge_parameters["4-3_3"].values[model_run]
 
         # prepare SFR data
-        reaches = pd.read_csv(base_path.parent / 'input' / 'sfr_packagedata_modified.csv', sep=';')
+        reaches = pd.read_csv(base_path.parent / "input" / "sfr_packagedata_modified.csv", sep=";")
         reaches.iloc[:, 0] = reaches.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
         reaches.iloc[:, 1] = reaches.iloc[:, 1].astype(int) - 1 # convert to zero-based indexing
         reaches.iloc[:, 2] = reaches.iloc[:, 2].astype(int) - 1  # convert to zero-based indexing
@@ -257,52 +257,52 @@ class ModFlowSimulation:
         reaches.iloc[:, 16] = reaches.iloc[:, 16].astype(int)
 
         # convert to m/day
-        reaches['rhk'] = reaches['rhk'] * 86400
+        reaches["rhk"] = reaches["rhk"] * 86400
 
         # increase the hydraulic conductivities of the reach cell by a factor of xx
         for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):
             if z == 0:
-                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * fudge_parameters['kf_riv'].values[model_run]
+                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * fudge_parameters["kf_riv"].values[model_run]
             elif z == 1:
-                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * fudge_parameters['kf_riv'].values[model_run]
-                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * fudge_parameters['kf_riv'].values[model_run]
+                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * fudge_parameters["kf_riv"].values[model_run]
+                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * fudge_parameters["kf_riv"].values[model_run]
             elif z == 2:
-                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * fudge_parameters['kf_riv'].values[model_run]
-                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * fudge_parameters['kf_riv'].values[model_run]
-                hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * fudge_parameters['kf_riv'].values[model_run]
+                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * fudge_parameters["kf_riv"].values[model_run]
+                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * fudge_parameters["kf_riv"].values[model_run]
+                hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * fudge_parameters["kf_riv"].values[model_run]
             elif z == 3:
-                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * fudge_parameters['kf_riv'].values[model_run]
-                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * fudge_parameters['kf_riv'].values[model_run]
-                hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * fudge_parameters['kf_riv'].values[model_run]
-                hydraulic_conductivities_layer4[x, y] = hydraulic_conductivities_layer4[x, y] * fudge_parameters['kf_riv'].values[model_run]
+                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * fudge_parameters["kf_riv"].values[model_run]
+                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * fudge_parameters["kf_riv"].values[model_run]
+                hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * fudge_parameters["kf_riv"].values[model_run]
+                hydraulic_conductivities_layer4[x, y] = hydraulic_conductivities_layer4[x, y] * fudge_parameters["kf_riv"].values[model_run]
 
-        # modify the manning's n and hydraulic conductivity of the streambed based on the fraction of channelisation
-        reaches['man'] = (1 - reaches['fc']) * reaches['man']
-        reaches['rhk'] = (1 - reaches['fc']) * reaches['rhk']
+        # modify the manning"s n and hydraulic conductivity of the streambed based on the fraction of channelisation
+        reaches["man"] = (1 - reaches["fc"]) * reaches["man"]
+        reaches["rhk"] = (1 - reaches["fc"]) * reaches["rhk"]
 
-        # modify the manning's n and hydraulic conductivity of the streambed based on the degree of alteration (5=partly, 6=strongly, 7=very strongly)
-        cond = (reaches['ss'] == 5)
-        reaches.loc[cond, 'rhk'] = 10e-5
-        cond = (reaches['ss'] == 6)
-        reaches.loc[cond, 'rhk'] = 10e-6
-        cond = (reaches['ss'] == 7)
-        reaches.loc[cond, 'rhk'] = 10e-7
+        # modify the manning"s n and hydraulic conductivity of the streambed based on the degree of alteration (5=partly, 6=strongly, 7=very strongly)
+        cond = (reaches["ss"] == 5)
+        reaches.loc[cond, "rhk"] = 10e-5
+        cond = (reaches["ss"] == 6)
+        reaches.loc[cond, "rhk"] = 10e-6
+        cond = (reaches["ss"] == 7)
+        reaches.loc[cond, "rhk"] = 10e-7
 
-        # set lower limits for manning's n and hydraulic conductivity of the streambed
-        cond = (reaches['man'] <= 0.12)
-        reaches.loc[cond, 'man'] = 0.12
-        cond = (reaches['rhk'] <= 10e-9)
-        reaches.loc[cond, 'rhk'] = 10e-9
+        # set lower limits for manning"s n and hydraulic conductivity of the streambed
+        cond = (reaches["man"] <= 0.12)
+        reaches.loc[cond, "man"] = 0.12
+        cond = (reaches["rhk"] <= 10e-9)
+        reaches.loc[cond, "rhk"] = 10e-9
 
         # fudge streambed conductivity
-        reaches['rhk'] = reaches['rhk'] * fudge_parameters['rhk'].values[model_run]
+        reaches["rhk"] = reaches["rhk"] * fudge_parameters["rhk"].values[model_run]
      
-        cond = np.isnan(reaches['rwid'])
-        reaches.loc[cond, 'rwid'] = 1.0  # set width to 1 m where it is NaN
-        cond_widht0 = (reaches.loc[:, 'rwid'] <= 1.0)
-        reaches.loc[cond_widht0, 'rwid'] = 1.0  # set width to 1 m if it is smaller than 1 m
+        cond = np.isnan(reaches["rwid"])
+        reaches.loc[cond, "rwid"] = 1.0  # set width to 1 m where it is NaN
+        cond_widht0 = (reaches.loc[:, "rwid"] <= 1.0)
+        reaches.loc[cond_widht0, "rwid"] = 1.0  # set width to 1 m if it is smaller than 1 m
 
-        diversions = pd.read_csv(base_path.parent / 'input' / 'sfr_diversions.csv', sep=';')
+        diversions = pd.read_csv(base_path.parent / "input" / "sfr_diversions.csv", sep=";")
         diversions.iloc[:, 0] = diversions.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
         diversions.iloc[:, 1] = diversions.iloc[:, 1].astype(int) - 1
         diversions.iloc[:, 2] = diversions.iloc[:, 2].astype(int) - 1  # convert to zero-based indexing
@@ -314,12 +314,12 @@ class ModFlowSimulation:
 
         # condition of diversions
         cond_diversions = reaches.iloc[:, 0].isin(diversions.iloc[:, 0])
-        reaches.loc[cond_diversions, 'ustrf'] = 1.0
-        reaches.loc[cond_diversions, 'ndv'] = 1
-        reaches.loc[cond_diversions, 'ncon'] = reaches.loc[cond_diversions, 'ncon'] + 1
+        reaches.loc[cond_diversions, "ustrf"] = 1.0
+        reaches.loc[cond_diversions, "ndv"] = 1
+        reaches.loc[cond_diversions, "ncon"] = reaches.loc[cond_diversions, "ncon"] + 1
         cond_diversions1 = reaches.iloc[:, 0].isin(diversions.iloc[:, 2])
-        reaches.loc[cond_diversions1, 'ustrf'] = 0.0
-        reaches.loc[cond_diversions1, 'ncon'] = reaches.loc[cond_diversions1, 'ncon'] + 1
+        reaches.loc[cond_diversions1, "ustrf"] = 0.0
+        reaches.loc[cond_diversions1, "ncon"] = reaches.loc[cond_diversions1, "ncon"] + 1
 
         packagedata = []
         for i in range(len(reaches)):
@@ -330,7 +330,7 @@ class ModFlowSimulation:
         
         nstrm = len(packagedata)  # number of reaches
 
-        connections = pd.read_csv(base_path.parent / 'input' / 'sfr_connectiondata.csv', sep=';', header=None)
+        connections = pd.read_csv(base_path.parent / "input" / "sfr_connectiondata.csv", sep=";", header=None)
         for i in range(len(diversions)):
             rno_up = diversions.iloc[i, 0]
             rno_down = diversions.iloc[i, 2] 
@@ -353,7 +353,7 @@ class ModFlowSimulation:
 
         hydraulic_conductivities_layers = [hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4]
         npf = flopy.mf6.modflow.mfgwfnpf.ModflowGwfnpf(
-            gwf, pname="npf", icelltype=1, k=hydraulic_conductivities_layers, wetdry=0.5, save_flows=True, save_specific_discharge='budget save file'
+            gwf, pname="npf", icelltype=1, k=hydraulic_conductivities_layers, wetdry=0.5, save_flows=True, save_specific_discharge="budget save file"
         )
 
         # create the storage package
@@ -383,14 +383,14 @@ class ModFlowSimulation:
             iconvert=1, ss=specific_storage, sy=specific_yield, steady_state=True)
 
         # Create the constant head package (Dirichlet boundary condition i.e. first type)
-        mask_boundary_condition_porous_aquifer = ds_bc['mask_porous_aquifer_bc'].values
+        mask_boundary_condition_porous_aquifer = ds_bc["mask_porous_aquifer_bc"].values
         index = np.where(mask_boundary_condition_porous_aquifer == 1)
         rows_bc = index[0]
         cols_bc = index[1]
 
         chd_rec = []
         for ii in range(0, len(rows_bc)):
-            constant_head = ds_bc['constant_head_porous_aquifer'].values[rows_bc[ii], cols_bc[ii]] - fudge_parameters['offset'].values[model_run]
+            constant_head = ds_bc["constant_head_porous_aquifer"].values[rows_bc[ii], cols_bc[ii]] - fudge_parameters["offset"].values[model_run]
             if (constant_head <= topography[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]):
                 layer = 0
             elif (constant_head <= elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]]):
@@ -410,11 +410,11 @@ class ModFlowSimulation:
         )
             
         # Recharge package (Neumann boundary condition i.e. second type)
-        recharge = ds_bc['recharge'].values / 1000  # convert mm/day to m/day
+        recharge = ds_bc["recharge"].values / 1000  # convert mm/day to m/day
         rcha = flopy.mf6.ModflowGwfrcha(gwf, recharge=recharge, fixed_cell=True, pname="rcha")
 
         # streamflow routing package (SFR)
-        ls_obs = [(str(key), str(modflow_config['sfr_obs'][key][0]), (int(modflow_config['sfr_obs'][key][1]),)) for key in modflow_config['sfr_obs'].keys()]
+        ls_obs = [(str(key), str(modflow_config["sfr_obs"][key][0]), (int(modflow_config["sfr_obs"][key][1]),)) for key in modflow_config["sfr_obs"].keys()]
         obs_dict = {
             (f"{name}_sfr.obs.csv", "binary"): ls_obs
         }
@@ -450,7 +450,7 @@ class ModFlowSimulation:
         )
 
         # load the groundwater extraction data
-        groundwater_extraction = pd.read_csv(base_path.parent / 'input' / 'groundwater_extraction.csv', sep=';')
+        groundwater_extraction = pd.read_csv(base_path.parent / "input" / "groundwater_extraction.csv", sep=";")
         # Create the well package (Neumann boundary condition i.e. second type)
         # pumping rate in m3/day
         wells_q = groundwater_extraction["annual_average"].values.tolist()
@@ -497,7 +497,7 @@ class ModFlowSimulation:
         """
         parse libmf6.so and libmf6.dll stdout file
         """
-        fpth = os.path.join(model_ws, 'mfsim.stdout')
+        fpth = os.path.join(model_ws, "mfsim.stdout")
         if os.path.exists(fpth):
             lines = open(fpth).readlines()
         else:
@@ -509,14 +509,14 @@ class ModFlowSimulation:
         success = False
         
         
-        if platform.system() == 'Windows':
-            libary_name = 'libmf6.dll'
-        elif platform.system() == 'Linux':
-            libary_name = 'libmf6.so'
-        elif platform.system() == 'Darwin':
-            libary_name = 'libmf6.dylib'
+        if platform.system() == "Windows":
+            libary_name = "libmf6.dll"
+        elif platform.system() == "Linux":
+            libary_name = "libmf6.so"
+        elif platform.system() == "Darwin":
+            libary_name = "libmf6.dylib"
         else:
-            raise ValueError(f'Platform {platform.system()} not recognized.')
+            raise ValueError(f"Platform {platform.system()} not recognized.")
 
         # modflow requires the real path (no symlinks etc.)
         library_path = self.folder.parent.parent.parent / "bin" / libary_name
@@ -528,7 +528,7 @@ class ModFlowSimulation:
             return self.bmi_return(success, self.working_directory)
 
         # modflow requires the real path (no symlinks etc.)
-        config_file = self.folder / 'output' / 'mfsim.nam'
+        config_file = self.folder / "output" / "mfsim.nam"
         if not os.path.exists(config_file):
             raise FileNotFoundError(f"Config file {config_file} not found on disk. Did you create the model first (load_from_disk = False)?")
 
@@ -536,7 +536,7 @@ class ModFlowSimulation:
             # initialize the model
             self.mf6.initialize(str(config_file))
         except:
-            return self.bmi_return(success, str(self.folder / 'output'))
+            return self.bmi_return(success, str(self.folder / "output"))
 
         if self.verbose:
             print("MODFLOW model initialized")
@@ -583,7 +583,7 @@ class ModFlowSimulation:
         self.mf6.finalize_time_step()
 
         if self.verbose:
-            print(f'MODFLOW timestep {int(self.mf6.get_current_time())} converged in {round(time() - t0, 2)} seconds')
+            print(f"MODFLOW timestep {int(self.mf6.get_current_time())} converged in {round(time() - t0, 2)} seconds")
         
         # If next step exists, prepare timestep. Otherwise the data set through the bmi
         # will be overwritten when preparing the next timestep.
@@ -603,10 +603,10 @@ def main(model_run):
         f"dmn_run_{model_run}",
         base_path,
         nlay=4,
-        nrow=modflow_config['nx'],
-        ncol=modflow_config['ny'],
-        rowsize=modflow_config['dx'],
-        colsize=modflow_config['dy'],
+        nrow=modflow_config["nx"],
+        ncol=modflow_config["ny"],
+        rowsize=modflow_config["dx"],
+        colsize=modflow_config["dy"],
         model_run=model_run,
         verbose=True
     )
