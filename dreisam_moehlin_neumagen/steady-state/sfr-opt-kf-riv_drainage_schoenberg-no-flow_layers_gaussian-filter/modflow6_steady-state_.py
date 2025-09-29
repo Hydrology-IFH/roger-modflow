@@ -535,7 +535,7 @@ class ModFlowSimulation:
             raise ValueError(f"Platform {platform.system()} not recognized.")
 
         # modflow requires the real path (no symlinks etc.)
-        library_path = self.folder.parent.parent.parent / "bin" / libary_name
+        library_path = self.folder.parent.parent.parent.parent / "bin" / libary_name
         try:
             self.mf6 = XmiWrapper(str(library_path), working_directory=self.working_directory)
         except Exception as e:
