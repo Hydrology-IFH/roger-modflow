@@ -53,7 +53,7 @@ def main(nsamples):
     df_params["offset"] = 0.
     df_params.iloc[:34, :] = 1.
     df_params.loc[:33, "kf_riv"] = 1
-    df_params.loc[:33, "rhk"] = 0.0005
+    df_params.loc[:33, "rhk"] = 0.0008
 
     df_params.loc[:33, "-8_1"] = 500.
     df_params.loc[:33, "-7_1"] = 75.

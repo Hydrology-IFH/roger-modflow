@@ -66,9 +66,9 @@ obs_depth = topography[rows, cols].flatten() - observed_groundwater_heads.iloc[:
 
 for model_run in range(0, 10000):
     converged = df_params_metrics.loc[model_run, "converged"]
-    if converged == 1:
+    output_file = Path(f"/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen/steady-state/{base_path.name}/output") / f"modflow_output_run_{model_run}.nc"
+    if os.path.exists(output_file):
         # load the netcdf file
-        output_file = Path(f"/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen/steady-state/{base_path.name}/output") / f"modflow_output_run_{model_run}.nc"
         ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
         groundwater_heads = ds_mf["head"].values[0, ...]
 
@@ -165,9 +165,9 @@ obs_depth = topography[rows, cols].flatten() - observed_groundwater_heads.iloc[:
 
 for model_run in range(0, 10000):
     converged = df_params_metrics.loc[model_run, "converged"]
-    if converged == 1:
+    output_file = Path(f"/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen/steady-state/{base_path.name}/output") / f"modflow_output_run_{model_run}.nc"
+    if os.path.exists(output_file):
         # load the netcdf file
-        output_file = Path(f"/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen/steady-state/{base_path.name}/output") / f"modflow_output_run_{model_run}.nc"
         ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
         groundwater_heads = ds_mf["head"].values[0, ...]
 
