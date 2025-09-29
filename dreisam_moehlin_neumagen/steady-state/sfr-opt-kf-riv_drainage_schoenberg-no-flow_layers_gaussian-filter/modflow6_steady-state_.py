@@ -61,10 +61,10 @@ class ModFlowSimulation:
         self.verbose = verbose
 
         # load MODFLOW parameters
-        path = Path(__file__).parent.parent / "input" / "parameters_modflow.nc"
+        path = base_path.parent.parent / "input" / "parameters_modflow.nc"
         ds_params = xr.open_dataset(path, engine="h5netcdf")
 
-        path = Path(__file__).parent.parent / "input" / "boundary_conditions.nc"
+        path = base_path.parent.parent / "input" / "boundary_conditions.nc"
         ds_bc = xr.open_dataset(path, engine="h5netcdf")
 
         path = base_path / "fudge_parameters_modflow.csv"
@@ -238,7 +238,7 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer3[mask433] = hydraulic_conductivities_layer3[mask433] * fudge_parameters["4-3_3"].values[model_run]
 
         # prepare SFR data
-        reaches = pd.read_csv(base_path.parent / "input" / "sfr_packagedata_modified.csv", sep=";")
+        reaches = pd.read_csv(base_path.parent.parent / "input" / "sfr_packagedata_modified.csv", sep=";")
         reaches.iloc[:, 0] = reaches.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
         reaches.iloc[:, 1] = reaches.iloc[:, 1].astype(int) - 1 # convert to zero-based indexing
         reaches.iloc[:, 2] = reaches.iloc[:, 2].astype(int) - 1  # convert to zero-based indexing
@@ -318,7 +318,7 @@ class ModFlowSimulation:
         cond_widht0 = (reaches.loc[:, "rwid"] <= 1.0)
         reaches.loc[cond_widht0, "rwid"] = 1.0  # set width to 1 m if it is smaller than 1 m
 
-        diversions = pd.read_csv(base_path.parent / "input" / "sfr_diversions.csv", sep=";")
+        diversions = pd.read_csv(base_path.parent.parent / "input" / "sfr_diversions.csv", sep=";")
         diversions.iloc[:, 0] = diversions.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
         diversions.iloc[:, 1] = diversions.iloc[:, 1].astype(int) - 1
         diversions.iloc[:, 2] = diversions.iloc[:, 2].astype(int) - 1  # convert to zero-based indexing
@@ -346,7 +346,7 @@ class ModFlowSimulation:
         
         nstrm = len(packagedata)  # number of reaches
 
-        connections = pd.read_csv(base_path.parent / "input" / "sfr_connectiondata.csv", sep=";", header=None)
+        connections = pd.read_csv(base_path.parent.parent / "input" / "sfr_connectiondata.csv", sep=";", header=None)
         for i in range(len(diversions)):
             rno_up = diversions.iloc[i, 0]
             rno_down = diversions.iloc[i, 2] 
@@ -466,7 +466,7 @@ class ModFlowSimulation:
         )
 
         # load the groundwater extraction data
-        groundwater_extraction = pd.read_csv(base_path.parent / "input" / "groundwater_extraction.csv", sep=";")
+        groundwater_extraction = pd.read_csv(base_path.parent.parent / "input" / "groundwater_extraction.csv", sep=";")
         # Create the well package (Neumann boundary condition i.e. second type)
         # pumping rate in m3/day
         wells_q = groundwater_extraction["annual_average"].values.tolist()
