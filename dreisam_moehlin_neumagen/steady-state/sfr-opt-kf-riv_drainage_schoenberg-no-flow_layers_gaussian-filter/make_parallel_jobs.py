@@ -27,6 +27,10 @@ for j in range(10):
     script_name = "modflow6_steady-state_monte_carlo"
     lines = []
     lines.append("#!/bin/bash\n")
+    lines.append("\n")
+    lines.append('module load devel/miniforge\n')
+    lines.append("conda activate roger-modflow\n")
+    lines.append("\n")
     lines.append("for i in {%s..%s}\n" % (start[j], end[j]))
     lines.append("do\n")
     lines.append("\tconverged=$(python modflow6_steady-state.py --model-run $i | grep 'converged: ' | awk '{print $NF}')\n")
@@ -56,8 +60,6 @@ for j in range(10):
     lines.append(f"#SBATCH --error={script_name}_err.out\n")
     lines.append("#SBATCH --export=ALL\n")
     lines.append(" \n")
-    lines.append('module load devel/miniforge\n')
-    lines.append("conda activate roger-modflow\n")
     lines.append(f"cd {str(path_dir)}\n")
     lines.append(" \n")
     lines.append(
