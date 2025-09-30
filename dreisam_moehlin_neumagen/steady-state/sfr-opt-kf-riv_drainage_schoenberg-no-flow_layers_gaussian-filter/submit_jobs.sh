@@ -26,3 +26,4 @@ cd ../batch_8
     sbatch -p cpu batch_8_slurm.sh
 cd ../batch_9
     sbatch -p cpu batch_9_slurm.sh
+cd ..

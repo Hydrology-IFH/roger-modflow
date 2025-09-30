@@ -56,10 +56,10 @@ def main(nsamples):
     df_params.loc[:33, "rhk"] = 0.01
 
     df_params.loc[:33, "-8_1"] = 500.
-    df_params.loc[:33, "-7_1"] = 75.
-    df_params.loc[:33, "-7_2"] = 50.
+    df_params.loc[:33, "-7_1"] = 50.
+    df_params.loc[:33, "-7_2"] = 40.
     df_params.loc[:33, "-7_3"] = 30.
-    df_params.loc[:33, "-7_4"] = 10.
+    df_params.loc[:33, "-7_4"] = 20.
 
     # df_params.loc[:33, "1-3_2"] = 1.0
     # df_params.loc[:33, "1.8-3_2"] = 1.0

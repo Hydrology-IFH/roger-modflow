@@ -57,7 +57,6 @@ for j in range(10):
     lines.append("#SBATCH --export=ALL\n")
     lines.append(" \n")
     lines.append('module load devel/miniforge\n')
-    lines.append('eval "$(conda shell.bash hook)"\n')
     lines.append("conda activate roger-modflow\n")
     lines.append(f"cd {str(path_dir)}\n")
     lines.append(" \n")
