@@ -91,7 +91,7 @@ MODFLOW requires river reaches. However, river network data is not divided into 
 1. Use `Processing toolbox --> Vector overlay --> Split with lines` in QGIS to split the river network into river segments
 2. Extract the downstream and upstream nodes from the river segments.
 3. Assign the elevations and streambed width to the downstream and upstream nodes and join the data to the river segments.
-4. Assign to each river segment the downstream connected segment.
+4. Assign to each river segment the downstream connected segment --> `python `
 5. Repair the geometries of the river segments.
 6. Write the data for the SFR package of MODFLOW using the `sfrmaker` tool.
 7. Check `input/model_SFR.chk` for errors and load `input/sfr_routing.shp` and `input/sfr_outlets.shp` in QGIS to make visual check.

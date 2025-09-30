@@ -17,7 +17,7 @@ for i in range(10):
         os.mkdir(path_output)
     shutil.copy(base_path / "fudge_parameters_modflow.csv", path_dir / "fudge_parameters_modflow.csv")
     shutil.copy(base_path / "modflow6_steady-state_.py", path_dir / "modflow6_steady-state.py")
-    shutil.copy(base_path / "write_binary_to_netcdf_steady-state.py", path_dir / "write_binary_to_netcdf_steady-state.py")
+    shutil.copy(base_path / "write_binary_to_netcdf_steady-state_.py", path_dir / "write_binary_to_netcdf_steady-state.py")
     shutil.copy(base_path / "cleanup.py", path_dir / "cleanup.py")
 
 start = [0, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000]
@@ -27,13 +27,17 @@ for j in range(10):
     script_name = "modflow6_steady-state_monte_carlo"
     lines = []
     lines.append("#!/bin/bash\n")
+    lines.append("\n")
+    lines.append('module load devel/miniforge\n')
+    lines.append("conda activate roger-modflow\n")
+    lines.append("\n")
     lines.append("for i in {%s..%s}\n" % (start[j], end[j]))
     lines.append("do\n")
     lines.append("\tconverged=$(python modflow6_steady-state.py --model-run $i | grep 'converged: ' | awk '{print $NF}')\n")
     lines.append("\tpython write_binary_to_netcdf_steady-state.py --model-run $i --converged $converged\n")
     lines.append("\tpython cleanup.py --model-run $i\n")
     lines.append("\tprogress=$i/10000\n")
-    lines.append("\techo 'Model run $i done ($progress; $converged)'\n")
+    lines.append('\techo "Model run $i done ($progress; $converged)"\n')
     lines.append("done\n")
     file_path = path_dir / f"{script_name}.sh"
     file = open(file_path, "w")
@@ -56,9 +60,6 @@ for j in range(10):
     lines.append(f"#SBATCH --error={script_name}_err.out\n")
     lines.append("#SBATCH --export=ALL\n")
     lines.append(" \n")
-    lines.append('module load devel/miniforge\n')
-    lines.append('eval "$(conda shell.bash hook)"\n')
-    lines.append("conda activate roger-modflow\n")
     lines.append(f"cd {str(path_dir)}\n")
     lines.append(" \n")
     lines.append(
