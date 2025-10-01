@@ -4,6 +4,7 @@ import shutil
 import subprocess
 
 base_path = Path(__file__).parent
+dir_name = base_path.name
 
 subprocess.Popen("python write_fudge_parameters.py", shell=True)
 
@@ -30,12 +31,17 @@ for j in range(10):
     lines.append("\n")
     lines.append('module load devel/miniforge\n')
     lines.append("conda activate roger-modflow\n")
+    lines.append(f"cd $TMPDIR/roger-modflow/dreisam_moehlin_neumagen/steady-state/{dir_name}/batch_{j}\n")
     lines.append("\n")
     lines.append("for i in {%s..%s}\n" % (start[j], end[j]))
     lines.append("do\n")
     lines.append("\tconverged=$(python modflow6_steady-state.py --model-run $i | grep 'converged: ' | awk '{print $NF}')\n")
     lines.append("\tpython write_binary_to_netcdf_steady-state.py --model-run $i --converged $converged\n")
     lines.append("\tpython cleanup.py --model-run $i\n")
+    lines.append("\tif (( $converged == 1 )); then\n")
+    lines.append("\t\tmv $TMPDIR/roger-modflow/dreisam_moehlin_neumagen/steady-state/{dir_name}/batch_{j}/output/modflow/modflow_output_run_{$i}.nc /pfs/work9/workspace/scratch/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/steady-state/{dir_name}/output\n")
+    lines.append("\t\tmv $TMPDIR/roger-modflow/dreisam_moehlin_neumagen/steady-state/{dir_name}/batch_{j}/output/modflow/dmn_run_{$i}_sfr.obs.csv /pfs/work9/workspace/scratch/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/steady-state/{dir_name}/output\n")
+    lines.append("\tfi\n")
     lines.append("\tprogress=$i/10000\n")
     lines.append('\techo "Model run $i done ($progress; $converged)"\n')
     lines.append("done\n")
@@ -59,9 +65,15 @@ for j in range(10):
     lines.append(f"#SBATCH --output={script_name}.out\n")
     lines.append(f"#SBATCH --error={script_name}_err.out\n")
     lines.append("#SBATCH --export=ALL\n")
-    lines.append(" \n")
+    lines.append("\n")
     lines.append(f"cd {str(path_dir)}\n")
-    lines.append(" \n")
+    lines.append("\n")
+    lines.append("mkdir $TMPDIR/roger-modflow\n")
+    lines.append("mkdir $TMPDIR/roger-modflow/dreisam_moehlin_neumagen\n")
+    lines.append("mkdir $TMPDIR/roger-modflow/dreisam_moehlin_neumagen/steady-state\n")
+    lines.append("cp/pfs/work9/workspace/scratch/fr_rs1092-workspace/roger-modflow/bin $TMPDIR/roger-modflow\n")
+    lines.append("cp/pfs/work9/workspace/scratch/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/steady-state/input $TMPDIR/roger-modflow/dreisam_moehlin_neumagen/steady-state\n")
+    lines.append(f"cp/pfs/work9/workspace/scratch/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/steady-state/{dir_name} $TMPDIR/roger-modflow/dreisam_moehlin_neumagen/steady-state\n")
     lines.append(
         './modflow6_steady-state_monte_carlo.sh\n'
     )
