@@ -641,27 +641,6 @@ def main(model_run):
     
     modflow_interface.finalize()
     print("MODFLOW (steady-state) finalized")
-
-    # update the fudge parameters if the parameter set produces a useful simulation
-    path = base_path / "fudge_parameters_modflow.csv"
-    fudge_parameters = pd.read_csv(path, sep=";", skiprows=1)
-    fudge_parameters.loc[fudge_parameters.index[model_run], "converged"] = converged
-    fudge_parameters.columns = [
-        ["[-]", "[-]", "[-]", "[-]", 
-         "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]",
-         "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]",
-         "[-]", "[-]", "[-]", "[-]",
-         "[-]", "[-]",
-         "[-]", "[m]",  ""],
-        ["-8_1", "-7_1", "-6_1", "-5_1", 
-         "-7_2", "-5_2", "-4_2", "1-3_2", "1.8-3_2", "3-3_2", "4-3_2",  
-         "-7_3", "-5_3", "-4_3", "1-3_3", "1.8-3_3", "3-3_3", "4-3_3",
-         "-7_4", "-5_4", "-4_4", "1.8-3_4",
-         "kf_riv", "rhk",
-         "rch", "offset", "converged"],
-    ]
-    fudge_parameters.to_csv(path, index=False, sep=";")
-
     print(f"converged: {converged}")
     return
 
