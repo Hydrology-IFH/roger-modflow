@@ -325,7 +325,7 @@ class ModFlowSimulation:
         cond = (reaches["rhk"] > 1)
         reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * 1.0
         cond = (reaches["kf"] < 10e-6) & (reaches["rhk"] > reaches["kf"])
-        reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * 0.001
+        reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * 0.01
         reaches["man"] = reaches["man"] * 1.0
 
         diversions = pd.read_csv(base_path.parent.parent / "input" / "sfr_diversions.csv", sep=";")
