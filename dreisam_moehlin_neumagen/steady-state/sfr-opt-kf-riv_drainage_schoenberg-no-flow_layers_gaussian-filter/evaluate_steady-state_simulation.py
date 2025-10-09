@@ -17,6 +17,23 @@ def main(model_run):
     path = Path(__file__).parent.parent / "input" / "parameters_modflow.nc"
     ds_params = xr.open_dataset(path, engine="h5netcdf")
 
+    path = base_path / "fudge_parameters_modflow.csv"
+    fudge_parameters = pd.read_csv(path, sep=";", skiprows=1)
+
+    # load the SFR reaches
+    reaches = pd.read_csv(base_path.parent / 'input' / 'sfr_packagedata_modified.csv', sep=';')
+    
+    # load the simulated groundwater heads
+    output_file = base_path / "output" / f"modflow_output_run_{model_run}.nc"
+    ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
+    groundwater_heads = ds_mf["head"].values[0, 1, ...]
+    gw_sw = np.nanmean(ds_mf['gw_sw'].isel(Time=0).values * (-1), axis=0) / 86400
+
+    # load the SFR output file
+    output_file = base_path / "output" / f"dmn_run_{model_run}_sfr.obs.csv"
+    df_sfr_ = pd.read_csv(output_file, sep=",")
+
+    # load the config file
     file_config = base_path.parent / "config.yml"
     with open(file_config, "r") as file:
         modflow_config = yaml.safe_load(file)
@@ -35,10 +52,181 @@ def main(model_run):
     elevation_bottom_layer4 = ds_params['elevations'].isel(z=4).values
     elevation_bottom_layers = [elevation_bottom_layer1, elevation_bottom_layer2, elevation_bottom_layer3, elevation_bottom_layer4]
 
+    topography = ds_params['elevations'].isel(z=0).values
+    elevation_bottom_layer1 = ds_params['elevations'].isel(z=1).values
+    elevation_bottom_layer2 = ds_params['elevations'].isel(z=2).values
+    elevation_bottom_layer3 = ds_params['elevations'].isel(z=3).values
+    elevation_bottom_layer4 = ds_params['elevations'].isel(z=4).values
+    elevation_bottom_layers = [elevation_bottom_layer1, elevation_bottom_layer2, elevation_bottom_layer3, elevation_bottom_layer4]
+    elevation_layers = [topography, elevation_bottom_layer1, elevation_bottom_layer2, elevation_bottom_layer3, elevation_bottom_layer4]
+
+    mask_ = np.isfinite(topography)
+    mask_schoenberg = ds_params['mask_schoenberg'].values
+    mask = mask_ & (mask_schoenberg == False)
+    domain = np.empty_like(topography)
+    domain[mask] = 1
+    domain[~mask] = -1
+
+    hydraulic_conductivities_layer1 = ds_params['kf'].isel(layer=0).values
+    hydraulic_conductivities_layer2 = ds_params['kf'].isel(layer=1).values
+    hydraulic_conductivities_layer3 = ds_params['kf'].isel(layer=2).values
+    hydraulic_conductivities_layer4 = ds_params['kf'].isel(layer=3).values
+
+
+    hydraulic_conductivities_layer1_ = ds_params['kf'].isel(layer=0).values / 86400
+    hydraulic_conductivities_layer2_ = ds_params['kf'].isel(layer=1).values / 86400
+    hydraulic_conductivities_layer3_ = ds_params['kf'].isel(layer=2).values / 86400
+    hydraulic_conductivities_layer4_ = ds_params['kf'].isel(layer=3).values / 86400
+    
+    # fudge parameters
+    mask1 = (hydraulic_conductivities_layer1_ <= 10e-10)
+    mask2 = (hydraulic_conductivities_layer2_ <= 10e-10)
+    mask3 = (hydraulic_conductivities_layer3_ <= 10e-10)
+    mask4 = (hydraulic_conductivities_layer4_ <= 10e-10)  
+    hydraulic_conductivities_layer1[mask1] = hydraulic_conductivities_layer1[mask1] * 10000
+    hydraulic_conductivities_layer2[mask2] = hydraulic_conductivities_layer2[mask2] * 10000
+    hydraulic_conductivities_layer3[mask3] = hydraulic_conductivities_layer3[mask3] * 10000
+    hydraulic_conductivities_layer4[mask4] = hydraulic_conductivities_layer4[mask4] * 10000
+
+    mask_ = (hydraulic_conductivities_layer2_ == 1.9999999e-07)
+    hydraulic_conductivities_layer2_ = np.where(mask_, 1.9722222e-07, hydraulic_conductivities_layer2_)
+    mask_ = (hydraulic_conductivities_layer3_ == 1.9999999e-07)
+    hydraulic_conductivities_layer3_ = np.where(mask_, 1.9722222e-07, hydraulic_conductivities_layer3_)
+    mask_ = (hydraulic_conductivities_layer4_ == 1.9999999e-07)
+    hydraulic_conductivities_layer4_ = np.where(mask_, 1.9722222e-07, hydraulic_conductivities_layer4_)
+
+    mask81 = (hydraulic_conductivities_layer1_ == 1.1574075e-08) | (hydraulic_conductivities_layer1_ == 2.7777778e-08)
+
+    mask71 = (hydraulic_conductivities_layer1_ == 1.9444444e-07) | (hydraulic_conductivities_layer1_ == 1.9722222e-07) | (hydraulic_conductivities_layer1_ == 2.3055554e-07) | (hydraulic_conductivities_layer1_ == 5.7777777e-07)
+    mask72 = (hydraulic_conductivities_layer2_ == 1.9722222e-07)
+    mask73 = (hydraulic_conductivities_layer3_ == 1.9722222e-07)
+    mask74 = (hydraulic_conductivities_layer4_ == 1.9722222e-07)
+
+    mask61 = (hydraulic_conductivities_layer1_ >= 1.1583334e-06) & (hydraulic_conductivities_layer1_ <= 8.1027783e-06)
+
+    mask51 = (hydraulic_conductivities_layer1_ == 1.1575000e-05) | (hydraulic_conductivities_layer1_ == 1.8181944e-04)
+    mask52 = (hydraulic_conductivities_layer2_ == 1.8180555e-05)
+    mask53 = (hydraulic_conductivities_layer3_ == 1.8180555e-05)
+    mask54 = (hydraulic_conductivities_layer4_ == 1.8180555e-05)
+
+    mask42 = (hydraulic_conductivities_layer2_ == 1.8181944e-04)
+    mask43 = (hydraulic_conductivities_layer3_ == 1.8181944e-04)
+    mask44 = (hydraulic_conductivities_layer4_ == 1.8181944e-04)
+
+    mask132 = (hydraulic_conductivities_layer2_ == 1.0000000e-03)
+    mask133 = (hydraulic_conductivities_layer3_ == 1.0000000e-03)
+
+    mask232 = (hydraulic_conductivities_layer2_ == 1.8181807e-03)
+    mask233 = (hydraulic_conductivities_layer3_ == 1.8181807e-03)
+    mask234 = (hydraulic_conductivities_layer4_ == 1.8181807e-03)
+
+    mask332 = (hydraulic_conductivities_layer2_ == 3.0000000e-03)
+    mask333 = (hydraulic_conductivities_layer3_ == 3.0000000e-03)
+
+    mask432 = (hydraulic_conductivities_layer2_ == 4.0000002e-03)
+    mask433 = (hydraulic_conductivities_layer3_ == 4.0000002e-03)
+
+    # fudge parameters
+    hydraulic_conductivities_layer1[mask81] = hydraulic_conductivities_layer1[mask81] * fudge_parameters['-8_1'].values[model_run]
+
+    hydraulic_conductivities_layer1[mask71] = hydraulic_conductivities_layer1[mask71] * fudge_parameters['-7_1'].values[model_run]
+    hydraulic_conductivities_layer2[mask72] = hydraulic_conductivities_layer2[mask72] * fudge_parameters['-7_2'].values[model_run]
+    hydraulic_conductivities_layer3[mask73] = hydraulic_conductivities_layer3[mask73] * fudge_parameters['-7_3'].values[model_run]
+    hydraulic_conductivities_layer4[mask74] = hydraulic_conductivities_layer4[mask74] * fudge_parameters['-7_4'].values[model_run]
+
+    hydraulic_conductivities_layer1[mask61] = hydraulic_conductivities_layer1[mask61] * fudge_parameters['-6_1'].values[model_run]
+
+    hydraulic_conductivities_layer1[mask51] = hydraulic_conductivities_layer1[mask51] * fudge_parameters['-5_1'].values[model_run]
+    hydraulic_conductivities_layer2[mask52] = hydraulic_conductivities_layer2[mask52] * fudge_parameters['-5_2'].values[model_run]
+    hydraulic_conductivities_layer3[mask53] = hydraulic_conductivities_layer3[mask53] * fudge_parameters['-5_3'].values[model_run]
+    hydraulic_conductivities_layer4[mask54] = hydraulic_conductivities_layer4[mask54] * fudge_parameters['-5_4'].values[model_run]
+
+    hydraulic_conductivities_layer2[mask42] = hydraulic_conductivities_layer2[mask42] * fudge_parameters['-4_2'].values[model_run]
+    hydraulic_conductivities_layer3[mask43] = hydraulic_conductivities_layer3[mask43] * fudge_parameters['-4_3'].values[model_run]
+    hydraulic_conductivities_layer4[mask44] = hydraulic_conductivities_layer4[mask44] * fudge_parameters['-4_4'].values[model_run]
+
+    hydraulic_conductivities_layer2[mask132] = hydraulic_conductivities_layer2[mask132] * fudge_parameters['1-3_2'].values[model_run]
+    hydraulic_conductivities_layer3[mask133] = hydraulic_conductivities_layer3[mask133] * fudge_parameters['1-3_3'].values[model_run]
+
+    hydraulic_conductivities_layer2[mask232] = hydraulic_conductivities_layer2[mask232] * fudge_parameters['1.8-3_2'].values[model_run]
+    hydraulic_conductivities_layer3[mask233] = hydraulic_conductivities_layer3[mask233] * fudge_parameters['1.8-3_3'].values[model_run]
+    hydraulic_conductivities_layer4[mask234] = hydraulic_conductivities_layer4[mask234] * fudge_parameters['1.8-3_4'].values[model_run]
+
+    hydraulic_conductivities_layer2[mask332] = hydraulic_conductivities_layer2[mask332] * fudge_parameters['3-3_2'].values[model_run]
+    hydraulic_conductivities_layer3[mask333] = hydraulic_conductivities_layer3[mask333] * fudge_parameters['3-3_3'].values[model_run]
+
+    hydraulic_conductivities_layer2[mask432] = hydraulic_conductivities_layer2[mask432] * fudge_parameters['4-3_2'].values[model_run]
+    hydraulic_conductivities_layer3[mask433] = hydraulic_conductivities_layer3[mask433] * fudge_parameters['4-3_3'].values[model_run]
+
+    # smooth transition between fissured and porous aquifers
+    hydraulic_conductivities_layer1[np.isnan(hydraulic_conductivities_layer1)] = 0
+    hydraulic_conductivities_layer2[np.isnan(hydraulic_conductivities_layer2)] = 0
+    hydraulic_conductivities_layer3[np.isnan(hydraulic_conductivities_layer3)] = 0
+    hydraulic_conductivities_layer4[np.isnan(hydraulic_conductivities_layer4)] = 0
+    hydraulic_conductivities_layer1 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [1.5, 1.5], mode="constant")
+    hydraulic_conductivities_layer2 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.5, 1.5], mode="constant")
+    hydraulic_conductivities_layer3 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.5, 1.5], mode="constant")
+    hydraulic_conductivities_layer4 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.5, 1.5], mode="constant")
+
+    # increase the hydraulic conductivities of the reach cell by a factor of xx
+    reaches["kf"] = np.nan
+    c_fissured = 1  # factor to increase the hydraulic conductivity in fissured layers
+    for rno, z, y, x in zip(reaches.loc[:, "rno"], reaches.loc[:, "k"], reaches.loc[:, "i"], reaches.loc[:, "j"]):
+        if z == 0:
+            kf_riv = hydraulic_conductivities_layer1[y, x] / 86400
+            if kf_riv < 10e-6:
+                hydraulic_conductivities_layer1[y, x] = hydraulic_conductivities_layer1[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured
+                reaches.loc[rno, "kf"] = (hydraulic_conductivities_layer1[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured) / 86400
+            else:
+                hydraulic_conductivities_layer1[y, x] = hydraulic_conductivities_layer1[y, x] * fudge_parameters["kf_riv"].values[model_run]
+                reaches.loc[rno, "kf"] = (hydraulic_conductivities_layer1[y, x] * fudge_parameters["kf_riv"].values[model_run]) / 86400
+        elif z == 1:
+            kf_riv = hydraulic_conductivities_layer2[y, x] / 86400
+            if kf_riv < 10e-6:
+                hydraulic_conductivities_layer1[y, x] = hydraulic_conductivities_layer1[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured
+                hydraulic_conductivities_layer2[y, x] = hydraulic_conductivities_layer2[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured
+                reaches.loc[rno, "kf"] = (hydraulic_conductivities_layer2[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured) / 86400
+            else:  
+                hydraulic_conductivities_layer1[y, x] = hydraulic_conductivities_layer1[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured
+                hydraulic_conductivities_layer2[y, x] = hydraulic_conductivities_layer2[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured
+                reaches.loc[rno, "kf"] = (hydraulic_conductivities_layer2[y, x] * fudge_parameters["kf_riv"].values[model_run]) / 86400
+        elif z == 2:
+            kf_riv = hydraulic_conductivities_layer3[y, x] / 86400
+            if kf_riv < 10e-6:
+                hydraulic_conductivities_layer1[y, x] = hydraulic_conductivities_layer1[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured
+                hydraulic_conductivities_layer2[y, x] = hydraulic_conductivities_layer2[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured
+                hydraulic_conductivities_layer3[y, x] = hydraulic_conductivities_layer3[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured
+                reaches.loc[rno, "kf"] = (hydraulic_conductivities_layer3[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured) / 86400
+            else:
+                hydraulic_conductivities_layer1[y, x] = hydraulic_conductivities_layer1[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured
+                hydraulic_conductivities_layer2[y, x] = hydraulic_conductivities_layer2[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured
+                hydraulic_conductivities_layer3[y, x] = hydraulic_conductivities_layer3[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured
+                reaches.loc[rno, "kf"] = (hydraulic_conductivities_layer3[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured) / 86400
+        elif z == 3:
+            kf_riv = hydraulic_conductivities_layer4[y, x] / 86400
+            if kf_riv < 10e-6:
+                hydraulic_conductivities_layer1[y, x] = hydraulic_conductivities_layer1[y, x] * fudge_parameters["kf_riv"].values[model_run]
+                hydraulic_conductivities_layer2[y, x] = hydraulic_conductivities_layer2[y, x] * fudge_parameters["kf_riv"].values[model_run]
+                hydraulic_conductivities_layer3[y, x] = hydraulic_conductivities_layer3[y, x] * fudge_parameters["kf_riv"].values[model_run]
+                hydraulic_conductivities_layer4[y, x] = hydraulic_conductivities_layer4[y, x] * fudge_parameters["kf_riv"].values[model_run]
+                reaches.loc[rno, "kf"] = (hydraulic_conductivities_layer4[y, x] * fudge_parameters["kf_riv"].values[model_run]) / 86400
+            else:
+                hydraulic_conductivities_layer1[y, x] = hydraulic_conductivities_layer1[y, x] * fudge_parameters["kf_riv"].values[model_run]
+                hydraulic_conductivities_layer2[y, x] = hydraulic_conductivities_layer2[y, x] * fudge_parameters["kf_riv"].values[model_run]
+                hydraulic_conductivities_layer3[y, x] = hydraulic_conductivities_layer3[y, x] * fudge_parameters["kf_riv"].values[model_run]
+                hydraulic_conductivities_layer4[y, x] = hydraulic_conductivities_layer4[y, x] * fudge_parameters["kf_riv"].values[model_run]
+                reaches.loc[rno, "kf"] = (hydraulic_conductivities_layer4[y, x] * fudge_parameters["kf_riv"].values[model_run]) / 86400
+
+    hydraulic_conductivities_layer1[~mask] = np.nan
+    hydraulic_conductivities_layer2[~mask] = np.nan
+    hydraulic_conductivities_layer3[~mask] = np.nan
+    hydraulic_conductivities_layer4[~mask] = np.nan
+
+    hydraulic_conductivities = np.array([hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4])
+
     # load observed groundwater heads (average values of the observation wells)
     path = base_path.parent / "observations" / "observed_groundwater_heads_avg.csv"
     observed_groundwater_heads = pd.read_csv(path, sep=";", skiprows=0)
-    observed_groundwater_heads = observed_groundwater_heads.iloc[:-2, :]
 
     # load observed streamflow
     path = base_path.parent / "observations" / "observed_streamflow.csv"
@@ -49,7 +237,7 @@ def main(model_run):
     src = rasterio.open(str(base_path.parent / "input" / "groundwater_heads_interpolated_50m.tif"))
     gw_heads_interpolated = src.read(1)
 
-    grid_extent = (0, (777*50) / 1000, (621*50) / 1000, 0)
+    grid_extent = (ds_mf.lon.values[0] / 1000, ds_mf.lon.values[-1] / 1000, ds_mf.lat.values[-1] / 1000, ds_mf.lat.values[0] / 1000)
     fig, axes = plt.subplots(figsize=(4, 4))
     gw_heads_interpolated[~mask] = np.nan
     plt.imshow(gw_heads_interpolated, cmap='terrain', aspect='equal')
@@ -82,19 +270,18 @@ def main(model_run):
 
     dict_obs_stage_id = modflow_config["dict_obs_stage_rnos"]
     dict_obs_flow_id = modflow_config["dict_obs_flow_rnos"]
+    sfr_obs_points = [key.split('_')[0] for key in dict_obs_stage_id.keys()]
 
     dict_obs_stage_id_inv = {v: k for k, v in dict_obs_stage_id.items()}
     dict_obs_flow_id_inv = {v: k for k, v in dict_obs_flow_id.items()}
 
-    # load the SFR reaches
-    reaches = pd.read_csv(base_path.parent / 'input' / 'sfr_packagedata_modified.csv', sep=';')
-    
-    output_file = base_path / "output" / f"dmn_run_{model_run}_sfr.obs.csv"
-    df_sfr_ = pd.read_csv(output_file, sep=",")
-
-    df_sfr = pd.DataFrame(index=["falkensteig", "ebnet", "ehrenkirchen", "muenstertal"], columns=["rno", "layer", "x", "y", "rlen", "rwid", "rtp", "rgrd", "man", "rhk", "water_depth", "flow"])
+    df_sfr = pd.DataFrame(index=sfr_obs_points, columns=["rno", "layer", "x", "y", "rlen", "rwid", "rtp", "rgrd", "man", "rhk", "water_head", "water_depth", "flow", "kf", "topo", "gw_head", "gw-sw", "sw-gw_flux"])
     df_sfr["rno"] = [key for key in dict_obs_stage_id.values()]
     for rno in df_sfr["rno"].values:
+        z = int(reaches.loc[reaches["rno"] == rno, "k"].values[0]) - 1
+        y = int(reaches.loc[reaches["rno"] == rno, "i"].values[0]) - 1
+        x = int(reaches.loc[reaches["rno"] == rno, "j"].values[0]) - 1
+        kf = hydraulic_conductivities[z, y, x] / 86400
         df_sfr.loc[df_sfr["rno"] == rno, "layer"] = reaches.loc[reaches["rno"] == rno, "k"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "y"] = reaches.loc[reaches["rno"] == rno, "i"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "x"] = reaches.loc[reaches["rno"] == rno, "j"].values[0]
@@ -102,28 +289,39 @@ def main(model_run):
         df_sfr.loc[df_sfr["rno"] == rno, "rwid"] = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "rtp"] = reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "rgrd"] = reaches.loc[reaches["rno"] == rno, "rgrd"].values[0]
-        df_sfr.loc[df_sfr["rno"] == rno, "rhk"] = reaches.loc[reaches["rno"] == rno, "rhk"].values[0]
+        df_sfr.loc[df_sfr["rno"] == rno, "rhk"] = reaches.loc[reaches["rno"] == rno, "rhk"].values[0] * fudge_parameters['rhk'].values[model_run]
         df_sfr.loc[df_sfr["rno"] == rno, "man"] = reaches.loc[reaches["rno"] == rno, "man"].values[0]
+        df_sfr.loc[df_sfr["rno"] == rno, "kf"] = kf
         rwidth = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
         stage_depth = df_sfr_.loc[0, dict_obs_stage_id_inv[rno]] - reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
+        df_sfr.loc[df_sfr["rno"] == rno, "water_head"] = df_sfr_.loc[0, dict_obs_stage_id_inv[rno]]
         df_sfr.loc[df_sfr["rno"] == rno, "water_depth"] = stage_depth
         flow = (df_sfr_.loc[0, dict_obs_flow_id_inv[rno]] * (-1)) / 86400
+        if stage_depth < 0:
+            flow = 0
+            stage_depth = 0
         df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * stage_depth * rwidth
+        df_sfr.loc[df_sfr["rno"] == rno, "gw_head"] = ds_mf["head"].values[0, z, y, x]
+        df_sfr.loc[df_sfr["rno"] == rno, "gw-sw"] = ds_mf["head"].values[0, z, y, x] - df_sfr_.loc[0, dict_obs_stage_id_inv[rno]]
+        df_sfr.loc[df_sfr["rno"] == rno, "sw-gw_flux"] = gw_sw[y, x]
+        df_sfr.loc[df_sfr["rno"] == rno, "topo"] = topography[y, x] 
+
+    cond = (df_sfr["rhk"] > 1)
+    df_sfr.loc[cond, "rhk"] = df_sfr.loc[cond, "rhk"] * 1.0
+    cond = (df_sfr["kf"] < 10e-6) & (df_sfr["rhk"] > df_sfr["kf"])
+    df_sfr.loc[cond, "rhk"] = df_sfr.loc[cond, "rhk"] * 0.1
 
     file = base_path / "output" / f"dmn_run_{model_run}_sfr.csv"
     df_sfr.to_csv(file, sep=";")
 
+    obs_flow_stage = ["EBNET", "FALKENSTEIG", "OBERAMBRINGEN", "UNTERMUENSTERTAL"]
+    df_sfr = df_sfr.loc[obs_flow_stage, :]
     sim_water_depth = df_sfr["water_depth"].values
     sim_water_depth[sim_water_depth < 0] = 0
     obs_water_depth = observed_streamflow["WDavg"].values
     diff_sim_obs_water_depth = sim_water_depth - obs_water_depth
 
-    # load the netcdf file
-    output_file = base_path / "output" / f"modflow_output_run_{model_run}.nc"
-    ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
-    groundwater_heads = ds_mf["head"].values[0, 1, ...]
     groundwater_heads[groundwater_heads > topography] = topography[groundwater_heads > topography]
-
     # extract the simulated groundwater heads at the location of the observation wells
     sim_depths = topography[rows, cols].flatten() - groundwater_heads[rows, cols].flatten()
     sim_depths = np.where(sim_depths < 0, 0, sim_depths)
@@ -135,95 +333,94 @@ def main(model_run):
     observed_groundwater_heads["int-obs"] = interp_depths - obs_depths
     observed_groundwater_heads.to_csv(base_path.parent / "observations" / "observed_groundwater_heads_avg_.csv", sep=";", index=False)
 
-
     fig, axes = plt.subplots(figsize=(4, 4))
     topography[~mask] = np.nan
-    gauge_obs_y = observed_streamflow["y"].values * 50  # row IDs of the observation wells
-    gauge_obs_x = observed_streamflow["x"].values * 50  # column IDs of the observation wells
-    plt.scatter(gauge_obs_x/1000, gauge_obs_y/1000, c=diff_sim_obs_water_depth, s=5, cmap='RdBu', vmin=-1, vmax=1)
+    gauge_obs_y = observed_streamflow["y-coordinate"].values / 1000  # row IDs of the observation wells
+    gauge_obs_x = observed_streamflow["x-coordinate"].values / 1000  # column IDs of the observation wells
+    plt.scatter(gauge_obs_x, gauge_obs_y, c=diff_sim_obs_water_depth, s=5, cmap='RdBu', vmin=-1, vmax=1)
     plt.colorbar(label='[m]', shrink=0.45)
     plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5, extent=grid_extent)
     plt.grid(zorder=0)
-    plt.xlabel('Distance in x-direction [km]')
-    plt.ylabel('Distance in y-direction [km]')
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
     fig.tight_layout()
     file = Path(__file__).parent / "figures" / f"difference_sim_obs_water_depth_{model_run}.png"
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
     # calculate mean error
-    print(np.mean(sim - obs))
+    print(np.mean(sim[:-2] - obs[:-2]))
     # calculate mean absolute error
-    print(np.mean(np.abs(sim - obs)))
-    print(sp.stats.spearmanr(sim_depths, obs_depths)[0])
+    print(np.mean(np.abs(sim[:-2] - obs[:-2])))
+    print(sp.stats.spearmanr(sim_depths[:-2], obs_depths[:-2])[0])
 
     diff_sim_obs = sim - obs
     cm = plt.get_cmap('PuOr')
     cm.set_bad(color='grey')
-    grid_extent = (0, (777*50)/1000, (621*50)/1000, 0)
+    grid_extent = (ds_mf.lon.values[0] / 1000, ds_mf.lon.values[-1] / 1000, ds_mf.lat.values[-1] / 1000, ds_mf.lat.values[0] / 1000)
     fig, axes = plt.subplots(figsize=(4, 4))
     topography[~mask] = np.nan
     # wells_y = np.array([266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]) * 50
     # wells_x = np.array([66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496]) * 50
     # plt.scatter(wells_x, wells_y, marker='x', s=5, c='black')
-    wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-    wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
-    plt.scatter(wells_obs_x/1000, wells_obs_y/1000, c=diff_sim_obs, s=5, cmap=cm, vmin=-5, vmax=5)
+    wells_obs_y = observed_groundwater_heads["y-coordinate"].values / 1000   # row IDs of the observation wells
+    wells_obs_x = observed_groundwater_heads["x-coordinate"].values / 1000   # column IDs of the observation wells
+    plt.scatter(wells_obs_x, wells_obs_y, c=diff_sim_obs, s=5, cmap=cm, vmin=-5, vmax=5)
     plt.colorbar(label='[m]', shrink=0.45)
     plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5, extent=grid_extent)
     plt.grid(zorder=0)
-    plt.xlabel('Distance in x-direction [km]')
-    plt.ylabel('Distance in y-direction [km]')
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
     fig.tight_layout()
     file = Path(__file__).parent / "figures" / f"difference_sim_obs_{model_run}.png"
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
-    grid_extent = (0, (777*50) / 1000, (621*50) / 1000, 0)
+    grid_extent = (ds_mf.lon.values[0] / 1000, ds_mf.lon.values[-1] / 1000, ds_mf.lat.values[-1] / 1000, ds_mf.lat.values[0] / 1000)
     fig, axes = plt.subplots(figsize=(4, 4))
     plt.imshow(groundwater_heads[:, :] - gw_heads_interpolated, cmap='PuOr', aspect='equal', vmin=-10, vmax=10, extent=grid_extent)
     plt.colorbar(label='[m]', shrink=0.45)
     plt.grid(zorder=0)
-    plt.xlabel('Distance in x-direction [m]')
-    plt.ylabel('Distance in y-direction [m]')
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
     plt.tight_layout()
     file = Path(__file__).parent / "figures" / f"difference_sim_{model_run}_int.png"
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
-    grid_extent = (0, (777*50) / 1000, (621*50) / 1000, 0)
+    grid_extent = (ds_mf.lon.values[0] / 1000, ds_mf.lon.values[-1] / 1000, ds_mf.lat.values[-1] / 1000, ds_mf.lat.values[0] / 1000)
     fig, axes = plt.subplots(figsize=(4, 4))
     topography[~mask] = np.nan
     wells_y = np.array([266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]) * 50
     wells_x = np.array([66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496]) * 50
     plt.scatter(wells_x, wells_y, marker='x', s=5, c='black')
-    wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-    wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+    wells_obs_y = observed_groundwater_heads["y-coordinate"].values   # row IDs of the observation wells
+    wells_obs_x = observed_groundwater_heads["x-coordinate"].values   # column IDs of the observation wells
     plt.scatter(wells_obs_x, wells_obs_y, c=sim, s=5, cmap="viridis", vmin=150, vmax=400)
     plt.colorbar(label='[m]', shrink=0.45)
     plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5, extent=grid_extent)
     plt.grid(zorder=0)
-    plt.xlabel('Distance in x-direction [m]')
-    plt.ylabel('Distance in y-direction [m]')
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
     plt.tight_layout()
     file = Path(__file__).parent / "figures" / f"groundwater_heads_sim{model_run}.png"
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
-    grid_extent = (0, (777*50) / 1000, (621*50) / 1000, 0)
+    grid_extent = (ds_mf.lon.values[0] / 1000, ds_mf.lon.values[-1] / 1000, ds_mf.lat.values[-1] / 1000, ds_mf.lat.values[0] / 1000)
     fig, axes = plt.subplots(figsize=(4, 4))
     topography[~mask] = np.nan
     wells_y = np.array([266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]) * 50
     wells_x = np.array([66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496]) * 50
     plt.scatter(wells_x, wells_y, marker='x', s=5, c='black')
-    wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-    wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+    wells_obs_y = observed_groundwater_heads["y-coordinate"].values   # row IDs of the observation wells
+    wells_obs_x = observed_groundwater_heads["x-coordinate"].values   # column IDs of the observation wells
     plt.scatter(wells_obs_x, wells_obs_y, c=obs, s=5, cmap="viridis", vmin=150, vmax=400)
     plt.colorbar(label='[m]', shrink=0.45)
     plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5, extent=grid_extent)
     plt.grid(zorder=0)
-    plt.xlabel('Distance in x-direction [m]')
-    plt.ylabel('Distance in y-direction [m]')
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
     plt.tight_layout()
     file = Path(__file__).parent / "figures" / "observed_groundwater_heads.png"
     fig.savefig(file, dpi=300)
@@ -244,11 +441,11 @@ def main(model_run):
 
 
     fig, axes = plt.subplots(figsize=(4, 4))
-    axes.scatter(obs_depths, sim_depths, marker='.', s=5, c='black')
+    axes.scatter(obs_depths[:-2], sim_depths[:-2], marker='.', s=5, c='black')
     axes.set_ylabel('Simulated groundwater depth [m]')
     axes.set_xlabel('Observed groundwater depth [m]')
-    axes.set_xlim(np.nanmin(sim_depths) - 1, np.nanmax(sim_depths) + 1)
-    axes.set_ylim(np.nanmin(sim_depths) - 1, np.nanmax(sim_depths) + 1)
+    axes.set_xlim(np.nanmin(sim_depths[:-2]) - 1, np.nanmax(sim_depths[:-2]) + 1)
+    axes.set_ylim(np.nanmin(sim_depths[:-2]) - 1, np.nanmax(sim_depths[:-2]) + 1)
     axes.plot(axes.get_xlim(), axes.get_ylim(), ls="--", c=".3", zorder=1, alpha=0.5)
     # axes.text(axes.get_xlim()[0] + 0.1, axes.get_ylim()[1] - 0.1, f"ME: {df_params_metrics.loc[model_run, 'ME']:.2f} m")
     fig.tight_layout()
@@ -257,7 +454,7 @@ def main(model_run):
     plt.close(fig)
 
     fig, axes = plt.subplots(figsize=(4, 4))
-    axes.scatter(obs_depths, sim_depths, marker='.', s=5, c='black')
+    axes.scatter(obs_depths[:-2], sim_depths[:-2], marker='.', s=5, c='black')
     axes.set_ylabel('Simulated groundwater depth [m]')
     axes.set_xlabel('Observed groundwater depth [m]')
     axes.set_xlim(0, 30)
@@ -271,7 +468,7 @@ def main(model_run):
 
 
     fig, axes = plt.subplots(figsize=(4, 4))
-    axes.scatter(range(len(diff_sim_obs)), diff_sim_obs, marker='.', s=5, c='black')
+    axes.scatter(range(len(diff_sim_obs[:-2])), diff_sim_obs[:-2], marker='.', s=5, c='black')
     axes.set_ylabel('Bias [m]')
     axes.set_xlabel('# Observation well')
     axes.axhline(y=0, color='grey', linestyle='--', zorder=1, alpha=0.5)
@@ -286,8 +483,8 @@ def main(model_run):
         plt.imshow(ds_mf['head'].isel(Time=0, layer=layer).values, extent=grid_extent, cmap='viridis', aspect='equal')
         plt.colorbar(label='groundwater head \n[m a.s.l.]', shrink=0.5)
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('x-coordinate [km]')
+        plt.ylabel('y-coordinate [km]')
         plt.tight_layout()
         i = layer + 1
         file = Path(__file__).parent / "figures" / f"gw_head_steady_state_layer{i}_grid_{model_run}.png"
@@ -301,8 +498,8 @@ def main(model_run):
         plt.imshow(gw_thickness, extent=grid_extent, cmap='viridis', aspect='equal')
         plt.colorbar(label='groundwater thickness [m]', shrink=0.5)
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('x-coordinate [km]')
+        plt.ylabel('y-coordinate [km]')
         plt.tight_layout()
         i = layer + 1
         file = Path(__file__).parent / "figures" / f"gw_thickness_steady_state_layer{i}_grid_{model_run}.png"
@@ -314,8 +511,8 @@ def main(model_run):
         plt.imshow(gw_depth, extent=grid_extent, cmap='viridis', aspect='equal', vmin=0, vmax=20)
         plt.colorbar(label='groundwater depth [m]', shrink=0.5)
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('x-coordinate [km]')
+        plt.ylabel('y-coordinate [km]')
         plt.tight_layout()
         i = layer + 1
         file = Path(__file__).parent / "figures" / f"gw_depth_steady_state_layer{i}_grid_{model_run}.png"
@@ -330,8 +527,8 @@ def main(model_run):
         plt.imshow(flow_residuals, extent=grid_extent, cmap='PuOr', aspect='equal', vmin=-minmax, vmax=minmax)
         plt.colorbar(label='groundwater flow residuals [m/day]', shrink=0.5)
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('x-coordinate [km]')
+        plt.ylabel('y-coordinate [km]')
         plt.tight_layout()
         i = layer + 1
         file = Path(__file__).parent / "figures" / f"gw_flow_residuals_steady_state_layer{i}_grid_{model_run}.png"
@@ -346,14 +543,27 @@ def main(model_run):
         plt.imshow(specific_discharge, extent=grid_extent, cmap='PuOr', aspect='equal', vmin=-minmax, vmax=minmax)
         plt.colorbar(label='groundwater specific discharge [m/day]', shrink=0.5)
         plt.grid(zorder=0)
-        plt.xlabel('Distance in x-direction [m]')
-        plt.ylabel('Distance in y-direction [m]')
+        plt.xlabel('x-coordinate [km]')
+        plt.ylabel('y-coordinate [km]')
         plt.tight_layout()
         i = layer + 1
         file = Path(__file__).parent / "figures" / f"gw_specific_discharge_steady_state_layer{i}_grid_{model_run}.png"
         fig.savefig(file, dpi=300)
         plt.close("all")
 
+    hydraulic_conductivities_layers = [hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4]
+    for i, hydraulic_conductivities_layer in enumerate(hydraulic_conductivities_layers):
+        fig, axes = plt.subplots(figsize=(4, 4))
+        hydraulic_conductivities_layer[~mask] = np.nan
+        plt.imshow(hydraulic_conductivities_layer/(24*60*60), extent=grid_extent, cmap='Oranges', aspect='equal', vmin=10e-7, vmax=10e-2, norm='log')
+        cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.48)
+        plt.grid(zorder=0)
+        plt.xlabel('x-coordinate [km]')
+        plt.ylabel('y-coordinate [km]')
+        plt.tight_layout()
+        file = Path(__file__).parent / "figures" / f"hydraulic_conductivity_layer_{i}_{model_run}.png"
+        fig.savefig(file, dpi=300)
+        plt.close(fig)
     return
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ import numpy as np
 
 base_path = Path(__file__).parent
 
-path = str(base_path / "parameters_modflow.nc")
+path = str(base_path / "input" / "parameters_modflow.nc")
 with h5netcdf.File(path, "a", decode_vlen_strings=False) as f:
     mask_zarten_brugga = (f.variables.get('mask_zarten_brugga')[:, :] == 1)
     mask_zarten_gravel_north = (f.variables.get('mask_zarten_gravel_north')[:, :] == 1)

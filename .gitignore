@@ -173,5 +173,9 @@ dreisam_moehlin_neumagen/steady-state/input/streambed_conductivity_.tif
 dreisam_moehlin_neumagen/steady-state/input/streambed_structure.tif
 dreisam_moehlin_neumagen/steady-state/input/streambed_structure_.tif
 dreisam_moehlin_neumagen/steady-state/input/upstream_nodes.gpkg
+dreisam_moehlin_neumagen/steady-state/input/daily_weights_drinking_water_supply.csv
+dreisam_moehlin_neumagen/steady-state/input/groundwater_extraction_cerdia.csv
+dreisam_moehlin_neumagen/steady-state/input/groundwater_extraction_cerdia.gpkg
+dreisam_moehlin_neumagen/steady-state/input/sfr_observation_points.csv
 
 **/batch_*/**

@@ -1,4 +1,4 @@
-Municipality;Station ID;x-Koordinate;y-Koordinate;Zelle_x;Zelle_y;Mean_2013-2023 [m asl.];Standard Deviation [m]
+Municipality;Station ID;x-coordinate;y-coordinate;cell_x;cell_y;Mean_2013-2023 [m asl.];Standard Deviation [m]
 EX_Bad_Krozingen;0101/071-4 - LUBW;402439;5305371;122;410;246.09;0.83
 EX_Bad_Krozingen;0118/020-6 - LUBW;399181;5311941;56;279;193.02;0.53
 EX_Bad_Krozingen;0159/070-6 - LUBW;403662;5307069;146;376;236.93;0.56

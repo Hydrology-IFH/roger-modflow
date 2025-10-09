@@ -1,5 +1,5 @@
-Station_ID;rno;x;y;Qavg;WDavg
-falkensteig;6695;591;309;1;0.43
-ebnet;14068;430;207;5.02;0.41
-ehrenkirchen;21470;191;360;0.4;0.66
-muenstertal;14511;218;487;1.49;0.15
+Station_ID;rno;x-coordinate;y-coordinate;cell_x;cell_y;Qavg;WDavg
+Falkensteig;6695;425881.5;5310468.5;591;309;1;0.43
+Ebnet;14068;417831.5;5315568.5;430;207;5.02;0.41
+Oberambringen;21470;405881.5;5307918.5;191;360;0.4;0.66
+Untermuenstertal;14511;407231.5;5301568.5;218;487;1.49;0.15

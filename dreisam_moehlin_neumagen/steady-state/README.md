@@ -13,7 +13,8 @@ Steady-state optimisation of different MODFLOW6 setups (i.e. different combinati
 - `config.yaml`: Configuration file (see in-file comments for more information)
 - `add_masks.py`: Add the masks (e.g. catchment mask) to the MODFLOW6 parameter file
 - `modify_elevations.py`: Ensure that bottom elevations of the layers do not overlap. Bottom elevations are adjusted in case of intersections. 
-- `modify_hydraulic_conductivity_and_specific_yield_of_layer1.py`: Replace hydarulic conductivities by hydraulic conductivities of the BK50 soil map.
+- `modify_hydraulic_conductivity_and_specific_yield_of_layer1.py`: Replace hydraulic conductivities by hydraulic conductivities of the BK50 soil map.
+- `modify_hydraulic_conductivity_and_specific_yield_of_gravel.py`: Assign values of gravel layers 
 - `generate_boundary_conditions.py`: Generate the boundary conditions file and add the no flow, constant head and recharge boundary condition.
 - `define_drainage_area.py`: Define the drainage area of the former Tuniberg wetland and the mask to `modflow_parameters.nc`. 
 - `make_stream_segment_routing.py`: Identify the downstream segment for each stream segment.

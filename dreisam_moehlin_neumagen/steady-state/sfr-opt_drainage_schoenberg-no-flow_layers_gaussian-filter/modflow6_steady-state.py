@@ -291,24 +291,6 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer3[~mask] = np.nan
         hydraulic_conductivities_layer4[~mask] = np.nan
 
-        # modify the manning"s n and hydraulic conductivity of the streambed based on the fraction of channelisation
-        reaches["man"] = (1 - reaches["fc"]) * reaches["man"]
-        reaches["rhk"] = (1 - reaches["fc"]) * reaches["rhk"]
-
-        # modify the manning"s n and hydraulic conductivity of the streambed based on the degree of alteration (5=partly, 6=strongly, 7=very strongly)
-        cond = (reaches["ss"] == 5)
-        reaches.loc[cond, "rhk"] = 10e-5
-        cond = (reaches["ss"] == 6)
-        reaches.loc[cond, "rhk"] = 10e-6
-        cond = (reaches["ss"] == 7)
-        reaches.loc[cond, "rhk"] = 10e-7
-
-        # set lower limits for manning"s n and hydraulic conductivity of the streambed
-        cond = (reaches["man"] <= 0.12)
-        reaches.loc[cond, "man"] = 0.12
-        cond = (reaches["rhk"] <= 10e-9)
-        reaches.loc[cond, "rhk"] = 10e-9
-
         # fudge streambed conductivity
         reaches["rhk"] = reaches["rhk"] * fudge_parameters["rhk"].values[model_run]
      

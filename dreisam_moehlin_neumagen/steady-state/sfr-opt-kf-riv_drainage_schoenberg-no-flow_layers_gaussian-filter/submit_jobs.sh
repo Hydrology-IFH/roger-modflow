@@ -1,9 +1,9 @@
 #!/bin/bash
 
 module load devel/miniforge
-
 conda activate roger-modflow
 
+python write_fudge_parameters.py
 python make_parallel_jobs.py
 
 cd batch_0

@@ -256,67 +256,77 @@ class ModFlowSimulation:
         reaches.iloc[:, 15] = reaches.iloc[:, 15].astype(float)
         reaches.iloc[:, 16] = reaches.iloc[:, 16].astype(int)
 
-        # convert to m/day
-        reaches["rhk"] = reaches["rhk"] * 86400
-
-        # increase the hydraulic conductivities of the reach cell by a factor of xx
-        for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):
-            if z == 0:
-                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * fudge_parameters["kf_riv"].values[model_run]
-            elif z == 1:
-                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * fudge_parameters["kf_riv"].values[model_run]
-                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * fudge_parameters["kf_riv"].values[model_run]
-            elif z == 2:
-                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * fudge_parameters["kf_riv"].values[model_run]
-                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * fudge_parameters["kf_riv"].values[model_run]
-                hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * fudge_parameters["kf_riv"].values[model_run]
-            elif z == 3:
-                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * fudge_parameters["kf_riv"].values[model_run]
-                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * fudge_parameters["kf_riv"].values[model_run]
-                hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * fudge_parameters["kf_riv"].values[model_run]
-                hydraulic_conductivities_layer4[x, y] = hydraulic_conductivities_layer4[x, y] * fudge_parameters["kf_riv"].values[model_run]
-
         # smooth transition between fissured and porous aquifers
         hydraulic_conductivities_layer1[np.isnan(hydraulic_conductivities_layer1)] = 0
         hydraulic_conductivities_layer2[np.isnan(hydraulic_conductivities_layer2)] = 0
         hydraulic_conductivities_layer3[np.isnan(hydraulic_conductivities_layer3)] = 0
         hydraulic_conductivities_layer4[np.isnan(hydraulic_conductivities_layer4)] = 0
-        hydraulic_conductivities_layer1 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [1.0, 1.0], mode="constant")
-        hydraulic_conductivities_layer2 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.0, 1.0], mode="constant")
-        hydraulic_conductivities_layer3 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.0, 1.0], mode="constant")
-        hydraulic_conductivities_layer4 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.0, 1.0], mode="constant")
+        hydraulic_conductivities_layer1 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [1.5, 1.5], mode="constant")
+        hydraulic_conductivities_layer2 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.5, 1.5], mode="constant")
+        hydraulic_conductivities_layer3 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.5, 1.5], mode="constant")
+        hydraulic_conductivities_layer4 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.5, 1.5], mode="constant")
+
+        # increase the hydraulic conductivities of the reach cell by a factor of xx
+        reaches["kf"] = np.nan
+        c_fissured = 10  # factor to increase the hydraulic conductivity in fissured layers
+        for rno, z, y, x in zip(reaches.loc[:, "rno"], reaches.loc[:, "k"], reaches.loc[:, "i"], reaches.loc[:, "j"]):
+            if z == 0:
+                kf_riv = hydraulic_conductivities_layer1[y, x] / 86400
+                if kf_riv < 10e-6:
+                    hydraulic_conductivities_layer1[y, x] = hydraulic_conductivities_layer1[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured
+                    reaches.loc[rno, "kf"] = (hydraulic_conductivities_layer1[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured) / 86400
+                else:
+                    hydraulic_conductivities_layer1[y, x] = hydraulic_conductivities_layer1[y, x] * fudge_parameters["kf_riv"].values[model_run]
+                    reaches.loc[rno, "kf"] = (hydraulic_conductivities_layer1[y, x] * fudge_parameters["kf_riv"].values[model_run]) / 86400
+            elif z == 1:
+                kf_riv = hydraulic_conductivities_layer2[y, x] / 86400
+                if kf_riv < 10e-6:
+                    hydraulic_conductivities_layer1[y, x] = hydraulic_conductivities_layer1[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured
+                    hydraulic_conductivities_layer2[y, x] = hydraulic_conductivities_layer2[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured
+                    reaches.loc[rno, "kf"] = (hydraulic_conductivities_layer2[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured) / 86400
+                else:  
+                    hydraulic_conductivities_layer1[y, x] = hydraulic_conductivities_layer1[y, x] * fudge_parameters["kf_riv"].values[model_run]
+                    hydraulic_conductivities_layer2[y, x] = hydraulic_conductivities_layer2[y, x] * fudge_parameters["kf_riv"].values[model_run]
+                    reaches.loc[rno, "kf"] = (hydraulic_conductivities_layer2[y, x] * fudge_parameters["kf_riv"].values[model_run]) / 86400
+            elif z == 2:
+                kf_riv = hydraulic_conductivities_layer3[y, x] / 86400
+                if kf_riv < 10e-6:
+                    hydraulic_conductivities_layer1[y, x] = hydraulic_conductivities_layer1[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured
+                    hydraulic_conductivities_layer2[y, x] = hydraulic_conductivities_layer2[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured
+                    hydraulic_conductivities_layer3[y, x] = hydraulic_conductivities_layer3[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured
+                    reaches.loc[rno, "kf"] = (hydraulic_conductivities_layer3[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured) / 86400
+                else:
+                    hydraulic_conductivities_layer1[y, x] = hydraulic_conductivities_layer1[y, x] * fudge_parameters["kf_riv"].values[model_run]
+                    hydraulic_conductivities_layer2[y, x] = hydraulic_conductivities_layer2[y, x] * fudge_parameters["kf_riv"].values[model_run]
+                    hydraulic_conductivities_layer3[y, x] = hydraulic_conductivities_layer3[y, x] * fudge_parameters["kf_riv"].values[model_run]
+                    reaches.loc[rno, "kf"] = (hydraulic_conductivities_layer3[y, x] * fudge_parameters["kf_riv"].values[model_run]) / 86400
+            elif z == 3:
+                kf_riv = hydraulic_conductivities_layer4[y, x] / 86400
+                if kf_riv < 10e-6:
+                    hydraulic_conductivities_layer1[y, x] = hydraulic_conductivities_layer1[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured
+                    hydraulic_conductivities_layer2[y, x] = hydraulic_conductivities_layer2[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured
+                    hydraulic_conductivities_layer3[y, x] = hydraulic_conductivities_layer3[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured
+                    hydraulic_conductivities_layer4[y, x] = hydraulic_conductivities_layer4[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured
+                    reaches.loc[rno, "kf"] = (hydraulic_conductivities_layer4[y, x] * fudge_parameters["kf_riv"].values[model_run] * c_fissured) / 86400
+                else:
+                    hydraulic_conductivities_layer1[y, x] = hydraulic_conductivities_layer1[y, x] * fudge_parameters["kf_riv"].values[model_run]
+                    hydraulic_conductivities_layer2[y, x] = hydraulic_conductivities_layer2[y, x] * fudge_parameters["kf_riv"].values[model_run]
+                    hydraulic_conductivities_layer3[y, x] = hydraulic_conductivities_layer3[y, x] * fudge_parameters["kf_riv"].values[model_run]
+                    hydraulic_conductivities_layer4[y, x] = hydraulic_conductivities_layer4[y, x] * fudge_parameters["kf_riv"].values[model_run]
+                    reaches.loc[rno, "kf"] = (hydraulic_conductivities_layer4[y, x] * fudge_parameters["kf_riv"].values[model_run]) / 86400
+
         hydraulic_conductivities_layer1[~mask] = np.nan
         hydraulic_conductivities_layer2[~mask] = np.nan
         hydraulic_conductivities_layer3[~mask] = np.nan
         hydraulic_conductivities_layer4[~mask] = np.nan
 
-        # modify the manning"s n and hydraulic conductivity of the streambed based on the fraction of channelisation
-        reaches["man"] = (1 - reaches["fc"]) * reaches["man"]
-        reaches["rhk"] = (1 - reaches["fc"]) * reaches["rhk"]
-
-        # modify the manning"s n and hydraulic conductivity of the streambed based on the degree of alteration (5=partly, 6=strongly, 7=very strongly)
-        cond = (reaches["ss"] == 5)
-        reaches.loc[cond, "rhk"] = 10e-5
-        cond = (reaches["ss"] == 6)
-        reaches.loc[cond, "rhk"] = 10e-6
-        cond = (reaches["ss"] == 7)
-        reaches.loc[cond, "rhk"] = 10e-7
-
-        # set lower limits for manning"s n and hydraulic conductivity of the streambed
-        cond = (reaches["man"] <= 0.12)
-        reaches.loc[cond, "man"] = 0.12
-        cond = (reaches["rhk"] <= 10e-9)
-        reaches.loc[cond, "rhk"] = 10e-9
-
         # fudge streambed conductivity
-        reaches["rwid"] = reaches["rwid"]
-        reaches["man"] = reaches["man"] * 1.0
         reaches["rhk"] = reaches["rhk"] * fudge_parameters["rhk"].values[model_run]
-     
-        cond = np.isnan(reaches["rwid"])
-        reaches.loc[cond, "rwid"] = 1.0  # set width to 1 m where it is NaN
-        cond_widht0 = (reaches.loc[:, "rwid"] <= 1.0)
-        reaches.loc[cond_widht0, "rwid"] = 1.0  # set width to 1 m if it is smaller than 1 m
+        cond = (reaches["rhk"] > 1)
+        reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * 1.0
+        cond = (reaches["kf"] < 10e-6) & (reaches["rhk"] > reaches["kf"])
+        reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * 0.1
+        reaches["man"] = reaches["man"] * 1.0
 
         diversions = pd.read_csv(base_path.parent / "input" / "sfr_diversions.csv", sep=";")
         diversions.iloc[:, 0] = diversions.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing

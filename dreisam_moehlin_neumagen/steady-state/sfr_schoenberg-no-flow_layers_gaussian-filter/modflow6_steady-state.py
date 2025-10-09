@@ -256,9 +256,6 @@ class ModFlowSimulation:
         reaches.iloc[:, 15] = reaches.iloc[:, 15].astype(float)
         reaches.iloc[:, 16] = reaches.iloc[:, 16].astype(int)
 
-        # convert to m/day
-        reaches["rhk"] = reaches["rhk"] * 86400
-
         # increase the hydraulic conductivities of the reach cell by a factor of xx
         xx = 3.0
         for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):
@@ -290,29 +287,6 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer2[~mask] = np.nan
         hydraulic_conductivities_layer3[~mask] = np.nan
         hydraulic_conductivities_layer4[~mask] = np.nan
-
-        # modify the manning"s n and hydraulic conductivity of the streambed based on the fraction of channelisation
-        reaches["man"] = (1 - reaches["fc"]) * reaches["man"]
-        reaches["rhk"] = (1 - reaches["fc"]) * reaches["rhk"]
-
-        # modify the manning"s n and hydraulic conductivity of the streambed based on the degree of alteration (5=partly, 6=strongly, 7=very strongly)
-        cond = (reaches["ss"] == 5)
-        reaches.loc[cond, "rhk"] = 10e-5
-        cond = (reaches["ss"] == 6)
-        reaches.loc[cond, "rhk"] = 10e-6
-        cond = (reaches["ss"] == 7)
-        reaches.loc[cond, "rhk"] = 10e-7
-
-        # set lower limits for manning"s n and hydraulic conductivity of the streambed
-        cond = (reaches["man"] <= 0.12)
-        reaches.loc[cond, "man"] = 0.12
-        cond = (reaches["rhk"] <= 10e-9)
-        reaches.loc[cond, "rhk"] = 10e-9
-
-        cond = np.isnan(reaches["rwid"])
-        reaches.loc[cond, "rwid"] = 1.0  # set width to 1 m where it is NaN
-        cond_widht0 = (reaches.loc[:, "rwid"] <= 1.0)
-        reaches.loc[cond_widht0, "rwid"] = 1.0  # set width to 1 m if it is smaller than 1 m
 
         diversions = pd.read_csv(base_path.parent / "input" / "sfr_diversions.csv", sep=";")
         # diversions = diversions.iloc[:3, :]

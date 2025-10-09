@@ -3,6 +3,7 @@
 python add_masks.py
 python modify_elevations.py
 python modify_hydraulic_conductivity_and_specific_yield_of_layer1.py
+python modify_hydraulic_conductivity_and_specific_yield_of_gravel.py
 
 python generate_boundary_conditions.py
 
@@ -18,4 +19,5 @@ python prepare_groundwater_extraction_data.py
 python make_stream_segment_routing.py
 python repair_geometries_of_stream_segments.py
 python write_sfr_data.py
-python assign_streambed_conducivity.py
+python assign_streambed_conducivity_and_manning_to_sfr_packagedata.py
+python add_streamflow_observation_points_to_sfr.py

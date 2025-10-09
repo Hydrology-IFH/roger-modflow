@@ -203,7 +203,7 @@ for model_run in range(0, 10000):
         df_sfr_ = pd.read_csv(output_file, sep=",")
 
         df_sfr = pd.DataFrame(index=["falkensteig", "ebnet", "ehrenkirchen", "muenstertal"], columns=["rno", "layer", "x", "y", "rlen", "rwid", "rtp" "rgrd", "man", "rhk", "water_depth", "flow"])
-        df_sfr["rno"] = [23614, 23888, 22337, 14854]
+        df_sfr["rno"] = [key for key in dict_obs_stage_id.values()]
         for rno in df_sfr["rno"].values:
             df_sfr.loc[df_sfr["rno"] == rno, "layer"] = reaches.loc[reaches["rno"] == rno, "k"].values[0]
             df_sfr.loc[df_sfr["rno"] == rno, "x"] = reaches.loc[reaches["rno"] == rno, "i"].values[0]

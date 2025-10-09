@@ -7,6 +7,9 @@ base_path = Path(__file__).parent
 path = base_path / "input" / "groundwater_extraction_.gpkg"
 gdf = gpd.read_file(path)
 
+path = base_path / "input" / "groundwater_extraction_cerdia.gpkg"
+gdf_cerdia = gpd.read_file(path)
+
 
 gdf = gdf[['GW-Nummer', 'Ost', 'Nord', 'Gemeinde',
        'Nutzung11', '2013', '2014', '2015', '2016', '2017',
@@ -14,13 +17,13 @@ gdf = gdf[['GW-Nummer', 'Ost', 'Nord', 'Gemeinde',
        'Zelle_y', 'geometry']]
 
 
-gdf.columns = ['ID', 'x', 'y', 'municipality',
+gdf.columns = ['ID', 'x-coordinate', 'y-coordinate', 'municipality',
        'purpose', '2013', '2014', '2015', '2016', '2017',
        '2018', '2019', '2020', '2021', '2022', '2023', 'annual_average', 'cell_y',
        'cell_x', 'geometry']
 
 # reorder columns
-gdf = gdf[['ID', 'x', 'y', 'cell_x',
+gdf = gdf[['ID', 'x-coordinate', 'y-coordinate', 'cell_x',
        'cell_y', 'municipality', 'purpose', '2013', '2014', '2015', '2016', '2017',
        '2018', '2019', '2020', '2021', '2022', '2023', 'annual_average', 'geometry']]
 
@@ -57,9 +60,11 @@ gdf['layer'] = 2
 cond = gdf['municipality'].isin(['Kirchzarten', 'Oberried', 'Buchenbach', 'Stegen'])
 gdf.loc[cond, 'layer'] = 3
 
+gdf_ = pd.concat([gdf, gdf_cerdia])
+
 # write to file
 output_path = base_path / "input" / "groundwater_extraction.gpkg"
-gdf.to_file(output_path, driver="GPKG")
+gdf_.to_file(output_path, driver="GPKG")
 # write to csv
 output_path = base_path / "input" / "groundwater_extraction.csv"
-gdf.drop(columns='geometry').to_csv(output_path, index=False, sep=';')
+gdf_.drop(columns='geometry').to_csv(output_path, index=False, sep=';')

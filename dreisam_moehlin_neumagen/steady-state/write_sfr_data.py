@@ -6,10 +6,16 @@ import geopandas as gpd
 from shapely.ops import unary_union
 from shapely.geometry import box
 import xarray as xr
+import yaml
 import flopy
 import sfrmaker
 
 base_path = Path(__file__).parent
+
+# load config file
+file_config = base_path / "config.yml"
+with open(file_config, "r") as file:
+    modflow_config = yaml.safe_load(file)
 
 path = base_path / "input" / "boundary_conditions.nc"
 ds_bc = xr.open_dataset(path, engine="h5netcdf")
@@ -57,24 +63,24 @@ gwf = flopy.mf6.ModflowGwf(sim, modelname="model", model_nam_file=model_nam_file
 dis = flopy.mf6.modflow.mfgwfdis.ModflowGwfdis(
     gwf,
     pname="dis",
-    nlay=4,
+    nlay=modflow_config["nz"],
     nrow=topography.shape[0],
     ncol=topography.shape[1],
-    delr=50, 
-    delc=50,
+    delr=modflow_config["dy"], 
+    delc=modflow_config["dx"],
     length_units="METERS",
     top=topography,
     botm=elevation_bottom_layers,
     idomain=domain_layers,
     xorigin=xoff,
-    yorigin=yoff - (50 * topography.shape[0]),  
+    yorigin=yoff - (modflow_config["dy"] * topography.shape[0]),  
 )
 
 # define the model grid
-delr = np.array([50.] * 777)  # cell spacing along a row
-delc = np.array([50.] * 621)  # cell spacing along a column
+delr = np.array([modflow_config["dy"]] * modflow_config["ny"])  # cell spacing along a row
+delc = np.array([modflow_config["dx"]] * modflow_config["nx"])  # cell spacing along a column
 flopy_grid = flopy.discretization.StructuredGrid(delr=delr, delc=delc,
-                                                 xoff=xoff, yoff=yoff - (50 * 621),  # lower left corner of model grid
+                                                 xoff=xoff, yoff=yoff - (modflow_config["dy"] * topography.shape[0]),  # lower left corner of model grid
                                                  angrot=0,  # grid is unrotated
                                                  crs=25832,
                                                  idomain=domain_layers,
@@ -83,7 +89,7 @@ flopy_grid = flopy.discretization.StructuredGrid(delr=delr, delc=delc,
                                                  botm=elevation_bottom_layers
                                                  )
 
-cellsize = 50  # Breite/Höhe einer Rasterzelle (z.B. Meter)
+cellsize = modflow_config["dx"]  # Breite/Höhe einer Rasterzelle (z.B. Meter)
 
 data = []
 for row in range(mask.shape[0]):
@@ -124,27 +130,19 @@ cond2 = custom_segments.df.width2 == 0
 custom_segments.df.loc[cond1, "width1"] = 1
 custom_segments.df.loc[cond2, "width2"] = 1
 
-# # remove segments with no geometry
-# custom_segments.df = custom_segments.df[custom_segments.df.geometry.notnull()]
-# file_active_area = base_path.parent / "input" / "active_area_grid.shp"
-# grid = flopy.discretization.StructuredGrid.from_modelgrid(flopy_grid, crs=25832, active_area=file_active_area)
-# reach_data = custom_segments.intersect(grid)
-# custom_segments.make_routing_one_to_one()
-# custom_segments.write_shapefile(outshp=base_path / "output" / "flowlines.shp")  
-
 # make the data for the SFR package
 file_active_area = base_path / "input" / "active_area_grid.shp"
 sfrdata = custom_segments.to_sfr(grid=flopy_grid, model=gwf, active_area=file_active_area, 
                                  model_length_units="meters", consolidate_conductance=True, one_reach_per_cell=False)
 
 # modify reach data
+sfrdata.reach_data.loc[:, "width"] = sfrdata.reach_data.loc[:, "width"] * 0.8
 cond = np.isnan(sfrdata.reach_data["width"])
 sfrdata.reach_data.loc[cond, "width"] = 1.0  # set width to 1 m where it is NaN
 cond_widht0 = (sfrdata.reach_data.loc[:, "width"] <= 1.0)
 sfrdata.reach_data.loc[cond_widht0, "width"] = 1.0  # set width to 1 m if it is smaller than 1 m
 cond_widht18 = (sfrdata.reach_data.loc[:, "width"] >= 18.0)
 sfrdata.reach_data.loc[cond_widht18, "width"] = 18.0  # set width to 18 m if it is larger than 18 m
-sfrdata.reach_data.loc[:, "width"] = sfrdata.reach_data.loc[:, "width"] * 0.8
 sfrdata.reach_data.loc[:, "strthick"] = 1  # set the stream thickness (in meters)
 sfrdata.reach_data.loc[:, "strhc1"] = 1.0  # set the streambed hydraulic conductivity (in meters per day)
 sfrdata.reach_data.loc[:, "thts"] = 0.035  # set the Manning"s roughness coefficient (dimensionless)
@@ -156,15 +154,15 @@ sfrdata.set_streambed_top_elevations_from_dem(dem_file,
                                               method="buffers",
                                               smooth=True,
                                               buffer_distance=100)
-sfrdata.update_slopes(default_slope=0.001, minimum_slope=0.0001, maximum_slope=0.45)  # update slopes based on the new streambed top elevations
+sfrdata.update_slopes(default_slope=0.01, minimum_slope=0.001, maximum_slope=0.45)  # update slopes based on the new streambed top elevations
 
+sfrdata.reach_data.loc[:, "width"] = sfrdata.reach_data.loc[:, "width"] * 0.8
 cond = np.isnan(sfrdata.reach_data["width"])
 sfrdata.reach_data.loc[cond, "width"] = 1.0  # set width to 1 m where it is NaN
 cond_widht0 = (sfrdata.reach_data.loc[:, "width"] <= 1.0)
 sfrdata.reach_data.loc[cond_widht0, "width"] = 1.0  # set width to 1 m if it is smaller than 1 m
 cond_widht18 = (sfrdata.reach_data.loc[:, "width"] >= 18.0)
 sfrdata.reach_data.loc[cond_widht18, "width"] = 18.0  # set width to 18 m if it is larger than 18 m
-sfrdata.reach_data.loc[:, "width"] = sfrdata.reach_data.loc[:, "width"] * 0.8
 
 # assign the layer
 for rno, i, j in zip(sfrdata.reach_data["rno"], sfrdata.reach_data["i"], sfrdata.reach_data["j"]):

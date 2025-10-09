@@ -1,59 +1,316 @@
-dx: 50  # grid spacing in x direction [m]
-dy: 50  # grid spacing in y direction [m]
-nx: 621  # number of grid cells in x direction
-ny: 777  # number of grid cells in y direction
-nz: 4   # number of grid layers
-
-
-# !this part below is only needed if SFR package is used!
-# identify outlet reach numbers by opening the shapefile "sfr_lines.shp" in QGIS
-# "sfr_lines.shp" is produced by "write_sfr_data.py"
-# Outlet reach numbers
-outlet_rnos:
-  - 25089
-  - 24976
-  - 24993
-  - 25030
-  - 24831
-  - 24712
-  - 24994
-
-# reach numbers of streamflow and water observation points
-# observation point can be identified by opening the shapefile "sfr_lines.shp" in QGIS
-dict_obs_stage_rnos: 
-  FALKENSTEIG_STAGE: 6695
-  EBNET_STAGE: 14068
-  EHRENKIRCHEN_STAGE: 21470
-  MUENSTERTAL_STAGE: 14511
-
 dict_obs_flow_rnos:
-  FALKENSTEIG_FLOW: 6695
-  EBNET_FLOW: 14068
-  EHRENKIRCHEN_FLOW: 21470
-  MUENSTERTAL_FLOW: 14511
-
+  B2_FLOW: 11190
+  DREI1_FLOW: 12062
+  DREI2_FLOW: 12095
+  DREI3_FLOW: 12115
+  DREI4_FLOW: 12940
+  DREI5_FLOW: 13375
+  DREI7_FLOW: 24711
+  E1_FLOW: 12188
+  E2_FLOW: 12578
+  E4_FLOW: 12993
+  E6_FLOW: 13396
+  E8_FLOW: 13425
+  EBNET_FLOW: 14067
+  FALKENSTEIG_FLOW: 6694
+  IB1_FLOW: 8724
+  K1_FLOW: 11818
+  MOE2_FLOW: 24133
+  MOE3_FLOW: 24183
+  MOE4_FLOW: 24238
+  MOE5_FLOW: 24269
+  MOE6_FLOW: 24646
+  NEU2_FLOW: 22408
+  NEU3_FLOW: 23294
+  OBERAMBRINGEN_FLOW: 21469
+  OBERRIED_FLOW: 8068
+  RE1_FLOW: 11877
+  RO2_A_FLOW: 11693
+  RO2_B_FLOW: 11695
+  UNTERMUENSTERTAL_FLOW: 14510
+  W1_NEW_FLOW: 7772
+  W2_FLOW: 10963
+  W3_FLOW: 11005
+  W4_FLOW: 11786
+  ZA1_FLOW: 5799
+dict_obs_stage_rnos:
+  B2_STAGE: 11190
+  DREI1_STAGE: 12062
+  DREI2_STAGE: 12095
+  DREI3_STAGE: 12115
+  DREI4_STAGE: 12940
+  DREI5_STAGE: 13375
+  DREI7_STAGE: 24711
+  E1_STAGE: 12188
+  E2_STAGE: 12578
+  E4_STAGE: 12993
+  E6_STAGE: 13396
+  E8_STAGE: 13425
+  EBNET_STAGE: 14067
+  FALKENSTEIG_STAGE: 6694
+  IB1_STAGE: 8724
+  K1_STAGE: 11818
+  MOE2_STAGE: 24133
+  MOE3_STAGE: 24183
+  MOE4_STAGE: 24238
+  MOE5_STAGE: 24269
+  MOE6_STAGE: 24646
+  NEU2_STAGE: 22408
+  NEU3_STAGE: 23294
+  OBERAMBRINGEN_STAGE: 21469
+  OBERRIED_STAGE: 8068
+  RE1_STAGE: 11877
+  RO2_A_STAGE: 11693
+  RO2_B_STAGE: 11695
+  UNTERMUENSTERTAL_STAGE: 14510
+  W1_NEW_STAGE: 7772
+  W2_STAGE: 10963
+  W3_STAGE: 11005
+  W4_STAGE: 11786
+  ZA1_STAGE: 5799
+dx: 50.0
+dy: 50.0
+nx: 621
+ny: 777
+nz: 4
+outlet_rnos:
+- 14067
+- 8068
+- 21469
+- 14510
+- 6694
+- 12062
+- 12095
+- 12115
+- 12940
+- 13375
+- 24711
+- 24133
+- 24183
+- 24238
+- 24269
+- 24646
+- 22408
+- 23294
+- 12188
+- 12578
+- 12993
+- 13396
+- 13425
+- 8724
+- 11818
+- 11877
+- 11695
+- 11693
+- 11786
+- 10963
+- 7772
+- 11005
+- 5799
+- 11190
+- 12095
 sfr_obs:
-  falkensteig_stage:
-      - stage
-      - 6695
-  ebnet_stage:
-      - stage
-      - 14068
-  ehrenkirchen_stage:
-      - stage
-      - 21470
-  muenstertal_stage:
-      - stage
-      - 14511
-  falkensteig_flow:
-      - downstream-flow
-      - 6695
-  ebnet_flow:
-      - downstream-flow
-      - 14068
-  ehrenkirchen_flow:
-      - downstream-flow
-      - 21470
-  muenstertal_flow:
-      - downstream-flow
-      - 14511
+  B2_flow:
+  - downstream-flow
+  - 11190
+  B2_stage:
+  - stage
+  - 11190
+  DREI1_flow:
+  - downstream-flow
+  - 12062
+  DREI1_stage:
+  - stage
+  - 12062
+  DREI2_flow:
+  - downstream-flow
+  - 12095
+  DREI2_stage:
+  - stage
+  - 12095
+  DREI3_flow:
+  - downstream-flow
+  - 12115
+  DREI3_stage:
+  - stage
+  - 12115
+  DREI4_flow:
+  - downstream-flow
+  - 12940
+  DREI4_stage:
+  - stage
+  - 12940
+  DREI5_flow:
+  - downstream-flow
+  - 13375
+  DREI5_stage:
+  - stage
+  - 13375
+  DREI7_flow:
+  - downstream-flow
+  - 24711
+  DREI7_stage:
+  - stage
+  - 24711
+  E1_flow:
+  - downstream-flow
+  - 12188
+  E1_stage:
+  - stage
+  - 12188
+  E2_flow:
+  - downstream-flow
+  - 12578
+  E2_stage:
+  - stage
+  - 12578
+  E4_flow:
+  - downstream-flow
+  - 12993
+  E4_stage:
+  - stage
+  - 12993
+  E6_flow:
+  - downstream-flow
+  - 13396
+  E6_stage:
+  - stage
+  - 13396
+  E8_flow:
+  - downstream-flow
+  - 13425
+  E8_stage:
+  - stage
+  - 13425
+  Ebnet_flow:
+  - downstream-flow
+  - 14067
+  Ebnet_stage:
+  - stage
+  - 14067
+  Falkensteig_flow:
+  - downstream-flow
+  - 6694
+  Falkensteig_stage:
+  - stage
+  - 6694
+  IB1_flow:
+  - downstream-flow
+  - 8724
+  IB1_stage:
+  - stage
+  - 8724
+  K1_flow:
+  - downstream-flow
+  - 11818
+  K1_stage:
+  - stage
+  - 11818
+  MOE2_flow:
+  - downstream-flow
+  - 24133
+  MOE2_stage:
+  - stage
+  - 24133
+  MOE3_flow:
+  - downstream-flow
+  - 24183
+  MOE3_stage:
+  - stage
+  - 24183
+  MOE4_flow:
+  - downstream-flow
+  - 24238
+  MOE4_stage:
+  - stage
+  - 24238
+  MOE5_flow:
+  - downstream-flow
+  - 24269
+  MOE5_stage:
+  - stage
+  - 24269
+  MOE6_flow:
+  - downstream-flow
+  - 24646
+  MOE6_stage:
+  - stage
+  - 24646
+  NEU2_flow:
+  - downstream-flow
+  - 22408
+  NEU2_stage:
+  - stage
+  - 22408
+  NEU3_flow:
+  - downstream-flow
+  - 23294
+  NEU3_stage:
+  - stage
+  - 23294
+  Oberambringen_flow:
+  - downstream-flow
+  - 21469
+  Oberambringen_stage:
+  - stage
+  - 21469
+  Oberried_flow:
+  - downstream-flow
+  - 8068
+  Oberried_stage:
+  - stage
+  - 8068
+  RE1_flow:
+  - downstream-flow
+  - 11877
+  RE1_stage:
+  - stage
+  - 11877
+  RO2_A_flow:
+  - downstream-flow
+  - 11693
+  RO2_A_stage:
+  - stage
+  - 11693
+  RO2_B_flow:
+  - downstream-flow
+  - 11695
+  RO2_B_stage:
+  - stage
+  - 11695
+  Untermuenstertal_flow:
+  - downstream-flow
+  - 14510
+  Untermuenstertal_stage:
+  - stage
+  - 14510
+  W1_new_flow:
+  - downstream-flow
+  - 7772
+  W1_new_stage:
+  - stage
+  - 7772
+  W2_flow:
+  - downstream-flow
+  - 10963
+  W2_stage:
+  - stage
+  - 10963
+  W3_flow:
+  - downstream-flow
+  - 11005
+  W3_stage:
+  - stage
+  - 11005
+  W4_flow:
+  - downstream-flow
+  - 11786
+  W4_stage:
+  - stage
+  - 11786
+  Za1_flow:
+  - downstream-flow
+  - 5799
+  Za1_stage:
+  - stage
+  - 5799

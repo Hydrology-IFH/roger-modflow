@@ -10,29 +10,29 @@ def main(nsamples):
     base_path = Path(__file__).parent
 
     bounds = {"-8_1": [400, 600], 
-              "-7_1": [10, 100], 
+              "-7_1": [40, 60], 
               "-6_1": [0.9, 10], 
               "-5_1": [0.9, 10],
-              "-7_2": [10, 100], 
+              "-7_2": [30, 50], 
               "-5_2": [0.9, 10], 
               "-4_2": [0.5, 2.5],
-              "1-3_2": [0.5, 2.5], 
-              "1.8-3_2": [0.5, 2.5], 
-              "3-3_2": [0.5, 2.5],  
-              "4-3_2": [0.5, 2.5],
-              "-7_3": [10, 60], 
+              "1-3_2": [0.1, 10.0], 
+              "1.8-3_2": [0.1, 10.0], 
+              "3-3_2": [0.1, 10.0],  
+              "4-3_2": [0.1, 10.0],
+              "-7_3": [10, 30], 
               "-5_3": [0.5, 2.5], 
               "-4_3": [0.5, 2.5],
-              "1-3_3": [0.5, 2.5], 
-              "1.8-3_3": [0.5, 2.5], 
-              "3-3_3": [0.5, 2.5],  
-              "4-3_3": [0.5, 2.5],
-              "-7_4": [5, 30], 
+              "1-3_3": [0.1, 10.0], 
+              "1.8-3_3": [0.1, 10.0], 
+              "3-3_3": [0.1, 10.0],  
+              "4-3_3": [0.1, 10.0],
+              "-7_4": [1, 20], 
               "-5_4": [0.5, 2.5], 
               "-4_4": [0.5, 2.5],
               "1.8-3_4": [0.5, 2.5],
-              "kf_riv": [1.0, 3.0],
-              "rhk": [0.0001, 0.01],
+              "kf_riv": [1.0, 10.0],
+              "rhk": [0.1, 250],
               "rch": [0.95, 1.05],
     }
 
@@ -52,22 +52,23 @@ def main(nsamples):
 
     df_params["offset"] = 0.
     df_params.iloc[:34, :] = 1.
-    df_params.loc[:33, "kf_riv"] = 1
-    df_params.loc[:33, "rhk"] = 0.0005
+    df_params.loc[:33, "kf_riv"] = 1.5
+    df_params.loc[:33, "rhk"] = 80.
 
+    xx = 1.2
     df_params.loc[:33, "-8_1"] = 500.
-    df_params.loc[:33, "-7_1"] = 50.
-    df_params.loc[:33, "-7_2"] = 40.
-    df_params.loc[:33, "-7_3"] = 30.
-    df_params.loc[:33, "-7_4"] = 20.
+    df_params.loc[:33, "-7_1"] = 40. * xx
+    df_params.loc[:33, "-7_2"] = 30. * xx
+    df_params.loc[:33, "-7_3"] = 20. * xx
+    df_params.loc[:33, "-7_4"] = 15. * xx
 
     # df_params.loc[:33, "1-3_2"] = 1.0
-    # df_params.loc[:33, "1.8-3_2"] = 1.0
-    # df_params.loc[:33, "3-3_2"] = 1.0
-    # df_params.loc[:33, "4-3_2"] = 1.0
+    df_params.loc[:33, "1.8-3_2"] = 0.5 
+    df_params.loc[:33, "3-3_2"] = 5.0 
+    df_params.loc[:33, "4-3_2"] = 5.0
     # df_params.loc[:33, "1-3_3"] = 1.0
-    # df_params.loc[:33, "1.8-3_3"] = 1.0
-    # df_params.loc[:33, "3-3_3"] = 1.0
+    df_params.loc[:33, "1.8-3_3"] = 0.3
+    df_params.loc[:33, "3-3_3"] = 2.5
     # df_params.loc[:33, "4-3_3"] = 1.0
 
     df_params.loc[0, "rch"] = 1.25
@@ -100,10 +101,10 @@ def main(nsamples):
     df_params.loc[27, "kf_riv"] = 3
     df_params.loc[28, "kf_riv"] = 4
     df_params.loc[29, "kf_riv"] = 5
-    df_params.loc[30, "rhk"] = 0.0001
-    df_params.loc[31, "rhk"] = 0.0005
-    df_params.loc[32, "rhk"] = 0.001
-    df_params.loc[33, "rhk"] = 0.008
+    df_params.loc[30, "rhk"] = 0.0025
+    df_params.loc[31, "rhk"] = 0.001
+    df_params.loc[32, "rhk"] = 0.0008
+    df_params.loc[33, "rhk"] = 0.0005
 
     # constrain parameters by upper layers (i.e. kf of lower layer is equal or less than kf of upper layer)
     cond = (df_params["-7_3"] >= df_params["-7_2"])
