@@ -261,10 +261,18 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer2[np.isnan(hydraulic_conductivities_layer2)] = 0
         hydraulic_conductivities_layer3[np.isnan(hydraulic_conductivities_layer3)] = 0
         hydraulic_conductivities_layer4[np.isnan(hydraulic_conductivities_layer4)] = 0
-        hydraulic_conductivities_layer1 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [1.5, 1.5], mode="constant")
-        hydraulic_conductivities_layer2 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.5, 1.5], mode="constant")
-        hydraulic_conductivities_layer3 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.5, 1.5], mode="constant")
-        hydraulic_conductivities_layer4 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.5, 1.5], mode="constant")
+        _hydraulic_conductivities_layer1 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [3., 3.], mode="constant")
+        _hydraulic_conductivities_layer2 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [3., 3.], mode="constant")
+        _hydraulic_conductivities_layer3 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [3., 3.], mode="constant")
+        _hydraulic_conductivities_layer4 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [3., 3.], mode="constant")
+        cond1 = (hydraulic_conductivities_layer1_ < 10.0e-07)
+        cond2 = (hydraulic_conductivities_layer2_ < 10.0e-07)
+        cond3 = (hydraulic_conductivities_layer3_ < 10.0e-07)
+        cond4 = (hydraulic_conductivities_layer4_ < 10.0e-07)
+        hydraulic_conductivities_layer1[cond1] = _hydraulic_conductivities_layer1[cond1]
+        hydraulic_conductivities_layer2[cond2] = _hydraulic_conductivities_layer2[cond2]
+        hydraulic_conductivities_layer3[cond3] = _hydraulic_conductivities_layer3[cond3]
+        hydraulic_conductivities_layer4[cond4] = _hydraulic_conductivities_layer4[cond4]
 
         # increase the hydraulic conductivities of the reach cell by a factor of xx
         reaches["kf"] = np.nan
@@ -321,7 +329,10 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer4[~mask] = np.nan
 
         # fudge streambed conductivity
-        reaches["rhk"] = reaches["rhk"] * fudge_parameters["rhk"].values[model_run]
+        cond = (reaches["kf"] >= 10e-6)
+        reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkp"].values[model_run]
+        cond = (reaches["kf"] < 10e-6)
+        reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkf"].values[model_run]
         reaches["man"] = reaches["man"] * fudge_parameters["man"].values[model_run]
 
         diversions = pd.read_csv(base_path.parent.parent / "input" / "sfr_diversions.csv", sep=";")
@@ -383,22 +394,26 @@ class ModFlowSimulation:
         specific_yield_layer2 = recalc_specific_yield(hydraulic_conductivities_layer2)
         specific_yield_layer3 = recalc_specific_yield(hydraulic_conductivities_layer3)
         specific_yield_layer4 = recalc_specific_yield(hydraulic_conductivities_layer4)
-        # modify specific yield for igneous and metamorphic rocks
+        # modify specific yield
+        cond1 = (hydraulic_conductivities_layer1_ < 10.0e-07)
         cond2 = (hydraulic_conductivities_layer2_ < 10.0e-07)
         specific_yield_layer2[cond2] = 0.05
         cond3 = (hydraulic_conductivities_layer3_ < 10.0e-07)
         specific_yield_layer3[cond3] = 0.02
         cond4 = (hydraulic_conductivities_layer4_ < 10.0e-07)
         specific_yield_layer4[cond4] = 0.01
-        # smooth transition between fissured and porous aquifers
         specific_yield_layer1[np.isnan(specific_yield_layer1)] = 0
         specific_yield_layer2[np.isnan(specific_yield_layer2)] = 0
         specific_yield_layer3[np.isnan(specific_yield_layer3)] = 0
         specific_yield_layer4[np.isnan(specific_yield_layer4)] = 0
-        specific_yield_layer1 = scipy.ndimage.gaussian_filter(specific_yield_layer1, [1.5, 1.5], mode="constant")
-        specific_yield_layer2 = scipy.ndimage.gaussian_filter(specific_yield_layer2, [1.5, 1.5], mode="constant")
-        specific_yield_layer3 = scipy.ndimage.gaussian_filter(specific_yield_layer3, [1.5, 1.5], mode="constant")
-        specific_yield_layer4 = scipy.ndimage.gaussian_filter(specific_yield_layer4, [1.5, 1.5], mode="constant")
+        _specific_yield_layer1 = scipy.ndimage.gaussian_filter(specific_yield_layer1, [3., 3.], mode="constant")
+        _specific_yield_layer2 = scipy.ndimage.gaussian_filter(specific_yield_layer2, [3., 3.], mode="constant")
+        _specific_yield_layer3 = scipy.ndimage.gaussian_filter(specific_yield_layer3, [3., 3.], mode="constant")
+        _specific_yield_layer4 = scipy.ndimage.gaussian_filter(specific_yield_layer4, [3., 3.], mode="constant")
+        specific_yield_layer1[cond1] = _specific_yield_layer1[cond1]
+        specific_yield_layer2[cond2] = _specific_yield_layer2[cond2]
+        specific_yield_layer3[cond3] = _specific_yield_layer3[cond3]
+        specific_yield_layer4[cond4] = _specific_yield_layer4[cond4]
         specific_yield_layer1[~mask] = np.nan
         specific_yield_layer2[~mask] = np.nan
         specific_yield_layer3[~mask] = np.nan

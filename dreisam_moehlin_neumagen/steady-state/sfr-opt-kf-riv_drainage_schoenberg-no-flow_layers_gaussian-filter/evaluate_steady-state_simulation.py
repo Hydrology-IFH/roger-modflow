@@ -182,10 +182,18 @@ def main(model_run):
     hydraulic_conductivities_layer2[np.isnan(hydraulic_conductivities_layer2)] = 0
     hydraulic_conductivities_layer3[np.isnan(hydraulic_conductivities_layer3)] = 0
     hydraulic_conductivities_layer4[np.isnan(hydraulic_conductivities_layer4)] = 0
-    hydraulic_conductivities_layer1 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [1.5, 1.5], mode="constant")
-    hydraulic_conductivities_layer2 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.5, 1.5], mode="constant")
-    hydraulic_conductivities_layer3 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.5, 1.5], mode="constant")
-    hydraulic_conductivities_layer4 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.5, 1.5], mode="constant")
+    _hydraulic_conductivities_layer1 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [3., 3.], mode="constant")
+    _hydraulic_conductivities_layer2 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [3., 3.], mode="constant")
+    _hydraulic_conductivities_layer3 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [3., 3.], mode="constant")
+    _hydraulic_conductivities_layer4 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [3., 3.], mode="constant")
+    cond1 = (hydraulic_conductivities_layer1_ < 10.0e-07)
+    cond2 = (hydraulic_conductivities_layer2_ < 10.0e-07)
+    cond3 = (hydraulic_conductivities_layer3_ < 10.0e-07)
+    cond4 = (hydraulic_conductivities_layer4_ < 10.0e-07)
+    hydraulic_conductivities_layer1[cond1] = _hydraulic_conductivities_layer1[cond1]
+    hydraulic_conductivities_layer2[cond2] = _hydraulic_conductivities_layer2[cond2]
+    hydraulic_conductivities_layer3[cond3] = _hydraulic_conductivities_layer3[cond3]
+    hydraulic_conductivities_layer4[cond4] = _hydraulic_conductivities_layer4[cond4]
 
     # increase the hydraulic conductivities of the reach cell by a factor of xx
     reaches["kf"] = np.nan
@@ -241,6 +249,16 @@ def main(model_run):
     hydraulic_conductivities_layer3[~mask] = np.nan
     hydraulic_conductivities_layer4[~mask] = np.nan
 
+    # fudge streambed conductivity
+    cond = (reaches["kf"] >= 10e-6)
+    reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkp"].values[model_run]
+    cond = (reaches["kf"] < 10e-6)
+    reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkf"].values[model_run]
+    reaches["man"] = reaches["man"] * fudge_parameters["man"].values[model_run]
+    # cond = (reaches["rhk"] > 1)
+    # reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * 1.0
+    cond = (reaches["kf"] < 10e-6)
+
     hydraulic_conductivities = np.array([hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4])
 
     specific_yield_layer1 = recalc_specific_yield(hydraulic_conductivities_layer1)
@@ -249,21 +267,25 @@ def main(model_run):
     specific_yield_layer4 = recalc_specific_yield(hydraulic_conductivities_layer4)
 
     # modify specific yield
+    cond1 = (hydraulic_conductivities_layer1_ < 10.0e-07)
     cond2 = (hydraulic_conductivities_layer2_ < 10.0e-07)
     specific_yield_layer2[cond2] = 0.05
     cond3 = (hydraulic_conductivities_layer3_ < 10.0e-07)
     specific_yield_layer3[cond3] = 0.02
     cond4 = (hydraulic_conductivities_layer4_ < 10.0e-07)
     specific_yield_layer4[cond4] = 0.01
-
     specific_yield_layer1[np.isnan(specific_yield_layer1)] = 0
     specific_yield_layer2[np.isnan(specific_yield_layer2)] = 0
     specific_yield_layer3[np.isnan(specific_yield_layer3)] = 0
     specific_yield_layer4[np.isnan(specific_yield_layer4)] = 0
-    specific_yield_layer1 = sp.ndimage.gaussian_filter(specific_yield_layer1, [1.5, 1.5], mode="constant")
-    specific_yield_layer2 = sp.ndimage.gaussian_filter(specific_yield_layer2, [1.5, 1.5], mode="constant")
-    specific_yield_layer3 = sp.ndimage.gaussian_filter(specific_yield_layer3, [1.5, 1.5], mode="constant")
-    specific_yield_layer4 = sp.ndimage.gaussian_filter(specific_yield_layer4, [1.5, 1.5], mode="constant")
+    _specific_yield_layer1 = sp.ndimage.gaussian_filter(specific_yield_layer1, [1.5, 1.5], mode="constant")
+    _specific_yield_layer2 = sp.ndimage.gaussian_filter(specific_yield_layer2, [1.5, 1.5], mode="constant")
+    _specific_yield_layer3 = sp.ndimage.gaussian_filter(specific_yield_layer3, [1.5, 1.5], mode="constant")
+    _specific_yield_layer4 = sp.ndimage.gaussian_filter(specific_yield_layer4, [1.5, 1.5], mode="constant")
+    specific_yield_layer1[cond1] = _specific_yield_layer1[cond1]
+    specific_yield_layer2[cond2] = _specific_yield_layer2[cond2]
+    specific_yield_layer3[cond3] = _specific_yield_layer3[cond3]
+    specific_yield_layer4[cond4] = _specific_yield_layer4[cond4]
     specific_yield_layer1[~mask] = np.nan
     specific_yield_layer2[~mask] = np.nan
     specific_yield_layer3[~mask] = np.nan
@@ -336,7 +358,7 @@ def main(model_run):
         df_sfr.loc[df_sfr["rno"] == rno, "rwid"] = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "rtp"] = reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "rgrd"] = reaches.loc[reaches["rno"] == rno, "rgrd"].values[0]
-        df_sfr.loc[df_sfr["rno"] == rno, "rhk"] = reaches.loc[reaches["rno"] == rno, "rhk"].values[0] * fudge_parameters['rhk'].values[model_run]
+        df_sfr.loc[df_sfr["rno"] == rno, "rhk"] = reaches.loc[reaches["rno"] == rno, "rhk"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "man"] = reaches.loc[reaches["rno"] == rno, "man"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "kf"] = kf
         rwidth = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
@@ -378,11 +400,11 @@ def main(model_run):
     sim = groundwater_heads[rows, cols].flatten()
 
     interp_depths = topography[rows, cols].flatten() - gw_heads_interpolated[rows, cols].flatten()
+    observed_groundwater_heads["sim-obs"] = sim - obs
     observed_groundwater_heads["sim_head"] = groundwater_heads[rows, cols].flatten()
     observed_groundwater_heads["topo"] = topography[rows, cols].flatten()
     observed_groundwater_heads["obs_depths"] = obs_depths
     observed_groundwater_heads["sim_depths"] = sim_depths
-    observed_groundwater_heads["sim-obs"] = sim_depths - obs_depths
     observed_groundwater_heads["sim-int"] = sim_depths - interp_depths
     observed_groundwater_heads["int-obs"] = interp_depths - obs_depths
     observed_groundwater_heads.to_csv(base_path / "output" / f"groundwater_heads_{model_run}.csv", sep=";", index=False)
