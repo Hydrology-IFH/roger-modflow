@@ -382,83 +382,54 @@ def main(model_run):
     #     plt.close("all")
 
 
-    for layer in range(4):
-        hydraulic_conductivity = hydraulic_conductivities_layers[layer]
-        fig, axes = plt.subplots(figsize=(4, 4))
-        bounds = [10e-8, 10e-7, 10e-6, 10e-5, 10e-4, 10e-3, 10e-2, 10e-1]
-        norm = mpl.colors.BoundaryNorm(bounds, mpl.colormaps["Oranges"].N)
-        plt.imshow(hydraulic_conductivity/(24*60*60), extent=grid_extent, cmap='Oranges', aspect='equal', norm=norm)
-        cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
-        cbar.set_ticks(ticks=bounds, labels=[r'$10^{-8}$', r'$10^{-7}$', r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$', r'$10^{-1}$'])
-        plt.grid(zorder=0)
-        plt.xlabel('x-coordinate [km]')
-        plt.ylabel('y-coordinate [km]')
-        plt.tight_layout()
-        i = layer + 1
-        file = base_path_figs / f"kf_layer{i}_{model_run}_fudged_.png"
-        fig.savefig(file, dpi=300)
-        plt.close("all")
+    # for layer in range(4):
+    #     flow_residuals = ds_mf['flow_residual'].isel(Time=0, layer=layer).values
+    #     flow_residuals[~mask] = np.nan
+    #     mask1 = (flow_residuals <= 0.1) & (flow_residuals >= -0.1)
 
-        fig, axes = plt.subplots(figsize=(4, 4))
-        plt.imshow(hydraulic_conductivity/(24*60*60), extent=grid_extent, cmap='Oranges', aspect='equal')
-        cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
-        plt.grid(zorder=0)
-        plt.xlabel('x-coordinate [km]')
-        plt.ylabel('y-coordinate [km]')
-        plt.tight_layout()
-        i = layer + 1
-        file = base_path_figs / f"kf_layer{i}_{model_run}_fudged.png"
-        fig.savefig(file, dpi=300)
-        plt.close("all")
+    #     thickness = elevation_layers[layer] - elevation_layers[layer + 1]
+    #     thickness[mask1] = np.nan
+    #     fig, axes = plt.subplots(figsize=(4, 4))
+    #     plt.imshow(thickness, extent=grid_extent, cmap='viridis', aspect='equal', vmin=5, vmax=25)
+    #     plt.colorbar(label='thickness [m]', shrink=0.5)
+    #     plt.grid(zorder=0)
+    #     plt.xlabel('x-coordinate [km]')
+    #     plt.ylabel('y-coordinate [km]')
+    #     plt.tight_layout()
+    #     i = layer + 1
+    #     file = base_path_figs / f"__thickness_layer{i}_{model_run}.png"
+    #     fig.savefig(file, dpi=300)
+    #     plt.close("all")
 
-    for layer in range(4):
-        flow_residuals = ds_mf['flow_residual'].isel(Time=0, layer=layer).values
-        flow_residuals[~mask] = np.nan
-        mask1 = (flow_residuals <= 0.1) & (flow_residuals >= -0.1)
+    #     hydraulic_conductivity = hydraulic_conductivities_layers[layer]
+    #     hydraulic_conductivity[mask1] = np.nan
+    #     hydraulic_conductivity[~mask] = np.nan
+    #     fig, axes = plt.subplots(figsize=(4, 4))
+    #     bounds = [10e-8, 10e-7, 10e-6, 10e-5, 10e-4, 10e-3, 10e-2, 10e-1]
+    #     norm = mpl.colors.BoundaryNorm(bounds, mpl.colormaps["Oranges"].N)
+    #     plt.imshow(hydraulic_conductivity/(24*60*60), extent=grid_extent, cmap='Oranges', aspect='equal', norm=norm)
+    #     cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
+    #     cbar.set_ticks(ticks=bounds, labels=[r'$10^{-8}$', r'$10^{-7}$', r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$', r'$10^{-1}$'])
+    #     plt.grid(zorder=0)
+    #     plt.xlabel('x-coordinate [km]')
+    #     plt.ylabel('y-coordinate [km]')
+    #     plt.tight_layout()
+    #     i = layer + 1
+    #     file = base_path_figs / f"__kf_layer{i}_{model_run}.png"
+    #     fig.savefig(file, dpi=300)
+    #     plt.close("all")
 
-        thickness = elevation_layers[layer] - elevation_layers[layer + 1]
-        thickness[mask1] = np.nan
-        fig, axes = plt.subplots(figsize=(4, 4))
-        plt.imshow(thickness, extent=grid_extent, cmap='viridis', aspect='equal', vmin=5, vmax=25)
-        plt.colorbar(label='thickness [m]', shrink=0.5)
-        plt.grid(zorder=0)
-        plt.xlabel('x-coordinate [km]')
-        plt.ylabel('y-coordinate [km]')
-        plt.tight_layout()
-        i = layer + 1
-        file = base_path_figs / f"__thickness_layer{i}_{model_run}.png"
-        fig.savefig(file, dpi=300)
-        plt.close("all")
-
-        hydraulic_conductivity = hydraulic_conductivities_layers[layer]
-        hydraulic_conductivity[mask1] = np.nan
-        hydraulic_conductivity[~mask] = np.nan
-        fig, axes = plt.subplots(figsize=(4, 4))
-        bounds = [10e-8, 10e-7, 10e-6, 10e-5, 10e-4, 10e-3, 10e-2, 10e-1]
-        norm = mpl.colors.BoundaryNorm(bounds, mpl.colormaps["Oranges"].N)
-        plt.imshow(hydraulic_conductivity/(24*60*60), extent=grid_extent, cmap='Oranges', aspect='equal', norm=norm)
-        cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
-        cbar.set_ticks(ticks=bounds, labels=[r'$10^{-8}$', r'$10^{-7}$', r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$', r'$10^{-1}$'])
-        plt.grid(zorder=0)
-        plt.xlabel('x-coordinate [km]')
-        plt.ylabel('y-coordinate [km]')
-        plt.tight_layout()
-        i = layer + 1
-        file = base_path_figs / f"__kf_layer{i}_{model_run}.png"
-        fig.savefig(file, dpi=300)
-        plt.close("all")
-
-        fig, axes = plt.subplots(figsize=(4, 4))
-        plt.imshow(hydraulic_conductivity/(24*60*60), extent=grid_extent, cmap='Oranges', aspect='equal')
-        cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
-        plt.grid(zorder=0)
-        plt.xlabel('x-coordinate [km]')
-        plt.ylabel('y-coordinate [km]')
-        plt.tight_layout()
-        i = layer + 1
-        file = base_path_figs / f"___kf_layer{i}_{model_run}.png"
-        fig.savefig(file, dpi=300)
-        plt.close("all")
+    #     fig, axes = plt.subplots(figsize=(4, 4))
+    #     plt.imshow(hydraulic_conductivity/(24*60*60), extent=grid_extent, cmap='Oranges', aspect='equal', vmin=10e-7, vmax=10e-2, norm='log')
+    #     cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
+    #     plt.grid(zorder=0)
+    #     plt.xlabel('x-coordinate [km]')
+    #     plt.ylabel('y-coordinate [km]')
+    #     plt.tight_layout()
+    #     i = layer + 1
+    #     file = base_path_figs / f"___kf_layer{i}_{model_run}.png"
+    #     fig.savefig(file, dpi=300)
+    #     plt.close("all")
 
 
     for layer in range(4):
@@ -499,11 +470,8 @@ def main(model_run):
         hydraulic_conductivity_[mask1] = np.nan
         hydraulic_conductivity_[~mask] = np.nan
         fig, axes = plt.subplots(figsize=(4, 4))
-        bounds = [10e-8, 10e-7, 10e-6, 10e-5, 10e-4, 10e-3, 10e-2, 10e-1]
-        norm = mpl.colors.BoundaryNorm(bounds, mpl.colormaps["Oranges"].N)
-        plt.imshow(hydraulic_conductivity_/(24*60*60), extent=grid_extent, cmap='Oranges', aspect='equal', norm=norm)
+        plt.imshow(hydraulic_conductivity_/(24*60*60), extent=grid_extent, cmap='Oranges', aspect='equal', vmin=10e-7, vmax=10e-2, norm='log')
         cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.45)
-        cbar.set_ticks(ticks=bounds, labels=[r'$10^{-8}$', r'$10^{-7}$', r'$10^{-6}$', r'$10^{-5}$', r'$10^{-4}$', r'$10^{-3}$', r'$10^{-2}$', r'$10^{-1}$'])
         plt.grid(zorder=0)
         plt.xlabel('x-coordinate [km]')
         plt.ylabel('y-coordinate [km]')

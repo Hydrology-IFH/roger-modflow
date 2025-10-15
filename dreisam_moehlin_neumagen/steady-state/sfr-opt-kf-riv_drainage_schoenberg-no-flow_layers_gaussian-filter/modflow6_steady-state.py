@@ -322,11 +322,12 @@ class ModFlowSimulation:
 
         # fudge streambed conductivity
         reaches["rhk"] = reaches["rhk"] * fudge_parameters["rhk"].values[model_run]
-        cond = (reaches["rhk"] > 1)
-        reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * 1.0
-        cond = (reaches["kf"] < 10e-6) & (reaches["rhk"] > reaches["kf"])
-        reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * 0.1
-        reaches["man"] = reaches["man"] * 1.0
+        reaches["man"] = reaches["man"] * fudge_parameters["man"].values[model_run]
+        # cond = (reaches["rhk"] > 1)
+        # reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * 1.0
+        # cond = (reaches["kf"] < 10e-6) & (reaches["rhk"] > reaches["kf"])
+        # reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * 0.01
+        # reaches["man"] = reaches["man"] * 1.0
 
         diversions = pd.read_csv(base_path.parent / "input" / "sfr_diversions.csv", sep=";")
         diversions.iloc[:, 0] = diversions.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
@@ -387,6 +388,26 @@ class ModFlowSimulation:
         specific_yield_layer2 = recalc_specific_yield(hydraulic_conductivities_layer2)
         specific_yield_layer3 = recalc_specific_yield(hydraulic_conductivities_layer3)
         specific_yield_layer4 = recalc_specific_yield(hydraulic_conductivities_layer4)
+        # modify specific yield for igneous and metamorphic rocks
+        cond2 = (hydraulic_conductivities_layer2_ < 10.0e-07)
+        specific_yield_layer2[cond2] = 0.05
+        cond3 = (hydraulic_conductivities_layer3_ < 10.0e-07)
+        specific_yield_layer3[cond3] = 0.02
+        cond4 = (hydraulic_conductivities_layer4_ < 10.0e-07)
+        specific_yield_layer4[cond4] = 0.01
+        # smooth transition between fissured and porous aquifers
+        specific_yield_layer1[np.isnan(specific_yield_layer1)] = 0
+        specific_yield_layer2[np.isnan(specific_yield_layer2)] = 0
+        specific_yield_layer3[np.isnan(specific_yield_layer3)] = 0
+        specific_yield_layer4[np.isnan(specific_yield_layer4)] = 0
+        specific_yield_layer1 = scipy.ndimage.gaussian_filter(specific_yield_layer1, [1.5, 1.5], mode="constant")
+        specific_yield_layer2 = scipy.ndimage.gaussian_filter(specific_yield_layer2, [1.5, 1.5], mode="constant")
+        specific_yield_layer3 = scipy.ndimage.gaussian_filter(specific_yield_layer3, [1.5, 1.5], mode="constant")
+        specific_yield_layer4 = scipy.ndimage.gaussian_filter(specific_yield_layer4, [1.5, 1.5], mode="constant")
+        specific_yield_layer1[~mask] = np.nan
+        specific_yield_layer2[~mask] = np.nan
+        specific_yield_layer3[~mask] = np.nan
+        specific_yield_layer4[~mask] = np.nan
         specific_yield = flopy.mf6.ModflowGwfsto.sy.empty(gwf, layered=True)
         specific_yield[0]["data"] = specific_yield_layer1
         specific_yield[1]["data"] = specific_yield_layer2
@@ -585,7 +606,7 @@ class ModFlowSimulation:
 
         # limit the execution time of the numerical solver
         signal.signal(signal.SIGALRM, handler)
-        signal.alarm(120)  # Set the timeout duration to 60 seconds
+        signal.alarm(90)  # Set the timeout duration to 60 seconds
 
         converged = 0
         self.mf6.prepare_solve(1)
@@ -641,27 +662,6 @@ def main(model_run):
     
     modflow_interface.finalize()
     print("MODFLOW (steady-state) finalized")
-
-    # update the fudge parameters if the parameter set produces a useful simulation
-    path = base_path / "fudge_parameters_modflow.csv"
-    fudge_parameters = pd.read_csv(path, sep=";", skiprows=1)
-    fudge_parameters.loc[fudge_parameters.index[model_run], "converged"] = converged
-    fudge_parameters.columns = [
-        ["[-]", "[-]", "[-]", "[-]", 
-         "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]",
-         "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]",
-         "[-]", "[-]", "[-]", "[-]",
-         "[-]", "[-]",
-         "[-]", "[m]",  ""],
-        ["-8_1", "-7_1", "-6_1", "-5_1", 
-         "-7_2", "-5_2", "-4_2", "1-3_2", "1.8-3_2", "3-3_2", "4-3_2",  
-         "-7_3", "-5_3", "-4_3", "1-3_3", "1.8-3_3", "3-3_3", "4-3_3",
-         "-7_4", "-5_4", "-4_4", "1.8-3_4",
-         "kf_riv", "rhk",
-         "rch", "offset", "converged"],
-    ]
-    fudge_parameters.to_csv(path, index=False, sep=";")
-
     print(f"converged: {converged}")
     return
 

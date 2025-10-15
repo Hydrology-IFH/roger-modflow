@@ -126,7 +126,6 @@ class ModFlowSimulation:
         self,
         name,
         folder,
-        ndays,
         nlay,
         nrow,
         ncol,
@@ -141,11 +140,20 @@ class ModFlowSimulation:
         self.ncol = ncol
         self.rowsize = rowsize
         self.colsize = colsize
-        self.roger_config = roger_config
-        self.working_directory = os.path.join(folder, 'output/transient')
+        self.working_directory = os.path.join(folder, "output")
         if not os.path.exists(self.working_directory):
             os.makedirs(self.working_directory)
         self.verbose = verbose
+
+        # load MODFLOW parameters
+        path = Path(__file__).parent / "input" / "parameters_modflow.nc"
+        ds_params_modflow = xr.open_dataset(path, engine="h5netcdf")
+
+        path = Path(__file__).parent / "input" / "boundary_conditions.nc"
+        ds_bc = xr.open_dataset(path, engine="h5netcdf")
+
+        path = base_path / "fudge_parameters_modflow.csv"
+        fudge_parameters = pd.read_csv(path, sep=";", skiprows=1)
 
         # Temporal discretization (TDIS)
         # One or more models (GWF is the only model supported at present)
@@ -156,7 +164,7 @@ class ModFlowSimulation:
 
         # Create the Flopy simulation object
         sim = flopy.mf6.MFSimulation(
-            sim_name=name, exe_name="mf6", version="mf6", sim_ws=self.working_directory
+            sim_name=name, exe_name="mf6", version="mf6", sim_ws=self.working_directory,
         )
 
         # Create the Flopy temporal discretization object
@@ -166,33 +174,41 @@ class ModFlowSimulation:
 
         # Create the Flopy groundwater flow (gwf) model object
         model_nam_file = "{}.nam".format(name)
-        gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file)
+        gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file, save_flows=True, newtonoptions="NEWTON")
 
         # Create the Flopy iterative model solver (ims) Package object
-        ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", complexity="COMPLEX",
-                                                 outer_maximum=300,inner_maximum=750)
+        ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="all",
+                                                 no_ptcrecord="NO_PTC_ALL",
+                                                 outer_maximum=50, inner_maximum=200,
+                                                 outer_dvclose=0.1, inner_dvclose=0.1,
+                                                 linear_acceleration="BICGSTAB")
 
         # Now that the overall simulation is set up, we can focus on building the groundwater flow model.  The groundwater flow model will be built by adding packages to it that describe the model characteristics.
         #
         # Define the discretization of the model. All layers are given equal thickness. The `bot` array is build from `H` and the `Nlay` values to indicate top and bottom of each layer, and `delrow` and `delcol` are computed from model size `L` and number of cells `N`. Once these are all computed, the Discretization file is built.
 
         # Create the discretization package
-        file = base_path / "input" / "elevation.grd"
-        layer_elevations = Raster.load(file)
-        file = base_path / "input" / "domain.grd"
-        domain = Raster.load(file)
-        self.modflow_basin = (domain.get_array(1)[:, :-1] == 1)  # [:, :-1]=leave last column out to match the shape of the RoGeR domain
-        self.n_active_cells_per_layer = np.sum(self.modflow_basin)
-        topography = layer_elevations.get_array(1)[:, :-1]
-        elevation_bottom_layer1 = layer_elevations.get_array(2)[:, :-1]  # [:, :-1]=leave last column out to match the shape of the RoGeR domain
-        topography[topography <= elevation_bottom_layer1] = elevation_bottom_layer1[topography <= elevation_bottom_layer1]
-        elevation_bottom_layer2 = layer_elevations.get_array(3)[:, :-1]  # [:, :-1]=leave last column out to match the shape of the RoGeR domain
-        elevation_bottom_layer3 = layer_elevations.get_array(4)[:, :-1]  # [:, :-1]=leave last column out to match the shape of the RoGeR domain
-        elevation_bottom_layer4 = layer_elevations.get_array(5)[:, :-1]  # [:, :-1]=leave last column out to match the shape of the RoGeR domain
-        elevation_bottom_layer4[elevation_bottom_layer4 <= 100] = 100
+        # load elevation data of the layers
+        topography = ds_params_modflow["elevations"].isel(z=0).values
+        elevation_bottom_layer1 = ds_params_modflow["elevations"].isel(z=1).values
+        elevation_bottom_layer2 = ds_params_modflow["elevations"].isel(z=2).values
+        elevation_bottom_layer3 = ds_params_modflow["elevations"].isel(z=3).values
+        elevation_bottom_layer4 = ds_params_modflow["elevations"].isel(z=4).values
         elevation_bottom_layers = [elevation_bottom_layer1, elevation_bottom_layer2, elevation_bottom_layer3, elevation_bottom_layer4]
-        domain_layer1 = domain.get_array(1)[:, :-1]
-        domain_layers = [domain_layer1, domain_layer1, domain_layer1, domain_layer1]
+
+        mask = np.isfinite(topography)
+        # set Schoenberg to inactive
+        mask_schoenberg = (ds_params_modflow["mask_schoenberg"].values == 1)
+        mask = np.where(mask_schoenberg, False, mask)
+        mask_boundary_condition_schoenberg = ds_bc["mask_schoenberg_bc"].values
+        mask = np.where(mask_boundary_condition_schoenberg, True, mask)
+        mask_drainage_area = (ds_params_modflow["mask_drainage"].values == 1)
+        domain = np.empty_like(topography)
+        domain[mask] = 1
+        domain[~mask] = -1
+        self.modflow_basin = mask
+        self.n_active_cells = np.nansum(self.modflow_basin)
+        domain_layers = [domain, domain, domain, domain]
         dis = flopy.mf6.modflow.mfgwfdis.ModflowGwfdis(
             gwf,
             pname="dis",
@@ -204,63 +220,172 @@ class ModFlowSimulation:
             length_units="METERS",
             top=topography,
             botm=elevation_bottom_layers,
-            idomain=domain_layers
+            idomain=domain_layers,
         )
+
         # Create the initial conditions package
-        file = base_path / "output" / "steady-state" / "moehlin.hds"
-        hds = flopy.utils.HeadFile(file).get_data()
-        initial_conditions_layer1 = hds[0, ...]
-        initial_conditions_layer2 = hds[1, ...]
-        initial_conditions_layer3 = hds[2, ...]
-        initial_conditions_layer4 = hds[3, ...]
+        initial_conditions_layer1 = (topography - elevation_bottom_layer1) * 0.75 + elevation_bottom_layer1
+        initial_conditions_layer2 = (elevation_bottom_layer1 - elevation_bottom_layer2) * 0.75 + elevation_bottom_layer2
+        initial_conditions_layer3 = (elevation_bottom_layer2 - elevation_bottom_layer3) * 0.75 + elevation_bottom_layer3
+        initial_conditions_layer4 = (elevation_bottom_layer3 - elevation_bottom_layer4) * 0.75 + elevation_bottom_layer4
         initial_conditions_layers = [initial_conditions_layer1, initial_conditions_layer2, initial_conditions_layer3, initial_conditions_layer4]
         ic = flopy.mf6.modflow.mfgwfic.ModflowGwfic(gwf, pname="ic", strt=initial_conditions_layers)
 
         # Create the node property flow package with hydraulic conducitivities
-        file = base_path / "input" / "hydraulic_conductivity_layer1.grd"
-        hydraulic_conductivities_layer1 = Raster.load(file).get_array(1)[:, :-1]  # [:, :-1]=leave last column out to match the shape of the RoGeR domain
-        file = base_path / "input" / "hydraulic_conductivity_layer2.grd"
-        hydraulic_conductivities_layer2 = Raster.load(file).get_array(1)[:, :-1]  # [:, :-1]=leave last column out to match the shape of the RoGeR domain
-        file = base_path / "input" / "hydraulic_conductivity_layer3.grd"
-        hydraulic_conductivities_layer3 = Raster.load(file).get_array(1)[:, :-1]  # [:, :-1]=leave last column out to match the shape of the RoGeR domain
-        file = base_path / "input" / "hydraulic_conductivity_layer1.grd"
-        hydraulic_conductivities_layer4 = Raster.load(file).get_array(1)[:, :-1]  # [:, :-1]=leave last column out to match the shape of the RoGeR domain
+        hydraulic_conductivities_layer1 = ds_params_modflow["kf"].isel(layer=0).values
+        hydraulic_conductivities_layer2 = ds_params_modflow["kf"].isel(layer=1).values
+        hydraulic_conductivities_layer3 = ds_params_modflow["kf"].isel(layer=2).values
+        hydraulic_conductivities_layer4 = ds_params_modflow["kf"].isel(layer=3).values
+
+        hydraulic_conductivities_layer1_ = ds_params_modflow["kf"].isel(layer=0).values / 86400
+        hydraulic_conductivities_layer2_ = ds_params_modflow["kf"].isel(layer=1).values / 86400
+        hydraulic_conductivities_layer3_ = ds_params_modflow["kf"].isel(layer=2).values / 86400
+        hydraulic_conductivities_layer4_ = ds_params_modflow["kf"].isel(layer=3).values / 86400
+        
+        # fudge parameters
+        mask1 = (hydraulic_conductivities_layer1_ <= 10e-10)
+        mask2 = (hydraulic_conductivities_layer2_ <= 10e-10)
+        mask3 = (hydraulic_conductivities_layer3_ <= 10e-10)
+        mask4 = (hydraulic_conductivities_layer4_ <= 10e-10)  
+        hydraulic_conductivities_layer1[mask1] = hydraulic_conductivities_layer1[mask1] * 10000
+        hydraulic_conductivities_layer2[mask2] = hydraulic_conductivities_layer2[mask2] * 10000
+        hydraulic_conductivities_layer3[mask3] = hydraulic_conductivities_layer3[mask3] * 10000
+        hydraulic_conductivities_layer4[mask4] = hydraulic_conductivities_layer4[mask4] * 10000
+
+        mask_ = (hydraulic_conductivities_layer2_ == 1.9999999e-07)
+        hydraulic_conductivities_layer2_ = np.where(mask_, 1.9722222e-07, hydraulic_conductivities_layer2_)
+        mask_ = (hydraulic_conductivities_layer3_ == 1.9999999e-07)
+        hydraulic_conductivities_layer3_ = np.where(mask_, 1.9722222e-07, hydraulic_conductivities_layer3_)
+        mask_ = (hydraulic_conductivities_layer4_ == 1.9999999e-07)
+        hydraulic_conductivities_layer4_ = np.where(mask_, 1.9722222e-07, hydraulic_conductivities_layer4_)
+
+        mask81 = (hydraulic_conductivities_layer1_ == 1.1574075e-08) | (hydraulic_conductivities_layer1_ == 2.7777778e-08)
+
+        mask71 = (hydraulic_conductivities_layer1_ == 1.9444444e-07) | (hydraulic_conductivities_layer1_ == 1.9722222e-07) | (hydraulic_conductivities_layer1_ == 2.3055554e-07) | (hydraulic_conductivities_layer1_ == 5.7777777e-07)
+        mask72 = (hydraulic_conductivities_layer2_ == 1.9722222e-07)
+        mask73 = (hydraulic_conductivities_layer3_ == 1.9722222e-07)
+        mask74 = (hydraulic_conductivities_layer4_ == 1.9722222e-07)
+
+        mask61 = (hydraulic_conductivities_layer1_ >= 1.1583334e-06) & (hydraulic_conductivities_layer1_ <= 8.1027783e-06)
+
+        mask51 = (hydraulic_conductivities_layer1_ == 1.1575000e-05) | (hydraulic_conductivities_layer1_ == 1.8181944e-04)
+        mask52 = (hydraulic_conductivities_layer2_ == 1.8180555e-05)
+        mask53 = (hydraulic_conductivities_layer3_ == 1.8180555e-05)
+        mask54 = (hydraulic_conductivities_layer4_ == 1.8180555e-05)
+
+        mask42 = (hydraulic_conductivities_layer2_ == 1.8181944e-04)
+        mask43 = (hydraulic_conductivities_layer3_ == 1.8181944e-04)
+        mask44 = (hydraulic_conductivities_layer4_ == 1.8181944e-04)
+
+        mask132 = (hydraulic_conductivities_layer2_ == 1.0000000e-03)
+        mask133 = (hydraulic_conductivities_layer3_ == 1.0000000e-03)
+
+        mask232 = (hydraulic_conductivities_layer2_ == 1.8181807e-03)
+        mask233 = (hydraulic_conductivities_layer3_ == 1.8181807e-03)
+        mask234 = (hydraulic_conductivities_layer4_ == 1.8181807e-03)
+
+        mask332 = (hydraulic_conductivities_layer2_ == 3.0000000e-03)
+        mask333 = (hydraulic_conductivities_layer3_ == 3.0000000e-03)
+
+        mask432 = (hydraulic_conductivities_layer2_ == 4.0000002e-03)
+        mask433 = (hydraulic_conductivities_layer3_ == 4.0000002e-03)
+
+        # fudge parameters
+        hydraulic_conductivities_layer1[mask81] = hydraulic_conductivities_layer1[mask81] * fudge_parameters["-8_1"].values[model_run]
+
+        hydraulic_conductivities_layer1[mask71] = hydraulic_conductivities_layer1[mask71] * fudge_parameters["-7_1"].values[model_run]
+        hydraulic_conductivities_layer2[mask72] = hydraulic_conductivities_layer2[mask72] * fudge_parameters["-7_2"].values[model_run]
+        hydraulic_conductivities_layer3[mask73] = hydraulic_conductivities_layer3[mask73] * fudge_parameters["-7_3"].values[model_run]
+        hydraulic_conductivities_layer4[mask74] = hydraulic_conductivities_layer4[mask74] * fudge_parameters["-7_4"].values[model_run]
+
+        hydraulic_conductivities_layer1[mask61] = hydraulic_conductivities_layer1[mask61] * fudge_parameters["-6_1"].values[model_run]
+
+        hydraulic_conductivities_layer1[mask51] = hydraulic_conductivities_layer1[mask51] * fudge_parameters["-5_1"].values[model_run]
+        hydraulic_conductivities_layer2[mask52] = hydraulic_conductivities_layer2[mask52] * fudge_parameters["-5_2"].values[model_run]
+        hydraulic_conductivities_layer3[mask53] = hydraulic_conductivities_layer3[mask53] * fudge_parameters["-5_3"].values[model_run]
+        hydraulic_conductivities_layer4[mask54] = hydraulic_conductivities_layer4[mask54] * fudge_parameters["-5_4"].values[model_run]
+
+        hydraulic_conductivities_layer2[mask42] = hydraulic_conductivities_layer2[mask42] * fudge_parameters["-4_2"].values[model_run]
+        hydraulic_conductivities_layer3[mask43] = hydraulic_conductivities_layer3[mask43] * fudge_parameters["-4_3"].values[model_run]
+        hydraulic_conductivities_layer4[mask44] = hydraulic_conductivities_layer4[mask44] * fudge_parameters["-4_4"].values[model_run]
+
+        hydraulic_conductivities_layer2[mask132] = hydraulic_conductivities_layer2[mask132] * fudge_parameters["1-3_2"].values[model_run]
+        hydraulic_conductivities_layer3[mask133] = hydraulic_conductivities_layer3[mask133] * fudge_parameters["1-3_3"].values[model_run]
+
+        hydraulic_conductivities_layer2[mask232] = hydraulic_conductivities_layer2[mask232] * fudge_parameters["1.8-3_2"].values[model_run]
+        hydraulic_conductivities_layer3[mask233] = hydraulic_conductivities_layer3[mask233] * fudge_parameters["1.8-3_3"].values[model_run]
+        hydraulic_conductivities_layer4[mask234] = hydraulic_conductivities_layer4[mask234] * fudge_parameters["1.8-3_4"].values[model_run]
+
+        hydraulic_conductivities_layer2[mask332] = hydraulic_conductivities_layer2[mask332] * fudge_parameters["3-3_2"].values[model_run]
+        hydraulic_conductivities_layer3[mask333] = hydraulic_conductivities_layer3[mask333] * fudge_parameters["3-3_3"].values[model_run]
+
+        hydraulic_conductivities_layer2[mask432] = hydraulic_conductivities_layer2[mask432] * fudge_parameters["4-3_2"].values[model_run]
+        hydraulic_conductivities_layer3[mask433] = hydraulic_conductivities_layer3[mask433] * fudge_parameters["4-3_3"].values[model_run]
+
+        # smooth transition between fissured and porous aquifers
+        hydraulic_conductivities_layer1[np.isnan(hydraulic_conductivities_layer1)] = 0
+        hydraulic_conductivities_layer2[np.isnan(hydraulic_conductivities_layer2)] = 0
+        hydraulic_conductivities_layer3[np.isnan(hydraulic_conductivities_layer3)] = 0
+        hydraulic_conductivities_layer4[np.isnan(hydraulic_conductivities_layer4)] = 0
+        hydraulic_conductivities_layer1 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [1.5, 1.5], mode="constant")
+        hydraulic_conductivities_layer2 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.5, 1.5], mode="constant")
+        hydraulic_conductivities_layer3 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.5, 1.5], mode="constant")
+        hydraulic_conductivities_layer4 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.5, 1.5], mode="constant")
+
+        hydraulic_conductivities_layer1[~mask] = np.nan
+        hydraulic_conductivities_layer2[~mask] = np.nan
+        hydraulic_conductivities_layer3[~mask] = np.nan
+        hydraulic_conductivities_layer4[~mask] = np.nan
+
         hydraulic_conductivities_layers = [hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4]
         npf = flopy.mf6.modflow.mfgwfnpf.ModflowGwfnpf(
-            gwf, pname="npf", icelltype=0, k=hydraulic_conductivities_layers, save_flows=True, wetdry=0.5
+            gwf, pname="npf", icelltype=1, k=hydraulic_conductivities_layers, wetdry=0.5, save_flows=True, save_specific_discharge="budget save file"
         )
 
         # create the storage package
+        specific_yield_layer1 = recalc_specific_yield(hydraulic_conductivities_layer1)
+        specific_yield_layer2 = recalc_specific_yield(hydraulic_conductivities_layer2)
+        specific_yield_layer3 = recalc_specific_yield(hydraulic_conductivities_layer3)
+        specific_yield_layer4 = recalc_specific_yield(hydraulic_conductivities_layer4)
         specific_yield = flopy.mf6.ModflowGwfsto.sy.empty(gwf, layered=True)
-        file = base_path / "input" / "specific_yield_layer1.grd"
-        specific_yield[0]["data"] = Raster.load(file).get_array(1)[:, :-1]  # [:, :-1]=leave last column out to match the shape of the RoGeR domain
-        file = base_path / "input" / "specific_yield_layer2.grd"
-        specific_yield[1]["data"] = Raster.load(file).get_array(1)[:, :-1]  # [:, :-1]=leave last column out to match the shape of the RoGeR domain
-        file = base_path / "input" / "specific_yield_layer3.grd"
-        specific_yield[2]["data"] = Raster.load(file).get_array(1)[:, :-1]  # [:, :-1]=leave last column out to match the shape of the RoGeR domain
-        file = base_path / "input" / "specific_yield_layer4.grd"
-        specific_yield[3]["data"] = Raster.load(file).get_array(1)[:, :-1]  # [:, :-1]=leave last column out to match the shape of the RoGeR domain
+        specific_yield[0]["data"] = specific_yield_layer1
+        specific_yield[1]["data"] = specific_yield_layer2
+        specific_yield[2]["data"] = specific_yield_layer3
+        specific_yield[3]["data"] = specific_yield_layer4
 
         specific_storage = flopy.mf6.ModflowGwfsto.ss.empty(
-            gwf, layered=True, default_value=0.000001
+            gwf, layered=True
         )
+        thickness_layer1 = topography - elevation_bottom_layer1
+        thickness_layer2 = elevation_bottom_layer1 - elevation_bottom_layer2
+        thickness_layer3 = elevation_bottom_layer2 - elevation_bottom_layer3
+        thickness_layer4 = elevation_bottom_layer3 - elevation_bottom_layer4
+        specific_storage[0]["data"] = specific_yield[0]["data"] * thickness_layer1
+        specific_storage[1]["data"] = specific_yield[1]["data"] * thickness_layer2
+        specific_storage[2]["data"] = specific_yield[2]["data"] * thickness_layer3
+        specific_storage[3]["data"] = specific_yield[3]["data"] * thickness_layer4
 
         sto = flopy.mf6.ModflowGwfsto(gwf, pname="sto",
-            iconvert=1, ss=specific_storage, sy=specific_yield, steady_state=False, transient=True)
+            iconvert=1, ss=specific_storage, sy=specific_yield, steady_state=False)
 
-        # Create the constant head package
-        file = base_path / "input" / "boundary_condition.grd"
-        boundary_condition = Raster.load(file).get_array(1)[:, :-1]
-        index = np.where(boundary_condition == -1)
+        # Create the constant head package (Dirichlet boundary condition i.e. first type)
+        mask_boundary_condition_porous_aquifer = ds_bc["mask_porous_aquifer_bc"].values
+        index = np.where(mask_boundary_condition_porous_aquifer == 1)
         rows_bc = index[0]
         cols_bc = index[1]
 
         chd_rec = []
-        for layer in range(0, nlay):
-            for ii in range(0, len(rows_bc)):
-                # set constant head using initial conditions
-                constant_head = initial_conditions_layers[layer][rows_bc[ii], cols_bc[ii]]
-                chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), constant_head))
+        for ii in range(0, len(rows_bc)):
+            constant_head = ds_bc["constant_head_porous_aquifer"].values[rows_bc[ii], cols_bc[ii]] - fudge_parameters["offset"].values[model_run]
+            if (constant_head <= topography[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]):
+                layer = 0
+            elif (constant_head <= elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]]):
+                layer = 1
+            elif (constant_head <= elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]):
+                layer = 2
+            elif (constant_head <= elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer4[rows_bc[ii], cols_bc[ii]]):
+                layer = 3
+            chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), constant_head))
 
         chd = flopy.mf6.modflow.mfgwfchd.ModflowGwfchd(
             gwf,
@@ -282,63 +407,41 @@ class ModFlowSimulation:
                             print_input=False, print_flows=False,
                             save_flows=False, boundnames=None,
                             maxbound=self.modflow_basin.sum(), stress_period_data=recharge)
-        
-        # create streamflow routing package
-        # Prepare the reach data
-        file = base_path / "input" / "river_reach.csv"
-        reach_data = np.genfromtxt(file, delimiter=',', names=True)
-        nstrm = len(reach_data)
-        reach_data_merged = np.column_stack((reach_data['k'],reach_data['i'],reach_data['j'])).astype(int)
-        reach_data_merged  = tuple(map(tuple,reach_data_merged))
 
-        reaches = []
-        for index in range(0, nstrm):
-            reaches.append((reach_data['rno'][index].astype(int)-1, reach_data_merged[index],reach_data['rlen'][index],
-                        reach_data['rwid'][index],reach_data['rgrd'][index],reach_data['rtp'][index],
-                        reach_data['rbth'][index],reach_data['rhk'][index],
-                        reach_data['man'][index],
-                        reach_data['ncon'][index],reach_data['ustrf'][index],reach_data['ndv'][index]))
+        index = np.where(mask_drainage_area)
+        rows_drainage = index[0]
+        cols_drainage = index[1]
+        drn_spd = []
+        for ii in range(0, len(rows_drainage)):
+            elev_drn = topography[rows_drainage[ii], cols_drainage[ii]] - 0.5 * (topography[rows_drainage[ii], cols_drainage[ii]] - elevation_bottom_layer1[rows_drainage[ii], cols_drainage[ii]])
+            slope = 0.01
+            length = 50
+            drainage_area = 0.3**2 * np.pi  # drainage pipe with 0.3 m diameter per grid cell
+            kf = 0.1 * 86400
+            conductance = kf * drainage_area * length * slope
+            drn_spd.append(((0, rows_drainage[ii], cols_drainage[ii]), elev_drn, conductance))
 
-        # Prepare connection data
-        file = base_path / "input" / "river_reach_hydraulic_conductivity.csv"
-        reach_connection_data = np.genfromtxt(file, delimiter=',', names=True, missing_values='nan')
-        direction = reach_connection_data['ic1']/np.absolute(reach_connection_data['ic1'])
-        zw1 = direction*(np.absolute(reach_connection_data['ic1'])-1)
-        direction = reach_connection_data['ic2']/np.absolute(reach_connection_data['ic2'])
-        zw2 = direction*(np.absolute(reach_connection_data['ic2'])-1)
-        direction = reach_connection_data['ic3']/np.absolute(reach_connection_data['ic3'])
-        zw3 = direction*(np.absolute(reach_connection_data['ic3'])-1)
-        zw_merged = np.column_stack((zw1,zw2,zw3)).astype(int)
-        connection = []
-        for index in range(0, nstrm):
-            length = sum(zw_merged[index] > -1000000000)
-            selection = []
-            selection.append(reach_connection_data['rno'][index]-1)
-            for i2 in range(0,length):
-                selection.append(zw_merged[index][i2])
-            selection = tuple(selection)
-            connection.append((selection))
-
-        sfr = flopy.mf6.modflow.mfgwfsfr.ModflowGwfsfr(gwf, pname="sfr",
-            time_conversion=86400, nreaches=nstrm, packagedata=reaches, 
-            connectiondata=connection,
-            save_flows=True)
-
+        drn = flopy.mf6.ModflowGwfdrn(
+            gwf,
+            pname="drn",
+            maxbound=len(drn_spd),
+            boundnames=False,
+            mover=False,
+            stress_period_data=drn_spd,
+        )
 
         # Create the output control package
         headfile = "{}.hds".format(name)
         head_filerecord = [headfile]
-        budgetfile = "{}.cbb".format(name)
+        budgetfile = "{}.cbc".format(name)
         budget_filerecord = [budgetfile]
         saverecord = [("HEAD", "ALL"), ("BUDGET", "ALL")]
-        printrecord = [("HEAD", "ALL"), ("BUDGET", "ALL")]
         oc = flopy.mf6.modflow.mfgwfoc.ModflowGwfoc(
             gwf,
             pname="oc",
             saverecord=saverecord,
             head_filerecord=head_filerecord,
             budget_filerecord=budget_filerecord,
-            printrecord=printrecord,
         )
 
         # Create the MODFLOW 6 Input Files and Run the Model
@@ -384,7 +487,7 @@ class ModFlowSimulation:
         # modflow requires the real path (no symlinks etc.)
         config_file = self.folder / 'output' / 'transient' / 'mfsim.nam'
         if not os.path.exists(config_file):
-            raise FileNotFoundError(f"roger_config file {config_file} not found on disk. Did you create the model first (load_from_disk = False)?")
+            raise FileNotFoundError(f"config_roger file {config_file} not found on disk. Did you create the model first (load_from_disk = False)?")
 
         # initialize the model
         try:
@@ -471,7 +574,7 @@ class ModFlowSimulation:
     def finalize(self):
         self.mf6.finalize()
 
-@click.option("-b", "--backend", type=click.Choice(["numpy", "jax"]), default="jax", help="Computational backend of RoGeR")
+@click.option("-b", "--backend", type=click.Choice(["numpy", "jax"]), default="numpy", help="Computational backend of RoGeR")
 @click.option("-ft", "--float_type", type=click.Choice(["float32", "float64"]), default="float32", help="Float type of RoGeR")
 @click.command("main", short_help="Run MODFLOW in transient mode coupled with RoGeR.")
 def main(backend, float_type):
@@ -482,49 +585,47 @@ def main(backend, float_type):
     )
     from bmiroger import BmiRoger
     from roger.bmimodels.svat import SVATSetup
-    file_config = base_path / "config.yml"
+    file_config = base_path / "config_roger.yml"
     with open(file_config, "r") as file:
-        roger_config = yaml.safe_load(file)
+        config_roger = yaml.safe_load(file)
+
+    file_config = base_path / "config_modflow.yml"
+    with open(file_config, "r") as file:
+        config_modflow = yaml.safe_load(file)
 
     # define the output variables of RoGeR
-    roger_config['OUTPUT_COLLECT'] = ["theta", "z_gw"]
-    roger_config['OUTPUT_RATE'] = ["q_hof", "q_ss"]
+    config_roger['OUTPUT_COLLECT'] = ["theta", "z_gw"]
+    config_roger['OUTPUT_RATE'] = ["q_hof", "q_ss"]
 
-    # choose parameters depending on the resolution of RoGeR
-    file1 = base_path / "input" / f"parameters_{int(roger_config['dx'])}.nc"
-    file2 = base_path / "parameters.nc"
-    shutil.copy(file1, file2)
     file = base_path / "write_parameters_to_csv_for_SVAT.py"
     subprocess.run(["python", str(file)], check=True, timeout=20)
 
     # set the number of grid cells in x and y direction from the parameters file
-    file = base_path / "parameters.nc"
-    with xr.open_dataset(file, engine="h5netcdf") as ds:
-        roger_config['nx'] = ds.sizes['y']
-        roger_config['ny'] = ds.sizes['x']
+    file = base_path / "input" / "parameters_roger_25m.nc"
+    with xr.open_dataset(file) as ds:
+        config_roger['nx'] = ds.sizes['y']
+        config_roger['ny'] = ds.sizes['x']
 
     # save the updated config file
     with open(file_config, "w") as file:
-        yaml.dump(roger_config, file)
+        yaml.dump(config_roger, file)
 
-    res_modflow = 50  # spatial resolution of MODFLOW in meters
-
-    modflow_config = {
-        'dx': int(roger_config['dx']*(res_modflow/roger_config['dx'])),
-        'dy': int(roger_config['dy']*(res_modflow/roger_config['dx'])),
-        'nx': int(roger_config['nx']/(res_modflow/roger_config['dx'])),
-        'ny': int(roger_config['ny']/(res_modflow/roger_config['dx'])),
-        'nz': 4,
-    }
+    # load the parameters of MODFLOW
+    path = Path(__file__).parent / "input" / "parameters_modflow.nc"
+    ds_params_modflow = xr.open_dataset(path, engine="h5netcdf")
 
     # load the spatial domain and elevation data
-    file = base_path / "input" / "domain.grd"
-    domain = Raster.load(file)
-    modflow_mask = (domain.get_array(1)[:, :-1] == 1)
-    file = base_path / "input" / "elevation.grd"
-    layer_elevations = Raster.load(file)
-    topography = layer_elevations.get_array(1)[:, :-1]
-    topography = aggregate_to_finer_resolution(topography, modflow_config['dx'], roger_config['dx'], method="keep")
+    topography = ds_params_modflow["elevations"].isel(z=0).values
+    mask = np.isfinite(topography)
+    # set Schoenberg to inactive
+    mask_schoenberg = (ds_params_modflow["mask_schoenberg"].values == 1)
+    mask = np.where(mask_schoenberg, False, mask)
+    mask_boundary_condition_schoenberg = ds_bc["mask_schoenberg_bc"].values
+    mask = np.where(mask_boundary_condition_schoenberg, True, mask)
+    domain = np.empty_like(topography)
+    domain[mask] = 1
+    domain[~mask] = -1
+    topography = aggregate_to_finer_resolution(topography, config_modflow['dx'], config_roger['dx'], method="keep")
 
     # initialize the SVAT model of RoGeR using BMI
     model = SVATSetup(base_path)
@@ -539,28 +640,28 @@ def main(backend, float_type):
     soildepth = soildepth / 1000  # mm to m
     roger_mask = np.empty(roger_interface.get_grid_node_count(), dtype=bool)
     roger_interface.get_value("maskCatch", roger_mask)
-    roger_mask = roger_mask.reshape(roger_config['nx'], roger_config['ny'])
+    roger_mask = roger_mask.reshape(config_roger['nx'], config_roger['ny'])
     
     # initialize the MODFLOW model using XMI
     modflow_interface = ModFlowSimulation(
-        roger_config['identifier'],
+        config_roger['identifier'],
         base_path,
         ndays=NDAYS,
-        nlay=modflow_config['nz'],
-        nrow=modflow_config['nx'],
-        ncol=modflow_config['ny'],
-        rowsize=modflow_config['dx'],
-        colsize=modflow_config['dy'],
-        roger_config=roger_config,
+        nlay=config_modflow['nz'],
+        nrow=config_modflow['nx'],
+        ncol=config_modflow['ny'],
+        rowsize=config_modflow['dx'],
+        colsize=config_modflow['dy'],
+        config_roger=config_roger,
         verbose=True
     )
     for _ in range(NDAYS):
         # update groundwater head
-        groundwater_head = np.zeros(modflow_config['nx'] * modflow_config['ny'])
+        groundwater_head = np.zeros(config_modflow['nx'] * config_modflow['ny'])
         modflow_interface.get_groundwater_head(groundwater_head)
-        groundwater_head = groundwater_head.reshape(modflow_config['nx'], modflow_config['ny'])
+        groundwater_head = groundwater_head.reshape(config_modflow['nx'], config_modflow['ny'])
         # aggregate groundwater head to the resolution of RoGeR
-        groundwater_head = aggregate_to_finer_resolution(groundwater_head, modflow_config['dx'], roger_config['dx'], method="keep")
+        groundwater_head = aggregate_to_finer_resolution(groundwater_head, config_modflow['dx'], config_roger['dx'], method="keep")
         # RoGeR requires depth of groundwater head (in meters)
         groundwater_depth = topography.flatten() - groundwater_head.flatten()
         groundwater_depth[(groundwater_depth <= soildepth)] = soildepth[(groundwater_depth <= soildepth)] + 0.05  # constrain groundwater depth to soil depth
@@ -574,9 +675,9 @@ def main(backend, float_type):
         recharge = np.zeros(roger_interface.get_grid_node_count())
         roger_interface.get_value("q_ss", recharge)
         recharge[(groundwater_depth <= soildepth)] = 0 # constrain recharge to zero where groundwater depth is equal to soil depth
-        recharge = recharge.reshape(roger_config['nx'], roger_config['ny']).astype(np.float64) / 1000  # mm/day to m/day
-        recharge = aggregate_to_coarser_resolution(recharge, roger_config['dx'], modflow_config['dx'], method="average")
-        recharge[~modflow_mask] = np.nan
+        recharge = recharge.reshape(config_roger['nx'], config_roger['ny']).astype(np.float64) / 1000  # mm/day to m/day
+        recharge = aggregate_to_coarser_resolution(recharge, config_roger['dx'], config_modflow['dx'], method="average")
+        recharge[~mask] = np.nan
         recharge = recharge.flatten()
         modflow_interface.set_recharge(recharge)
     
@@ -626,8 +727,8 @@ if __name__ == "__main__":
 # fig.savefig(file, dpi=300)
 
 # fig, axes = plt.subplots(figsize=(4, 4))
-# recharge = recharge.reshape(modflow_config['nx'], modflow_config['ny']) * 1000
-# recharge[~modflow_mask] = np.nan
+# recharge = recharge.reshape(config_modflow['nx'], config_modflow['ny']) * 1000
+# recharge[~mask] = np.nan
 # plt.imshow(recharge, extent=grid_extent, cmap='viridis', aspect='equal')
 # plt.colorbar(label='[mm/day]', shrink=0.5)
 # plt.grid(zorder=0)

@@ -27,6 +27,7 @@ dependencies:
     - pyproj
     - netCDF4
     - xmipy
+    - xesmf
     - shapely
     - geopandas
     - pip:

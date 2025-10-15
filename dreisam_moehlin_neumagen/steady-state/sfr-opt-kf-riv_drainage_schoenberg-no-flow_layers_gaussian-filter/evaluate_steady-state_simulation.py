@@ -8,6 +8,21 @@ import matplotlib.pyplot as plt
 import click
 import yaml
 
+def recalc_specific_yield(hydraulic_conductivity, specific_yield_min=0.05, specific_yield_max=0.35):
+    """Recalculate specific yield based on hydraulic conductivity using the formula of Marotz (1968)
+
+    Args:
+        hydraulic_conductivity (numpy.ndarray): hydraulic conductivity in m/day
+        specific_yield_min (float, optional): Constraint of specific yield. Default is 0.05.
+
+    Returns:
+        numpy.ndarray: specific yield
+    """
+    specific_yield = 0.462 + 0.045 * np.log(hydraulic_conductivity/86400)
+    specific_yield[specific_yield < specific_yield_min] = specific_yield_min
+    specific_yield[specific_yield > specific_yield_max] = specific_yield_max
+    return specific_yield
+
 @click.option("-mr", "--model-run", type=int, default=5)
 @click.command("main", short_help="Evaluate the steady-state simulation")
 def main(model_run):
@@ -22,6 +37,10 @@ def main(model_run):
 
     # load the SFR reaches
     reaches = pd.read_csv(base_path.parent / 'input' / 'sfr_packagedata_modified.csv', sep=';')
+    reaches["rno"] = reaches["rno"] - 1
+    reaches["k"] = reaches["k"] - 1
+    reaches["i"] = reaches["i"] - 1
+    reaches["j"] = reaches["j"] - 1
     
     # load the simulated groundwater heads
     output_file = base_path / "output" / f"modflow_output_run_{model_run}.nc"
@@ -224,6 +243,34 @@ def main(model_run):
 
     hydraulic_conductivities = np.array([hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4])
 
+    specific_yield_layer1 = recalc_specific_yield(hydraulic_conductivities_layer1)
+    specific_yield_layer2 = recalc_specific_yield(hydraulic_conductivities_layer2)
+    specific_yield_layer3 = recalc_specific_yield(hydraulic_conductivities_layer3)
+    specific_yield_layer4 = recalc_specific_yield(hydraulic_conductivities_layer4)
+
+    # modify specific yield
+    cond2 = (hydraulic_conductivities_layer2_ < 10.0e-07)
+    specific_yield_layer2[cond2] = 0.05
+    cond3 = (hydraulic_conductivities_layer3_ < 10.0e-07)
+    specific_yield_layer3[cond3] = 0.02
+    cond4 = (hydraulic_conductivities_layer4_ < 10.0e-07)
+    specific_yield_layer4[cond4] = 0.01
+
+    specific_yield_layer1[np.isnan(specific_yield_layer1)] = 0
+    specific_yield_layer2[np.isnan(specific_yield_layer2)] = 0
+    specific_yield_layer3[np.isnan(specific_yield_layer3)] = 0
+    specific_yield_layer4[np.isnan(specific_yield_layer4)] = 0
+    specific_yield_layer1 = sp.ndimage.gaussian_filter(specific_yield_layer1, [1.5, 1.5], mode="constant")
+    specific_yield_layer2 = sp.ndimage.gaussian_filter(specific_yield_layer2, [1.5, 1.5], mode="constant")
+    specific_yield_layer3 = sp.ndimage.gaussian_filter(specific_yield_layer3, [1.5, 1.5], mode="constant")
+    specific_yield_layer4 = sp.ndimage.gaussian_filter(specific_yield_layer4, [1.5, 1.5], mode="constant")
+    specific_yield_layer1[~mask] = np.nan
+    specific_yield_layer2[~mask] = np.nan
+    specific_yield_layer3[~mask] = np.nan
+    specific_yield_layer4[~mask] = np.nan
+
+    specific_yield_layers = [specific_yield_layer1, specific_yield_layer2, specific_yield_layer3, specific_yield_layer4]
+
     # load observed groundwater heads (average values of the observation wells)
     path = base_path.parent / "observations" / "observed_groundwater_heads_avg.csv"
     observed_groundwater_heads = pd.read_csv(path, sep=";", skiprows=0)
@@ -275,12 +322,12 @@ def main(model_run):
     dict_obs_stage_id_inv = {v: k for k, v in dict_obs_stage_id.items()}
     dict_obs_flow_id_inv = {v: k for k, v in dict_obs_flow_id.items()}
 
-    df_sfr = pd.DataFrame(index=sfr_obs_points, columns=["rno", "layer", "x", "y", "rlen", "rwid", "rtp", "rgrd", "man", "rhk", "water_head", "water_depth", "flow", "kf", "topo", "gw_head", "gw-sw", "sw-gw_flux"])
+    df_sfr = pd.DataFrame(index=sfr_obs_points, columns=["rno", "layer", "x", "y", "rlen", "rwid", "rtp", "rgrd", "man", "rhk", "water_head", "water_depth", "flow", "kf", "topo", "elev_layer1", "elev_layer2", "gw_head", "topo-rtp", "topo1-rtp", "gw-sw", "sw-gw_flux"])
     df_sfr["rno"] = [key for key in dict_obs_stage_id.values()]
     for rno in df_sfr["rno"].values:
-        z = int(reaches.loc[reaches["rno"] == rno, "k"].values[0]) - 1
-        y = int(reaches.loc[reaches["rno"] == rno, "i"].values[0]) - 1
-        x = int(reaches.loc[reaches["rno"] == rno, "j"].values[0]) - 1
+        z = int(reaches.loc[reaches["rno"] == rno, "k"].values[0])
+        y = int(reaches.loc[reaches["rno"] == rno, "i"].values[0])
+        x = int(reaches.loc[reaches["rno"] == rno, "j"].values[0])
         kf = hydraulic_conductivities[z, y, x] / 86400
         df_sfr.loc[df_sfr["rno"] == rno, "layer"] = reaches.loc[reaches["rno"] == rno, "k"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "y"] = reaches.loc[reaches["rno"] == rno, "i"].values[0]
@@ -304,22 +351,25 @@ def main(model_run):
         df_sfr.loc[df_sfr["rno"] == rno, "gw_head"] = ds_mf["head"].values[0, z, y, x]
         df_sfr.loc[df_sfr["rno"] == rno, "gw-sw"] = ds_mf["head"].values[0, z, y, x] - df_sfr_.loc[0, dict_obs_stage_id_inv[rno]]
         df_sfr.loc[df_sfr["rno"] == rno, "sw-gw_flux"] = gw_sw[y, x]
-        df_sfr.loc[df_sfr["rno"] == rno, "topo"] = topography[y, x] 
-
-    cond = (df_sfr["rhk"] > 1)
-    df_sfr.loc[cond, "rhk"] = df_sfr.loc[cond, "rhk"] * 1.0
-    cond = (df_sfr["kf"] < 10e-6) & (df_sfr["rhk"] > df_sfr["kf"])
-    df_sfr.loc[cond, "rhk"] = df_sfr.loc[cond, "rhk"] * 0.1
+        df_sfr.loc[df_sfr["rno"] == rno, "topo"] = topography[y, x]
+        df_sfr.loc[df_sfr["rno"] == rno, "elev_layer1"] = elevation_bottom_layer1[y, x]
+        df_sfr.loc[df_sfr["rno"] == rno, "elev_layer2"] = elevation_bottom_layer2[y, x] 
+    
+    df_sfr.loc[:, "topo-rtp"] = df_sfr.loc[:, "topo"] - df_sfr.loc[:, "rtp"]
+    df_sfr.loc[:, "topo1-rtp"] = df_sfr.loc[:, "elev_layer1"] - df_sfr.loc[:, "rtp"]
 
     file = base_path / "output" / f"dmn_run_{model_run}_sfr.csv"
     df_sfr.to_csv(file, sep=";")
 
-    obs_flow_stage = ["EBNET", "FALKENSTEIG", "OBERAMBRINGEN", "UNTERMUENSTERTAL"]
+    obs_flow_stage = ["FALKENSTEIG", "EBNET", "OBERAMBRINGEN", "UNTERMUENSTERTAL", "WIESNECK", "SANKTWILHELM", "OBERRIED", "ZASTLER"]
     df_sfr = df_sfr.loc[obs_flow_stage, :]
     sim_water_depth = df_sfr["water_depth"].values
     sim_water_depth[sim_water_depth < 0] = 0
     obs_water_depth = observed_streamflow["WDavg"].values
     diff_sim_obs_water_depth = sim_water_depth - obs_water_depth
+    obs_streamflow = observed_streamflow["Qavg"].values
+    sim_streamflow = df_sfr["flow"].values
+    diff_sim_obs_streamflow = sim_streamflow - obs_streamflow
 
     groundwater_heads[groundwater_heads > topography] = topography[groundwater_heads > topography]
     # extract the simulated groundwater heads at the location of the observation wells
@@ -328,10 +378,14 @@ def main(model_run):
     sim = groundwater_heads[rows, cols].flatten()
 
     interp_depths = topography[rows, cols].flatten() - gw_heads_interpolated[rows, cols].flatten()
+    observed_groundwater_heads["sim_head"] = groundwater_heads[rows, cols].flatten()
+    observed_groundwater_heads["topo"] = topography[rows, cols].flatten()
+    observed_groundwater_heads["obs_depths"] = obs_depths
+    observed_groundwater_heads["sim_depths"] = sim_depths
     observed_groundwater_heads["sim-obs"] = sim_depths - obs_depths
     observed_groundwater_heads["sim-int"] = sim_depths - interp_depths
     observed_groundwater_heads["int-obs"] = interp_depths - obs_depths
-    observed_groundwater_heads.to_csv(base_path.parent / "observations" / "observed_groundwater_heads_avg_.csv", sep=";", index=False)
+    observed_groundwater_heads.to_csv(base_path / "output" / f"groundwater_heads_{model_run}.csv", sep=";", index=False)
 
     fig, axes = plt.subplots(figsize=(4, 4))
     topography[~mask] = np.nan
@@ -345,6 +399,21 @@ def main(model_run):
     plt.ylabel('y-coordinate [km]')
     fig.tight_layout()
     file = Path(__file__).parent / "figures" / f"difference_sim_obs_water_depth_{model_run}.png"
+    fig.savefig(file, dpi=300)
+    plt.close(fig)
+
+    fig, axes = plt.subplots(figsize=(4, 4))
+    topography[~mask] = np.nan
+    gauge_obs_y = observed_streamflow["y-coordinate"].values / 1000  # row IDs of the observation wells
+    gauge_obs_x = observed_streamflow["x-coordinate"].values / 1000  # column IDs of the observation wells
+    plt.scatter(gauge_obs_x, gauge_obs_y, c=diff_sim_obs_streamflow, s=5, cmap='RdBu', vmin=-1, vmax=1)
+    plt.colorbar(label='[$m^3$/s]', shrink=0.45)
+    plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5, extent=grid_extent)
+    plt.grid(zorder=0)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    fig.tight_layout()
+    file = Path(__file__).parent / "figures" / f"difference_sim_obs_streamflow_{model_run}.png"
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
@@ -439,6 +508,18 @@ def main(model_run):
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
+    fig, axes = plt.subplots(figsize=(4, 4))
+    axes.scatter(obs_streamflow, sim_streamflow, marker='.', s=8, c='black')
+    axes.set_ylabel('Simulated streamflow [$m^3$/s]')
+    axes.set_xlabel('Observed streamflow [$m^3$/s]')
+    axes.set_xlim(0, 8)
+    axes.set_ylim(0, 8)
+    axes.plot(axes.get_xlim(), axes.get_ylim(), ls="--", c=".3", zorder=1, alpha=0.5)
+    # axes.text(axes.get_xlim()[0] + 0.1, axes.get_ylim()[1] - 0.1, f"ME: {df_params_metrics.loc[model_run, 'ME']:.2f} m")
+    fig.tight_layout()
+    file = Path(__file__).parent / "figures" / f"scatter_obs_sim_streamflow{model_run}.png"
+    fig.savefig(file, dpi=300)
+    plt.close(fig)
 
     fig, axes = plt.subplots(figsize=(4, 4))
     axes.scatter(obs_depths[:-2], sim_depths[:-2], marker='.', s=5, c='black')
@@ -564,6 +645,20 @@ def main(model_run):
         file = Path(__file__).parent / "figures" / f"hydraulic_conductivity_layer_{i}_{model_run}.png"
         fig.savefig(file, dpi=300)
         plt.close(fig)
+
+    for i, specific_yield_layer in enumerate(specific_yield_layers):
+        fig, axes = plt.subplots(figsize=(4, 4))
+        specific_yield_layer[~mask] = np.nan
+        plt.imshow(specific_yield_layer, extent=grid_extent, cmap='Blues', aspect='equal', vmin=0.01, vmax=0.35)
+        cbar = plt.colorbar(label='$sy$ [-]', shrink=0.48)
+        plt.grid(zorder=0)
+        plt.xlabel('x-coordinate [km]')
+        plt.ylabel('y-coordinate [km]')
+        plt.tight_layout()
+        file = Path(__file__).parent / "figures" / f"specific_yield_layer_{i}_{model_run}.png"
+        fig.savefig(file, dpi=300)
+        plt.close(fig)
+
     return
 
 if __name__ == "__main__":

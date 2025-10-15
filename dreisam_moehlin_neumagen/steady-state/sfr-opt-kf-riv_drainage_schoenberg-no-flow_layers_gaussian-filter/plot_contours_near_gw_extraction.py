@@ -216,8 +216,6 @@ def main(model_run):
         file = base_path_figs / f"gw_depth_steady_state_layer{i}_contour_{model_run}_bn-hausen.png"
         fig.savefig(file, dpi=300)
         plt.close("all")
-
-
     return
 
 

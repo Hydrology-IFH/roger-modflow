@@ -27,12 +27,14 @@ dict_obs_flow_rnos:
   RE1_FLOW: 11877
   RO2_A_FLOW: 11693
   RO2_B_FLOW: 11695
+  SANKTWILHELM_FLOW: 3510
   UNTERMUENSTERTAL_FLOW: 14510
   W1_NEW_FLOW: 7772
   W2_FLOW: 10963
   W3_FLOW: 11005
   W4_FLOW: 11786
-  ZA1_FLOW: 5799
+  WIESNECK_FLOW: 10990
+  ZASTLER_FLOW: 5799
 dict_obs_stage_rnos:
   B2_STAGE: 11190
   DREI1_STAGE: 12062
@@ -62,12 +64,14 @@ dict_obs_stage_rnos:
   RE1_STAGE: 11877
   RO2_A_STAGE: 11693
   RO2_B_STAGE: 11695
+  SANKTWILHELM_STAGE: 3510
   UNTERMUENSTERTAL_STAGE: 14510
   W1_NEW_STAGE: 7772
   W2_STAGE: 10963
   W3_STAGE: 11005
   W4_STAGE: 11786
-  ZA1_STAGE: 5799
+  WIESNECK_STAGE: 10990
+  ZASTLER_STAGE: 5799
 dx: 50.0
 dy: 50.0
 nx: 621
@@ -109,6 +113,8 @@ outlet_rnos:
 - 5799
 - 11190
 - 12095
+- 10990
+- 3510
 sfr_obs:
   B2_flow:
   - downstream-flow
@@ -278,6 +284,12 @@ sfr_obs:
   RO2_B_stage:
   - stage
   - 11695
+  SanktWilhelm_flow:
+  - downstream-flow
+  - 3510
+  SanktWilhelm_stage:
+  - stage
+  - 3510
   Untermuenstertal_flow:
   - downstream-flow
   - 14510
@@ -308,9 +320,15 @@ sfr_obs:
   W4_stage:
   - stage
   - 11786
-  Za1_flow:
+  Wiesneck_flow:
+  - downstream-flow
+  - 10990
+  Wiesneck_stage:
+  - stage
+  - 10990
+  Zastler_flow:
   - downstream-flow
   - 5799
-  Za1_stage:
+  Zastler_stage:
   - stage
   - 5799

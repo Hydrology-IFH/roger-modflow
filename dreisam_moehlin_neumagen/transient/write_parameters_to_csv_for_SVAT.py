@@ -25,8 +25,8 @@ def main():
     base_path = Path(__file__).parent
 
     # load the netcdf file
-    params_file = base_path / "parameters.nc"
-    ds_params = xr.open_dataset(params_file, engine="h5netcdf")
+    params_file = base_path / "input" / "parameters_roger_25m.nc"
+    ds_params = xr.open_dataset(params_file)
     nrows = ds_params.sizes["y"]
     ncols = ds_params.sizes["x"]
 
@@ -75,7 +75,7 @@ def main():
         ["", "[-]", "[mm]", "[1/m2]", "[mm]", "[-]", "[-]", "[-]", "[mm/hour]", "[mm/hour]", "[degC]", "[-]", "[-]"],
         ["lu_id", "sealing", "z_soil", "dmpv", "lmpv", "theta_ac", "theta_ufc", "theta_pwp", "ks", "kf", "ta_offset", "pet_weight", "prec_weight"],
     ]
-    df_params.to_csv(base_path / "parameters.csv", index=False, sep=";")
+    df_params.to_csv(base_path / "parameters_roger.csv", index=False, sep=";")
     return
 
 

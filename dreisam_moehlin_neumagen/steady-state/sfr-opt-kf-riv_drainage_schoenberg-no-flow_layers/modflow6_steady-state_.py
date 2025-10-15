@@ -361,6 +361,13 @@ class ModFlowSimulation:
         specific_yield_layer2 = recalc_specific_yield(hydraulic_conductivities_layer2)
         specific_yield_layer3 = recalc_specific_yield(hydraulic_conductivities_layer3)
         specific_yield_layer4 = recalc_specific_yield(hydraulic_conductivities_layer4)
+        # modify specific yield for igneous and metamorphic rocks
+        cond2 = (hydraulic_conductivities_layer2_ < 10.0e-07)
+        specific_yield_layer2[cond2] = 0.05
+        cond3 = (hydraulic_conductivities_layer3_ < 10.0e-07)
+        specific_yield_layer3[cond3] = 0.02
+        cond4 = (hydraulic_conductivities_layer4_ < 10.0e-07)
+        specific_yield_layer4[cond4] = 0.01
         specific_yield = flopy.mf6.ModflowGwfsto.sy.empty(gwf, layered=True)
         specific_yield[0]["data"] = specific_yield_layer1
         specific_yield[1]["data"] = specific_yield_layer2
