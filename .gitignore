@@ -285,6 +285,8 @@ dreisam_moehlin_neumagen/transient/input/streambed_conductivity_.tif
 dreisam_moehlin_neumagen/transient/input/streambed_structure.tif
 dreisam_moehlin_neumagen/transient/input/streambed_structure_.tif
 dreisam_moehlin_neumagen/transient/input/upstream_nodes.gpkg
+dreisam_moehlin_neumagen/steady-state/input/mask_kf_18e-3_lower_moehlin.tif
+dreisam_moehlin_neumagen/steady-state/input/mask_kf_2e-7_lower_moehlin_and_dreisam.tif
 
 
 **/parameters_roger.csv

@@ -12,6 +12,8 @@ Steady-state optimisation of different MODFLOW6 setups (i.e. different combinati
 ## Files
 - `config.yaml`: Configuration file (see in-file comments for more information)
 - `add_masks.py`: Add the masks (e.g. catchment mask) to the MODFLOW6 parameter file
+- `add_interpolated_gw_heads.py`: Add the interpolated groundwater heads to the MODFLOW6 parameter file which are used to guess initial values
+- `add_streamflow_observation_points_to_sfr.py`: Add reaches to `config.yml` for which stage and streamflow are collected by MODFLOW6
 - `modify_elevations.py`: Ensure that bottom elevations of the layers do not overlap. Bottom elevations are adjusted in case of intersections. 
 - `modify_hydraulic_conductivity_and_specific_yield_of_layer1.py`: Replace hydraulic conductivities by hydraulic conductivities of the BK50 soil map.
 - `modify_hydraulic_conductivity_and_specific_yield_of_gravel.py`: Assign values of gravel layers 
@@ -69,6 +71,7 @@ No flow boundary is set at the boundary to the black forest and Schoenberg. We a
 ## Wells
 Drinking water wells are considered for groundwater extraction. We use average annual extraction rates based on the data provided by the drinking water suppliers
 
+- `prepare_groundwater_extraction_data.py`: Writes `input/groundwater_extraction.gpkg`
 - `input/groundwater_extraction.gpkg`: Contains locations of groundwater extraction and annual extraction volumes
 
 ## Drainage area
@@ -92,13 +95,13 @@ MODFLOW requires river reaches. However, river network data is not divided into 
 1. Use `Processing toolbox --> Vector overlay --> Split with lines` in QGIS to split the river network into river segments
 2. Extract the downstream and upstream nodes from the river segments.
 3. Assign the elevations and streambed width to the downstream and upstream nodes and join the data to the river segments.
-4. Assign to each river segment the downstream connected segment --> `python `
-5. Repair the geometries of the river segments.
-6. Write the data for the SFR package of MODFLOW using the `sfrmaker` tool.
+4. Assign to each river segment the downstream connected segment --> `python make_stream_segment_routing.py`
+5. Repair the geometries of the river segments --> `python make_stream_segment_routing.py`
+6. Write the data for the SFR package of MODFLOW using the `sfrmaker` tool --> `python write_sfr_data.py`
 7. Check `input/model_SFR.chk` for errors and load `input/sfr_routing.shp` and `input/sfr_outlets.shp` in QGIS to make visual check.
-8. Assign the hydraulic conductivity of the streambed and Manning's coeffecient to the SFR packagedata.
-9. Identify the diversions (i.e. river reaches with with downstream connections).
-10. Identify the reach IDs to collect the water depth and downstream flow.
+8. Assign the hydraulic conductivity of the streambed and Manning's coeffecient to the SFR packagedata --> `python make_diversions.py`
+9. Identify the diversions (i.e. river reaches with with downstream connections) --> `python make_diversions.py`
+10. Identify the streamflow observation points. Collect the information in `input/streamflow_observation_points.csv`. Then, run `python make_diversions.py`.
 
 ## Observations
 
@@ -107,7 +110,7 @@ MODFLOW requires river reaches. However, river network data is not divided into 
 
 Workflow:
 1. Run `preprocess_data_for_modflow_state_optimisation.sh`
-2. Run `run_optimisation.sh`
+2. Run `run_optimisation.sh`. May not work on your local computer. SSD hard drive decrease computation time.
 3. Run `run_evaluation.sh`
 
 Coordinate system:

@@ -92,11 +92,7 @@ class ModFlowSimulation:
         gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file, save_flows=True, newtonoptions="NEWTON")
 
         # Create the Flopy iterative model solver (ims) Package object
-        ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="all",
-                                                 no_ptcrecord="NO_PTC_ALL",
-                                                 outer_maximum=50, inner_maximum=200,
-                                                 outer_dvclose=0.1, inner_dvclose=0.1,
-                                                 linear_acceleration="BICGSTAB")
+        ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="all", complexity="COMPLEX", no_ptcrecord="NO_PTC_ALL")
 
         # Now that the overall simulation is set up, we can focus on building the groundwater flow model.  The groundwater flow model will be built by adding packages to it that describe the model characteristics.
         #
@@ -139,11 +135,10 @@ class ModFlowSimulation:
         )
 
         # Create the initial conditions package
-        initial_conditions_layer1 = (topography - elevation_bottom_layer1) * 0.75 + elevation_bottom_layer1
-        initial_conditions_layer2 = (elevation_bottom_layer1 - elevation_bottom_layer2) * 0.75 + elevation_bottom_layer2
-        initial_conditions_layer3 = (elevation_bottom_layer2 - elevation_bottom_layer3) * 0.75 + elevation_bottom_layer3
-        initial_conditions_layer4 = (elevation_bottom_layer3 - elevation_bottom_layer4) * 0.75 + elevation_bottom_layer4
-        initial_conditions_layers = [initial_conditions_layer1, initial_conditions_layer2, initial_conditions_layer3, initial_conditions_layer4]
+        # use interpolated groundwater heads from well observations as initial conditions
+        gw_heads_interpolated = ds_params["gw_heads_interpolated"].values
+        gw_heads_interpolated[~mask] = np.nan
+        initial_conditions_layers = [gw_heads_interpolated, gw_heads_interpolated, gw_heads_interpolated, gw_heads_interpolated]
         ic = flopy.mf6.modflow.mfgwfic.ModflowGwfic(gwf, pname="ic", strt=initial_conditions_layers)
 
         # Create the node property flow package with hydraulic conducitivities

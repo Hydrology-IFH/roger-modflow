@@ -10,29 +10,32 @@ def main(nsamples):
     base_path = Path(__file__).parent
 
     bounds = {"-8_1": [400, 600], 
-              "-7_1": [70, 80], 
+              "-7_1": [1.0, 7.5], 
               "-6_1": [0.9, 10], 
               "-5_1": [0.9, 10],
-              "-7_2": [50, 60], 
+              "-7_2": [1.0, 5.0], 
               "-5_2": [0.9, 10], 
               "-4_2": [0.5, 2.5],
-              "1-3_2": [0.5, 2.5], 
-              "1.8-3_2": [0.5, 2.5], 
-              "3-3_2": [0.5, 2.5],  
-              "4-3_2": [0.5, 2.5],
-              "-7_3": [50, 60], 
+              "1-3_2": [0.1, 10.0], 
+              "1.8-3_2": [0.1, 10.0], 
+              "3-3_2": [0.1, 10.0],  
+              "4-3_2": [0.1, 10.0],
+              "-7_3": [0.8, 3.0], 
               "-5_3": [0.5, 2.5], 
               "-4_3": [0.5, 2.5],
-              "1-3_3": [0.5, 2.5], 
-              "1.8-3_3": [0.5, 2.5], 
-              "3-3_3": [0.5, 2.5],  
-              "4-3_3": [0.5, 2.5],
-              "-7_4": [30, 50], 
+              "1-3_3": [0.1, 10.0], 
+              "1.8-3_3": [0.1, 10.0], 
+              "3-3_3": [0.1, 10.0],  
+              "4-3_3": [0.1, 10.0],
+              "-7_4": [0.1, 1.2], 
               "-5_4": [0.5, 2.5], 
               "-4_4": [0.5, 2.5],
               "1.8-3_4": [0.5, 2.5],
-              "rhk": [0.0001, 0.01],
-              "rch": [0.95, 1.05],
+              "rhkp": [0.01, 100.0],
+              "rhkf": [0.01, 50.0],
+              "man": [0.9, 1.1],
+              "rch": [0.9, 1.1],
+              "offset": [0., 2.0],
     }
 
     nrows = nsamples
@@ -50,14 +53,28 @@ def main(nsamples):
         df_params.loc[:, param] = values.flatten()
 
     df_params["offset"] = 0.
-    df_params.iloc[:30, :] = 1.
-    df_params.loc[:30, "rhk"] = 0.0005
+    df_params.iloc[:34, :] = 1.
+    df_params.loc[:33, "rhkp"] = 60.
+    df_params.loc[:33, "rhkf"] = 30.
+    df_params.loc[:33, "man"] = 1.0
 
-    df_params.loc[:29, "-8_1"] = 500.
-    df_params.loc[:29, "-7_1"] = 75.
-    df_params.loc[:29, "-7_2"] = 60.
-    df_params.loc[:29, "-7_3"] = 50.
-    df_params.loc[:29, "-7_4"] = 40.
+    xx = 0.6
+    df_params.loc[:33, "-8_1"] = 500.
+    df_params.loc[:33, "-7_1"] = 2.5 * xx
+    df_params.loc[:33, "-7_2"] = 2.0 * xx
+    df_params.loc[:33, "-7_3"] = 1.5 * xx
+    df_params.loc[:33, "-7_4"] = 0.88 * xx
+
+    df_params.loc[:33, "1.8-3_2"] = 0.4 
+    df_params.loc[:33, "3-3_2"] = 5.0 
+    df_params.loc[:33, "4-3_2"] = 5.0
+    df_params.loc[:33, "1.8-3_3"] = 0.3
+    df_params.loc[:33, "3-3_3"] = 4.5
+    df_params.loc[:33, "4-3_3"] = 4.5
+
+    df_params.loc[:33, "rch"] = 1.0
+    df_params.loc[:33, "offset"] = 2.0
+
     df_params.loc[0, "rch"] = 1.25
     df_params.loc[1, "rch"] = 1.2
     df_params.loc[2, "rch"] = 1.15
@@ -84,10 +101,10 @@ def main(nsamples):
     df_params.loc[23, "offset"] = 2.5
     df_params.loc[24, "offset"] = 5.0
     df_params.loc[25, "offset"] = 10.0
-    df_params.loc[26, "rhk"] = 1.2
-    df_params.loc[27, "rhk"] = 1.1
-    df_params.loc[28, "rhk"] = 0.9
-    df_params.loc[29, "rhk"] = 0.8
+    df_params.loc[30, "rhk"] = 0.0025
+    df_params.loc[31, "rhk"] = 0.001
+    df_params.loc[32, "rhk"] = 0.0008
+    df_params.loc[33, "rhk"] = 0.0005
 
     # constrain parameters by upper layers (i.e. kf of lower layer is equal or less than kf of upper layer)
     cond = (df_params["-7_3"] >= df_params["-7_2"])
@@ -123,7 +140,7 @@ def main(nsamples):
                                   "-7_2", "-5_2","-4_2", "1-3_2", "1.8-3_2", "3-3_2", "4-3_2",  
                                   "-7_3", "-5_3","-4_3", "1-3_3", "1.8-3_3", "3-3_3", "4-3_3",
                                   "-7_4", "-5_4","-4_4", "1.8-3_4",
-                                  "rhk",
+                                  "rhkp", "rhkf", "man",
                                   "rch", "offset", "converged"]]
 
     # write parameters to csv
@@ -132,13 +149,13 @@ def main(nsamples):
          "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]",
          "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]",
          "[-]", "[-]", "[-]", "[-]",
-         "[-]",
+         "[-]", "[-]", "[-]", "[-]",
          "[-]", "[m]",  ""],
         ["-8_1", "-7_1", "-6_1", "-5_1", 
          "-7_2", "-5_2", "-4_2", "1-3_2", "1.8-3_2", "3-3_2", "4-3_2",  
          "-7_3", "-5_3", "-4_3", "1-3_3", "1.8-3_3", "3-3_3", "4-3_3",
          "-7_4", "-5_4", "-4_4", "1.8-3_4",
-         "rhk",
+         "rhkp", "rhkf", "man",
          "rch", "offset", "converged"],
     ]
     df_params.to_csv(base_path / "fudge_parameters_modflow.csv", index=False, sep=";")

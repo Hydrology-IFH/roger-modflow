@@ -1,6 +1,7 @@
 #!/bin/bash
 
 python add_masks.py
+python add_interpolated_gw_heads.py
 python modify_elevations.py
 python modify_hydraulic_conductivity_and_specific_yield_of_layer1.py
 python modify_hydraulic_conductivity_and_specific_yield_of_gravel.py
@@ -20,4 +21,5 @@ python make_stream_segment_routing.py
 python repair_geometries_of_stream_segments.py
 python write_sfr_data.py
 python assign_streambed_conducivity_and_manning_to_sfr_packagedata.py
+python make_diversions.py
 python add_streamflow_observation_points_to_sfr.py

@@ -78,10 +78,10 @@ def main(model_run):
     y1 = 86
     y2 = 136 
 
-    x1 = 334
-    x2 = 334 + 25
-    y1 = 136 - 25
-    y2 = 136
+    # x1 = 334
+    # x2 = 334 + 25
+    # y1 = 136 - 25
+    # y2 = 136
 
     grid_extent = (ds_mf.lon.values[x1] / 1000, ds_mf.lon.values[x2] / 1000, ds_mf.lat.values[y2] / 1000, ds_mf.lat.values[y1] / 1000)
 
@@ -96,7 +96,8 @@ def main(model_run):
         CS = axes.contour(X, Y, Z, colors='black')
         axes.clabel(CS, inline=True, fontsize=8, colors='black')
         axes.scatter(wells_x, wells_y, marker='^', s=10, c='green')
-        axes.imshow(topography[y1:y2, x1:x2], extent=grid_extent, cmap='terrain', alpha=0.25, vmin=190, vmax=450)
+        # axes.imshow(topography[y1:y2, x1:x2], extent=grid_extent, cmap='terrain', alpha=0.25, vmin=190, vmax=450)
+        axes.imshow(Z, extent=grid_extent, cmap='Blues', alpha=0.75)
         plt.xlabel('x-coordinate [km]')
         plt.ylabel('y-coordinate [km]')
         plt.title(f"Groundwater head of layer {layer + 1} [m a.s.l.]", fontsize=8)
@@ -142,7 +143,7 @@ def main(model_run):
         CS = axes.contour(X, Y, Z, colors='black')
         axes.clabel(CS, inline=True, fontsize=8, colors='black')
         axes.scatter(wells_x, wells_y, marker='^', s=10, c='green')
-        axes.imshow(topography[y1:y2, x1:x2], extent=grid_extent, cmap='terrain', alpha=0.25, vmin=190, vmax=450)
+        axes.imshow(Z, extent=grid_extent, cmap='Blues', alpha=0.75)
         plt.xlabel('x-coordinate [km]')
         plt.ylabel('y-coordinate [km]')
         plt.title(f"Groundwater head of layer {layer + 1} [m a.s.l.]", fontsize=8)
@@ -188,7 +189,7 @@ def main(model_run):
         CS = axes.contour(X, Y, Z, colors='black')
         axes.clabel(CS, inline=True, fontsize=8, colors='black')
         axes.scatter(wells_x, wells_y, marker='^', s=10, c='green')
-        axes.imshow(topography[y1:y2, x1:x2], extent=grid_extent, cmap='terrain', alpha=0.25, vmin=190, vmax=450)
+        axes.imshow(Z, extent=grid_extent, cmap='Blues', alpha=0.75)
         plt.xlabel('x-coordinate [km]')
         plt.ylabel('y-coordinate [km]')
         plt.title(f"Groundwater depth of layer {layer + 1} [m a.s.l.]", fontsize=8)

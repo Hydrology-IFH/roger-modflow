@@ -92,11 +92,7 @@ class ModFlowSimulation:
         gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file, save_flows=True, newtonoptions="NEWTON")
 
         # Create the Flopy iterative model solver (ims) Package object
-        ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="all",
-                                                 no_ptcrecord="NO_PTC_ALL",
-                                                 outer_maximum=50, inner_maximum=200,
-                                                 outer_dvclose=0.1, inner_dvclose=0.1,
-                                                 linear_acceleration="BICGSTAB")
+        ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="all", complexity="COMPLEX", no_ptcrecord="NO_PTC_ALL")
 
         # Now that the overall simulation is set up, we can focus on building the groundwater flow model.  The groundwater flow model will be built by adding packages to it that describe the model characteristics.
         #
@@ -143,11 +139,10 @@ class ModFlowSimulation:
         )
 
         # Create the initial conditions package
-        initial_conditions_layer1 = (topography - elevation_bottom_layer1) * 0.75 + elevation_bottom_layer1
-        initial_conditions_layer2 = (elevation_bottom_layer1 - elevation_bottom_layer2) * 0.75 + elevation_bottom_layer2
-        initial_conditions_layer3 = (elevation_bottom_layer2 - elevation_bottom_layer3) * 0.75 + elevation_bottom_layer3
-        initial_conditions_layer4 = (elevation_bottom_layer3 - elevation_bottom_layer4) * 0.75 + elevation_bottom_layer4
-        initial_conditions_layers = [initial_conditions_layer1, initial_conditions_layer2, initial_conditions_layer3, initial_conditions_layer4]
+        # use interpolated groundwater heads from well observations as initial conditions
+        gw_heads_interpolated = ds_params["gw_heads_interpolated"].values
+        gw_heads_interpolated[~mask] = np.nan
+        initial_conditions_layers = [gw_heads_interpolated, gw_heads_interpolated, gw_heads_interpolated, gw_heads_interpolated]
         ic = flopy.mf6.modflow.mfgwfic.ModflowGwfic(gwf, pname="ic", strt=initial_conditions_layers)
 
         # Create the node property flow package with hydraulic conducitivities
@@ -211,37 +206,23 @@ class ModFlowSimulation:
         reaches.iloc[:, 15] = reaches.iloc[:, 15].astype(float)
         reaches.iloc[:, 16] = reaches.iloc[:, 16].astype(int)
 
-        # increase the hydraulic conductivities of the reach cell by a factor of xx
-        xx = 3.0
-        for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):
-            if z == 0:
-                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * xx
-            elif z == 1:
-                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * xx
-                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * xx
-            elif z == 2:
-                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * xx
-                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * xx
-                hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * xx
-            elif z == 3:
-                hydraulic_conductivities_layer1[x, y] = hydraulic_conductivities_layer1[x, y] * xx
-                hydraulic_conductivities_layer2[x, y] = hydraulic_conductivities_layer2[x, y] * xx
-                hydraulic_conductivities_layer3[x, y] = hydraulic_conductivities_layer3[x, y] * xx
-                hydraulic_conductivities_layer4[x, y] = hydraulic_conductivities_layer4[x, y] * xx
-
         # smooth transition between fissured and porous aquifers
         hydraulic_conductivities_layer1[np.isnan(hydraulic_conductivities_layer1)] = 0
         hydraulic_conductivities_layer2[np.isnan(hydraulic_conductivities_layer2)] = 0
         hydraulic_conductivities_layer3[np.isnan(hydraulic_conductivities_layer3)] = 0
         hydraulic_conductivities_layer4[np.isnan(hydraulic_conductivities_layer4)] = 0
-        hydraulic_conductivities_layer1 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [1.0, 1.0], mode="constant")
-        hydraulic_conductivities_layer2 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.0, 1.0], mode="constant")
-        hydraulic_conductivities_layer3 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.0, 1.0], mode="constant")
-        hydraulic_conductivities_layer4 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.0, 1.0], mode="constant")
-        hydraulic_conductivities_layer1[~mask] = np.nan
-        hydraulic_conductivities_layer2[~mask] = np.nan
-        hydraulic_conductivities_layer3[~mask] = np.nan
-        hydraulic_conductivities_layer4[~mask] = np.nan
+        _hydraulic_conductivities_layer1 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [1.5, 1.5], mode="constant")
+        _hydraulic_conductivities_layer2 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.5, 1.5], mode="constant")
+        _hydraulic_conductivities_layer3 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.5, 1.5], mode="constant")
+        _hydraulic_conductivities_layer4 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.5, 1.5], mode="constant")
+        cond1 = (hydraulic_conductivities_layer1_ < 10.0e-07)
+        cond2 = (hydraulic_conductivities_layer2_ < 10.0e-07)
+        cond3 = (hydraulic_conductivities_layer3_ < 10.0e-07)
+        cond4 = (hydraulic_conductivities_layer4_ < 10.0e-07)
+        hydraulic_conductivities_layer1[cond1] = _hydraulic_conductivities_layer1[cond1]
+        hydraulic_conductivities_layer2[cond2] = _hydraulic_conductivities_layer2[cond2]
+        hydraulic_conductivities_layer3[cond3] = _hydraulic_conductivities_layer3[cond3]
+        hydraulic_conductivities_layer4[cond4] = _hydraulic_conductivities_layer4[cond4]
 
         diversions = pd.read_csv(base_path.parent / "input" / "sfr_diversions.csv", sep=";")
         diversions.iloc[:, 0] = diversions.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing

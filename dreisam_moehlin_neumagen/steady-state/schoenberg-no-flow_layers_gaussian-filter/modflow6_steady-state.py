@@ -139,11 +139,10 @@ class ModFlowSimulation:
         )
 
         # Create the initial conditions package
-        initial_conditions_layer1 = (topography - elevation_bottom_layer1) * 0.75 + elevation_bottom_layer1
-        initial_conditions_layer2 = (elevation_bottom_layer1 - elevation_bottom_layer2) * 0.75 + elevation_bottom_layer2
-        initial_conditions_layer3 = (elevation_bottom_layer2 - elevation_bottom_layer3) * 0.75 + elevation_bottom_layer3
-        initial_conditions_layer4 = (elevation_bottom_layer3 - elevation_bottom_layer4) * 0.75 + elevation_bottom_layer4
-        initial_conditions_layers = [initial_conditions_layer1, initial_conditions_layer2, initial_conditions_layer3, initial_conditions_layer4]
+        # use interpolated groundwater heads from well observations as initial conditions
+        gw_heads_interpolated = ds_params["gw_heads_interpolated"].values
+        gw_heads_interpolated[~mask] = np.nan
+        initial_conditions_layers = [gw_heads_interpolated, gw_heads_interpolated, gw_heads_interpolated, gw_heads_interpolated]
         ic = flopy.mf6.modflow.mfgwfic.ModflowGwfic(gwf, pname="ic", strt=initial_conditions_layers)
 
         # Create the node property flow package with hydraulic conducitivities
@@ -242,14 +241,18 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer2[np.isnan(hydraulic_conductivities_layer2)] = 0
         hydraulic_conductivities_layer3[np.isnan(hydraulic_conductivities_layer3)] = 0
         hydraulic_conductivities_layer4[np.isnan(hydraulic_conductivities_layer4)] = 0
-        hydraulic_conductivities_layer1 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [1.0, 1.0], mode="constant")
-        hydraulic_conductivities_layer2 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.0, 1.0], mode="constant")
-        hydraulic_conductivities_layer3 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.0, 1.0], mode="constant")
-        hydraulic_conductivities_layer4 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.0, 1.0], mode="constant")
-        hydraulic_conductivities_layer1[~mask] = np.nan
-        hydraulic_conductivities_layer2[~mask] = np.nan
-        hydraulic_conductivities_layer3[~mask] = np.nan
-        hydraulic_conductivities_layer4[~mask] = np.nan
+        _hydraulic_conductivities_layer1 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [1.5, 1.5], mode="constant")
+        _hydraulic_conductivities_layer2 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.5, 1.5], mode="constant")
+        _hydraulic_conductivities_layer3 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.5, 1.5], mode="constant")
+        _hydraulic_conductivities_layer4 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.5, 1.5], mode="constant")
+        cond1 = (hydraulic_conductivities_layer1_ < 10.0e-07)
+        cond2 = (hydraulic_conductivities_layer2_ < 10.0e-07)
+        cond3 = (hydraulic_conductivities_layer3_ < 10.0e-07)
+        cond4 = (hydraulic_conductivities_layer4_ < 10.0e-07)
+        hydraulic_conductivities_layer1[cond1] = _hydraulic_conductivities_layer1[cond1]
+        hydraulic_conductivities_layer2[cond2] = _hydraulic_conductivities_layer2[cond2]
+        hydraulic_conductivities_layer3[cond3] = _hydraulic_conductivities_layer3[cond3]
+        hydraulic_conductivities_layer4[cond4] = _hydraulic_conductivities_layer4[cond4]
 
         hydraulic_conductivities_layers = [hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4]
         npf = flopy.mf6.modflow.mfgwfnpf.ModflowGwfnpf(

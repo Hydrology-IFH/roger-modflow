@@ -34,6 +34,11 @@ src = rasterio.open(str(base_path / "input" / "mask_zarten_gravel_north.tif"))
 mask_zarten_gravel_north = src.read(1)
 src = rasterio.open(str(base_path / "input" / "mask_staufen_gravel.tif"))
 mask_staufen_gravel = src.read(1)
+# add custom masks
+src = rasterio.open(str(base_path / "input" / "mask_kf_18e-3_lower_moehlin.tif"))
+mask_kf_18e_3_lower_moehlin = src.read(1)
+src = rasterio.open(str(base_path / "input" / "mask_kf_2e-7_lower_moehlin_and_dreisam.tif"))
+mask_kf_2e_7_lower_moehlin_and_dreisam = src.read(1)
 
 path = str(base_path / "input" / "parameters_modflow.nc")
 with h5netcdf.File(path, "a", decode_vlen_strings=False) as f:
@@ -104,3 +109,17 @@ with h5netcdf.File(path, "a", decode_vlen_strings=False) as f:
     except ValueError:
         var_obj = f.variables.get("mask_staufen_gravel")
         var_obj[:, :] = mask_staufen_gravel
+    try:
+        v = f.create_variable("mask_kf_18e_3_lower_moehlin", ("y", "x"), int, compression="gzip", compression_opts=1)
+        v[:, :] = mask_kf_18e_3_lower_moehlin
+        v.attrs.update(long_name="Custom mask (Hausen)", units="")
+    except ValueError:
+        var_obj = f.variables.get("mask_kf_18e_3_lower_moehlin")
+        var_obj[:, :] = mask_kf_18e_3_lower_moehlin
+    try:
+        v = f.create_variable("mask_kf_2e_7_lower_moehlin_and_dreisam", ("y", "x"), int, compression="gzip", compression_opts=1)
+        v[:, :] = mask_kf_2e_7_lower_moehlin_and_dreisam
+        v.attrs.update(long_name="Custom mask (Hausen)", units="")
+    except ValueError:
+        var_obj = f.variables.get("mask_kf_2e_7_lower_moehlin_and_dreisam")
+        var_obj[:, :] = mask_kf_2e_7_lower_moehlin_and_dreisam

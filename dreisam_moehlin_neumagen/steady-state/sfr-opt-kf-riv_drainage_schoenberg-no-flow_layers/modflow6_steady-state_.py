@@ -92,11 +92,7 @@ class ModFlowSimulation:
         gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file, save_flows=True, newtonoptions="NEWTON")
 
         # Create the Flopy iterative model solver (ims) Package object
-        ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="all",
-                                                 no_ptcrecord="NO_PTC_ALL",
-                                                 outer_maximum=50, inner_maximum=200,
-                                                 outer_dvclose=0.1, inner_dvclose=0.1,
-                                                 linear_acceleration="BICGSTAB")
+        ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="all", complexity="COMPLEX", no_ptcrecord="NO_PTC_ALL")
 
         # Now that the overall simulation is set up, we can focus on building the groundwater flow model.  The groundwater flow model will be built by adding packages to it that describe the model characteristics.
         #
@@ -139,11 +135,10 @@ class ModFlowSimulation:
         )
 
         # Create the initial conditions package
-        initial_conditions_layer1 = (topography - elevation_bottom_layer1) * 0.75 + elevation_bottom_layer1
-        initial_conditions_layer2 = (elevation_bottom_layer1 - elevation_bottom_layer2) * 0.75 + elevation_bottom_layer2
-        initial_conditions_layer3 = (elevation_bottom_layer2 - elevation_bottom_layer3) * 0.75 + elevation_bottom_layer3
-        initial_conditions_layer4 = (elevation_bottom_layer3 - elevation_bottom_layer4) * 0.75 + elevation_bottom_layer4
-        initial_conditions_layers = [initial_conditions_layer1, initial_conditions_layer2, initial_conditions_layer3, initial_conditions_layer4]
+        # use interpolated groundwater heads from well observations as initial conditions
+        gw_heads_interpolated = ds_params["gw_heads_interpolated"].values
+        gw_heads_interpolated[~mask] = np.nan
+        initial_conditions_layers = [gw_heads_interpolated, gw_heads_interpolated, gw_heads_interpolated, gw_heads_interpolated]
         ic = flopy.mf6.modflow.mfgwfic.ModflowGwfic(gwf, pname="ic", strt=initial_conditions_layers)
 
         # Create the node property flow package with hydraulic conducitivities
@@ -256,9 +251,6 @@ class ModFlowSimulation:
         reaches.iloc[:, 15] = reaches.iloc[:, 15].astype(float)
         reaches.iloc[:, 16] = reaches.iloc[:, 16].astype(int)
 
-        # convert to m/day
-        reaches["rhk"] = reaches["rhk"] * 86400
-
         # increase the hydraulic conductivities of the reach cell by a factor of xx
         for rno, z, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 1], reaches.iloc[:, 2], reaches.iloc[:, 3]):
             if z == 0:
@@ -295,12 +287,11 @@ class ModFlowSimulation:
         reaches.loc[cond, "rhk"] = 10e-9
 
         # fudge streambed conductivity
-        reaches["rhk"] = reaches["rhk"] * fudge_parameters["rhk"].values[model_run]
-     
-        cond = np.isnan(reaches["rwid"])
-        reaches.loc[cond, "rwid"] = 1.0  # set width to 1 m where it is NaN
-        cond_widht0 = (reaches.loc[:, "rwid"] <= 1.0)
-        reaches.loc[cond_widht0, "rwid"] = 1.0  # set width to 1 m if it is smaller than 1 m
+        cond = (reaches["kf"] >= 10e-6)
+        reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkp"].values[model_run]
+        cond = (reaches["kf"] < 10e-6)
+        reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkf"].values[model_run]
+        reaches["man"] = reaches["man"] * fudge_parameters["man"].values[model_run]
 
         diversions = pd.read_csv(base_path.parent.parent / "input" / "sfr_diversions.csv", sep=";")
         diversions.iloc[:, 0] = diversions.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
@@ -418,7 +409,7 @@ class ModFlowSimulation:
             
         # Recharge package (Neumann boundary condition i.e. second type)
         recharge = ds_bc["recharge"].values / 1000  # convert mm/day to m/day
-        rcha = flopy.mf6.ModflowGwfrcha(gwf, recharge=recharge, fixed_cell=True, pname="rcha")
+        rcha = flopy.mf6.ModflowGwfrcha(gwf, recharge=recharge * fudge_parameters["rch"].values[model_run], fixed_cell=True, pname="rcha")
 
         # streamflow routing package (SFR)
         ls_obs = [(str(key), str(modflow_config["sfr_obs"][key][0]), (int(modflow_config["sfr_obs"][key][1]),)) for key in modflow_config["sfr_obs"].keys()]

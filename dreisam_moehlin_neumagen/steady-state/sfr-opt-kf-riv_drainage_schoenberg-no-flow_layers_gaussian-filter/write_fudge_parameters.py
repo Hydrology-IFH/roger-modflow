@@ -10,33 +10,33 @@ def main(nsamples):
     base_path = Path(__file__).parent
 
     bounds = {"-8_1": [400, 600], 
-              "-7_1": [0.1, 100.0], 
+              "-7_1": [1.0, 7.5], 
               "-6_1": [0.9, 10], 
               "-5_1": [0.9, 10],
-              "-7_2": [0.1, 50.0], 
+              "-7_2": [1.0, 5.0], 
               "-5_2": [0.9, 10], 
               "-4_2": [0.5, 2.5],
               "1-3_2": [0.1, 10.0], 
               "1.8-3_2": [0.1, 10.0], 
               "3-3_2": [0.1, 10.0],  
               "4-3_2": [0.1, 10.0],
-              "-7_3": [0.1, 25.0], 
+              "-7_3": [0.8, 3.0], 
               "-5_3": [0.5, 2.5], 
               "-4_3": [0.5, 2.5],
               "1-3_3": [0.1, 10.0], 
               "1.8-3_3": [0.1, 10.0], 
               "3-3_3": [0.1, 10.0],  
               "4-3_3": [0.1, 10.0],
-              "-7_4": [0.1, 5.0], 
+              "-7_4": [0.1, 1.2], 
               "-5_4": [0.5, 2.5], 
               "-4_4": [0.5, 2.5],
               "1.8-3_4": [0.5, 2.5],
-              "kf_riv": [1.0, 10.0],
+              "kf_riv": [1.0, 1.2],
               "rhkp": [0.01, 100.0],
-              "rhkf": [0.01, 100.0],
+              "rhkf": [0.01, 50.0],
               "man": [0.9, 1.1],
               "rch": [0.9, 1.1],
-              "offset": [0, 2.0],
+              "offset": [0., 2.0],
     }
 
     nrows = nsamples
@@ -55,28 +55,27 @@ def main(nsamples):
 
     df_params["offset"] = 0.
     df_params.iloc[:34, :] = 1.
-    df_params.loc[:33, "kf_riv"] = 1.0
-    df_params.loc[:33, "rhkp"] = 0.1
-    df_params.loc[:33, "rhkf"] = 1000.
-    df_params.loc[:33, "man"] = 1.
+    df_params.loc[:33, "kf_riv"] = 1.1
+    df_params.loc[:33, "rhkp"] = 75.
+    df_params.loc[:33, "rhkf"] = 40.
+    df_params.loc[:33, "man"] = 1.0
 
+    xx = 0.6
     df_params.loc[:33, "-8_1"] = 500.
-    df_params.loc[:33, "-7_1"] = 30.0
-    df_params.loc[:33, "-7_2"] = 25.0
-    df_params.loc[:33, "-7_3"] = 12.0
-    df_params.loc[:33, "-7_4"] = 0.8
+    df_params.loc[:33, "-7_1"] = 2.5 * xx
+    df_params.loc[:33, "-7_2"] = 2.0 * xx
+    df_params.loc[:33, "-7_3"] = 1.5 * xx
+    df_params.loc[:33, "-7_4"] = 0.875 * xx
 
-    # df_params.loc[:33, "1-3_2"] = 1.0
-    df_params.loc[:33, "1.8-3_2"] = 1.0 
-    df_params.loc[:33, "3-3_2"] = 1.0 
-    df_params.loc[:33, "4-3_2"] = 1.0
-    # df_params.loc[:33, "1-3_3"] = 1.0
-    df_params.loc[:33, "1.8-3_3"] = 1.0
-    df_params.loc[:33, "3-3_3"] = 1.0
-    # df_params.loc[:33, "4-3_3"] = 1.0
+    df_params.loc[:33, "1.8-3_2"] = 0.3 
+    df_params.loc[:33, "3-3_2"] = 5.0 
+    df_params.loc[:33, "4-3_2"] = 5.0
+    df_params.loc[:33, "1.8-3_3"] = 0.3
+    df_params.loc[:33, "3-3_3"] = 4.5
+    df_params.loc[:33, "4-3_3"] = 4.5
 
     df_params.loc[:33, "rch"] = 1.0
-    df_params.loc[:33, "offset"] = 0.0
+    df_params.loc[:33, "offset"] = 2.0
 
     df_params.loc[0, "rch"] = 1.25
     df_params.loc[1, "rch"] = 1.2

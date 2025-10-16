@@ -182,10 +182,10 @@ def main(model_run):
     hydraulic_conductivities_layer2[np.isnan(hydraulic_conductivities_layer2)] = 0
     hydraulic_conductivities_layer3[np.isnan(hydraulic_conductivities_layer3)] = 0
     hydraulic_conductivities_layer4[np.isnan(hydraulic_conductivities_layer4)] = 0
-    _hydraulic_conductivities_layer1 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [3., 3.], mode="constant")
-    _hydraulic_conductivities_layer2 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [3., 3.], mode="constant")
-    _hydraulic_conductivities_layer3 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [3., 3.], mode="constant")
-    _hydraulic_conductivities_layer4 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [3., 3.], mode="constant")
+    _hydraulic_conductivities_layer1 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [1.0, 1.0], mode="constant")
+    _hydraulic_conductivities_layer2 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.0, 1.0], mode="constant")
+    _hydraulic_conductivities_layer3 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.0, 1.0], mode="constant")
+    _hydraulic_conductivities_layer4 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.0, 1.0], mode="constant")
     cond1 = (hydraulic_conductivities_layer1_ < 10.0e-07)
     cond2 = (hydraulic_conductivities_layer2_ < 10.0e-07)
     cond3 = (hydraulic_conductivities_layer3_ < 10.0e-07)
@@ -278,10 +278,10 @@ def main(model_run):
     specific_yield_layer2[np.isnan(specific_yield_layer2)] = 0
     specific_yield_layer3[np.isnan(specific_yield_layer3)] = 0
     specific_yield_layer4[np.isnan(specific_yield_layer4)] = 0
-    _specific_yield_layer1 = sp.ndimage.gaussian_filter(specific_yield_layer1, [1.5, 1.5], mode="constant")
-    _specific_yield_layer2 = sp.ndimage.gaussian_filter(specific_yield_layer2, [1.5, 1.5], mode="constant")
-    _specific_yield_layer3 = sp.ndimage.gaussian_filter(specific_yield_layer3, [1.5, 1.5], mode="constant")
-    _specific_yield_layer4 = sp.ndimage.gaussian_filter(specific_yield_layer4, [1.5, 1.5], mode="constant")
+    _specific_yield_layer1 = sp.ndimage.gaussian_filter(specific_yield_layer1, [1.0, 1.0], mode="constant")
+    _specific_yield_layer2 = sp.ndimage.gaussian_filter(specific_yield_layer2, [1.0, 1.0], mode="constant")
+    _specific_yield_layer3 = sp.ndimage.gaussian_filter(specific_yield_layer3, [1.0, 1.0], mode="constant")
+    _specific_yield_layer4 = sp.ndimage.gaussian_filter(specific_yield_layer4, [1.0, 1.0], mode="constant")
     specific_yield_layer1[cond1] = _specific_yield_layer1[cond1]
     specific_yield_layer2[cond2] = _specific_yield_layer2[cond2]
     specific_yield_layer3[cond3] = _specific_yield_layer3[cond3]
@@ -309,11 +309,11 @@ def main(model_run):
     grid_extent = (ds_mf.lon.values[0] / 1000, ds_mf.lon.values[-1] / 1000, ds_mf.lat.values[-1] / 1000, ds_mf.lat.values[0] / 1000)
     fig, axes = plt.subplots(figsize=(4, 4))
     gw_heads_interpolated[~mask] = np.nan
-    plt.imshow(gw_heads_interpolated, cmap='terrain', aspect='equal')
+    plt.imshow(gw_heads_interpolated, cmap='terrain', aspect='equal', extent=grid_extent)
     plt.colorbar(label='[m]', shrink=0.5)
     plt.grid(zorder=0)
-    plt.xlabel('x-direction')
-    plt.ylabel('y-direction')
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
     plt.tight_layout()
     file = Path(__file__).parent / "figures" / "groundwater_heads_interpolated.png"
     fig.savefig(file, dpi=300)
@@ -321,11 +321,11 @@ def main(model_run):
 
     fig, axes = plt.subplots(figsize=(4, 4))
     gw_depth_interpolated = topography - gw_heads_interpolated
-    plt.imshow(gw_depth_interpolated, cmap='viridis', aspect='equal', vmin=0, vmax=50)
+    plt.imshow(gw_depth_interpolated, cmap='viridis', aspect='equal', vmin=0, vmax=20, extent=grid_extent)
     plt.colorbar(label='[m]', shrink=0.5)
     plt.grid(zorder=0)
-    plt.xlabel('x-direction')
-    plt.ylabel('y-direction')
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
     plt.tight_layout()
     file = Path(__file__).parent / "figures" / "groundwater_depths_interpolated.png"
     fig.savefig(file, dpi=300)
@@ -624,7 +624,7 @@ def main(model_run):
 
         fig, axes = plt.subplots(figsize=(4, 4))
         flow_residuals = ds_mf['flow_residual'].isel(Time=0, layer=layer).values
-        mask1 = (flow_residuals <= 10) & (flow_residuals >= -10)
+        mask1 = (flow_residuals <= 1) & (flow_residuals >= -1)
         flow_residuals[mask1] = np.nan
         minmax = np.nanmax(np.abs(flow_residuals))
         plt.imshow(flow_residuals, extent=grid_extent, cmap='PuOr', aspect='equal', vmin=-minmax, vmax=minmax)

@@ -92,11 +92,7 @@ class ModFlowSimulation:
         gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file, save_flows=True, newtonoptions="NEWTON")
 
         # Create the Flopy iterative model solver (ims) Package object
-        ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="all",
-                                                 no_ptcrecord="NO_PTC_ALL",
-                                                 outer_maximum=50, inner_maximum=200,
-                                                 outer_dvclose=0.1, inner_dvclose=0.1,
-                                                 linear_acceleration="BICGSTAB")
+        ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="all", complexity="COMPLEX", no_ptcrecord="NO_PTC_ALL")
         
         # Now that the overall simulation is set up, we can focus on building the groundwater flow model.  The groundwater flow model will be built by adding packages to it that describe the model characteristics.
         #
@@ -139,11 +135,10 @@ class ModFlowSimulation:
         )
 
         # Create the initial conditions package
-        initial_conditions_layer1 = (topography - elevation_bottom_layer1) * 0.75 + elevation_bottom_layer1
-        initial_conditions_layer2 = (elevation_bottom_layer1 - elevation_bottom_layer2) * 0.75 + elevation_bottom_layer2
-        initial_conditions_layer3 = (elevation_bottom_layer2 - elevation_bottom_layer3) * 0.75 + elevation_bottom_layer3
-        initial_conditions_layer4 = (elevation_bottom_layer3 - elevation_bottom_layer4) * 0.75 + elevation_bottom_layer4
-        initial_conditions_layers = [initial_conditions_layer1, initial_conditions_layer2, initial_conditions_layer3, initial_conditions_layer4]
+        # use interpolated groundwater heads from well observations as initial conditions
+        gw_heads_interpolated = ds_params["gw_heads_interpolated"].values - 1
+        gw_heads_interpolated[~mask] = np.nan
+        initial_conditions_layers = [gw_heads_interpolated, gw_heads_interpolated, gw_heads_interpolated, gw_heads_interpolated]
         ic = flopy.mf6.modflow.mfgwfic.ModflowGwfic(gwf, pname="ic", strt=initial_conditions_layers)
 
         # Create the node property flow package with hydraulic conducitivities
@@ -261,10 +256,10 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer2[np.isnan(hydraulic_conductivities_layer2)] = 0
         hydraulic_conductivities_layer3[np.isnan(hydraulic_conductivities_layer3)] = 0
         hydraulic_conductivities_layer4[np.isnan(hydraulic_conductivities_layer4)] = 0
-        _hydraulic_conductivities_layer1 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [3., 3.], mode="constant")
-        _hydraulic_conductivities_layer2 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [3., 3.], mode="constant")
-        _hydraulic_conductivities_layer3 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [3., 3.], mode="constant")
-        _hydraulic_conductivities_layer4 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [3., 3.], mode="constant")
+        _hydraulic_conductivities_layer1 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [1.0, 1.0], mode="constant")
+        _hydraulic_conductivities_layer2 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.0, 1.0], mode="constant")
+        _hydraulic_conductivities_layer3 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.0, 1.0], mode="constant")
+        _hydraulic_conductivities_layer4 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.0, 1.0], mode="constant")
         cond1 = (hydraulic_conductivities_layer1_ < 10.0e-07)
         cond2 = (hydraulic_conductivities_layer2_ < 10.0e-07)
         cond3 = (hydraulic_conductivities_layer3_ < 10.0e-07)
@@ -334,8 +329,6 @@ class ModFlowSimulation:
         cond = (reaches["kf"] < 10e-6)
         reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkf"].values[model_run]
         reaches["man"] = reaches["man"] * fudge_parameters["man"].values[model_run]
-        # cond = (reaches["rhk"] > 1)
-        # reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * 1.0
 
         diversions = pd.read_csv(base_path.parent / "input" / "sfr_diversions.csv", sep=";")
         diversions.iloc[:, 0] = diversions.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
@@ -408,10 +401,10 @@ class ModFlowSimulation:
         specific_yield_layer2[np.isnan(specific_yield_layer2)] = 0
         specific_yield_layer3[np.isnan(specific_yield_layer3)] = 0
         specific_yield_layer4[np.isnan(specific_yield_layer4)] = 0
-        _specific_yield_layer1 = scipy.ndimage.gaussian_filter(specific_yield_layer1, [3., 3.], mode="constant")
-        _specific_yield_layer2 = scipy.ndimage.gaussian_filter(specific_yield_layer2, [3., 3.], mode="constant")
-        _specific_yield_layer3 = scipy.ndimage.gaussian_filter(specific_yield_layer3, [3., 3.], mode="constant")
-        _specific_yield_layer4 = scipy.ndimage.gaussian_filter(specific_yield_layer4, [3., 3.], mode="constant")
+        _specific_yield_layer1 = scipy.ndimage.gaussian_filter(specific_yield_layer1, [1.0, 1.0], mode="constant")
+        _specific_yield_layer2 = scipy.ndimage.gaussian_filter(specific_yield_layer2, [1.0, 1.0], mode="constant")
+        _specific_yield_layer3 = scipy.ndimage.gaussian_filter(specific_yield_layer3, [1.0, 1.0], mode="constant")
+        _specific_yield_layer4 = scipy.ndimage.gaussian_filter(specific_yield_layer4, [1.0, 1.0], mode="constant")
         specific_yield_layer1[cond1] = _specific_yield_layer1[cond1]
         specific_yield_layer2[cond2] = _specific_yield_layer2[cond2]
         specific_yield_layer3[cond3] = _specific_yield_layer3[cond3]
@@ -470,7 +463,7 @@ class ModFlowSimulation:
             
         # Recharge package (Neumann boundary condition i.e. second type)
         recharge = ds_bc["recharge"].values / 1000  # convert mm/day to m/day
-        rcha = flopy.mf6.ModflowGwfrcha(gwf, recharge=recharge, fixed_cell=True, pname="rcha")
+        rcha = flopy.mf6.ModflowGwfrcha(gwf, recharge=recharge * fudge_parameters["rch"].values[model_run], fixed_cell=True, pname="rcha")
 
         # streamflow routing package (SFR)
         ls_obs = [(str(key), str(modflow_config["sfr_obs"][key][0]), (int(modflow_config["sfr_obs"][key][1]),)) for key in modflow_config["sfr_obs"].keys()]
@@ -618,7 +611,7 @@ class ModFlowSimulation:
 
         # limit the execution time of the numerical solver
         signal.signal(signal.SIGALRM, handler)
-        signal.alarm(90)  # Set the timeout duration to 60 seconds
+        signal.alarm(120)  # Set the timeout duration to 60 seconds
 
         converged = 0
         self.mf6.prepare_solve(1)
