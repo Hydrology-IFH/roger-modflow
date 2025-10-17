@@ -64,6 +64,8 @@ for j in range(10):
     lines.append(f"#SBATCH --error={script_name}_err.out\n")
     lines.append("#SBATCH --export=ALL\n")
     lines.append("\n")
+    lines.append(f"cd /pfs/data6/home/fr/fr_fr/fr_rs1092\n")
+    lines.append("\n")
     lines.append('module load devel/miniforge\n')
     lines.append("conda activate roger-modflow\n")
     lines.append("\n")
