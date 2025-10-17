@@ -29,8 +29,6 @@ for j in range(10):
     lines = []
     lines.append("#!/bin/bash\n")
     lines.append("\n")
-    lines.append('module load devel/miniforge\n')
-    lines.append("conda activate roger-modflow\n")
     lines.append(f"cd $TMPDIR/roger-modflow/dreisam_moehlin_neumagen/steady-state/{dir_name}/batch_{j}\n")
     lines.append("\n")
     lines.append("for i in {%s..%s}\n" % (start[j], end[j]))
@@ -65,6 +63,9 @@ for j in range(10):
     lines.append(f"#SBATCH --output={script_name}.out\n")
     lines.append(f"#SBATCH --error={script_name}_err.out\n")
     lines.append("#SBATCH --export=ALL\n")
+    lines.append("\n")
+    lines.append('module load devel/miniforge\n')
+    lines.append("conda activate roger-modflow\n")
     lines.append("\n")
     lines.append(f"cd /pfs/work9/workspace/scratch/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/steady-state/{dir_name}/batch_{j}\n")
     lines.append("\n")
