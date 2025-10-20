@@ -78,7 +78,7 @@ file = base_path_figs / "basin.png"
 fig.savefig(file, dpi=300)
 plt.close(fig)
 
-grid_extent = (ds_params.x.values[0] / 1000, ds_params.x.values[-1] / 1000, ds_params.y.values[-1] / 1000, ds_params.y.values[0] / 1000)
+grid_extent = (ds_params.x.values[0] / 1000, ds_params.x.values[-1] / 1000, ds_params.y.values[0] / 1000, ds_params.y.values[-1] / 1000)
 fig, axes = plt.subplots(figsize=(4, 4))
 topography[~mask] = np.nan
 plt.imshow(topography, extent=grid_extent, cmap='terrain', aspect='equal')
@@ -91,7 +91,7 @@ file = base_path_figs / "topography.png"
 fig.savefig(file, dpi=300)
 plt.close(fig)
 
-grid_extent = (ds_params.x.values[0] / 1000, ds_params.x.values[-1] / 1000, ds_params.y.values[-1] / 1000, ds_params.y.values[0] / 1000)
+grid_extent = (ds_params.x.values[0] / 1000, ds_params.x.values[-1] / 1000, ds_params.y.values[0] / 1000, ds_params.y.values[-1] / 1000)
 fig, axes = plt.subplots(figsize=(4, 4))
 topography[~mask] = np.nan
 plt.imshow(np.where(topography < 300, np.nan, topography), extent=grid_extent, cmap='terrain', aspect='equal')
@@ -104,13 +104,13 @@ file = base_path_figs / "topography_mountains.png"
 fig.savefig(file, dpi=300)
 plt.close(fig)
 
-grid_extent = (ds_params.x.values[0] / 1000, ds_params.x.values[-1] / 1000, ds_params.y.values[-1] / 1000, ds_params.y.values[0] / 1000)
+grid_extent = (ds_params.x.values[0] / 1000, ds_params.x.values[-1] / 1000, ds_params.y.values[0] / 1000, ds_params.y.values[-1] / 1000)
 fig, axes = plt.subplots(figsize=(4, 4))
 topography[~mask] = np.nan
-wells_y = groundwater_extraction["y-coordinate"].values
-wells_x = groundwater_extraction["x-coordinate"].values
+wells_y = groundwater_extraction["y-coordinate"].values / 1000
+wells_x = groundwater_extraction["x-coordinate"].values / 1000
 plt.scatter(wells_x, wells_y, marker='x', s=5, c='black')
-plt.imshow(topography, cmap='terrain', aspect='equal')
+plt.imshow(topography, cmap='terrain', aspect='equal', extent=grid_extent)
 plt.colorbar(label='[m a.s.l.]', shrink=0.5)
 plt.grid(zorder=0)
 plt.xlabel('x-coordinate [km]')
@@ -141,7 +141,7 @@ file = base_path_figs / "topography_and_wells_observations.png"
 fig.savefig(file, dpi=300)
 plt.close(fig)
 
-grid_extent = (ds_params.x.values[0] / 1000, ds_params.x.values[-1] / 1000, ds_params.y.values[-1] / 1000, ds_params.y.values[0] / 1000)
+grid_extent = (ds_params.x.values[0] / 1000, ds_params.x.values[-1] / 1000, ds_params.y.values[0] / 1000, ds_params.y.values[-1] / 1000)
 fig, axes = plt.subplots(figsize=(4, 4))
 topography[~mask] = np.nan
 topography_schoenberg = topography.copy()

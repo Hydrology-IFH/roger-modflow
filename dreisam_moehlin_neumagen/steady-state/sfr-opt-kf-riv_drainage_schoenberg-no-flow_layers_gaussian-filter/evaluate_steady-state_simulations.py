@@ -6,7 +6,8 @@ import pandas as pd
 import os
 import yaml
 
-obs_stations_sfr = ["FALKENSTEIG_STAGE", "EBNET_STAGE", "OBERAMBRINGEN_STAGE", "UNTERMUENSTERTAL_STAGE"]
+obs_stations_sfr = ["FALKENSTEIG_STAGE", "EBNET_STAGE", "OBERAMBRINGEN_STAGE", "UNTERMUENSTERTAL_STAGE", "WIESNECK_STAGE", "SANKTWILHELM_STAGE", "OBERRIED_STAGE", "ZASTLER_STAGE"]
+obs_flow_stage = ["FALKENSTEIG", "EBNET", "OBERAMBRINGEN", "UNTERMUENSTERTAL", "WIESNECK", "SANKTWILHELM", "OBERRIED", "ZASTLER"]
 
 base_path = Path(__file__).parent
 
@@ -129,8 +130,11 @@ for model_run in range(0, 10000):
             flow = (df_sfr_.loc[0, dict_obs_flow_id_inv[rno]] * (-1)) / 86400
             df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * water_depth / rwidth
 
+        df_sfr = df_sfr.loc[obs_flow_stage, :]
         sim_water_depth = df_sfr["water_depth"].values
         obs_water_depth = observed_streamflow["WDavg"].values
+        obs_streamflow = observed_streamflow["Qavg"].values
+        sim_streamflow = df_sfr["flow"].values
 
         df_params_metrics.loc[model_run, "MAE_sfr"] = np.mean(np.abs(sim_water_depth - obs_water_depth))
         df_params_metrics.loc[model_run, "ME_sfr"] = np.mean(sim_water_depth - obs_water_depth)
@@ -230,10 +234,10 @@ for model_run in range(0, 10000):
         sim_water_depth = df_sfr["water_depth"].values
         obs_water_depth = observed_streamflow["WDavg"].values
 
-        df_params_metrics.loc[model_run, "MAE_sfr"] = np.mean(np.abs(sim_water_depth - obs_water_depth))
-        df_params_metrics.loc[model_run, "ME_sfr"] = np.mean(sim_water_depth - obs_water_depth)
-        df_params_metrics.loc[model_run, "RBIAS_sfr"] = np.mean((sim_water_depth - obs_water_depth) / obs_water_depth)
-        df_params_metrics.loc[model_run, "RABIAS_sfr"] = np.mean(np.abs((sim_water_depth - obs_water_depth) / obs_water_depth))
+        df_params_metrics.loc[model_run, "MAE_sfr"] = np.nanmean(np.abs(sim_water_depth - obs_water_depth))
+        df_params_metrics.loc[model_run, "ME_sfr"] = np.nanmean(sim_water_depth - obs_water_depth)
+        df_params_metrics.loc[model_run, "RBIAS_sfr"] = np.nanmean((sim_water_depth - obs_water_depth) / obs_water_depth)
+        df_params_metrics.loc[model_run, "RABIAS_sfr"] = np.nanmean(np.abs((sim_water_depth - obs_water_depth) / obs_water_depth))
         df_params_metrics.loc[model_run, "E_multi"] = ((1 - df_params_metrics.loc[model_run, "r_rank"]) + ((41/45) * (df_params_metrics.loc[model_run, "RABIAS_sfr"]) + (4/45) * (df_params_metrics.loc[model_run, "RBIAS_sfr"]))) / 2
 
 # save the metrics

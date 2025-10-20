@@ -238,12 +238,6 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer2[mask432] = hydraulic_conductivities_layer2[mask432] * fudge_parameters["4-3_2"].values[model_run]
         hydraulic_conductivities_layer3[mask433] = hydraulic_conductivities_layer3[mask433] * fudge_parameters["4-3_3"].values[model_run]
 
-        # hydraulic_conductivities_layer2[mask232 & mask_custom_hausen1] = hydraulic_conductivities_layer2[mask232 & mask_custom_hausen1] * 3
-        # hydraulic_conductivities_layer3[mask233 & mask_custom_hausen1] = hydraulic_conductivities_layer2[mask233 & mask_custom_hausen1] * 2
-
-        hydraulic_conductivities_layer2[mask72 & mask_custom_hausen2] = hydraulic_conductivities_layer2[mask72 & mask_custom_hausen2] * 5
-        hydraulic_conductivities_layer3[mask73 & mask_custom_hausen2] = hydraulic_conductivities_layer3[mask73 & mask_custom_hausen2] * 2.5
-
         # prepare SFR data
         reaches = pd.read_csv(base_path.parent.parent / "input" / "sfr_packagedata_modified.csv", sep=";")
         reaches.iloc[:, 0] = reaches.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
@@ -264,13 +258,19 @@ class ModFlowSimulation:
         reaches.iloc[:, 16] = reaches.iloc[:, 16].astype(int)
 
         # adjust hydraulic conductivities
+        # hydraulic_conductivities_layer2[mask232 & mask_custom_hausen1] = hydraulic_conductivities_layer2[mask232 & mask_custom_hausen1] * fudge_parameters["hausen1_re"].values[model_run]
+        # hydraulic_conductivities_layer3[mask233 & mask_custom_hausen1] = hydraulic_conductivities_layer2[mask233 & mask_custom_hausen1] * fudge_parameters["hausen1_re"].values[model_run]
+
+        hydraulic_conductivities_layer2[mask72 & mask_custom_hausen2] = hydraulic_conductivities_layer2[mask72 & mask_custom_hausen2] * fudge_parameters["hausen2_re"].values[model_run]
+        hydraulic_conductivities_layer3[mask73 & mask_custom_hausen2] = hydraulic_conductivities_layer3[mask73 & mask_custom_hausen2] * fudge_parameters["hausen2_re"].values[model_run]
+
         gw_depth = topography - ds_mf['head'].isel(Time=0, layer=3).values
         cond2 = (gw_depth < 0) & (hydraulic_conductivities_layer2_ <= 10.0e-07)
         cond3 = (gw_depth < 0) & (hydraulic_conductivities_layer3_ <= 10.0e-07)
         cond4 = (gw_depth < 0) & (hydraulic_conductivities_layer4_ <= 10.0e-07)
-        hydraulic_conductivities_layer2[cond2] = hydraulic_conductivities_layer2[cond2] * 5
-        hydraulic_conductivities_layer3[cond3] = hydraulic_conductivities_layer3[cond3] * 3.5
-        hydraulic_conductivities_layer4[cond4] = hydraulic_conductivities_layer4[cond4] * 2
+        hydraulic_conductivities_layer2[cond2] = hydraulic_conductivities_layer2[cond2] * fudge_parameters["-7_2_re"].values[model_run]
+        hydraulic_conductivities_layer3[cond3] = hydraulic_conductivities_layer3[cond3] * fudge_parameters["-7_3_re"].values[model_run]
+        hydraulic_conductivities_layer4[cond4] = hydraulic_conductivities_layer4[cond4] * fudge_parameters["-7_4_re"].values[model_run]
 
         # smooth transition between fissured and porous aquifers
         hydraulic_conductivities_layer1[np.isnan(hydraulic_conductivities_layer1)] = 0

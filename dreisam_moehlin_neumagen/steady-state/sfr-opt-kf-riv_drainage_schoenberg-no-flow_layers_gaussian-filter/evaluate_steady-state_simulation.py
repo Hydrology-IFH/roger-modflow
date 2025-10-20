@@ -91,7 +91,6 @@ def main(model_run):
     hydraulic_conductivities_layer3 = ds_params['kf'].isel(layer=2).values
     hydraulic_conductivities_layer4 = ds_params['kf'].isel(layer=3).values
 
-
     hydraulic_conductivities_layer1_ = ds_params['kf'].isel(layer=0).values / 86400
     hydraulic_conductivities_layer2_ = ds_params['kf'].isel(layer=1).values / 86400
     hydraulic_conductivities_layer3_ = ds_params['kf'].isel(layer=2).values / 86400
