@@ -68,24 +68,31 @@ def main(model_run):
     ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
 
     # contours of groundwater heads (Cerdia wells)
-    # x1 = 286
-    # x2 = 379
-    # y1 = 39
-    # y2 = 136 
-
     x1 = 334
     x2 = 376
     y1 = 86
     y2 = 136 
 
-    # x1 = 334
-    # x2 = 334 + 25
-    # y1 = 136 - 25
-    # y2 = 136
-
     grid_extent = (ds_mf.lon.values[x1] / 1000, ds_mf.lon.values[x2] / 1000, ds_mf.lat.values[y2] / 1000, ds_mf.lat.values[y1] / 1000)
 
-    levels = [1, 2, 3, 4, 5, 10, 12, 14, 16, 18]
+    levels_depth = [1, 2, 3, 4, 5, 10, 12, 14, 16, 18]
+
+    fig, axes = plt.subplots(figsize=(4, 4))
+    y = ds_mf.lat.values[y1:y2] / 1000
+    x = ds_mf.lon.values[x1:x2] / 1000
+    X, Y = np.meshgrid(x, y)
+    Z = topography[y1:y2, x1:x2]
+    CS = axes.contour(X, Y, Z, colors='black')
+    axes.clabel(CS, inline=True, fontsize=8, colors='black')
+    axes.scatter(wells_x, wells_y, marker='^', s=10, c='magenta')
+    cb = axes.imshow(Z, extent=grid_extent, cmap='Blues', alpha=1)
+    plt.colorbar(cb, label='Topography [m a.s.l.]', shrink=0.72)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / f"topography_cerdia.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
 
     for layer in range(4):
         fig, axes = plt.subplots(figsize=(4, 4))
@@ -93,14 +100,17 @@ def main(model_run):
         x = ds_mf.lon.values[x1:x2] / 1000
         X, Y = np.meshgrid(x, y)
         Z = ds_mf['head'].isel(Time=0, layer=layer).values[y1:y2, x1:x2]
-        CS = axes.contour(X, Y, Z, colors='black')
+        zmin = int(np.nanmin(Z))
+        zmax = int(np.nanmax(Z))
+        levels_head = list(range(zmin, zmax + 1, 1))
+        CS = axes.contour(X, Y, Z, levels_head, colors='black')
         axes.clabel(CS, inline=True, fontsize=8, colors='black')
-        axes.scatter(wells_x, wells_y, marker='^', s=10, c='green')
+        axes.scatter(wells_x, wells_y, marker='^', s=10, c='magenta')
         # axes.imshow(topography[y1:y2, x1:x2], extent=grid_extent, cmap='terrain', alpha=0.25, vmin=190, vmax=450)
-        axes.imshow(Z, extent=grid_extent, cmap='Blues', alpha=0.75)
+        cb = axes.imshow(Z, extent=grid_extent, cmap='Blues', alpha=0.75)
+        plt.colorbar(cb, label='Groundwater head [m a.s.l.]', shrink=0.72)
         plt.xlabel('x-coordinate [km]')
         plt.ylabel('y-coordinate [km]')
-        plt.title(f"Groundwater head of layer {layer + 1} [m a.s.l.]", fontsize=8)
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"gw_head_steady_state_layer{i}_contour_{model_run}_cerdia.png"
@@ -115,11 +125,11 @@ def main(model_run):
         gw_depth[gw_depth < 0] = 0
         CS = axes.contour(X, Y, gw_depth, colors='black')
         axes.clabel(CS, inline=True, fontsize=8, colors='black')
-        axes.scatter(wells_x, wells_y, marker='^', s=10, c='green')
-        axes.imshow(gw_depth, extent=grid_extent, cmap='viridis', alpha=1.0, vmin=0, vmax=20)
+        axes.scatter(wells_x, wells_y, marker='^', s=10, c='magenta')
+        cb = axes.imshow(gw_depth, extent=grid_extent, cmap='viridis', alpha=1.0, vmin=0, vmax=20)
+        plt.colorbar(cb, label='Groundwater depth [m]', shrink=0.75)
         plt.xlabel('x-coordinate [km]')
         plt.ylabel('y-coordinate [km]')
-        plt.title(f"Groundwater depth of layer {layer + 1} [m a.s.l.]", fontsize=8)
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"gw_depth_steady_state_layer{i}_contour_{model_run}_cerdia.png"
@@ -134,19 +144,39 @@ def main(model_run):
 
     grid_extent = (ds_mf.lon.values[x1] / 1000, ds_mf.lon.values[x2] / 1000, ds_mf.lat.values[y2] / 1000, ds_mf.lat.values[y1] / 1000)
 
+    fig, axes = plt.subplots(figsize=(4, 4))
+    y = ds_mf.lat.values[y1:y2] / 1000
+    x = ds_mf.lon.values[x1:x2] / 1000
+    X, Y = np.meshgrid(x, y)
+    Z = topography[y1:y2, x1:x2]
+    CS = axes.contour(X, Y, Z, colors='black')
+    axes.clabel(CS, inline=True, fontsize=8, colors='black')
+    axes.scatter(wells_x, wells_y, marker='^', s=10, c='magenta')
+    cb = axes.imshow(Z, extent=grid_extent, cmap='Blues', alpha=1)
+    plt.colorbar(cb, label='Topography [m a.s.l.]', shrink=0.72)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / f"topography_bn-ebnet.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
     for layer in range(4):
-        fig, axes = plt.subplots(figsize=(4, 4))
+        fig, axes = plt.subplots(figsize=(6, 4))
         y = ds_mf.lat.values[y1:y2] / 1000
         x = ds_mf.lon.values[x1:x2] / 1000
         X, Y = np.meshgrid(x, y)
         Z = ds_mf['head'].isel(Time=0, layer=layer).values[y1:y2, x1:x2]
-        CS = axes.contour(X, Y, Z, colors='black')
+        zmin = int(np.nanmin(Z))
+        zmax = int(np.nanmax(Z))
+        levels_head = list(range(zmin, zmax + 1, 1))
+        CS = axes.contour(X, Y, Z, levels_head, colors='black')
         axes.clabel(CS, inline=True, fontsize=8, colors='black')
-        axes.scatter(wells_x, wells_y, marker='^', s=10, c='green')
-        axes.imshow(Z, extent=grid_extent, cmap='Blues', alpha=0.75)
+        axes.scatter(wells_x, wells_y, marker='^', s=10, c='magenta')
+        cb = axes.imshow(Z, extent=grid_extent, cmap='Blues', alpha=0.75)
+        plt.colorbar(cb, label='Groundwater head [m a.s.l.]', shrink=0.72)
         plt.xlabel('x-coordinate [km]')
         plt.ylabel('y-coordinate [km]')
-        plt.title(f"Groundwater head of layer {layer + 1} [m a.s.l.]", fontsize=8)
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"gw_head_steady_state_layer{i}_contour_{model_run}_bn-ebnet.png"
@@ -161,11 +191,11 @@ def main(model_run):
         gw_depth[gw_depth < 0] = 0
         CS = axes.contour(X, Y, gw_depth, colors='black')
         axes.clabel(CS, inline=True, fontsize=8, colors='black')
-        axes.scatter(wells_x, wells_y, marker='^', s=10, c='green')
-        axes.imshow(gw_depth, extent=grid_extent, cmap='viridis', alpha=1.0, vmin=0, vmax=20)
+        axes.scatter(wells_x, wells_y, marker='^', s=10, c='magenta')
+        cb = axes.imshow(gw_depth, extent=grid_extent, cmap='viridis', alpha=1.0, vmin=0, vmax=20)
+        plt.colorbar(cb, label='Groundwater depth [m]', shrink=0.75)
         plt.xlabel('x-coordinate [km]')
         plt.ylabel('y-coordinate [km]')
-        plt.title(f"Groundwater depth of layer {layer + 1} [m a.s.l.]", fontsize=8)
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"gw_depth_steady_state_layer{i}_contour_{model_run}_bn-ebnet.png"
@@ -180,19 +210,39 @@ def main(model_run):
 
     grid_extent = (ds_mf.lon.values[x1] / 1000, ds_mf.lon.values[x2] / 1000, ds_mf.lat.values[y2] / 1000, ds_mf.lat.values[y1] / 1000)
 
+    fig, axes = plt.subplots(figsize=(4, 4))
+    y = ds_mf.lat.values[y1:y2] / 1000
+    x = ds_mf.lon.values[x1:x2] / 1000
+    X, Y = np.meshgrid(x, y)
+    Z = topography[y1:y2, x1:x2]
+    # CS = axes.contour(X, Y, Z, colors='black')
+    # axes.clabel(CS, inline=True, fontsize=8, colors='black')
+    axes.scatter(wells_x, wells_y, marker='^', s=10, c='magenta')
+    cb = axes.imshow(Z, extent=grid_extent, cmap='Blues', alpha=1)
+    plt.colorbar(cb, label='Topography [m a.s.l.]', shrink=0.72)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / f"topography_bn-hausen.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
     for layer in range(4):
         fig, axes = plt.subplots(figsize=(4, 4))
         y = ds_mf.lat.values[y1:y2] / 1000
         x = ds_mf.lon.values[x1:x2] / 1000
         X, Y = np.meshgrid(x, y)
         Z = ds_mf['head'].isel(Time=0, layer=layer).values[y1:y2, x1:x2]
-        CS = axes.contour(X, Y, Z, colors='black')
-        axes.clabel(CS, inline=True, fontsize=8, colors='black')
-        axes.scatter(wells_x, wells_y, marker='^', s=10, c='green')
-        axes.imshow(Z, extent=grid_extent, cmap='Blues', alpha=0.75)
+        zmin = int(np.nanmin(Z))
+        zmax = int(np.nanmax(Z))
+        levels_head = list(np.arange(zmin, zmax + 1, 0.5))
+        # CS = axes.contour(X, Y, Z, levels_head, colors='black')
+        # axes.clabel(CS, inline=True, fontsize=8, colors='black')
+        axes.scatter(wells_x, wells_y, marker='^', s=10, c='magenta')
+        cb = axes.imshow(Z, extent=grid_extent, cmap='Blues', alpha=1, vmin=193, vmax=198)
+        plt.colorbar(cb, label='Groundwater head [m a.s.l.]', shrink=0.72)
         plt.xlabel('x-coordinate [km]')
         plt.ylabel('y-coordinate [km]')
-        plt.title(f"Groundwater depth of layer {layer + 1} [m a.s.l.]", fontsize=8)
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"gw_head_steady_state_layer{i}_contour_{model_run}_bn-hausen.png"
@@ -207,11 +257,11 @@ def main(model_run):
         gw_depth[gw_depth < 0] = 0
         CS = axes.contour(X, Y, gw_depth, colors='black')
         axes.clabel(CS, inline=True, fontsize=8, colors='black')
-        axes.scatter(wells_x, wells_y, marker='^', s=10, c='green')
-        axes.imshow(gw_depth, extent=grid_extent, cmap='viridis', alpha=1.0, vmin=0, vmax=20)
+        axes.scatter(wells_x, wells_y, marker='^', s=10, c='magenta')
+        cb = axes.imshow(gw_depth, extent=grid_extent, cmap='viridis', alpha=1.0, vmin=0, vmax=20)
+        plt.colorbar(cb, label='Groundwater depth [m]', shrink=0.75)
         plt.xlabel('x-coordinate [km]')
         plt.ylabel('y-coordinate [km]')
-        plt.title(f"Groundwater depth of layer {layer + 1} [m a.s.l.]", fontsize=8)
         plt.tight_layout()
         i = layer + 1
         file = base_path_figs / f"gw_depth_steady_state_layer{i}_contour_{model_run}_bn-hausen.png"

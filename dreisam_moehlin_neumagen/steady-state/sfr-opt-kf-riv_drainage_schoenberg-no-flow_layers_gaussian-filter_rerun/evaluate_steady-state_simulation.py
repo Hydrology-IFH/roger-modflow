@@ -46,7 +46,7 @@ def main(model_run):
     output_file = base_path / "output" / f"modflow_output_run_{model_run}.nc"
     ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
     groundwater_heads = ds_mf["head"].values[0, 1, ...]
-    gw_sw = np.nanmean(ds_mf['gw_sw'].isel(Time=0).values * (-1), axis=0) / 86400
+    gw_sw = np.nanmean(ds_mf['gw_sw'].isel(Time=0).values, axis=0) / 86400
 
     # load the SFR output file
     output_file = base_path / "output" / f"dmn_run_{model_run}_sfr.obs.csv"
@@ -64,6 +64,8 @@ def main(model_run):
     # set Schoenberg to inactive
     mask_schoenberg = (ds_params['mask_schoenberg'].values == 1)
     mask = np.where(mask_schoenberg, False, mask)
+    mask_custom_hausen1 = (ds_params["mask_kf_18e_3_lower_moehlin"].values == 1)
+    mask_custom_hausen2 = (ds_params["mask_kf_2e_7_lower_moehlin_and_dreisam"].values == 1)
 
     elevation_bottom_layer1 = ds_params['elevations'].isel(z=1).values
     elevation_bottom_layer2 = ds_params['elevations'].isel(z=2).values
@@ -177,15 +179,49 @@ def main(model_run):
     hydraulic_conductivities_layer2[mask432] = hydraulic_conductivities_layer2[mask432] * fudge_parameters['4-3_2'].values[model_run]
     hydraulic_conductivities_layer3[mask433] = hydraulic_conductivities_layer3[mask433] * fudge_parameters['4-3_3'].values[model_run]
 
+    # adjust hydraulic conductivities
+    hydraulic_conductivities_layer2[mask232 & mask_custom_hausen1] = hydraulic_conductivities_layer2[mask232 & mask_custom_hausen1] * fudge_parameters["hausen1_re"].values[model_run]
+    hydraulic_conductivities_layer3[mask233 & mask_custom_hausen1] = hydraulic_conductivities_layer2[mask233 & mask_custom_hausen1] * fudge_parameters["hausen1_re"].values[model_run]
+
+    hydraulic_conductivities_layer2[mask72 & mask_custom_hausen2] = hydraulic_conductivities_layer2[mask72 & mask_custom_hausen2] * fudge_parameters["hausen2_re"].values[model_run]
+    hydraulic_conductivities_layer3[mask73 & mask_custom_hausen2] = hydraulic_conductivities_layer3[mask73 & mask_custom_hausen2] * fudge_parameters["hausen2_re"].values[model_run]
+
+    gw_depth_layer2 = topography - ds_mf['head'].isel(Time=0, layer=1).values
+    gw_depth_layer3 = topography - ds_mf['head'].isel(Time=0, layer=2).values
+    gw_depth_layer4 = topography - ds_mf['head'].isel(Time=0, layer=3).values
+
+    cond2 = (gw_depth_layer2 >= 0)
+    cond3 = (gw_depth_layer3 >= 0)
+    cond4 = (gw_depth_layer4 >= 0)
+
+    gw_depth_layer2[cond2] = 0
+    gw_depth_layer3[cond3] = 0
+    gw_depth_layer4[cond4] = 0
+
+    gw_depth_min_layer2 = np.nanmin(gw_depth_layer2)
+    gw_depth_min_layer3 = np.nanmin(gw_depth_layer3)
+    gw_depth_min_layer4 = np.nanmin(gw_depth_layer4)
+
+    scale2 = np.abs(gw_depth_layer2) / np.abs(gw_depth_min_layer2)
+    scale3 = np.abs(gw_depth_layer3) / np.abs(gw_depth_min_layer3)
+    scale4 = np.abs(gw_depth_layer4) / np.abs(gw_depth_min_layer4)
+
+    cond2 = (gw_depth_layer2 < 0) & (hydraulic_conductivities_layer2_ <= 10.0e-07)
+    cond3 = (gw_depth_layer3 < 0) & (hydraulic_conductivities_layer3_ <= 10.0e-07)
+    cond4 = (gw_depth_layer4 < 0) & (hydraulic_conductivities_layer4_ <= 10.0e-07)
+    hydraulic_conductivities_layer2[cond2] = hydraulic_conductivities_layer2[cond2] * (1 + (fudge_parameters["-7_2_re"].values[model_run] - 1) * scale2[cond2])
+    hydraulic_conductivities_layer3[cond3] = hydraulic_conductivities_layer3[cond3] * (1 + (fudge_parameters["-7_3_re"].values[model_run] - 1) * scale3[cond3])
+    hydraulic_conductivities_layer4[cond4] = hydraulic_conductivities_layer4[cond4] * (1 + (fudge_parameters["-7_4_re"].values[model_run] - 1) * scale4[cond4])
+
     # smooth transition between fissured and porous aquifers
     hydraulic_conductivities_layer1[np.isnan(hydraulic_conductivities_layer1)] = 0
     hydraulic_conductivities_layer2[np.isnan(hydraulic_conductivities_layer2)] = 0
     hydraulic_conductivities_layer3[np.isnan(hydraulic_conductivities_layer3)] = 0
     hydraulic_conductivities_layer4[np.isnan(hydraulic_conductivities_layer4)] = 0
-    _hydraulic_conductivities_layer1 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [1.0, 1.0], mode="constant")
-    _hydraulic_conductivities_layer2 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.0, 1.0], mode="constant")
-    _hydraulic_conductivities_layer3 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.0, 1.0], mode="constant")
-    _hydraulic_conductivities_layer4 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.0, 1.0], mode="constant")
+    _hydraulic_conductivities_layer1 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [1.5, 1.5], mode="constant")
+    _hydraulic_conductivities_layer2 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.5, 1.5], mode="constant")
+    _hydraulic_conductivities_layer3 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.5, 1.5], mode="constant")
+    _hydraulic_conductivities_layer4 = sp.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.5, 1.5], mode="constant")
     cond1 = (hydraulic_conductivities_layer1_ < 10.0e-07)
     cond2 = (hydraulic_conductivities_layer2_ < 10.0e-07)
     cond3 = (hydraulic_conductivities_layer3_ < 10.0e-07)

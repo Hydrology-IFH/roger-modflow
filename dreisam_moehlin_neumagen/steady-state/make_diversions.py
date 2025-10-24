@@ -88,6 +88,8 @@ for idx, row in gdf_reaches.iterrows():
 df_diversions = pd.DataFrame({"rno": div_rno, "iconr": div_iconr})
 df_diversions["idv"] = 1
 df_diversions["cprior"] = "FRACTION"
+# remove duplicates and keep second occurrence
+df_diversions = df_diversions.drop_duplicates(subset=["rno"], keep="last")
 # reorder columns
 df_diversions = df_diversions[["rno", "idv", "iconr", "cprior"]]
 file = base_path / "input" / "sfr_diversions.csv"

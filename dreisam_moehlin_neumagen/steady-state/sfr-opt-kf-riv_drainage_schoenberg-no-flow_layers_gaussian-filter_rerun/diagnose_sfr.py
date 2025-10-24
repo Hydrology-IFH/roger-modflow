@@ -12,10 +12,12 @@ import yaml
 @click.command("main", short_help="Evaluate the steady-state simulation")
 def main(model_run):
     base_path = Path(__file__).parent
+    base_path_figs = base_path / "figures"
 
     # load MODFLOW parameters
     path = Path(__file__).parent.parent / "input" / "parameters_modflow.nc"
     ds_params = xr.open_dataset(path, engine="h5netcdf")
+    grid_extent = (ds_params.x.values[0] / 1000, ds_params.x.values[-1] / 1000, ds_params.y.values[0] / 1000, ds_params.y.values[-1] / 1000)
 
     file_config = base_path.parent / "config.yml"
     with open(file_config, "r") as file:
@@ -55,13 +57,6 @@ def main(model_run):
     obs_depths = topography[rows, cols].flatten() - observed_groundwater_heads.iloc[:, -1].values  # observed groundwater depths
     obs = observed_groundwater_heads.iloc[:, -1].values
 
-    dict_obs_stage_id = modflow_config["dict_obs_stage_rnos"]
-    dict_obs_flow_id = modflow_config["dict_obs_flow_rnos"]
-    sfr_obs_points = [key.split('_')[0] for key in dict_obs_stage_id.keys()]
-
-    dict_obs_stage_id_inv = {v: k for k, v in dict_obs_stage_id.items()}
-    dict_obs_flow_id_inv = {v: k for k, v in dict_obs_flow_id.items()}
-
     # load the SFR reaches
     reaches = pd.read_csv(base_path.parent / 'input' / 'sfr_packagedata_modified.csv', sep=';')
     
@@ -69,46 +64,283 @@ def main(model_run):
     output_file = base_path / "output" / f"modflow_output_run_{model_run}.nc"
     ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
     groundwater_heads = ds_mf["head"].values[0, 1, ...]
-    gw_sw = np.nanmean(ds_mf['gw_sw'].isel(Time=0).values * (-1), axis=0) / 86400
+    gw_sw = np.nanmean(ds_mf['gw_sw'].isel(Time=0).values, axis=0) / 86400
 
-    # load the SFR output file
-    output_file = base_path / "output" / f"dmn_run_{model_run}_sfr.obs.csv"
-    df_sfr_ = pd.read_csv(output_file, sep=",")
+    rwid = ds_mf["sfr_width"].values
+    man = ds_mf["sfr_manning_coefficient"].values
+    rhk = ds_mf["sfr_hydraulic_conductivity"].values
+    rgrd = ds_mf["sfr_gradient"].values
+    sfr_head = ds_mf["sfr_head"].values
+    sfr_depth = ds_mf["sfr_depth"].values
+    sfr_flow = ds_mf["sfr_flow"].values
 
-    rwid = np.nan * np.ones(topography.shape)
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(rwid, extent=grid_extent, cmap='Blues', aspect='equal', vmin=1, vmax=15)
+    plt.colorbar(label='reach width [m]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / "reach_width.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
 
-    df_sfr = pd.DataFrame(index=sfr_obs_points, columns=["rno", "layer", "x", "y", "rlen", "rwid", "rtp", "rgrd", "man", "rhk", "water_head", "water_depth", "flow", "kf", "topo", "gw_head", "gw-sw", "sw-gw_flux"])
-    df_sfr["rno"] = [key for key in dict_obs_stage_id.values()]
-    df_sfr["rno"] = df_sfr["rno"] + 1
-    for rno in df_sfr["rno"].values:
-        z = reaches.loc[reaches["rno"] == rno, "k"].values[0] - 1
-        y = reaches.loc[reaches["rno"] == rno, "i"].values[0] - 1
-        x = reaches.loc[reaches["rno"] == rno, "j"].values[0] - 1
-        kf = ds_params["kf"].isel(layer=1).values[y, x] / 86400
-        df_sfr.loc[df_sfr["rno"] == rno, "layer"] = reaches.loc[reaches["rno"] == rno, "k"].values[0]
-        df_sfr.loc[df_sfr["rno"] == rno, "y"] = reaches.loc[reaches["rno"] == rno, "i"].values[0]
-        df_sfr.loc[df_sfr["rno"] == rno, "x"] = reaches.loc[reaches["rno"] == rno, "j"].values[0]
-        df_sfr.loc[df_sfr["rno"] == rno, "rlen"] = reaches.loc[reaches["rno"] == rno, "rlen"].values[0]
-        df_sfr.loc[df_sfr["rno"] == rno, "rwid"] = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
-        df_sfr.loc[df_sfr["rno"] == rno, "rtp"] = reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
-        df_sfr.loc[df_sfr["rno"] == rno, "rgrd"] = reaches.loc[reaches["rno"] == rno, "rgrd"].values[0]
-        df_sfr.loc[df_sfr["rno"] == rno, "rhk"] = reaches.loc[reaches["rno"] == rno, "rhk"].values[0]
-        df_sfr.loc[df_sfr["rno"] == rno, "man"] = reaches.loc[reaches["rno"] == rno, "man"].values[0]
-        df_sfr.loc[df_sfr["rno"] == rno, "kf"] = kf
-        rwidth = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
-        stage_depth = df_sfr_.loc[0, dict_obs_stage_id_inv[rno-1]] - reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
-        df_sfr.loc[df_sfr["rno"] == rno, "water_head"] = df_sfr_.loc[0, dict_obs_stage_id_inv[rno-1]]
-        df_sfr.loc[df_sfr["rno"] == rno, "water_depth"] = stage_depth
-        flow = (df_sfr_.loc[0, dict_obs_flow_id_inv[rno-1]] * (-1)) / 86400
-        df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * stage_depth * rwidth
-        df_sfr.loc[df_sfr["rno"] == rno, "gw_head"] = ds_mf["head"].values[0, z, y, x]
-        df_sfr.loc[df_sfr["rno"] == rno, "gw-sw"] = ds_mf["head"].values[0, z, y, x] - df_sfr_.loc[0, dict_obs_stage_id_inv[rno-1]]
-        df_sfr.loc[df_sfr["rno"] == rno, "sw-gw_flux"] = gw_sw[y, x] 
-        df_sfr.loc[df_sfr["rno"] == rno, "topo"] = topography[y, x] 
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(rgrd, extent=grid_extent, cmap='Oranges', aspect='equal', vmin=0.01, vmax=0.45)
+    plt.colorbar(label='reach gradient [-]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / "reach_gradient.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
 
-    file = base_path / "output" / f"dmn_run_{model_run}_sfr_.csv"
-    df_sfr.to_csv(file, sep=";")
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(rhk, extent=grid_extent, cmap='Oranges', aspect='equal', norm='log')
+    plt.colorbar(label='reach hydraulic conductivity [m/s]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / f"reach_hydraulic_conductivity_{model_run}.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
 
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(man, extent=grid_extent, cmap='viridis', aspect='equal')
+    plt.colorbar(label='Manning\'s n', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / f"reach_manning_coefficient_{model_run}.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(sfr_head, extent=grid_extent, cmap='viridis', aspect='equal')
+    plt.colorbar(label='surface water head [m a.s.l.]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / f"sfr_head_{model_run}.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(sfr_depth, extent=grid_extent, cmap='viridis_r', aspect='equal', vmin=0, vmax=0.6)
+    plt.colorbar(label='surface water depth [m]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / f"sfr_depth_{model_run}.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(sfr_flow, extent=grid_extent, cmap='viridis_r', aspect='equal', vmin=0, vmax=6)
+    plt.colorbar(label='streamflow [$m^3/s$]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / f"sfr_flow_{model_run}.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+    # near Hausen BN wells
+    x1 = 50
+    x2 = 90
+    y1 = 238
+    y2 = 288
+    grid_extent = (ds_mf.lon.values[x1] / 1000, ds_mf.lon.values[x2] / 1000, ds_mf.lat.values[y2] / 1000, ds_mf.lat.values[y1] / 1000)
+
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(rwid[y1:y2, x1:x2], extent=grid_extent, cmap='viridis', aspect='equal', vmin=1, vmax=15)
+    plt.colorbar(label='reach width [m]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / "reach_width_bn-hausen.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(rgrd[y1:y2, x1:x2], extent=grid_extent, cmap='Oranges', aspect='equal', vmin=0.01, vmax=0.45)
+    plt.colorbar(label='reach gradient [-]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / "reach_gradient_hausen.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(rhk[y1:y2, x1:x2], extent=grid_extent, cmap='Oranges', aspect='equal', norm='log')
+    plt.colorbar(label='reach hydraulic conductivity [m/s]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / f"reach_hydraulic_conductivity_bn-hausen_{model_run}.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(man[y1:y2, x1:x2], extent=grid_extent, cmap='viridis', aspect='equal')
+    plt.colorbar(label='Manning\'s n', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / f"reach_manning_coefficient_bn-hausen_{model_run}.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(sfr_head[y1:y2, x1:x2], extent=grid_extent, cmap='viridis', aspect='equal')
+    plt.colorbar(label='surface water head [m a.s.l.]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / f"sfr_head_bn-hausen_{model_run}.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(sfr_depth[y1:y2, x1:x2], extent=grid_extent, cmap='viridis_r', aspect='equal', vmin=0, vmax=0.5)
+    plt.colorbar(label='surface water depth [m]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / f"sfr_depth_bn-hausen_{model_run}.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(sfr_flow[y1:y2, x1:x2], extent=grid_extent, cmap='viridis_r', aspect='equal', vmin=0, vmax=5)
+    plt.colorbar(label='streamflow [$m^3/s$]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / f"sfr_flow_bn-hausen_{model_run}.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(gw_sw[y1:y2, x1:x2], extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-0.01, vmax=0.01)
+    plt.colorbar(label='SW-GW flux \n[$m^3$/s]', shrink=0.42)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / f"gw-sw_steady_state_grid_m3_s_bn-hausen_{model_run}.png"
+    fig.savefig(file, dpi=600)
+    plt.close("all")
+
+    # near Ebnet BN wells
+    x1 = 435
+    x2 = 499
+    y1 = 206
+    y2 = 233 
+    grid_extent = (ds_mf.lon.values[x1] / 1000, ds_mf.lon.values[x2] / 1000, ds_mf.lat.values[y2] / 1000, ds_mf.lat.values[y1] / 1000)
+
+    fig, axes = plt.subplots(figsize=(6, 4))
+    plt.imshow(rwid[y1:y2, x1:x2], extent=grid_extent, cmap='viridis', aspect='equal', vmin=1, vmax=15)
+    plt.colorbar(label='reach width [m]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / "reach_width_bn-ebnet.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+    fig, axes = plt.subplots(figsize=(6, 4))
+    plt.imshow(rgrd[y1:y2, x1:x2], extent=grid_extent, cmap='Oranges', aspect='equal', vmin=0.01, vmax=0.45)
+    plt.colorbar(label='reach gradient [-]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / "reach_gradient_bn-ebnet.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+    fig, axes = plt.subplots(figsize=(6, 4))
+    plt.imshow(rhk[y1:y2, x1:x2], extent=grid_extent, cmap='Oranges', aspect='equal', norm='log')
+    plt.colorbar(label='reach hydraulic conductivity [m/s]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / f"reach_hydraulic_conductivity_bn-ebnet_{model_run}.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+    fig, axes = plt.subplots(figsize=(6, 4))
+    plt.imshow(man[y1:y2, x1:x2], extent=grid_extent, cmap='viridis', aspect='equal')
+    plt.colorbar(label='Manning\'s n', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / f"reach_manning_coefficient_bn-ebnet_{model_run}.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+
+    fig, axes = plt.subplots(figsize=(6, 4))
+    plt.imshow(sfr_head[y1:y2, x1:x2], extent=grid_extent, cmap='viridis', aspect='equal')
+    plt.colorbar(label='surface water head [m a.s.l.]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / f"sfr_head_bn-ebnet_{model_run}.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+    fig, axes = plt.subplots(figsize=(6, 4))
+    plt.imshow(sfr_depth[y1:y2, x1:x2], extent=grid_extent, cmap='viridis_r', aspect='equal', vmin=0, vmax=0.5)
+    plt.colorbar(label='surface water depth [m]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / f"sfr_depth_bn-ebnet_{model_run}.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+    fig, axes = plt.subplots(figsize=(6, 4))
+    plt.imshow(sfr_flow[y1:y2, x1:x2], extent=grid_extent, cmap='viridis_r', aspect='equal', vmin=0, vmax=5)
+    plt.colorbar(label='streamflow [$m^3/s$]', shrink=0.5)
+    plt.grid(zorder=0)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / f"sfr_flow_bn-ebnet_{model_run}.png"
+    fig.savefig(file, dpi=300)
+    plt.close("all")
+
+    fig, axes = plt.subplots(figsize=(6, 4))
+    plt.imshow(gw_sw[y1:y2, x1:x2], extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-0.01, vmax=0.01)
+    plt.colorbar(label='SW-GW flux \n[$m^3$/s]', shrink=0.42)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = base_path_figs / f"gw-sw_steady_state_grid_m3_s_bn-ebnet_{model_run}.png"
+    fig.savefig(file, dpi=600)
+    plt.close("all")
 
     return
 

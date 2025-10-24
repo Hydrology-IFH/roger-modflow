@@ -61,14 +61,17 @@ def main(nsamples):
     df_params.iloc[:34, :] = 1.
     df_params.loc[:33, "kf_riv"] = 1.0
     df_params.loc[:33, "rhkp"] = 88.
-    df_params.loc[:33, "rhkf"] = 20.
+    df_params.loc[:33, "rhkf"] = 40.
     df_params.loc[:33, "man"] = 1.0
 
-    df_params.loc[:33, "-7_2_re"] = 3.
-    df_params.loc[:33, "-7_3_re"] = 2.
-    df_params.loc[:33, "-7_4_re"] = 1.25
-    df_params.loc[:33, "hausen1_re"] = 2.5
-    df_params.loc[:33, "hausen2_re"] = 7.
+    df_params.loc[:33, "-5_2"] = 1.0
+    df_params.loc[:33, "-5_4"] = 1.0
+
+    df_params.loc[:33, "-7_2_re"] = 50.0
+    df_params.loc[:33, "-7_3_re"] = 50.0
+    df_params.loc[:33, "-7_4_re"] = 25.0
+    df_params.loc[:33, "hausen1_re"] = 1.5
+    df_params.loc[:33, "hausen2_re"] = 15.
 
     xx = 0.6
     df_params.loc[:33, "-8_1"] = 500.
@@ -85,7 +88,7 @@ def main(nsamples):
     df_params.loc[:33, "4-3_3"] = 4.5
 
     df_params.loc[:33, "rch"] = 1.0
-    df_params.loc[:33, "offset"] = 0.0
+    df_params.loc[:33, "offset"] = 2.3
 
     df_params.loc[0, "rch"] = 1.25
     df_params.loc[1, "rch"] = 1.2

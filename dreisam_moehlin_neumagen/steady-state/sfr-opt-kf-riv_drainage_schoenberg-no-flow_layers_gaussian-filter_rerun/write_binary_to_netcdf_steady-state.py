@@ -37,7 +37,7 @@ def main(model_run, converged):
                 xcoords = ds.x.values
                 ycoords = ds.y.values[::-1]
 
-            # export groundwater head to netcdf
+            # write groundwater head to netcdf
             fhead = base_path / "output" / f"dmn_run_{model_run}.hds"
             hds = flopy.utils.HeadFile(fhead)
 

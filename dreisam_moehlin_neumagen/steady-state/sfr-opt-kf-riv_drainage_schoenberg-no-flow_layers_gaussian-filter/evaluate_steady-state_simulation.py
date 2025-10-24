@@ -46,7 +46,7 @@ def main(model_run):
     output_file = base_path / "output" / f"modflow_output_run_{model_run}.nc"
     ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
     groundwater_heads = ds_mf["head"].values[0, 1, ...]
-    gw_sw = np.nanmean(ds_mf['gw_sw'].isel(Time=0).values * (-1), axis=0) / 86400
+    gw_sw = np.nanmean(ds_mf['gw_sw'].isel(Time=0).values, axis=0) / 86400
 
     # load the SFR output file
     output_file = base_path / "output" / f"dmn_run_{model_run}_sfr.obs.csv"

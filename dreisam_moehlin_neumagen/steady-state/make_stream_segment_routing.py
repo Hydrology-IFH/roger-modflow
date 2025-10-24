@@ -55,6 +55,22 @@ def find_downstream(row):
 
 gdf_segments["to_segment"] = gdf_segments.apply(find_downstream, axis=1)
 
+# enforce Dreisam
+cond = (gdf_segments["segment"] == 810)
+gdf_segments.loc[cond, "to_segment"] = 809
+cond = (gdf_segments["segment"] == 808)
+gdf_segments.loc[cond, "to_segment"] = 807
+# enforce Brugga
+cond = (gdf_segments["segment"] == 641)
+gdf_segments.loc[cond, "to_segment"] = 640
+# enforce Moehlin
+cond = (gdf_segments["segment"] == 144)
+gdf_segments.loc[cond, "to_segment"] = 143
+cond = (gdf_segments["segment"] == 766)
+gdf_segments.loc[cond, "to_segment"] = 97
+cond = (gdf_segments["segment"] == 9)
+gdf_segments.loc[cond, "to_segment"] = 8
+
 # fill NaN values in "to_segment" with 0 (for outlets)
 gdf_segments["to_segment"] = gdf_segments["to_segment"].fillna(0).astype(int)
 

@@ -33,7 +33,6 @@ for x, y in zip(df_observation_points["cell_x"].values, df_observation_points["c
         rnos.append(rno)
         labels.append(label)
 
-modflow_config["outlet_rnos"] = [int(rno) for rno in rnos]
 dict_obs_stage_rnos = {}
 dict_obs_flow_rnos = {}
 dict_sfr_obs = {}

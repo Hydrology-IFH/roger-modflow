@@ -5,13 +5,29 @@ import numpy as np
 from xmipy import XmiWrapper
 import flopy
 from flopy.utils import Raster
+import scipy
 import platform
 import yaml
 import xarray as xr
 import xesmf as xe
 import click
-import shutil
+import pandas as pd
 import subprocess
+
+def recalc_specific_yield(hydraulic_conductivity, specific_yield_min=0.05, specific_yield_max=0.35):
+    """Recalculate specific yield based on hydraulic conductivity using the formula of Marotz (1968)
+
+    Args:
+        hydraulic_conductivity (numpy.ndarray): hydraulic conductivity in m/day
+        specific_yield_min (float, optional): Constraint of specific yield. Default is 0.05.
+
+    Returns:
+        numpy.ndarray: specific yield
+    """
+    specific_yield = 0.462 + 0.045 * np.log(hydraulic_conductivity/86400)
+    specific_yield[specific_yield < specific_yield_min] = specific_yield_min
+    specific_yield[specific_yield > specific_yield_max] = specific_yield_max
+    return specific_yield
 
 
 def aggregate_to_coarser_resolution(vals, res_fine, res_coarse, method="sum", x_origin=0, y_origin=0):
@@ -126,12 +142,13 @@ class ModFlowSimulation:
         self,
         name,
         folder,
+        ndays,
         nlay,
         nrow,
         ncol,
         rowsize,
         colsize,
-        roger_config,
+        model_run=5,
         verbose=False
     ):
         self.name = name.upper()  # MODFLOW requires the name to be uppercase
@@ -169,7 +186,7 @@ class ModFlowSimulation:
 
         # Create the Flopy temporal discretization object
         tdis = flopy.mf6.modflow.mftdis.ModflowTdis(
-            sim, pname="tdis", time_units="DAYS", start_date_time=str(self.roger_config['t_origin']), nper=ndays, perioddata=[(1.0, 1, 1)] * ndays
+            sim, pname="tdis", time_units="DAYS", start_date_time='2019-11-01', nper=ndays, perioddata=[(1.0, 1, 1)] * ndays
         )
 
         # Create the Flopy groundwater flow (gwf) model object
@@ -177,11 +194,7 @@ class ModFlowSimulation:
         gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file, save_flows=True, newtonoptions="NEWTON")
 
         # Create the Flopy iterative model solver (ims) Package object
-        ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="all",
-                                                 no_ptcrecord="NO_PTC_ALL",
-                                                 outer_maximum=50, inner_maximum=200,
-                                                 outer_dvclose=0.1, inner_dvclose=0.1,
-                                                 linear_acceleration="BICGSTAB")
+        ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="all", complexity="COMPLEX", no_ptcrecord="NO_PTC_ALL")
 
         # Now that the overall simulation is set up, we can focus on building the groundwater flow model.  The groundwater flow model will be built by adding packages to it that describe the model characteristics.
         #
@@ -207,7 +220,7 @@ class ModFlowSimulation:
         domain[mask] = 1
         domain[~mask] = -1
         self.modflow_basin = mask
-        self.n_active_cells = np.nansum(self.modflow_basin)
+        self.n_active_cells_per_layer = np.nansum(self.modflow_basin)
         domain_layers = [domain, domain, domain, domain]
         dis = flopy.mf6.modflow.mfgwfdis.ModflowGwfdis(
             gwf,
@@ -224,11 +237,9 @@ class ModFlowSimulation:
         )
 
         # Create the initial conditions package
-        initial_conditions_layer1 = (topography - elevation_bottom_layer1) * 0.75 + elevation_bottom_layer1
-        initial_conditions_layer2 = (elevation_bottom_layer1 - elevation_bottom_layer2) * 0.75 + elevation_bottom_layer2
-        initial_conditions_layer3 = (elevation_bottom_layer2 - elevation_bottom_layer3) * 0.75 + elevation_bottom_layer3
-        initial_conditions_layer4 = (elevation_bottom_layer3 - elevation_bottom_layer4) * 0.75 + elevation_bottom_layer4
-        initial_conditions_layers = [initial_conditions_layer1, initial_conditions_layer2, initial_conditions_layer3, initial_conditions_layer4]
+        gw_heads_interpolated = ds_params_modflow["gw_heads_interpolated"].values - 1
+        gw_heads_interpolated[~mask] = np.nan
+        initial_conditions_layers = [gw_heads_interpolated, gw_heads_interpolated, gw_heads_interpolated, gw_heads_interpolated]
         ic = flopy.mf6.modflow.mfgwfic.ModflowGwfic(gwf, pname="ic", strt=initial_conditions_layers)
 
         # Create the node property flow package with hydraulic conducitivities
@@ -347,6 +358,30 @@ class ModFlowSimulation:
         specific_yield_layer2 = recalc_specific_yield(hydraulic_conductivities_layer2)
         specific_yield_layer3 = recalc_specific_yield(hydraulic_conductivities_layer3)
         specific_yield_layer4 = recalc_specific_yield(hydraulic_conductivities_layer4)
+        # modify specific yield
+        cond1 = (hydraulic_conductivities_layer1_ < 10.0e-07)
+        cond2 = (hydraulic_conductivities_layer2_ < 10.0e-07)
+        specific_yield_layer2[cond2] = 0.05
+        cond3 = (hydraulic_conductivities_layer3_ < 10.0e-07)
+        specific_yield_layer3[cond3] = 0.02
+        cond4 = (hydraulic_conductivities_layer4_ < 10.0e-07)
+        specific_yield_layer4[cond4] = 0.01
+        specific_yield_layer1[np.isnan(specific_yield_layer1)] = 0
+        specific_yield_layer2[np.isnan(specific_yield_layer2)] = 0
+        specific_yield_layer3[np.isnan(specific_yield_layer3)] = 0
+        specific_yield_layer4[np.isnan(specific_yield_layer4)] = 0
+        _specific_yield_layer1 = scipy.ndimage.gaussian_filter(specific_yield_layer1, [1.0, 1.0], mode="constant")
+        _specific_yield_layer2 = scipy.ndimage.gaussian_filter(specific_yield_layer2, [1.0, 1.0], mode="constant")
+        _specific_yield_layer3 = scipy.ndimage.gaussian_filter(specific_yield_layer3, [1.0, 1.0], mode="constant")
+        _specific_yield_layer4 = scipy.ndimage.gaussian_filter(specific_yield_layer4, [1.0, 1.0], mode="constant")
+        specific_yield_layer1[cond1] = _specific_yield_layer1[cond1]
+        specific_yield_layer2[cond2] = _specific_yield_layer2[cond2]
+        specific_yield_layer3[cond3] = _specific_yield_layer3[cond3]
+        specific_yield_layer4[cond4] = _specific_yield_layer4[cond4]
+        specific_yield_layer1[~mask] = np.nan
+        specific_yield_layer2[~mask] = np.nan
+        specific_yield_layer3[~mask] = np.nan
+        specific_yield_layer4[~mask] = np.nan
         specific_yield = flopy.mf6.ModflowGwfsto.sy.empty(gwf, layered=True)
         specific_yield[0]["data"] = specific_yield_layer1
         specific_yield[1]["data"] = specific_yield_layer2
@@ -476,7 +511,7 @@ class ModFlowSimulation:
             raise ValueError(f'Platform {platform.system()} not recognized.')
 
         # modflow requires the real path (no symlinks etc.)
-        library_path = self.folder.parent / "bin" / libary_name
+        library_path = self.folder.parent.parent / "bin" / libary_name
         try:
             self.mf6 = XmiWrapper(str(library_path), working_directory=self.working_directory)
         except Exception as e:
@@ -485,7 +520,7 @@ class ModFlowSimulation:
             return self.bmi_return(success, self.working_directory)
 
         # modflow requires the real path (no symlinks etc.)
-        config_file = self.folder / 'output' / 'transient' / 'mfsim.nam'
+        config_file = self.folder / 'output' / 'mfsim.nam'
         if not os.path.exists(config_file):
             raise FileNotFoundError(f"config_roger file {config_file} not found on disk. Did you create the model first (load_from_disk = False)?")
 
@@ -584,7 +619,8 @@ def main(backend, float_type):
     float_type=float_type,
     )
     from bmiroger import BmiRoger
-    from roger.bmimodels.svat import SVATSetup
+    from roger.bmimodels.svat_dist import SVATDISTSetup
+    from roger.tools.setup import write_forcing_distributed
     file_config = base_path / "config_roger.yml"
     with open(file_config, "r") as file:
         config_roger = yaml.safe_load(file)
@@ -597,8 +633,8 @@ def main(backend, float_type):
     config_roger['OUTPUT_COLLECT'] = ["theta", "z_gw"]
     config_roger['OUTPUT_RATE'] = ["q_hof", "q_ss"]
 
-    file = base_path / "write_parameters_to_csv_for_SVAT.py"
-    subprocess.run(["python", str(file)], check=True, timeout=20)
+    # file = base_path / "write_parameters_to_csv_for_SVAT.py"
+    # subprocess.run(["python", str(file)], check=True, timeout=20)
 
     # set the number of grid cells in x and y direction from the parameters file
     file = base_path / "input" / "parameters_roger_25m.nc"
@@ -607,12 +643,16 @@ def main(backend, float_type):
         config_roger['ny'] = ds.sizes['x']
 
     # save the updated config file
+    file_config = base_path / "config_roger.yml"
     with open(file_config, "w") as file:
         yaml.dump(config_roger, file)
 
     # load the parameters of MODFLOW
     path = Path(__file__).parent / "input" / "parameters_modflow.nc"
     ds_params_modflow = xr.open_dataset(path, engine="h5netcdf")
+
+    path = Path(__file__).parent / "input" / "boundary_conditions.nc"
+    ds_bc = xr.open_dataset(path, engine="h5netcdf")
 
     # load the spatial domain and elevation data
     topography = ds_params_modflow["elevations"].isel(z=0).values
@@ -628,9 +668,10 @@ def main(backend, float_type):
     topography = aggregate_to_finer_resolution(topography, config_modflow['dx'], config_roger['dx'], method="keep")
 
     # initialize the SVAT model of RoGeR using BMI
-    model = SVATSetup(base_path)
+    model = SVATDISTSetup(base_path)
+    write_forcing_distributed(base_path / "input")
     roger_interface = BmiRoger(model=model)
-    roger_interface._model._output_dir = base_path / "output" / "transient"
+    roger_interface._model._output_dir = base_path / "output"
     roger_interface.initialize(base_path)
     print("RoGeR model initialized")
     NDAYS = int(roger_interface.get_end_time() / (60 * 60 * 24))  # seconds to days
@@ -652,7 +693,6 @@ def main(backend, float_type):
         ncol=config_modflow['ny'],
         rowsize=config_modflow['dx'],
         colsize=config_modflow['dy'],
-        config_roger=config_roger,
         verbose=True
     )
     for _ in range(NDAYS):

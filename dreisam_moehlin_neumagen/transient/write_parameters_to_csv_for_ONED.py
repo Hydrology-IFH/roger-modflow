@@ -19,6 +19,7 @@ _UNITS = {
     "ta_offset": "degC",
     "pet_weight": "-",
     "prec_weight": "-",
+    "STAT_ID": "",
 }
 
 
@@ -52,6 +53,11 @@ def main():
     df_params.loc[:, "ta_offset"] = df_params.loc[:, "ta_offset"].fillna(0)
     df_params.loc[:, "pet_weight"] = df_params.loc[:, "pet_weight"].fillna(0)
     df_params.loc[:, "prec_weight"] = df_params.loc[:, "prec_weight"].fillna(0)
+    df_params.loc[:, "STAT_ID"] = ds_params.station_id.values.flatten()
+    cond = (df_params.loc[:, "sealing"] > 1.0)
+    df_params.loc[cond, "sealing"] = 1.0
+    cond = (df_params.loc[:, "lu_id"] < 0.0)
+    df_params.loc[cond, "lu_id"] = -9999
 
     df_params = df_params.loc[
         :,
@@ -70,16 +76,18 @@ def main():
             "kf",
             "ta_offset",
             "pet_weight",
-            "prec_weight"
+            "prec_weight",
+            "STAT_ID"
         ],
     ]
     df_params.fillna(-9999, inplace=True)
     df_params["lu_id"] = df_params["lu_id"].astype(onp.int16)
+    df_params["STAT_ID"] = df_params["STAT_ID"].astype(onp.int32)
 
     # write parameters to csv
     df_params.columns = [
-        ["", "[-]", "[-]", "[mm]", "[1/m2]", "[mm]", "[1/m2]", "[-]", "[-]", "[-]", "[mm/hour]", "[mm/hour]", "[degC]", "[-]", "[-]"],
-        ["lu_id", "slope", "sealing", "z_soil", "dmpv", "lmpv", "dmph", "theta_ac", "theta_ufc", "theta_pwp", "ks", "kf", "ta_offset", "pet_weight", "prec_weight"],
+        ["", "[-]", "[-]", "[mm]", "[1/m2]", "[mm]", "[1/m2]", "[-]", "[-]", "[-]", "[mm/hour]", "[mm/hour]", "[degC]", "[-]", "[-]", ""],
+        ["lu_id", "slope", "sealing", "z_soil", "dmpv", "lmpv", "dmph", "theta_ac", "theta_ufc", "theta_pwp", "ks", "kf", "ta_offset", "pet_weight", "prec_weight", "STAT_ID"],
     ]
     df_params.to_csv(base_path / "parameters_roger.csv", index=False, sep=";")
     return

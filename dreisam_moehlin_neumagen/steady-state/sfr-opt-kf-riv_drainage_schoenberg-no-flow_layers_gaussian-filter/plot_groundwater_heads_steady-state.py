@@ -224,8 +224,8 @@ def main(model_run):
     # plot the groundwater-surface water interaction
     gw_sw = np.nanmean(ds_mf['gw_sw'].isel(Time=0).values, axis=0) / 86400
     fig, axes = plt.subplots(figsize=(4, 4))
-    plt.imshow(gw_sw * (-1), extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-0.01, vmax=0.01)
-    plt.colorbar(label='GW-SW flux \n[$m^3$/s]', shrink=0.42)
+    plt.imshow(gw_sw, extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-0.01, vmax=0.01)
+    plt.colorbar(label='SW-GW flux \n[$m^3$/s]', shrink=0.42)
     plt.xlabel('x-coordinate [km]')
     plt.ylabel('y-coordinate [km]')
     plt.tight_layout()
@@ -235,8 +235,8 @@ def main(model_run):
 
     minmax = np.nanmax(np.abs(gw_sw))
     fig, axes = plt.subplots(figsize=(4, 4))
-    plt.imshow(gw_sw * (-1), extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-minmax, vmax=minmax)
-    plt.colorbar(label='GW-SW flux \n[$m^3$/s]', shrink=0.42)
+    plt.imshow(gw_sw, extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-minmax, vmax=minmax)
+    plt.colorbar(label='SW-GW flux \n[$m^3$/s]', shrink=0.42)
     plt.xlabel('x-coordinate [km]')
     plt.ylabel('y-coordinate [km]')
     plt.tight_layout()
@@ -246,8 +246,8 @@ def main(model_run):
 
     gw_sw = np.nanmean(ds_mf['gw_sw'].isel(Time=0).values, axis=0) / rarea
     fig, axes = plt.subplots(figsize=(4, 4))
-    plt.imshow(gw_sw * (-1), extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-10, vmax=10)
-    plt.colorbar(label='GW-SW flux \n[mm/day]', shrink=0.42)
+    plt.imshow(gw_sw, extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-10, vmax=10)
+    plt.colorbar(label='SW-GW flux \n[mm/day]', shrink=0.42)
     plt.xlabel('x-coordinate [km]')
     plt.ylabel('y-coordinate [km]')
     plt.tight_layout()
@@ -257,8 +257,8 @@ def main(model_run):
 
     minmax = np.nanmax(np.abs(gw_sw))
     fig, axes = plt.subplots(figsize=(4, 4))
-    plt.imshow(gw_sw * (-1), extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-minmax, vmax=minmax)
-    plt.colorbar(label='GW-SW flux \n[mm/day]', shrink=0.42)
+    plt.imshow(gw_sw, extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-minmax, vmax=minmax)
+    plt.colorbar(label='SW-GW flux \n[mm/day]', shrink=0.42)
     plt.xlabel('x-coordinate [km]')
     plt.ylabel('y-coordinate [km]')
     plt.tight_layout()

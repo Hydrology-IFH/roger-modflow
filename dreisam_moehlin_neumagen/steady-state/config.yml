@@ -1,157 +1,127 @@
 dict_obs_flow_rnos:
-  B2_FLOW: 11190
-  DREI1_FLOW: 12062
-  DREI2_FLOW: 12095
-  DREI3_FLOW: 12115
-  DREI4_FLOW: 12940
-  DREI5_FLOW: 13375
+  B2_FLOW: 12609
+  DREI1_FLOW: 13897
+  DREI2_FLOW: 13930
+  DREI3_FLOW: 13950
+  DREI4_FLOW: 15279
+  DREI5_FLOW: 17046
   DREI7_FLOW: 24711
-  E1_FLOW: 12188
-  E2_FLOW: 12578
-  E4_FLOW: 12993
-  E6_FLOW: 13396
-  E8_FLOW: 13425
-  EBNET_FLOW: 14067
-  FALKENSTEIG_FLOW: 6694
-  IB1_FLOW: 8724
-  K1_FLOW: 11818
+  E1_FLOW: 14023
+  E2_FLOW: 14634
+  E4_FLOW: 15332
+  E6_FLOW: 17067
+  E8_FLOW: 17096
+  EBNET_FLOW: 18598
+  FALKENSTEIG_FLOW: 9094
+  IB1_FLOW: 10653
+  K1_FLOW: 13372
   MOE2_FLOW: 24133
   MOE3_FLOW: 24183
   MOE4_FLOW: 24238
   MOE5_FLOW: 24269
   MOE6_FLOW: 24646
-  NEU2_FLOW: 22408
-  NEU3_FLOW: 23294
-  OBERAMBRINGEN_FLOW: 21469
-  OBERRIED_FLOW: 8068
-  RE1_FLOW: 11877
-  RO2_A_FLOW: 11693
-  RO2_B_FLOW: 11695
-  SANKTWILHELM_FLOW: 3510
-  UNTERMUENSTERTAL_FLOW: 14510
-  W1_NEW_FLOW: 7772
-  W2_FLOW: 10963
-  W3_FLOW: 11005
-  W4_FLOW: 11786
-  WIESNECK_FLOW: 10990
-  ZASTLER_FLOW: 5799
+  NEU2_FLOW: 22186
+  NEU3_FLOW: 23253
+  OBERAMBRINGEN_FLOW: 21173
+  OBERRIED_FLOW: 8804
+  RE1_FLOW: 13431
+  RO2_A_FLOW: 13247
+  RO2_B_FLOW: 13249
+  SANKTWILHELM_FLOW: 3528
+  UNTERMUENSTERTAL_FLOW: 13127
+  W1_NEW_FLOW: 9935
+  W2_FLOW: 12382
+  W3_FLOW: 12424
+  W4_FLOW: 13340
+  WIESNECK_FLOW: 12409
+  ZASTLER_FLOW: 8166
 dict_obs_stage_rnos:
-  B2_STAGE: 11190
-  DREI1_STAGE: 12062
-  DREI2_STAGE: 12095
-  DREI3_STAGE: 12115
-  DREI4_STAGE: 12940
-  DREI5_STAGE: 13375
+  B2_STAGE: 12609
+  DREI1_STAGE: 13897
+  DREI2_STAGE: 13930
+  DREI3_STAGE: 13950
+  DREI4_STAGE: 15279
+  DREI5_STAGE: 17046
   DREI7_STAGE: 24711
-  E1_STAGE: 12188
-  E2_STAGE: 12578
-  E4_STAGE: 12993
-  E6_STAGE: 13396
-  E8_STAGE: 13425
-  EBNET_STAGE: 14067
-  FALKENSTEIG_STAGE: 6694
-  IB1_STAGE: 8724
-  K1_STAGE: 11818
+  E1_STAGE: 14023
+  E2_STAGE: 14634
+  E4_STAGE: 15332
+  E6_STAGE: 17067
+  E8_STAGE: 17096
+  EBNET_STAGE: 18598
+  FALKENSTEIG_STAGE: 9094
+  IB1_STAGE: 10653
+  K1_STAGE: 13372
   MOE2_STAGE: 24133
   MOE3_STAGE: 24183
   MOE4_STAGE: 24238
   MOE5_STAGE: 24269
   MOE6_STAGE: 24646
-  NEU2_STAGE: 22408
-  NEU3_STAGE: 23294
-  OBERAMBRINGEN_STAGE: 21469
-  OBERRIED_STAGE: 8068
-  RE1_STAGE: 11877
-  RO2_A_STAGE: 11693
-  RO2_B_STAGE: 11695
-  SANKTWILHELM_STAGE: 3510
-  UNTERMUENSTERTAL_STAGE: 14510
-  W1_NEW_STAGE: 7772
-  W2_STAGE: 10963
-  W3_STAGE: 11005
-  W4_STAGE: 11786
-  WIESNECK_STAGE: 10990
-  ZASTLER_STAGE: 5799
+  NEU2_STAGE: 22186
+  NEU3_STAGE: 23253
+  OBERAMBRINGEN_STAGE: 21173
+  OBERRIED_STAGE: 8804
+  RE1_STAGE: 13431
+  RO2_A_STAGE: 13247
+  RO2_B_STAGE: 13249
+  SANKTWILHELM_STAGE: 3528
+  UNTERMUENSTERTAL_STAGE: 13127
+  W1_NEW_STAGE: 9935
+  W2_STAGE: 12382
+  W3_STAGE: 12424
+  W4_STAGE: 13340
+  WIESNECK_STAGE: 12409
+  ZASTLER_STAGE: 8166
 dx: 50.0
 dy: 50.0
 nx: 621
 ny: 777
 nz: 4
 outlet_rnos:
-- 14067
-- 8068
-- 21469
-- 14510
-- 6694
-- 12062
-- 12095
-- 12115
-- 12940
-- 13375
-- 24711
-- 24133
-- 24183
-- 24238
-- 24269
-- 24646
-- 22408
-- 23294
-- 12188
-- 12578
-- 12993
-- 13396
-- 13425
-- 8724
-- 11818
-- 11877
-- 11695
-- 11693
-- 11786
-- 10963
-- 7772
-- 11005
-- 5799
-- 11190
-- 12095
-- 10990
-- 3510
+- 25089
+- 24974
+- 24993
+- 25030
+- 24831
+- 24712
+- 24994
 sfr_obs:
   B2_flow:
   - downstream-flow
-  - 11190
+  - 12609
   B2_stage:
   - stage
-  - 11190
+  - 12609
   DREI1_flow:
   - downstream-flow
-  - 12062
+  - 13897
   DREI1_stage:
   - stage
-  - 12062
+  - 13897
   DREI2_flow:
   - downstream-flow
-  - 12095
+  - 13930
   DREI2_stage:
   - stage
-  - 12095
+  - 13930
   DREI3_flow:
   - downstream-flow
-  - 12115
+  - 13950
   DREI3_stage:
   - stage
-  - 12115
+  - 13950
   DREI4_flow:
   - downstream-flow
-  - 12940
+  - 15279
   DREI4_stage:
   - stage
-  - 12940
+  - 15279
   DREI5_flow:
   - downstream-flow
-  - 13375
+  - 17046
   DREI5_stage:
   - stage
-  - 13375
+  - 17046
   DREI7_flow:
   - downstream-flow
   - 24711
@@ -160,58 +130,58 @@ sfr_obs:
   - 24711
   E1_flow:
   - downstream-flow
-  - 12188
+  - 14023
   E1_stage:
   - stage
-  - 12188
+  - 14023
   E2_flow:
   - downstream-flow
-  - 12578
+  - 14634
   E2_stage:
   - stage
-  - 12578
+  - 14634
   E4_flow:
   - downstream-flow
-  - 12993
+  - 15332
   E4_stage:
   - stage
-  - 12993
+  - 15332
   E6_flow:
   - downstream-flow
-  - 13396
+  - 17067
   E6_stage:
   - stage
-  - 13396
+  - 17067
   E8_flow:
   - downstream-flow
-  - 13425
+  - 17096
   E8_stage:
   - stage
-  - 13425
+  - 17096
   Ebnet_flow:
   - downstream-flow
-  - 14067
+  - 18598
   Ebnet_stage:
   - stage
-  - 14067
+  - 18598
   Falkensteig_flow:
   - downstream-flow
-  - 6694
+  - 9094
   Falkensteig_stage:
   - stage
-  - 6694
+  - 9094
   IB1_flow:
   - downstream-flow
-  - 8724
+  - 10653
   IB1_stage:
   - stage
-  - 8724
+  - 10653
   K1_flow:
   - downstream-flow
-  - 11818
+  - 13372
   K1_stage:
   - stage
-  - 11818
+  - 13372
   MOE2_flow:
   - downstream-flow
   - 24133
@@ -244,91 +214,91 @@ sfr_obs:
   - 24646
   NEU2_flow:
   - downstream-flow
-  - 22408
+  - 22186
   NEU2_stage:
   - stage
-  - 22408
+  - 22186
   NEU3_flow:
   - downstream-flow
-  - 23294
+  - 23253
   NEU3_stage:
   - stage
-  - 23294
+  - 23253
   Oberambringen_flow:
   - downstream-flow
-  - 21469
+  - 21173
   Oberambringen_stage:
   - stage
-  - 21469
+  - 21173
   Oberried_flow:
   - downstream-flow
-  - 8068
+  - 8804
   Oberried_stage:
   - stage
-  - 8068
+  - 8804
   RE1_flow:
   - downstream-flow
-  - 11877
+  - 13431
   RE1_stage:
   - stage
-  - 11877
+  - 13431
   RO2_A_flow:
   - downstream-flow
-  - 11693
+  - 13247
   RO2_A_stage:
   - stage
-  - 11693
+  - 13247
   RO2_B_flow:
   - downstream-flow
-  - 11695
+  - 13249
   RO2_B_stage:
   - stage
-  - 11695
+  - 13249
   SanktWilhelm_flow:
   - downstream-flow
-  - 3510
+  - 3528
   SanktWilhelm_stage:
   - stage
-  - 3510
+  - 3528
   Untermuenstertal_flow:
   - downstream-flow
-  - 14510
+  - 13127
   Untermuenstertal_stage:
   - stage
-  - 14510
+  - 13127
   W1_new_flow:
   - downstream-flow
-  - 7772
+  - 9935
   W1_new_stage:
   - stage
-  - 7772
+  - 9935
   W2_flow:
   - downstream-flow
-  - 10963
+  - 12382
   W2_stage:
   - stage
-  - 10963
+  - 12382
   W3_flow:
   - downstream-flow
-  - 11005
+  - 12424
   W3_stage:
   - stage
-  - 11005
+  - 12424
   W4_flow:
   - downstream-flow
-  - 11786
+  - 13340
   W4_stage:
   - stage
-  - 11786
+  - 13340
   Wiesneck_flow:
   - downstream-flow
-  - 10990
+  - 12409
   Wiesneck_stage:
   - stage
-  - 10990
+  - 12409
   Zastler_flow:
   - downstream-flow
-  - 5799
+  - 8166
   Zastler_stage:
   - stage
-  - 5799
+  - 8166

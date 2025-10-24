@@ -100,11 +100,13 @@ for model_run in range(0, 10000):
         # calculate spearman correlation
         df_params_metrics.loc[model_run, "r_lin"] = sp.stats.pearsonr(sim_depth, obs_depth)[0]
         # calculate number of cells with a bias less than 5m
-        df_params_metrics.loc[model_run, "n_5m"] = np.sum(np.abs(sim - obs) < 5) / n_obs
+        df_params_metrics.loc[model_run, "n_5m"] = np.sum(np.abs(sim - obs) <= 5) / n_obs
         # calculate number of cells with a bias less than 3m
-        df_params_metrics.loc[model_run, "n_3m"] = np.sum(np.abs(sim - obs) < 3) / n_obs
+        df_params_metrics.loc[model_run, "n_3m"] = np.sum(np.abs(sim - obs) <= 3) / n_obs
         # calculate number of cells with a bias less than 1m
-        df_params_metrics.loc[model_run, "n_1m"] = np.sum(np.abs(sim - obs) < 1) / n_obs
+        df_params_metrics.loc[model_run, "n_1m"] = np.sum(np.abs(sim - obs) <= 1) / n_obs
+        # calculate number of cells with a bias less than 0.7m
+        df_params_metrics.loc[model_run, "n_07m"] = np.sum(np.abs(sim - obs) <= 0.7) / n_obs
 
         # calculate SFR metrics
         output_file = Path(f"/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen/steady-state/{base_path.name}/output") / f"dmn_run_{model_run}_sfr.obs.csv"

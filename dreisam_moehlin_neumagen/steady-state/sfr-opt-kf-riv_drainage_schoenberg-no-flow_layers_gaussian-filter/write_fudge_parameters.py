@@ -55,7 +55,7 @@ def main(nsamples):
 
     df_params.iloc[:34, :] = 1.
     df_params.loc[:33, "kf_riv"] = 1.0
-    df_params.loc[:33, "rhkp"] = 88.
+    df_params.loc[:33, "rhkp"] = 108.
     df_params.loc[:33, "rhkf"] = 20.
     df_params.loc[:33, "man"] = 1.0
 

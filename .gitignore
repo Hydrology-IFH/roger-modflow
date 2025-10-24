@@ -287,6 +287,22 @@ dreisam_moehlin_neumagen/transient/input/streambed_structure_.tif
 dreisam_moehlin_neumagen/transient/input/upstream_nodes.gpkg
 dreisam_moehlin_neumagen/steady-state/input/mask_kf_18e-3_lower_moehlin.tif
 dreisam_moehlin_neumagen/steady-state/input/mask_kf_2e-7_lower_moehlin_and_dreisam.tif
+dreisam_moehlin_neumagen/steady-state/input/cerdia_data_annual.csv
+dreisam_moehlin_neumagen/steady-state/input/cerdia_data_daily.csv
+dreisam_moehlin_neumagen/steady-state/input/cerdia_data_hourly.csv
+dreisam_moehlin_neumagen/steady-state/prepare_cerdia_data.py
+dreisam_moehlin_neumagen/transient/input/cerdia_data_annual.csv
+dreisam_moehlin_neumagen/transient/input/cerdia_data_daily.csv
+dreisam_moehlin_neumagen/transient/input/cerdia_data_hourly.csv
+dreisam_moehlin_neumagen/transient/input/crop_rotations_2000-2023.nc
+dreisam_moehlin_neumagen/transient/input/crop_rotations_2013-2023.nc
+dreisam_moehlin_neumagen/transient/input/crop_rotations_2018-2022.nc
+dreisam_moehlin_neumagen/transient/input/mask_kf_18e-3_lower_moehlin.tif
+dreisam_moehlin_neumagen/transient/input/mask_kf_2e-7_lower_moehlin_and_dreisam.tif
+dreisam_moehlin_neumagen/transient/input/meteo/2000-2024/
+dreisam_moehlin_neumagen/transient/input/meteo/2013-2023/
+dreisam_moehlin_neumagen/transient/input/meteo_stations/
+
 
 
 **/parameters_roger.csv
