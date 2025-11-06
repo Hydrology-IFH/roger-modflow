@@ -32,6 +32,7 @@ def main():
     ncols = ds_params.sizes["x"]
 
     # write parameters to csv
+    maskCatch = ds_params.maskCatch.values.flatten()
     df_params = pd.DataFrame(index=range(nrows * ncols))
     df_params.loc[:, "lu_id"] = ds_params.lanu.values.flatten()
     df_params.loc[:, "sealing"] = ds_params.vers.values.flatten() / 100
@@ -54,6 +55,8 @@ def main():
     df_params.loc[cond, "sealing"] = 1.0
     cond = (df_params.loc[:, "lu_id"] < 0.0)
     df_params.loc[cond, "lu_id"] = -9999
+    cond = (maskCatch == 0)
+    df_params.loc[cond, :] = -9999
 
     df_params = df_params.loc[
         :,

@@ -71,8 +71,8 @@ class ModFlowSimulation:
         fudge_parameters = pd.read_csv(path, sep=";", skiprows=1)
 
         # load the previous MODFLOW output
-        output_file = base_path / "output" / f"modflow_output_run_{model_run}.nc"
-        ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
+        output_file = base_path / "output" / f"modflow_output_run_{model_run}_pre.nc"
+        ds_mf_pre = xr.open_dataset(output_file, engine="h5netcdf")
 
         # Temporal discretization (TDIS)
         # One or more models (GWF is the only model supported at present)
@@ -264,9 +264,27 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer2[mask72 & mask_custom_hausen2] = hydraulic_conductivities_layer2[mask72 & mask_custom_hausen2] * fudge_parameters["hausen2_re"].values[model_run]
         hydraulic_conductivities_layer3[mask73 & mask_custom_hausen2] = hydraulic_conductivities_layer3[mask73 & mask_custom_hausen2] * fudge_parameters["hausen2_re"].values[model_run]
 
-        gw_depth_layer2 = topography - ds_mf['head'].isel(Time=0, layer=1).values
-        gw_depth_layer3 = topography - ds_mf['head'].isel(Time=0, layer=2).values
-        gw_depth_layer4 = topography - ds_mf['head'].isel(Time=0, layer=3).values
+        # smooth transition between fissured and porous aquifers
+        hydraulic_conductivities_layer1[np.isnan(hydraulic_conductivities_layer1)] = 0
+        hydraulic_conductivities_layer2[np.isnan(hydraulic_conductivities_layer2)] = 0
+        hydraulic_conductivities_layer3[np.isnan(hydraulic_conductivities_layer3)] = 0
+        hydraulic_conductivities_layer4[np.isnan(hydraulic_conductivities_layer4)] = 0
+        _hydraulic_conductivities_layer1 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [1.5, 1.5], mode="constant")
+        _hydraulic_conductivities_layer2 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.5, 1.5], mode="constant")
+        _hydraulic_conductivities_layer3 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.5, 1.5], mode="constant")
+        _hydraulic_conductivities_layer4 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.5, 1.5], mode="constant")
+        cond1 = (hydraulic_conductivities_layer1_ <= 10.0e-07)
+        cond2 = (hydraulic_conductivities_layer2_ <= 10.0e-07)
+        cond3 = (hydraulic_conductivities_layer3_ <= 10.0e-07)
+        cond4 = (hydraulic_conductivities_layer4_ <= 10.0e-07)
+        hydraulic_conductivities_layer1[cond1] = _hydraulic_conductivities_layer1[cond1]
+        hydraulic_conductivities_layer2[cond2] = _hydraulic_conductivities_layer2[cond2]
+        hydraulic_conductivities_layer3[cond3] = _hydraulic_conductivities_layer3[cond3]
+        hydraulic_conductivities_layer4[cond4] = _hydraulic_conductivities_layer4[cond4]
+
+        gw_depth_layer2 = topography - ds_mf_pre['head'].isel(Time=0, layer=1).values
+        gw_depth_layer3 = topography - ds_mf_pre['head'].isel(Time=0, layer=2).values
+        gw_depth_layer4 = topography - ds_mf_pre['head'].isel(Time=0, layer=3).values
 
         cond2 = (gw_depth_layer2 >= 0)
         cond3 = (gw_depth_layer3 >= 0)
@@ -287,27 +305,9 @@ class ModFlowSimulation:
         cond2 = (gw_depth_layer2 < 0) & (hydraulic_conductivities_layer2_ <= 10.0e-07)
         cond3 = (gw_depth_layer3 < 0) & (hydraulic_conductivities_layer3_ <= 10.0e-07)
         cond4 = (gw_depth_layer4 < 0) & (hydraulic_conductivities_layer4_ <= 10.0e-07)
-        hydraulic_conductivities_layer2[cond2] = hydraulic_conductivities_layer2[cond2] * (1 + (fudge_parameters["-7_2_re"].values[model_run] - 1) * scale2[cond2])
-        hydraulic_conductivities_layer3[cond3] = hydraulic_conductivities_layer3[cond3] * (1 + (fudge_parameters["-7_3_re"].values[model_run] - 1) * scale3[cond3])
-        hydraulic_conductivities_layer4[cond4] = hydraulic_conductivities_layer4[cond4] * (1 + (fudge_parameters["-7_4_re"].values[model_run] - 1) * scale4[cond4])
-
-        # smooth transition between fissured and porous aquifers
-        hydraulic_conductivities_layer1[np.isnan(hydraulic_conductivities_layer1)] = 0
-        hydraulic_conductivities_layer2[np.isnan(hydraulic_conductivities_layer2)] = 0
-        hydraulic_conductivities_layer3[np.isnan(hydraulic_conductivities_layer3)] = 0
-        hydraulic_conductivities_layer4[np.isnan(hydraulic_conductivities_layer4)] = 0
-        _hydraulic_conductivities_layer1 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [1.5, 1.5], mode="constant")
-        _hydraulic_conductivities_layer2 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.5, 1.5], mode="constant")
-        _hydraulic_conductivities_layer3 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.5, 1.5], mode="constant")
-        _hydraulic_conductivities_layer4 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.5, 1.5], mode="constant")
-        cond1 = (hydraulic_conductivities_layer1_ <= 10.0e-07)
-        cond2 = (hydraulic_conductivities_layer2_ <= 10.0e-07)
-        cond3 = (hydraulic_conductivities_layer3_ <= 10.0e-07)
-        cond4 = (hydraulic_conductivities_layer4_ <= 10.0e-07)
-        hydraulic_conductivities_layer1[cond1] = _hydraulic_conductivities_layer1[cond1]
-        hydraulic_conductivities_layer2[cond2] = _hydraulic_conductivities_layer2[cond2]
-        hydraulic_conductivities_layer3[cond3] = _hydraulic_conductivities_layer3[cond3]
-        hydraulic_conductivities_layer4[cond4] = _hydraulic_conductivities_layer4[cond4]
+        hydraulic_conductivities_layer2[cond2] = hydraulic_conductivities_layer2[cond2] * (1 + fudge_parameters["-7_2_re"].values[model_run] * scale2[cond2])
+        hydraulic_conductivities_layer3[cond3] = hydraulic_conductivities_layer3[cond3] * (1 + fudge_parameters["-7_3_re"].values[model_run] * scale3[cond3])
+        hydraulic_conductivities_layer4[cond4] = hydraulic_conductivities_layer4[cond4] * (1 + fudge_parameters["-7_4_re"].values[model_run] * scale4[cond4])
 
         # increase the hydraulic conductivities of the reach cell by a factor of xx
         reaches["kf"] = np.nan

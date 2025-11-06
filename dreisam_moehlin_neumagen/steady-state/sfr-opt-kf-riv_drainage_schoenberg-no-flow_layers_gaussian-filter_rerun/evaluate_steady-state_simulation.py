@@ -398,14 +398,14 @@ def main(model_run):
         df_sfr.loc[df_sfr["rno"] == rno, "man"] = reaches.loc[reaches["rno"] == rno, "man"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "kf"] = kf
         rwidth = reaches.loc[reaches["rno"] == rno, "rwid"].values[0]
-        stage_depth = df_sfr_.loc[0, dict_obs_stage_id_inv[rno]] - reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
+        stage = df_sfr_.loc[0, dict_obs_stage_id_inv[rno]] - reaches.loc[reaches["rno"] == rno, "rtp"].values[0]
         df_sfr.loc[df_sfr["rno"] == rno, "water_head"] = df_sfr_.loc[0, dict_obs_stage_id_inv[rno]]
-        df_sfr.loc[df_sfr["rno"] == rno, "water_depth"] = stage_depth
+        df_sfr.loc[df_sfr["rno"] == rno, "water_depth"] = stage
         flow = (df_sfr_.loc[0, dict_obs_flow_id_inv[rno]] * (-1)) / 86400
-        if stage_depth < 0:
+        if stage < 0:
             flow = 0
-            stage_depth = 0
-        df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * stage_depth * rwidth
+            stage = 0
+        df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * stage * rwidth
         df_sfr.loc[df_sfr["rno"] == rno, "gw_head"] = ds_mf["head"].values[0, z, y, x]
         df_sfr.loc[df_sfr["rno"] == rno, "gw-sw"] = ds_mf["head"].values[0, z, y, x] - df_sfr_.loc[0, dict_obs_stage_id_inv[rno]]
         df_sfr.loc[df_sfr["rno"] == rno, "sw-gw_flux"] = gw_sw[y, x]

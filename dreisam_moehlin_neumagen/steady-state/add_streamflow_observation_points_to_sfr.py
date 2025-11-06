@@ -57,6 +57,14 @@ for label, rno in zip(labels, rnos):
     ll = ["downstream-flow", int(rno)]
     dict_sfr_obs[key] = ll
 
+    key = f"{label}_depth"
+    ll = ["depth", int(rno)]
+    dict_sfr_obs[key] = ll
+
+    key = f"{label}_area"
+    ll = ["wet-area", int(rno)]
+    dict_sfr_obs[key] = ll
+
 modflow_config["sfr_obs"] = dict_sfr_obs
 
 # add SFR observation points to config

@@ -5,7 +5,7 @@ python write_fudge_parameters.py
 # python evaluate_boundary_condition.py --model-run 5
 
 python modflow6_steady-state.py --model-run 5
-python write_binary_to_netcdf_steady-state.py --model-run 5
+python write_binary_to_netcdf_steady-state_pre.py --model-run 5
 python modflow6_steady-state_rerun.py --model-run 5
 python write_binary_to_netcdf_steady-state.py --model-run 5
 # python evaluate_boundary_condition.py --model-run 5 --plot

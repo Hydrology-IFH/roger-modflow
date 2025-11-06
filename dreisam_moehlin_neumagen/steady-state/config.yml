@@ -86,216 +86,432 @@ outlet_rnos:
 - 24712
 - 24994
 sfr_obs:
+  B2_area:
+  - wet-area
+  - 12609
+  B2_depth:
+  - depth
+  - 12609
   B2_flow:
   - downstream-flow
   - 12609
   B2_stage:
   - stage
   - 12609
+  DREI1_area:
+  - wet-area
+  - 13897
+  DREI1_depth:
+  - depth
+  - 13897
   DREI1_flow:
   - downstream-flow
   - 13897
   DREI1_stage:
   - stage
   - 13897
+  DREI2_area:
+  - wet-area
+  - 13930
+  DREI2_depth:
+  - depth
+  - 13930
   DREI2_flow:
   - downstream-flow
   - 13930
   DREI2_stage:
   - stage
   - 13930
+  DREI3_area:
+  - wet-area
+  - 13950
+  DREI3_depth:
+  - depth
+  - 13950
   DREI3_flow:
   - downstream-flow
   - 13950
   DREI3_stage:
   - stage
   - 13950
+  DREI4_area:
+  - wet-area
+  - 15279
+  DREI4_depth:
+  - depth
+  - 15279
   DREI4_flow:
   - downstream-flow
   - 15279
   DREI4_stage:
   - stage
   - 15279
+  DREI5_area:
+  - wet-area
+  - 17046
+  DREI5_depth:
+  - depth
+  - 17046
   DREI5_flow:
   - downstream-flow
   - 17046
   DREI5_stage:
   - stage
   - 17046
+  DREI7_area:
+  - wet-area
+  - 24711
+  DREI7_depth:
+  - depth
+  - 24711
   DREI7_flow:
   - downstream-flow
   - 24711
   DREI7_stage:
   - stage
   - 24711
+  E1_area:
+  - wet-area
+  - 14023
+  E1_depth:
+  - depth
+  - 14023
   E1_flow:
   - downstream-flow
   - 14023
   E1_stage:
   - stage
   - 14023
+  E2_area:
+  - wet-area
+  - 14634
+  E2_depth:
+  - depth
+  - 14634
   E2_flow:
   - downstream-flow
   - 14634
   E2_stage:
   - stage
   - 14634
+  E4_area:
+  - wet-area
+  - 15332
+  E4_depth:
+  - depth
+  - 15332
   E4_flow:
   - downstream-flow
   - 15332
   E4_stage:
   - stage
   - 15332
+  E6_area:
+  - wet-area
+  - 17067
+  E6_depth:
+  - depth
+  - 17067
   E6_flow:
   - downstream-flow
   - 17067
   E6_stage:
   - stage
   - 17067
+  E8_area:
+  - wet-area
+  - 17096
+  E8_depth:
+  - depth
+  - 17096
   E8_flow:
   - downstream-flow
   - 17096
   E8_stage:
   - stage
   - 17096
+  Ebnet_area:
+  - wet-area
+  - 18598
+  Ebnet_depth:
+  - depth
+  - 18598
   Ebnet_flow:
   - downstream-flow
   - 18598
   Ebnet_stage:
   - stage
   - 18598
+  Falkensteig_area:
+  - wet-area
+  - 9094
+  Falkensteig_depth:
+  - depth
+  - 9094
   Falkensteig_flow:
   - downstream-flow
   - 9094
   Falkensteig_stage:
   - stage
   - 9094
+  IB1_area:
+  - wet-area
+  - 10653
+  IB1_depth:
+  - depth
+  - 10653
   IB1_flow:
   - downstream-flow
   - 10653
   IB1_stage:
   - stage
   - 10653
+  K1_area:
+  - wet-area
+  - 13372
+  K1_depth:
+  - depth
+  - 13372
   K1_flow:
   - downstream-flow
   - 13372
   K1_stage:
   - stage
   - 13372
+  MOE2_area:
+  - wet-area
+  - 24133
+  MOE2_depth:
+  - depth
+  - 24133
   MOE2_flow:
   - downstream-flow
   - 24133
   MOE2_stage:
   - stage
   - 24133
+  MOE3_area:
+  - wet-area
+  - 24183
+  MOE3_depth:
+  - depth
+  - 24183
   MOE3_flow:
   - downstream-flow
   - 24183
   MOE3_stage:
   - stage
   - 24183
+  MOE4_area:
+  - wet-area
+  - 24238
+  MOE4_depth:
+  - depth
+  - 24238
   MOE4_flow:
   - downstream-flow
   - 24238
   MOE4_stage:
   - stage
   - 24238
+  MOE5_area:
+  - wet-area
+  - 24269
+  MOE5_depth:
+  - depth
+  - 24269
   MOE5_flow:
   - downstream-flow
   - 24269
   MOE5_stage:
   - stage
   - 24269
+  MOE6_area:
+  - wet-area
+  - 24646
+  MOE6_depth:
+  - depth
+  - 24646
   MOE6_flow:
   - downstream-flow
   - 24646
   MOE6_stage:
   - stage
   - 24646
+  NEU2_area:
+  - wet-area
+  - 22186
+  NEU2_depth:
+  - depth
+  - 22186
   NEU2_flow:
   - downstream-flow
   - 22186
   NEU2_stage:
   - stage
   - 22186
+  NEU3_area:
+  - wet-area
+  - 23253
+  NEU3_depth:
+  - depth
+  - 23253
   NEU3_flow:
   - downstream-flow
   - 23253
   NEU3_stage:
   - stage
   - 23253
+  Oberambringen_area:
+  - wet-area
+  - 21173
+  Oberambringen_depth:
+  - depth
+  - 21173
   Oberambringen_flow:
   - downstream-flow
   - 21173
   Oberambringen_stage:
   - stage
   - 21173
+  Oberried_area:
+  - wet-area
+  - 8804
+  Oberried_depth:
+  - depth
+  - 8804
   Oberried_flow:
   - downstream-flow
   - 8804
   Oberried_stage:
   - stage
   - 8804
+  RE1_area:
+  - wet-area
+  - 13431
+  RE1_depth:
+  - depth
+  - 13431
   RE1_flow:
   - downstream-flow
   - 13431
   RE1_stage:
   - stage
   - 13431
+  RO2_A_area:
+  - wet-area
+  - 13247
+  RO2_A_depth:
+  - depth
+  - 13247
   RO2_A_flow:
   - downstream-flow
   - 13247
   RO2_A_stage:
   - stage
   - 13247
+  RO2_B_area:
+  - wet-area
+  - 13249
+  RO2_B_depth:
+  - depth
+  - 13249
   RO2_B_flow:
   - downstream-flow
   - 13249
   RO2_B_stage:
   - stage
   - 13249
+  SanktWilhelm_area:
+  - wet-area
+  - 3528
+  SanktWilhelm_depth:
+  - depth
+  - 3528
   SanktWilhelm_flow:
   - downstream-flow
   - 3528
   SanktWilhelm_stage:
   - stage
   - 3528
+  Untermuenstertal_area:
+  - wet-area
+  - 13127
+  Untermuenstertal_depth:
+  - depth
+  - 13127
   Untermuenstertal_flow:
   - downstream-flow
   - 13127
   Untermuenstertal_stage:
   - stage
   - 13127
+  W1_new_area:
+  - wet-area
+  - 9935
+  W1_new_depth:
+  - depth
+  - 9935
   W1_new_flow:
   - downstream-flow
   - 9935
   W1_new_stage:
   - stage
   - 9935
+  W2_area:
+  - wet-area
+  - 12382
+  W2_depth:
+  - depth
+  - 12382
   W2_flow:
   - downstream-flow
   - 12382
   W2_stage:
   - stage
   - 12382
+  W3_area:
+  - wet-area
+  - 12424
+  W3_depth:
+  - depth
+  - 12424
   W3_flow:
   - downstream-flow
   - 12424
   W3_stage:
   - stage
   - 12424
+  W4_area:
+  - wet-area
+  - 13340
+  W4_depth:
+  - depth
+  - 13340
   W4_flow:
   - downstream-flow
   - 13340
   W4_stage:
   - stage
   - 13340
+  Wiesneck_area:
+  - wet-area
+  - 12409
+  Wiesneck_depth:
+  - depth
+  - 12409
   Wiesneck_flow:
   - downstream-flow
   - 12409
   Wiesneck_stage:
   - stage
   - 12409
+  Zastler_area:
+  - wet-area
+  - 8166
+  Zastler_depth:
+  - depth
+  - 8166
   Zastler_flow:
   - downstream-flow
   - 8166

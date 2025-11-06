@@ -302,6 +302,14 @@ dreisam_moehlin_neumagen/transient/input/mask_kf_2e-7_lower_moehlin_and_dreisam.
 dreisam_moehlin_neumagen/transient/input/meteo/2000-2024/
 dreisam_moehlin_neumagen/transient/input/meteo/2013-2023/
 dreisam_moehlin_neumagen/transient/input/meteo_stations/
+dreisam_moehlin_neumagen/steady-state/input/groundwater_extraction_bn_cerdia.csv
+dreisam_moehlin_neumagen/steady-state/input/mask_wsg_hausen.tif
+dreisam_moehlin_neumagen/steady-state/input/mask_wsg_zartener_becken.tif
+dreisam_moehlin_neumagen/steady-state/input/wsg_hausen.gpkg
+dreisam_moehlin_neumagen/steady-state/input/wsg_hausen.tif
+dreisam_moehlin_neumagen/steady-state/input/wsg_zartener_becken.gpkg
+dreisam_moehlin_neumagen/steady-state/input/wsg_zartener_becken.tif
+dreisam_moehlin_neumagen/transient/input/crop_rotations_2013-2023.csv
 
 
 

@@ -244,7 +244,7 @@ def main(model_run):
     fig.savefig(file, dpi=300)
     plt.close("all")
 
-    gw_sw = np.nanmean(ds_mf['gw_sw'].isel(Time=0).values, axis=0) / rarea
+    gw_sw = (np.nanmean(ds_mf['gw_sw'].isel(Time=0).values, axis=0) / (50*50)) * 1000
     fig, axes = plt.subplots(figsize=(4, 4))
     plt.imshow(gw_sw, extent=grid_extent, cmap='RdYlBu', aspect='equal', vmin=-10, vmax=10)
     plt.colorbar(label='SW-GW flux \n[mm/day]', shrink=0.42)

@@ -9,7 +9,7 @@ import flopy.utils.binaryfile as bf
 
 import click
 
-@click.option("-mr", "--model-run", type=int, default=5)
+@click.option("-mr", "--model-run", type=int, default=9491)
 @click.option("-c", "--converged", type=int, default=1)
 @click.command("main")
 def main(model_run, converged):
@@ -31,13 +31,13 @@ def main(model_run, converged):
             nlayers = np.arange(ml.modelgrid.nlay)
 
             # load spatial reference and coordinates
-            with xr.open_dataset(base_path.parent.parent / "input" / "parameters_modflow.nc") as ds:
+            with xr.open_dataset(base_path.parent / "input" / "parameters_modflow.nc") as ds:
                 topography = ds['elevations'].isel(z=0).values
                 spatial_ref = ds.spatial_ref
                 xcoords = ds.x.values
                 ycoords = ds.y.values[::-1]
 
-            # export groundwater head to netcdf
+            # write groundwater head to netcdf
             fhead = base_path / "output" / f"dmn_run_{model_run}.hds"
             hds = flopy.utils.HeadFile(fhead)
 
@@ -84,7 +84,7 @@ def main(model_run, converged):
             # create spatial reference
             ds = ds.geo.write_crs("EPSG:25832")
             ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
-            file = base_path / "output" / f"modflow_output_run_{model_run}.nc"
+            file = base_path / "output" / f"modflow_output_run_{model_run}_pre1.nc"
             comp = dict(zlib=True, complevel=1)  # compress data to save storage
             encoding = {var: comp for var in ds.data_vars}
             ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)

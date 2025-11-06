@@ -52,7 +52,7 @@ for j in range(10):
     script_name = f"batch_{j}_slurm"
     lines = []
     lines.append("#!/bin/bash\n")
-    lines.append("#SBATCH --time=48:00:00\n")
+    lines.append("#SBATCH --time=72:00:00\n")
     lines.append("#SBATCH --nodes=1\n")
     lines.append("#SBATCH --ntasks=1\n")
     lines.append("#SBATCH --cpus-per-task=1\n")

@@ -32,8 +32,8 @@ def main(nsamples):
               "-4_4": [0.1, 1.0],
               "1.8-3_4": [0.1, 0.5],
               "kf_riv": [1.0, 1.2],
-              "rhkp": [40.0, 120.0],
-              "rhkf": [1.0, 40.0],
+              "rhkp": [0.00001, 0.1],
+              "rhkf": [0.00001, 0.1],
               "man": [0.9, 1.1],
               "rch": [0.9, 1.1],
               "offset": [0., 3.0],
@@ -55,8 +55,8 @@ def main(nsamples):
 
     df_params.iloc[:34, :] = 1.
     df_params.loc[:33, "kf_riv"] = 1.0
-    df_params.loc[:33, "rhkp"] = 108.
-    df_params.loc[:33, "rhkf"] = 20.
+    df_params.loc[:33, "rhkp"] = 0.001
+    df_params.loc[:33, "rhkf"] = 0.00002
     df_params.loc[:33, "man"] = 1.0
 
     xx = 0.6

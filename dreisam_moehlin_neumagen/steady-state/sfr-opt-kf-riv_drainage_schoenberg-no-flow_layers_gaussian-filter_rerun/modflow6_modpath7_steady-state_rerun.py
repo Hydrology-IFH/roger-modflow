@@ -32,7 +32,7 @@ def recalc_specific_yield(hydraulic_conductivity, specific_yield_min=0.05, speci
 
 base_path = Path(__file__).parent
 
-file_config = base_path.parent.parent / "config.yml"
+file_config = base_path.parent / "config.yml"
 with open(file_config, "r") as file:
     modflow_config = yaml.safe_load(file)
 
@@ -61,17 +61,17 @@ class ModFlowSimulation:
         self.verbose = verbose
 
         # load MODFLOW parameters
-        path = base_path.parent.parent/ "input" / "parameters_modflow.nc"
+        path = Path(__file__).parent.parent / "input" / "parameters_modflow.nc"
         ds_params = xr.open_dataset(path, engine="h5netcdf")
 
-        path = base_path.parent.parent / "input" / "boundary_conditions.nc"
+        path = Path(__file__).parent.parent / "input" / "boundary_conditions.nc"
         ds_bc = xr.open_dataset(path, engine="h5netcdf")
 
         path = base_path / "fudge_parameters_modflow.csv"
         fudge_parameters = pd.read_csv(path, sep=";", skiprows=1)
 
         # load the previous MODFLOW output
-        output_file = base_path / "output" / f"modflow_output_run_{model_run}_pre.nc"
+        output_file = base_path / "output" / f"modflow_output_run_{model_run}.nc"
         ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
 
         # Temporal discretization (TDIS)
@@ -239,7 +239,7 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer3[mask433] = hydraulic_conductivities_layer3[mask433] * fudge_parameters["4-3_3"].values[model_run]
 
         # prepare SFR data
-        reaches = pd.read_csv(base_path.parent.parent / "input" / "sfr_packagedata_modified.csv", sep=";")
+        reaches = pd.read_csv(base_path.parent / "input" / "sfr_packagedata_modified.csv", sep=";")
         reaches.iloc[:, 0] = reaches.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
         reaches.iloc[:, 1] = reaches.iloc[:, 1].astype(int) - 1 # convert to zero-based indexing
         reaches.iloc[:, 2] = reaches.iloc[:, 2].astype(int) - 1  # convert to zero-based indexing
@@ -258,19 +258,38 @@ class ModFlowSimulation:
         reaches.iloc[:, 16] = reaches.iloc[:, 16].astype(int)
 
         # adjust hydraulic conductivities
-        # hydraulic_conductivities_layer2[mask232 & mask_custom_hausen1] = hydraulic_conductivities_layer2[mask232 & mask_custom_hausen1] * fudge_parameters["hausen1_re"].values[model_run]
-        # hydraulic_conductivities_layer3[mask233 & mask_custom_hausen1] = hydraulic_conductivities_layer2[mask233 & mask_custom_hausen1] * fudge_parameters["hausen1_re"].values[model_run]
+        hydraulic_conductivities_layer2[mask232 & mask_custom_hausen1] = hydraulic_conductivities_layer2[mask232 & mask_custom_hausen1] * fudge_parameters["hausen1_re"].values[model_run]
+        hydraulic_conductivities_layer3[mask233 & mask_custom_hausen1] = hydraulic_conductivities_layer2[mask233 & mask_custom_hausen1] * fudge_parameters["hausen1_re"].values[model_run]
 
         hydraulic_conductivities_layer2[mask72 & mask_custom_hausen2] = hydraulic_conductivities_layer2[mask72 & mask_custom_hausen2] * fudge_parameters["hausen2_re"].values[model_run]
         hydraulic_conductivities_layer3[mask73 & mask_custom_hausen2] = hydraulic_conductivities_layer3[mask73 & mask_custom_hausen2] * fudge_parameters["hausen2_re"].values[model_run]
 
-        gw_depth = topography - ds_mf['head'].isel(Time=0, layer=3).values
-        cond2 = (gw_depth < 0) & (hydraulic_conductivities_layer2_ <= 10.0e-07)
-        cond3 = (gw_depth < 0) & (hydraulic_conductivities_layer3_ <= 10.0e-07)
-        cond4 = (gw_depth < 0) & (hydraulic_conductivities_layer4_ <= 10.0e-07)
-        hydraulic_conductivities_layer2[cond2] = hydraulic_conductivities_layer2[cond2] * fudge_parameters["-7_2_re"].values[model_run]
-        hydraulic_conductivities_layer3[cond3] = hydraulic_conductivities_layer3[cond3] * fudge_parameters["-7_3_re"].values[model_run]
-        hydraulic_conductivities_layer4[cond4] = hydraulic_conductivities_layer4[cond4] * fudge_parameters["-7_4_re"].values[model_run]
+        gw_depth_layer2 = topography - ds_mf['head'].isel(Time=0, layer=1).values
+        gw_depth_layer3 = topography - ds_mf['head'].isel(Time=0, layer=2).values
+        gw_depth_layer4 = topography - ds_mf['head'].isel(Time=0, layer=3).values
+
+        cond2 = (gw_depth_layer2 >= 0)
+        cond3 = (gw_depth_layer3 >= 0)
+        cond4 = (gw_depth_layer4 >= 0)
+
+        gw_depth_layer2[cond2] = 0
+        gw_depth_layer3[cond3] = 0
+        gw_depth_layer4[cond4] = 0
+
+        gw_depth_min_layer2 = np.nanmin(gw_depth_layer2)
+        gw_depth_min_layer3 = np.nanmin(gw_depth_layer3)
+        gw_depth_min_layer4 = np.nanmin(gw_depth_layer4)
+
+        scale2 = np.abs(gw_depth_layer2) / np.abs(gw_depth_min_layer2)
+        scale3 = np.abs(gw_depth_layer3) / np.abs(gw_depth_min_layer3)
+        scale4 = np.abs(gw_depth_layer4) / np.abs(gw_depth_min_layer4)
+
+        cond2 = (gw_depth_layer2 < 0) & (hydraulic_conductivities_layer2_ <= 10.0e-07)
+        cond3 = (gw_depth_layer3 < 0) & (hydraulic_conductivities_layer3_ <= 10.0e-07)
+        cond4 = (gw_depth_layer4 < 0) & (hydraulic_conductivities_layer4_ <= 10.0e-07)
+        hydraulic_conductivities_layer2[cond2] = hydraulic_conductivities_layer2[cond2] * (1 + (fudge_parameters["-7_2_re"].values[model_run] - 1) * scale2[cond2])
+        hydraulic_conductivities_layer3[cond3] = hydraulic_conductivities_layer3[cond3] * (1 + (fudge_parameters["-7_3_re"].values[model_run] - 1) * scale3[cond3])
+        hydraulic_conductivities_layer4[cond4] = hydraulic_conductivities_layer4[cond4] * (1 + (fudge_parameters["-7_4_re"].values[model_run] - 1) * scale4[cond4])
 
         # smooth transition between fissured and porous aquifers
         hydraulic_conductivities_layer1[np.isnan(hydraulic_conductivities_layer1)] = 0
@@ -353,7 +372,7 @@ class ModFlowSimulation:
         # cond = (reaches["rhk"] > 1)
         # reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * 1.0
 
-        diversions = pd.read_csv(base_path.parent.parent / "input" / "sfr_diversions.csv", sep=";")
+        diversions = pd.read_csv(base_path.parent / "input" / "sfr_diversions.csv", sep=";")
         diversions.iloc[:, 0] = diversions.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
         diversions.iloc[:, 1] = diversions.iloc[:, 1].astype(int) - 1
         diversions.iloc[:, 2] = diversions.iloc[:, 2].astype(int) - 1  # convert to zero-based indexing
@@ -381,7 +400,7 @@ class ModFlowSimulation:
         
         nstrm = len(packagedata)  # number of reaches
 
-        connections = pd.read_csv(base_path.parent.parent/ "input" / "sfr_connectiondata.csv", sep=";", header=None)
+        connections = pd.read_csv(base_path.parent / "input" / "sfr_connectiondata.csv", sep=";", header=None)
         for i in range(len(diversions)):
             rno_up = diversions.iloc[i, 0]
             rno_down = diversions.iloc[i, 2] 
@@ -525,7 +544,7 @@ class ModFlowSimulation:
         )
 
         # load the groundwater extraction data
-        groundwater_extraction = pd.read_csv(base_path.parent.parent/ "input" / "groundwater_extraction.csv", sep=";")
+        groundwater_extraction = pd.read_csv(base_path.parent / "input" / "groundwater_extraction.csv", sep=";")
         # Create the well package (Neumann boundary condition i.e. second type)
         # pumping rate in m3/day
         wells_q = groundwater_extraction["annual_average"].values.tolist()
@@ -594,7 +613,7 @@ class ModFlowSimulation:
             raise ValueError(f"Platform {platform.system()} not recognized.")
 
         # modflow requires the real path (no symlinks etc.)
-        library_path = self.folder.parent.parent.parent.parent / "bin" / libary_name
+        library_path = self.folder.parent.parent.parent / "bin" / libary_name
         try:
             self.mf6 = XmiWrapper(str(library_path), working_directory=self.working_directory)
         except Exception as e:
