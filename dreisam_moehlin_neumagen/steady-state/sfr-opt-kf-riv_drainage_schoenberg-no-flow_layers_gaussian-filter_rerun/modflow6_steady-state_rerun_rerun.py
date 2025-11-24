@@ -268,60 +268,6 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer2[mask72 & mask_custom_hausen2] = hydraulic_conductivities_layer2[mask72 & mask_custom_hausen2] * fudge_parameters["hausen2_re"].values[model_run]
         hydraulic_conductivities_layer3[mask73 & mask_custom_hausen2] = hydraulic_conductivities_layer3[mask73 & mask_custom_hausen2] * fudge_parameters["hausen2_re"].values[model_run]
 
-        gw_depth_layer2 = topography - ds_mf_pre['head'].isel(Time=0, layer=1).values
-        gw_depth_layer3 = topography - ds_mf_pre['head'].isel(Time=0, layer=2).values
-        gw_depth_layer4 = topography - ds_mf_pre['head'].isel(Time=0, layer=3).values
-
-        cond2 = (gw_depth_layer2 >= 0)
-        cond3 = (gw_depth_layer3 >= 0)
-        cond4 = (gw_depth_layer4 >= 0)
-
-        gw_depth_layer2[cond2] = 0
-        gw_depth_layer3[cond3] = 0
-        gw_depth_layer4[cond4] = 0
-
-        gw_depth_min_layer2 = np.nanmin(gw_depth_layer2)
-        gw_depth_min_layer3 = np.nanmin(gw_depth_layer3)
-        gw_depth_min_layer4 = np.nanmin(gw_depth_layer4)
-
-        scale2 = np.abs(gw_depth_layer2) / np.abs(gw_depth_min_layer2)
-        scale3 = np.abs(gw_depth_layer3) / np.abs(gw_depth_min_layer3)
-        scale4 = np.abs(gw_depth_layer4) / np.abs(gw_depth_min_layer4)
-
-        cond2 = (gw_depth_layer2 < 0) & (hydraulic_conductivities_layer2_ <= 10.0e-07)
-        cond3 = (gw_depth_layer3 < 0) & (hydraulic_conductivities_layer3_ <= 10.0e-07)
-        cond4 = (gw_depth_layer4 < 0) & (hydraulic_conductivities_layer4_ <= 10.0e-07)
-        hydraulic_conductivities_layer2[cond2] = hydraulic_conductivities_layer2[cond2] * (1 + fudge_parameters["-7_2_re"].values[model_run] * scale2[cond2])
-        hydraulic_conductivities_layer3[cond3] = hydraulic_conductivities_layer3[cond3] * (1 + fudge_parameters["-7_3_re"].values[model_run] * scale3[cond3])
-        hydraulic_conductivities_layer4[cond4] = hydraulic_conductivities_layer4[cond4] * (1 + fudge_parameters["-7_4_re"].values[model_run] * scale4[cond4])
-
-        gw_depth_layer2 = topography - ds_mf_pre1['head'].isel(Time=0, layer=1).values
-        gw_depth_layer3 = topography - ds_mf_pre1['head'].isel(Time=0, layer=2).values
-        gw_depth_layer4 = topography - ds_mf_pre1['head'].isel(Time=0, layer=3).values
-
-        cond2 = (gw_depth_layer2 >= 0)
-        cond3 = (gw_depth_layer3 >= 0)
-        cond4 = (gw_depth_layer4 >= 0)
-
-        gw_depth_layer2[cond2] = 0
-        gw_depth_layer3[cond3] = 0
-        gw_depth_layer4[cond4] = 0
-
-        gw_depth_min_layer2 = np.nanmin(gw_depth_layer2)
-        gw_depth_min_layer3 = np.nanmin(gw_depth_layer3)
-        gw_depth_min_layer4 = np.nanmin(gw_depth_layer4)
-
-        scale2 = np.abs(gw_depth_layer2) / np.abs(gw_depth_min_layer2)
-        scale3 = np.abs(gw_depth_layer3) / np.abs(gw_depth_min_layer3)
-        scale4 = np.abs(gw_depth_layer4) / np.abs(gw_depth_min_layer4)
-
-        cond2 = (gw_depth_layer2 < 0) & (hydraulic_conductivities_layer2_ <= 10.0e-07)
-        cond3 = (gw_depth_layer3 < 0) & (hydraulic_conductivities_layer3_ <= 10.0e-07)
-        cond4 = (gw_depth_layer4 < 0) & (hydraulic_conductivities_layer4_ <= 10.0e-07)
-        hydraulic_conductivities_layer2[cond2] = hydraulic_conductivities_layer2[cond2] * (1 + fudge_parameters["-7_2_re1"].values[model_run] * scale2[cond2])
-        hydraulic_conductivities_layer3[cond3] = hydraulic_conductivities_layer3[cond3] * (1 + fudge_parameters["-7_3_re1"].values[model_run] * scale3[cond3])
-        hydraulic_conductivities_layer4[cond4] = hydraulic_conductivities_layer4[cond4] * (1 + fudge_parameters["-7_4_re1"].values[model_run] * scale4[cond4])
-
         # smooth transition between fissured and porous aquifers
         hydraulic_conductivities_layer1[np.isnan(hydraulic_conductivities_layer1)] = 0
         hydraulic_conductivities_layer2[np.isnan(hydraulic_conductivities_layer2)] = 0

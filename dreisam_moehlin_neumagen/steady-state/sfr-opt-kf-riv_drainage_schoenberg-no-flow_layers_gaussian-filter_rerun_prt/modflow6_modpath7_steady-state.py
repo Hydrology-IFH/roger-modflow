@@ -6,11 +6,73 @@ import pandas as pd
 import xarray as xr
 from xmipy import XmiWrapper
 import flopy
+from flopy.utils.gridgen import Gridgen
+import flopy.utils.binaryfile as bf
+from flopy.utils.gridintersect import GridIntersect
+from shapely.geometry import LineString, MultiPoint
 import scipy
 import platform
 import yaml
 import click
 import signal
+
+base_path = Path(__file__).parent
+
+# load the groundwater extraction data
+_groundwater_extraction = pd.read_csv(base_path.parent / "input" / "groundwater_extraction.csv", sep=";")
+_groundwater_extraction["cell_y"] = _groundwater_extraction["cell_y"].values - 1
+_groundwater_extraction["cell_x"] = _groundwater_extraction["cell_x"].values - 1
+_groundwater_extraction["layer"] = _groundwater_extraction["layer"].values - 1
+
+_wells_y = _groundwater_extraction["cell_y"].values.tolist()
+_wells_x = _groundwater_extraction["cell_x"].values.tolist()
+_wells_layer = _groundwater_extraction["layer"].values.tolist()
+WEL_LOCS = []
+for i in range(len(_wells_x)):
+    WEL_LOCS.append((_wells_layer[i], _wells_y[i], _wells_x[i]))
+
+def get_well_particle_data(well_locs, well_id=0):
+    pcoord = np.array(
+        [
+            [0.500, 0.500, 0.000],
+            [0.500, 0.500, 0.200],
+            [0.500, 0.500, 0.400],
+            [0.500, 0.500, 0.600],
+            [0.500, 0.500, 0.800],
+            [0.500, 0.500, 1.000],
+            [0.000, 0.500, 0.000],
+            [0.200, 0.500, 0.200],
+            [0.400, 0.500, 0.400],
+            [0.600, 0.500, 0.600],
+            [0.800, 0.500, 0.800],
+            [1.000, 0.500, 1.000],
+            [0.500, 0.000, 0.000],
+            [0.500, 0.200, 0.200],
+            [0.500, 0.400, 0.400],
+            [0.500, 0.600, 0.600],
+            [0.500, 0.800, 0.800],
+            [0.500, 1.000, 1.000],
+        ]
+    )
+    return flopy.modpath.ParticleData(
+        well_locs[well_id],
+        structured=False,
+        localx=pcoord[:, 0],
+        localy=pcoord[:, 1],
+        localz=pcoord[:, 2],
+        drape=0,
+    )
+
+def reverse_budgetfile(fpth, rev_fpth, tdis):
+    f = bf.CellBudgetFile(fpth, tdis=tdis)
+    f.reverse(rev_fpth)
+
+
+def reverse_headfile(fpth, rev_fpth, tdis):
+    f = bf.HeadFile(fpth, tdis=tdis)
+    f.reverse(rev_fpth)
+
+
 
 def handler(signum, frame):
     raise TimeoutError("Function execution timed out")
@@ -29,8 +91,6 @@ def recalc_specific_yield(hydraulic_conductivity, specific_yield_min=0.05, speci
     specific_yield[specific_yield < specific_yield_min] = specific_yield_min
     specific_yield[specific_yield > specific_yield_max] = specific_yield_max
     return specific_yield
-
-base_path = Path(__file__).parent
 
 file_config = base_path.parent / "config.yml"
 with open(file_config, "r") as file:
@@ -58,6 +118,10 @@ class ModFlowSimulation:
         self.working_directory = os.path.join(folder, "output")
         if not os.path.exists(self.working_directory):
             os.makedirs(self.working_directory)
+        self.disv_props = None
+        self.grid = None
+        self.tdis = None
+        self.gwf_model = None
         self.verbose = verbose
 
         # load MODFLOW parameters
@@ -71,8 +135,8 @@ class ModFlowSimulation:
         fudge_parameters = pd.read_csv(path, sep=";", skiprows=1)
 
         # load the previous MODFLOW output
-        output_file = base_path / "output" / f"modflow_output_run_{model_run}_pre.nc"
-        ds_mf_pre = xr.open_dataset(output_file, engine="h5netcdf")
+        output_file = base_path / "output" / f"modflow_output_run_{model_run}.nc"
+        ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
 
         # Temporal discretization (TDIS)
         # One or more models (GWF is the only model supported at present)
@@ -88,8 +152,9 @@ class ModFlowSimulation:
 
         # Create the Flopy temporal discretization object
         tdis = flopy.mf6.modflow.mftdis.ModflowTdis(
-            sim, pname="tdis", time_units="DAYS", nper=1, perioddata=[(1.0, 1, 1)]
+            sim, pname="tdis", time_units="DAYS", nper=1, perioddata=[(1000.0, 1, 1.0)]
         )
+        self.tdis = tdis
 
         # Create the Flopy groundwater flow (gwf) model object
         model_nam_file = "{}.nam".format(name)
@@ -97,6 +162,7 @@ class ModFlowSimulation:
 
         # Create the Flopy iterative model solver (ims) Package object
         ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="all", complexity="COMPLEX", no_ptcrecord="NO_PTC_ALL")
+        sim.register_ims_package(ims, [gwf.name])
         
         # Now that the overall simulation is set up, we can focus on building the groundwater flow model.  The groundwater flow model will be built by adding packages to it that describe the model characteristics.
         #
@@ -249,7 +315,7 @@ class ModFlowSimulation:
         reaches.iloc[:, 6] = reaches.iloc[:, 6].astype(float)
         reaches.iloc[:, 7] = reaches.iloc[:, 7].astype(float)
         reaches.iloc[:, 8] = reaches.iloc[:, 8].astype(float)
-        reaches.iloc[:, 9] = reaches.iloc[:, 9].astype(float) * 86400  # convert to m/day
+        reaches.iloc[:, 9] = reaches.iloc[:, 9].astype(float)
         reaches.iloc[:, 10] = reaches.iloc[:, 10].astype(float)
         reaches.iloc[:, 11] = reaches.iloc[:, 11].astype(int)
         reaches.iloc[:, 12] = reaches.iloc[:, 12].astype(float)
@@ -264,27 +330,9 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer2[mask72 & mask_custom_hausen2] = hydraulic_conductivities_layer2[mask72 & mask_custom_hausen2] * fudge_parameters["hausen2_re"].values[model_run]
         hydraulic_conductivities_layer3[mask73 & mask_custom_hausen2] = hydraulic_conductivities_layer3[mask73 & mask_custom_hausen2] * fudge_parameters["hausen2_re"].values[model_run]
 
-        # smooth transition between fissured and porous aquifers
-        hydraulic_conductivities_layer1[np.isnan(hydraulic_conductivities_layer1)] = 0
-        hydraulic_conductivities_layer2[np.isnan(hydraulic_conductivities_layer2)] = 0
-        hydraulic_conductivities_layer3[np.isnan(hydraulic_conductivities_layer3)] = 0
-        hydraulic_conductivities_layer4[np.isnan(hydraulic_conductivities_layer4)] = 0
-        _hydraulic_conductivities_layer1 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [1.5, 1.5], mode="constant")
-        _hydraulic_conductivities_layer2 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.5, 1.5], mode="constant")
-        _hydraulic_conductivities_layer3 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.5, 1.5], mode="constant")
-        _hydraulic_conductivities_layer4 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.5, 1.5], mode="constant")
-        cond1 = (hydraulic_conductivities_layer1_ <= 10.0e-07)
-        cond2 = (hydraulic_conductivities_layer2_ <= 10.0e-07)
-        cond3 = (hydraulic_conductivities_layer3_ <= 10.0e-07)
-        cond4 = (hydraulic_conductivities_layer4_ <= 10.0e-07)
-        hydraulic_conductivities_layer1[cond1] = _hydraulic_conductivities_layer1[cond1]
-        hydraulic_conductivities_layer2[cond2] = _hydraulic_conductivities_layer2[cond2]
-        hydraulic_conductivities_layer3[cond3] = _hydraulic_conductivities_layer3[cond3]
-        hydraulic_conductivities_layer4[cond4] = _hydraulic_conductivities_layer4[cond4]
-
-        gw_depth_layer2 = topography - ds_mf_pre['head'].isel(Time=0, layer=1).values
-        gw_depth_layer3 = topography - ds_mf_pre['head'].isel(Time=0, layer=2).values
-        gw_depth_layer4 = topography - ds_mf_pre['head'].isel(Time=0, layer=3).values
+        gw_depth_layer2 = topography - ds_mf['head'].isel(Time=0, layer=1).values
+        gw_depth_layer3 = topography - ds_mf['head'].isel(Time=0, layer=2).values
+        gw_depth_layer4 = topography - ds_mf['head'].isel(Time=0, layer=3).values
 
         cond2 = (gw_depth_layer2 >= 0)
         cond3 = (gw_depth_layer3 >= 0)
@@ -305,9 +353,27 @@ class ModFlowSimulation:
         cond2 = (gw_depth_layer2 < 0) & (hydraulic_conductivities_layer2_ <= 10.0e-07)
         cond3 = (gw_depth_layer3 < 0) & (hydraulic_conductivities_layer3_ <= 10.0e-07)
         cond4 = (gw_depth_layer4 < 0) & (hydraulic_conductivities_layer4_ <= 10.0e-07)
-        hydraulic_conductivities_layer2[cond2] = hydraulic_conductivities_layer2[cond2] * (1 + fudge_parameters["-7_2_re"].values[model_run] * scale2[cond2])
-        hydraulic_conductivities_layer3[cond3] = hydraulic_conductivities_layer3[cond3] * (1 + fudge_parameters["-7_3_re"].values[model_run] * scale3[cond3])
-        hydraulic_conductivities_layer4[cond4] = hydraulic_conductivities_layer4[cond4] * (1 + fudge_parameters["-7_4_re"].values[model_run] * scale4[cond4])
+        hydraulic_conductivities_layer2[cond2] = hydraulic_conductivities_layer2[cond2] * (1 + (fudge_parameters["-7_2_re"].values[model_run] - 1) * scale2[cond2])
+        hydraulic_conductivities_layer3[cond3] = hydraulic_conductivities_layer3[cond3] * (1 + (fudge_parameters["-7_3_re"].values[model_run] - 1) * scale3[cond3])
+        hydraulic_conductivities_layer4[cond4] = hydraulic_conductivities_layer4[cond4] * (1 + (fudge_parameters["-7_4_re"].values[model_run] - 1) * scale4[cond4])
+
+        # smooth transition between fissured and porous aquifers
+        hydraulic_conductivities_layer1[np.isnan(hydraulic_conductivities_layer1)] = 0
+        hydraulic_conductivities_layer2[np.isnan(hydraulic_conductivities_layer2)] = 0
+        hydraulic_conductivities_layer3[np.isnan(hydraulic_conductivities_layer3)] = 0
+        hydraulic_conductivities_layer4[np.isnan(hydraulic_conductivities_layer4)] = 0
+        _hydraulic_conductivities_layer1 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer1, [1.5, 1.5], mode="constant")
+        _hydraulic_conductivities_layer2 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.5, 1.5], mode="constant")
+        _hydraulic_conductivities_layer3 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.5, 1.5], mode="constant")
+        _hydraulic_conductivities_layer4 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.5, 1.5], mode="constant")
+        cond1 = (hydraulic_conductivities_layer1_ <= 10.0e-07)
+        cond2 = (hydraulic_conductivities_layer2_ <= 10.0e-07)
+        cond3 = (hydraulic_conductivities_layer3_ <= 10.0e-07)
+        cond4 = (hydraulic_conductivities_layer4_ <= 10.0e-07)
+        hydraulic_conductivities_layer1[cond1] = _hydraulic_conductivities_layer1[cond1]
+        hydraulic_conductivities_layer2[cond2] = _hydraulic_conductivities_layer2[cond2]
+        hydraulic_conductivities_layer3[cond3] = _hydraulic_conductivities_layer3[cond3]
+        hydraulic_conductivities_layer4[cond4] = _hydraulic_conductivities_layer4[cond4]
 
         # increase the hydraulic conductivities of the reach cell by a factor of xx
         reaches["kf"] = np.nan
@@ -423,7 +489,7 @@ class ModFlowSimulation:
 
         hydraulic_conductivities_layers = [hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4]
         npf = flopy.mf6.modflow.mfgwfnpf.ModflowGwfnpf(
-            gwf, pname="npf", icelltype=1, k=hydraulic_conductivities_layers, wetdry=0.5, save_flows=True, save_specific_discharge="budget save file"
+            gwf, pname="npf", icelltype=1, k=hydraulic_conductivities_layers, wetdry=0.5, save_flows=True, save_saturation=True, save_specific_discharge=True
         )
 
         # create the storage package
@@ -474,7 +540,9 @@ class ModFlowSimulation:
         specific_storage[3]["data"] = specific_yield[3]["data"] * thickness_layer4
 
         sto = flopy.mf6.ModflowGwfsto(gwf, pname="sto",
-            iconvert=1, ss=specific_storage, sy=specific_yield, steady_state=True)
+            iconvert=1, ss=specific_storage, sy=specific_yield, 
+            steady_state=True,
+        )
 
         # Create the constant head package (Dirichlet boundary condition i.e. first type)
         mask_boundary_condition_porous_aquifer = ds_bc["mask_porous_aquifer_bc"].values
@@ -581,6 +649,42 @@ class ModFlowSimulation:
             budget_filerecord=budget_filerecord,
         )
 
+        # create Gridgen object
+        g = Gridgen(gwf.modelgrid, model_ws=self.working_directory)
+        g.build(verbose=False)
+        grid_props = g.get_gridprops_vertexgrid()
+        self.disv_props = g.get_gridprops_disv()
+        self.grid = flopy.discretization.VertexGrid(**grid_props)
+
+        # ncpl = disv_props["ncpl"]
+        # top = disv_props["top"]
+        # botm = disv_props["botm"]
+        # nvert = disv_props["nvert"]
+        # vertices = disv_props["vertices"]
+        # cell2d = disv_props["cell2d"]
+
+        # def get_recharge_particle_data():
+        #     nodew = ncpl * 2 + wellcells[0]
+        #     return flopy.modpath.NodeParticleData(
+        #         subdivisiondata=flopy.modpath.FaceDataType(
+        #             drape=0,
+        #             verticaldivisions1=10,
+        #             horizontaldivisions1=10,
+        #             verticaldivisions2=10,
+        #             horizontaldivisions2=10,
+        #             verticaldivisions3=10,
+        #             horizontaldivisions3=10,
+        #             verticaldivisions4=10,
+        #             horizontaldivisions4=10,
+        #             rowdivisions5=0,
+        #             columndivisions5=0,
+        #             rowdivisions6=4,
+        #             columndivisions6=4,
+        #         ),
+        #         nodes=nodew,
+        #     )
+
+        self.gwf_model = sim
         # Create the MODFLOW 6 Input Files and Run the Model
         # Once all the flopy objects are created, it is very easy to create all of the input files and run the model.
         sim.write_simulation()  # write the MODFLOW6 files
@@ -653,7 +757,7 @@ class ModFlowSimulation:
 
         # limit the execution time of the numerical solver
         signal.signal(signal.SIGALRM, handler)
-        signal.alarm(150)  # Set the timeout duration to 60 seconds
+        signal.alarm(120)  # Set the timeout duration to 60 seconds
 
         converged = 0
         self.mf6.prepare_solve(1)
@@ -689,10 +793,285 @@ class ModFlowSimulation:
     def finalize(self):
         self.mf6.finalize()
 
-@click.option("-mr", "--model-run", type=int, default=5)
+class ModFlowPrtSimulation:
+    def __init__(
+        self,
+        name,
+        folder,
+        disv_props=None,
+        grid=None,
+        well_id=0,
+        verbose=False
+    ):
+        self.name = name.upper()  # MODFLOW requires the name to be uppercase
+        self.folder = folder
+        self.working_directory = os.path.join(folder, "output")
+        if not os.path.exists(self.working_directory):
+            os.makedirs(self.working_directory)
+        self.disv_props = disv_props
+        self.grid = grid
+        self.verbose = verbose
+
+
+        # Instantiate the MODFLOW 6 simulation object
+        sim = flopy.mf6.MFSimulation(
+            sim_name=f"{self.name}_prt", exe_name="mf6", version="mf6", sim_ws=self.working_directory
+        )
+
+        # Instantiate the MODFLOW 6 temporal discretization package
+        flopy.mf6.ModflowTdis(
+            sim, pname="tdis", time_units="DAYS", nper=1, perioddata=[(1000.0, 1, 1.0)]
+        )
+
+        # Instantiate the MODFLOW 6 prt model
+        prt = flopy.mf6.ModflowPrt(
+            sim, modelname=f"{self.name}_prt", model_nam_file=f"{self.name}_prt.nam"
+        )
+
+        # Instantiate the MODFLOW 6 prt discretization package
+        flopy.mf6.ModflowGwfdisv(
+            prt,
+            length_units="METERS",
+            **disv_props,
+        )
+
+        # Instantiate the MODFLOW 6 prt model input package
+        flopy.mf6.ModflowPrtmip(prt, pname="mip", porosity=0.1)
+
+        def add_prp(well_id=0):
+            prpname = f"prp2{well_id}"
+            prpfilename = f"{self.name}_prt_2{well_id}.prp"
+
+            # Set particle release point data according to the scenario
+            releasepts = list(get_well_particle_data(WEL_LOCS, well_id).to_prp(grid))
+
+            # Instantiate the MODFLOW 6 prt particle release point (prp) package
+            pd = {0: ["FIRST"], 1: []}
+            flopy.mf6.ModflowPrtprp(
+                prt,
+                pname=prpname,
+                filename=prpfilename,
+                nreleasepts=len(releasepts),
+                packagedata=releasepts,
+                perioddata=pd,
+                exit_solve_tolerance=1e-5,
+                extend_tracking=True,
+            )
+
+        add_prp(well_id=well_id)
+
+        # Instantiate the MODFLOW 6 prt output control package
+        budgetfile = f"{self.name}_prt.bud"
+        trackfile = f"{self.name}_prt.trk"
+        trackcsvfile = f"{self.name}_prt.trk.csv"
+        budget_record = [budgetfile]
+        track_record = [trackfile]
+        trackcsv_record = [trackcsvfile]
+        track_times = list(range(0, 72000, 1000))
+        flopy.mf6.ModflowPrtoc(
+            prt,
+            pname="oc",
+            budget_filerecord=budget_record,
+            track_filerecord=track_record,
+            trackcsv_filerecord=trackcsv_record,
+            ntracktimes=len(track_times),
+            tracktimes=[(t,) for t in track_times],
+            saverecord=[("BUDGET", "ALL")],
+        )
+
+        # Instantiate the MODFLOW 6 prt flow model interface
+        # using "time-reversed" budget and head files
+        pd = [
+            ("GWFHEAD", Path(f"{self.working_directory}/{self.name}_rev.hds")),
+            ("GWFBUDGET", Path(f"{self.working_directory}/{self.name}_rev.cbc")),
+        ]
+        flopy.mf6.ModflowPrtfmi(prt, packagedata=pd)
+
+        # Create an explicit model solution (EMS) for the MODFLOW 6 prt model
+        ems = flopy.mf6.ModflowEms(
+            sim,
+            pname="ems",
+            filename=f"{self.name}_prt.ems",
+        )
+        sim.register_solution_package(ems, [prt.name])
+
+
+        # Create the MODFLOW 6 Input Files and Run the Model
+        # Once all the flopy objects are created, it is very easy to create all of the input files and run the model.
+        sim.write_input()  # write the MODFLOW6 files
+        sim.run_model(report=True)
+
+class ModpathSimulation:
+    def __init__(
+        self,
+        name,
+        folder,
+        gwf_model=None,
+        well_id=0,
+        verbose=False
+    ):
+        self.name = name.upper()  # MODFLOW requires the name to be uppercase
+        self.folder = folder
+        self.working_directory = os.path.join(folder, "output")
+        if not os.path.exists(self.working_directory):
+            os.makedirs(self.working_directory)
+        self.gwf_model = gwf_model
+        self.verbose = verbose
+        self.mp7 = None
+
+        # Create particle groups
+        pg = flopy.modpath.ParticleGroup(
+            particlegroupname=f"PG2{well_id}",
+            particledata=get_well_particle_data(WEL_LOCS, well_id=well_id),
+            filename=f"{well_id}.sloc",
+        )
+        # pgb = flopy.modpath.ParticleGroupNodeTemplate(
+        #     particlegroupname="PG2B",
+        #     particledata=get_particle_data("B"),
+        #     filename="b.sloc",
+        # )
+
+        # Instantiate the MODPATH 7 simulation object
+        mp7 = flopy.modpath.Modpath7(
+            modelname=f"{self.name}_mp7",
+            flowmodel=self.gwf_model,
+            exe_name="mp7",
+            model_ws=self.working_directory,
+            budgetfilename=f"{self.gwf_model.name}.cbc",
+            headfilename=f"{self.gwf_model.name}.hds",
+        )
+
+        # Instantiate the MODPATH 7 basic data
+        flopy.modpath.Modpath7Bas(mp7, porosity=0.1)
+
+        # Instantiate the MODPATH 7 simulation data
+        flopy.modpath.Modpath7Sim(
+            mp7,
+            simulationtype="combined",
+            trackingdirection="backward",
+            weaksinkoption="pass_through",
+            weaksourceoption="pass_through",
+            referencetime=0.0,
+            stoptimeoption="extend",
+            timepointdata=[500, 1000.0],
+            particlegroups=[pg],
+        )
+        self.mp7 = mp7
+
+        # Create the MODFLOW 6 Input Files and Run the Model
+        # Once all the flopy objects are created, it is very easy to create all of the input files and run the model.
+        mp7.write_simulation()  # write the MODFLOW6 files
+
+        self.load_bmi()
+
+    def bmi_return(self, success, model_ws):
+        """
+        parse libmf6.so and libmf6.dll stdout file
+        """
+        fpth = os.path.join(model_ws, "mpsim.stdout")
+        if os.path.exists(fpth):
+            lines = open(fpth).readlines()
+        else:
+            lines = None
+        return success, lines
+
+    def load_bmi(self):
+        """Load the Basic Model Interface"""
+        success = False
+        
+        
+        if platform.system() == "Windows":
+            libary_name = "libmf6.dll"
+        elif platform.system() == "Linux":
+            libary_name = "libmf6.so"
+        elif platform.system() == "Darwin":
+            libary_name = "libmf6.dylib"
+        else:
+            raise ValueError(f"Platform {platform.system()} not recognized.")
+
+        # modflow requires the real path (no symlinks etc.)
+        library_path = self.folder.parent.parent.parent / "bin" / libary_name
+        try:
+            self.mf6 = XmiWrapper(str(library_path), working_directory=self.working_directory)
+        except Exception as e:
+            print(f"Failed to load {library_path}")
+            print("with message: " + str(e))
+            return self.bmi_return(success, self.working_directory)
+
+        # modflow requires the real path (no symlinks etc.)
+        config_file = self.folder / "output" / "mpsim.nam"
+        if not os.path.exists(config_file):
+            raise FileNotFoundError(f"Config file {config_file} not found on disk. Did you create the model first (load_from_disk = False)?")
+
+        try:
+            # initialize the model
+            self.mf6.initialize(str(config_file))
+        except:
+            return self.bmi_return(success, str(self.folder / "output"))
+
+        if self.verbose:
+            print("MODPATH model initialized")
+
+        
+        self.end_time = self.mf6.get_end_time()
+
+        mxit_tag = self.mf6.get_var_address("MXITER", "SLN_1")
+        self.max_iter = self.mf6.get_value_ptr(mxit_tag)[0]
+
+        self.prepare_time_step()
+
+    def prepare_time_step(self):
+        dt = self.mf6.get_time_step()
+        self.mf6.prepare_time_step(dt)
+
+    def step(self):
+        if self.mf6.get_current_time() > self.end_time:
+            raise StopIteration("MODFLOW used all iteration steps. Consider increasing `ndays`")
+
+        # limit the execution time of the numerical solver
+        signal.signal(signal.SIGALRM, handler)
+        signal.alarm(120)  # Set the timeout duration to 60 seconds
+
+        converged = 0
+        self.mf6.prepare_solve(1)
+        t0 = time()
+        try:
+            # convergence loop
+            for i in range(self.max_iter):
+                has_converged = self.mf6.solve(1)
+                print(f"MODPATH iteration {i+1} of {self.max_iter}. Convergence of numerical solution: {has_converged}")
+
+                if has_converged:
+                    converged = 1
+                    break
+        except TimeoutError:
+            has_converged = False
+            print("MODPATH numerical solver timed out")
+        finally:
+            signal.alarm(0)  # Reset the alarm
+            self.mf6.finalize_solve(1)
+
+        self.mf6.finalize_time_step()
+
+        if self.verbose:
+            print(f"MODPATH timestep {int(self.mf6.get_current_time())} converged in {round(time() - t0, 2)} seconds")
+        
+        # If next step exists, prepare timestep. Otherwise the data set through the bmi
+        # will be overwritten when preparing the next timestep.
+        if self.mf6.get_current_time() < self.end_time:
+            self.prepare_time_step()
+
+        return converged
+
+    def finalize(self):
+        self.mf6.finalize()
+
+
+@click.option("-mr", "--model-run", type=int, default=9491)
+@click.option("-wi", "--well-id", type=int, default=6)
 @click.option("-c", "--converged", type=int, default=1)
 @click.command("main", short_help="Run MODFLOW in steady-state mode")
-def main(model_run, converged):
+def main(model_run, well_id, converged):
     if converged == 1:
         # initialize the MODFLOW model using XMI
         modflow_interface = ModFlowSimulation(
@@ -712,6 +1091,38 @@ def main(model_run, converged):
         modflow_interface.finalize()
         print("MODFLOW (steady-state) finalized")
         print(f"converged: {converged}")
+
+        reverse_budgetfile(base_path / "output" / f"dmn_run_{model_run}.cbc", base_path / "output" / f"dmn_run_{model_run}_rev.cbc", modflow_interface.tdis)
+        reverse_headfile(base_path / "output" / f"dmn_run_{model_run}.hds", base_path / "output" / f"dmn_run_{model_run}_rev.hds", modflow_interface.tdis)
+
+        # initialize the MODFLOW particle model using XMI
+        modflowprt_interface = ModFlowPrtSimulation(
+            f"dmn_run_{model_run}",
+            base_path,
+            disv_props=modflow_interface.disv_props,
+            grid=modflow_interface.grid,
+            well_id=well_id,
+            verbose=True
+        )
+
+        # initialize the MODPATH model using XMI
+        modpath_interface = ModpathSimulation(
+            f"dmn_run_{model_run}",
+            base_path,
+            nlay=4,
+            gwf_model=modflow_interface.gwf_model,
+            well_id=well_id,
+            verbose=True
+        )
+        # run MODPATH for one timestep
+        converged = modpath_interface.step()
+
+        modpath_interface.finalize()
+        print("MODPATH (steady-state) finalized")
+        print(f"converged: {converged}")
+
+
+
     return
 
 if __name__ == "__main__":

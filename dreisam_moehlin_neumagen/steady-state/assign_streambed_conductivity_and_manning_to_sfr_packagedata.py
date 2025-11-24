@@ -98,6 +98,7 @@ cond = (gdf_reaches["man"] <= 0.0)
 gdf_reaches.loc[cond, "man"] = gdf_reaches["man"].median()
 cond = (gdf_reaches["rhk"] <= 10e-9)
 gdf_reaches.loc[cond, "rhk"] = 10e-9
+gdf_reaches.loc[:, "rhk"] = gdf_reaches["rhk"].interpolate()
 
 cond = (gdf_reaches["kf"] < 10e-7)
 gdf_reaches.loc[cond, "rwid"] = gdf_reaches.loc[cond, "rwid"] * 0.6

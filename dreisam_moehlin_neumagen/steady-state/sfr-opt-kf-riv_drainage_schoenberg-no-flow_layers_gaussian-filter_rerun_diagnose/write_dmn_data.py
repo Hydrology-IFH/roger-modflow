@@ -25,7 +25,7 @@ def recalc_specific_yield(hydraulic_conductivity, specific_yield_min=0.05, speci
     specific_yield[specific_yield > specific_yield_max] = specific_yield_max
     return specific_yield
 
-@click.option("-mr", "--model-run", type=int, default=9491)
+@click.option("-mr", "--model-run", type=int, default=8304)
 @click.command("main")
 def main(model_run):
     base_path = Path(__file__).parent
@@ -51,29 +51,22 @@ def main(model_run):
     output_file = Path(__file__).parent / "output" / f"modflow_output_run_{model_run}_pre1.nc"
     ds_mf_pre1 = xr.open_dataset(output_file, engine="h5netcdf")
 
+    groundwater_extraction = pd.read_csv(base_path.parent / "input" / "groundwater_extraction.csv", sep=";")
+    groundwater_extraction["cell_y"] = groundwater_extraction["cell_y"].values - 1
+    groundwater_extraction["cell_x"] = groundwater_extraction["cell_x"].values - 1
+    groundwater_extraction["layer"] = groundwater_extraction["layer"].values - 1
+
+    gw_extraction = np.zeros(ds_params['kf'].values.shape)
+    gw_extraction[:, :, :] = np.nan
+    for idx, row in groundwater_extraction.iterrows():
+        gw_extraction[row["layer"], row["cell_y"], row["cell_x"]] = row["annual_average"]
+
     # load the netcdf file
     output_file = Path(__file__).parent / "output" / f"modflow_output_run_{model_run}.nc"
     ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
     gw_depth = topography[np.newaxis, :, :] - ds_mf['head'].isel(Time=0).values
     cond = (gw_depth < 0)
     gw_depth[cond] = 0
-
-    # load water protection areas
-    path = Path(__file__).parent.parent / "input" / "wsg_hausen.tif"
-    src_wsg_hausen = rasterio.open(str(path))
-    wsg_hausen = src_wsg_hausen.read(1)
-
-    path = Path(__file__).parent.parent / "input" / "mask_wsg_hausen.tif"
-    src_mask_wsg_hausen = rasterio.open(str(path))
-    mask_wsg_hausen = src_mask_wsg_hausen.read(1)
-
-    path = Path(__file__).parent.parent / "input" / "wsg_zartener_becken.tif"
-    src_wsg_zarten = rasterio.open(str(path))
-    wsg_zarten = src_wsg_zarten.read(1)
-
-    path = Path(__file__).parent.parent / "input" / "mask_wsg_zartener_becken.tif"
-    src_mask_wsg_zarten = rasterio.open(str(path))
-    mask_wsg_zarten = src_mask_wsg_zarten.read(1)
 
     thickness_layer1 = ds_params['elevations'].isel(z=0).values - ds_params['elevations'].isel(z=1).values
     thickness_layer2 = ds_params['elevations'].isel(z=1).values - ds_params['elevations'].isel(z=2).values
@@ -84,7 +77,7 @@ def main(model_run):
     # load the boundary conditions
     path = Path(__file__).parent.parent / "input" / "boundary_conditions.nc"
     ds_bc = xr.open_dataset(path, engine="h5netcdf")
-    indirect_recharge = ds_bc['recharge'].values
+    direct_recharge = ds_bc['recharge'].values * ((50 * 50)/ 1000)
 
     mask = np.isfinite(topography)
     # set Schoenberg to inactive
@@ -92,7 +85,6 @@ def main(model_run):
     mask = np.where(mask_schoenberg, False, mask)
     mask_boundary_condition_schoenberg = ds_bc["mask_schoenberg_bc"].values
     mask = np.where(mask_boundary_condition_schoenberg, True, mask)
-    mask_drainage_area = (ds_params["mask_drainage"].values == 1)
     mask_custom_hausen1 = (ds_params["mask_kf_18e_3_lower_moehlin"].values == 1)
     mask_custom_hausen2 = (ds_params["mask_kf_2e_7_lower_moehlin_and_dreisam"].values == 1)
 
@@ -128,19 +120,17 @@ def main(model_run):
         man[x, y] = reaches.loc[rno, 'man']
         rhk[x, y] = reaches.loc[rno, 'rhk']
 
-    rarea = rlen * rwid + ds_mf['sfr_stage'].values * rlen * 2  # in m2
-    direct_recharge = np.nanmean(ds_mf['gw_sw'].isel(Time=0).values, axis=0)
-    # direct_recharge = (np.nansum(ds_mf['gw_sw'].isel(Time=0).values, axis=0) / (50*50)) * 1000  # in mm/day
+    indirect_recharge = np.nanmean(ds_mf['gw_sw'].isel(Time=0).values, axis=0)
 
     # fudge parameters
     path = base_path / "fudge_parameters_modflow.csv"
     fudge_parameters = pd.read_csv(path, sep=";", skiprows=1)
 
     # Create the node property flow package with hydraulic conducitivities
-    hydraulic_conductivities_layer1 = ds_params["kf"].isel(layer=0).values
-    hydraulic_conductivities_layer2 = ds_params["kf"].isel(layer=1).values
-    hydraulic_conductivities_layer3 = ds_params["kf"].isel(layer=2).values
-    hydraulic_conductivities_layer4 = ds_params["kf"].isel(layer=3).values
+    hydraulic_conductivities_layer1 = np.copy(ds_params["kf"].isel(layer=0).values)
+    hydraulic_conductivities_layer2 = np.copy(ds_params["kf"].isel(layer=1).values)
+    hydraulic_conductivities_layer3 = np.copy(ds_params["kf"].isel(layer=2).values)
+    hydraulic_conductivities_layer4 = np.copy(ds_params["kf"].isel(layer=3).values)
 
     specific_yield_layer1 = recalc_specific_yield(hydraulic_conductivities_layer1)
     specific_yield_layer2 = recalc_specific_yield(hydraulic_conductivities_layer2)
@@ -149,10 +139,10 @@ def main(model_run):
 
     sy = np.array([specific_yield_layer1, specific_yield_layer2, specific_yield_layer3, specific_yield_layer4])
 
-    hydraulic_conductivities_layer1_ = ds_params["kf"].isel(layer=0).values / 86400
-    hydraulic_conductivities_layer2_ = ds_params["kf"].isel(layer=1).values / 86400
-    hydraulic_conductivities_layer3_ = ds_params["kf"].isel(layer=2).values / 86400
-    hydraulic_conductivities_layer4_ = ds_params["kf"].isel(layer=3).values / 86400
+    hydraulic_conductivities_layer1_ = np.copy(ds_params["kf"].isel(layer=0).values) / 86400
+    hydraulic_conductivities_layer2_ = np.copy(ds_params["kf"].isel(layer=1).values) / 86400
+    hydraulic_conductivities_layer3_ = np.copy(ds_params["kf"].isel(layer=2).values) / 86400
+    hydraulic_conductivities_layer4_ = np.copy(ds_params["kf"].isel(layer=3).values) / 86400
     
     # fudge parameters
     mask1 = (hydraulic_conductivities_layer1_ <= 10e-10)
@@ -390,10 +380,10 @@ def main(model_run):
     specific_yield_layer2[np.isnan(specific_yield_layer2)] = 0
     specific_yield_layer3[np.isnan(specific_yield_layer3)] = 0
     specific_yield_layer4[np.isnan(specific_yield_layer4)] = 0
-    _specific_yield_layer1 = scipy.ndimage.gaussian_filter(specific_yield_layer1, [1.0, 1.0], mode="constant")
-    _specific_yield_layer2 = scipy.ndimage.gaussian_filter(specific_yield_layer2, [1.0, 1.0], mode="constant")
-    _specific_yield_layer3 = scipy.ndimage.gaussian_filter(specific_yield_layer3, [1.0, 1.0], mode="constant")
-    _specific_yield_layer4 = scipy.ndimage.gaussian_filter(specific_yield_layer4, [1.0, 1.0], mode="constant")
+    _specific_yield_layer1 = scipy.ndimage.gaussian_filter(specific_yield_layer1, [1.5, 1.5], mode="constant")
+    _specific_yield_layer2 = scipy.ndimage.gaussian_filter(specific_yield_layer2, [1.5, 1.5], mode="constant")
+    _specific_yield_layer3 = scipy.ndimage.gaussian_filter(specific_yield_layer3, [1.5, 1.5], mode="constant")
+    _specific_yield_layer4 = scipy.ndimage.gaussian_filter(specific_yield_layer4, [1.5, 1.5], mode="constant")
     specific_yield_layer1[cond1] = _specific_yield_layer1[cond1]
     specific_yield_layer2[cond2] = _specific_yield_layer2[cond2]
     specific_yield_layer3[cond3] = _specific_yield_layer3[cond3]
@@ -422,79 +412,55 @@ def main(model_run):
 
     for rno, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 2], reaches.iloc[:, 3]):
         man_fudged[x, y] = reaches.loc[rno, 'man']
-        rhk_fudged[x, y] = reaches.loc[rno, 'rhk'] / 86400
-    
-    # create xarray dataset of the Zartener Becken
-    height = wsg_zarten.shape[0]
-    width = wsg_zarten.shape[1]
-    cols, rows = np.meshgrid(np.arange(width), np.arange(height))
-    xs, ys = rasterio.transform.xy(src_wsg_zarten.transform, rows, cols)
-    xcoords = np.array(xs)
-    ycoords = np.array(ys)
-
-    direct_recharge_ = direct_recharge.copy()
-    indirect_recharge_ = indirect_recharge.copy()
-    cond_nan = mask_wsg_zarten != 1
-    direct_recharge_[cond_nan] = np.nan
-    indirect_recharge_[cond_nan] = np.nan
-
-    cond_y = (ds_mf.lat.values <= ycoords[0]) & (ds_mf.lat.values >= ycoords[-1])
-    cond_x = (ds_mf.lon.values >= xcoords[0]) & (ds_mf.lon.values <= xcoords[-1])
-    y = ds_mf.lat.values[cond_y]
-    x = ds_mf.lon.values[cond_x]
-    x1 = np.where(cond_x)[0][0]
-    x2 = np.where(cond_x)[0][-1] + 1
-    y1 = np.where(cond_y)[0][0]
-    y2 = np.where(cond_y)[0][-1] + 1
-
-    direct_recharge_zarten = direct_recharge_[y1:y2, x1:x2]
-    indirect_recharge_zarten = indirect_recharge_[y1:y2, x1:x2]
+        rhk_fudged[x, y] = reaches.loc[rno, 'rhk']
 
     attrs = dict(
             date_created=datetime.datetime.today().isoformat(),
-            title="Recharge data from MODFLOW steady-state simulations of the water protection area Zartener Becken",
+            title="MODFLOW steady-state simulation of the Dreisam-Moehlin-Neumagen catchment",
             institution="University of Freiburg, Chair of Hydrology",
             flopy_version=f"{flopy.__version__}",
             modflow_version=f"{ml.version}",
         )
     coords = {
-            "lon": ("lon", ds_mf.lon.values[cond_x]),  # x
-            "lat": ("lat", ds_mf.lat.values[cond_y]),  # y
+            "lon": ("lon", ds_mf.lon.values),  # x
+            "lat": ("lat", ds_mf.lat.values),  # y
             "layer": ("layer", ds_mf.layer.values),
             "z": ("z", ds_params['z'].values),
             "Time": ("Time", [1]),
         }
     data_vars=dict(
-            gw_head=(["Time", "layer", "lat", "lon"], ds_mf['head'].values[:, :, y1:y2, x1:x2]),
-            gw_depth=(["Time", "layer", "lat", "lon"], gw_depth[np.newaxis, :, y1:y2, x1:x2]),
-            indirect_recharge=(["Time", "lat", "lon"], indirect_recharge_zarten[np.newaxis, :, :]),
-            direct_recharge=(["Time", "lat", "lon"], direct_recharge_zarten[np.newaxis, :, :] * (-1)),
-            elevations=(["z", "lat", "lon"], ds_params['elevations'].values[:, y1:y2, x1:x2]),
-            thickness=(["layer", "lat", "lon"], thickness[:, y1:y2, x1:x2]),
-            kf=(["layer", "lat", "lon"], ds_params['kf'].values[:, y1:y2, x1:x2] / 86400),
-            sy=(["layer", "lat", "lon"], sy[:, y1:y2, x1:x2]),
-            kf_fudged=(["layer", "lat", "lon"], kf_fudged[:, y1:y2, x1:x2] / 86400),
-            sy_fudged=(["layer", "lat", "lon"], sy_fudged[:, y1:y2, x1:x2]),
-            rhk=(["lat", "lon"], rhk[y1:y2, x1:x2]),
-            rhk_fudged=(["lat", "lon"], rhk_fudged[y1:y2, x1:x2]),
-            man=(["lat", "lon"], man[y1:y2, x1:x2]),
-            man_fudged=(["lat", "lon"], man_fudged[y1:y2, x1:x2]),
-            rwid=(["lat", "lon"], rwid[y1:y2, x1:x2]),
-            rlen=(["lat", "lon"], rlen[y1:y2, x1:x2]),
-            rarea=(["lat", "lon"], rarea[y1:y2, x1:x2]),
-            rgrd=(["lat", "lon"], ds_mf['sfr_gradient'].values[y1:y2, x1:x2]),
-            sfr_stage=(["Time", "lat", "lon"], ds_mf['sfr_stage'].values[np.newaxis, y1:y2, x1:x2]),
-            sfr_head=(["Time", "lat", "lon"], ds_mf['sfr_head'].values[np.newaxis, y1:y2, x1:x2]),
-            sfr_flow=(["Time", "lat", "lon"], ds_mf['sfr_flow'].values[np.newaxis, y1:y2, x1:x2]),
-            delta_sw_gw_head=(["Time", "lat", "lon"], ds_mf['delta_sw_gw_head'].values[np.newaxis, y1:y2, x1:x2]),
-            delta_rtp_gw_head=(["Time", "lat", "lon"], ds_mf['delta_rtp_gw_head'].values[np.newaxis, y1:y2, x1:x2]),
+            mask=(["lat", "lon"], mask),
+            gw_head=(["Time", "layer", "lat", "lon"], ds_mf['head'].values),
+            gw_depth=(["Time", "layer", "lat", "lon"], gw_depth[np.newaxis, :, :, :]),
+            indirect_recharge=(["Time", "lat", "lon"], indirect_recharge[np.newaxis, :, :] * (-1)),
+            direct_recharge=(["Time", "lat", "lon"], direct_recharge[np.newaxis, :, :]),
+            elevations=(["z", "lat", "lon"], ds_params['elevations'].values),
+            thickness=(["layer", "lat", "lon"], thickness),
+            kf=(["layer", "lat", "lon"], ds_params['kf'].values / 86400),
+            sy=(["layer", "lat", "lon"], sy),
+            kf_fudged=(["layer", "lat", "lon"], kf_fudged),
+            sy_fudged=(["layer", "lat", "lon"], sy_fudged),
+            rhk=(["lat", "lon"], rhk),
+            rhk_fudged=(["lat", "lon"], rhk_fudged),
+            man=(["lat", "lon"], man),
+            man_fudged=(["lat", "lon"], man_fudged),
+            rwid=(["lat", "lon"], rwid),
+            rlen=(["lat", "lon"], rlen),
+            rgrd=(["lat", "lon"], ds_mf['sfr_gradient'].values),
+            sfr_stage=(["Time", "lat", "lon"], ds_mf['sfr_stage'].values[np.newaxis, :, :]),
+            sfr_head=(["Time", "lat", "lon"], ds_mf['sfr_head'].values[np.newaxis, :, :]),
+            sfr_flow=(["Time", "lat", "lon"], ds_mf['sfr_flow'].values[np.newaxis, :, :]),
+            delta_sw_gw_head=(["Time", "lat", "lon"], ds_mf['delta_sw_gw_head'].values[np.newaxis, :, :]),
+            delta_rtp_gw_head=(["Time", "lat", "lon"], ds_mf['delta_rtp_gw_head'].values[np.newaxis, :, :]),
+            gw_extraction=(["Time", "layer", "lat", "lon"], gw_extraction[np.newaxis, :, :, :]),
         )
 
     ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
-    ds["indirect_recharge"].attrs["units"] = "mm/day"
-    ds["indirect_recharge"].attrs["long_name"] = "Recharge from percolation"
-    ds["direct_recharge"].attrs["units"] = "mm/day"
-    ds["direct_recharge"].attrs["long_name"] = "Recharge from surface water. Negative values indicate surface water leakage into the groundwater."
+    ds["mask"].attrs["long_name"] = "Mask of the catchment"
+    ds["indirect_recharge"].attrs["units"] = "m3/day"
+    ds["indirect_recharge"].attrs["long_name"] = "Recharge from surface water. Negative values indicate surface water leakage into the groundwater."
+    ds["direct_recharge"].attrs["units"] = "m3/day"
+    ds["direct_recharge"].attrs["long_name"] = "Recharge from percolation"
     ds["elevations"].attrs["units"] = "m a.s.l."
     ds["elevations"].attrs["long_name"] = "layer elevations of the top"
     ds["thickness"].attrs["units"] = "m"
@@ -521,8 +487,6 @@ def main(model_run):
     ds["rwid"].attrs["long_name"] = "Reach width"
     ds["rlen"].attrs["units"] = "m"
     ds["rlen"].attrs["long_name"] = "Reach length"
-    ds["rarea"].attrs["units"] = "m2"
-    ds["rarea"].attrs["long_name"] = "Reach area of wetted surface"
     ds["man"].attrs["units"] = ""
     ds["man"].attrs["long_name"] = "Reach Manning's roughness coefficient"
     ds["rhk"].attrs["units"] = "m/s"
@@ -533,129 +497,12 @@ def main(model_run):
     ds["delta_sw_gw_head"].attrs["long_name"] = "Difference between surface water head and groundwater head"
     ds["delta_rtp_gw_head"].attrs["units"] = "m"
     ds["delta_rtp_gw_head"].attrs["long_name"] = "Difference between elevation of the riverbed and groundwater head"
+    ds["gw_extraction"].attrs["units"] = "m3/day"
+    ds["gw_extraction"].attrs["long_name"] = "Groundwater extraction"
     # create spatial reference
     ds = ds.geo.write_crs("EPSG:25832")
     ds["spatial_ref"] = spatial_ref
-    ds["spatial_ref"].attrs["GeoTransform"] = f'{xcoords[0]} 50.0 0.0 {ycoords[0]} 0.0 -50.0'  # update spatial reference from parameters_modflow.nc
-    file = base_path / "output" / "wsg_zartener_becken.nc"
-    comp = dict(zlib=True, complevel=1)  # compress data to save storage
-    encoding = {var: comp for var in ds.data_vars}
-    ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)
-
-    # create xarray dataset of the Hausen water protection area
-    height = wsg_hausen.shape[0]
-    width = wsg_hausen.shape[1]
-    cols, rows = np.meshgrid(np.arange(width), np.arange(height))
-    xs, ys = rasterio.transform.xy(src_wsg_hausen.transform, rows, cols)
-    xcoords = np.array(xs)
-    ycoords = np.array(ys)
-
-    direct_recharge_ = direct_recharge.copy()
-    indirect_recharge_ = indirect_recharge.copy()
-    cond_nan = mask_wsg_hausen != 1
-    direct_recharge_[cond_nan] = np.nan
-    indirect_recharge_[cond_nan] = np.nan
-
-    cond_y = (ds_mf.lat.values <= ycoords[0]) & (ds_mf.lat.values >= ycoords[-1])
-    cond_x = (ds_mf.lon.values >= xcoords[0]) & (ds_mf.lon.values <= xcoords[-1])
-    y = ds_mf.lat.values[cond_y]
-    x = ds_mf.lon.values[cond_x]
-    x1 = np.where(cond_x)[0][0]
-    x2 = np.where(cond_x)[0][-1] + 1
-    y1 = np.where(cond_y)[0][0]
-    y2 = np.where(cond_y)[0][-1] + 1
-
-    direct_recharge_hausen = direct_recharge_[y1:y2, x1:x2]
-    indirect_recharge_hausen = indirect_recharge_[y1:y2, x1:x2]
-
-    attrs = dict(
-            date_created=datetime.datetime.today().isoformat(),
-            title="Recharge data from MODFLOW steady-state simulations of the water protection area Hausen",
-            institution="University of Freiburg, Chair of Hydrology",
-            flopy_version=f"{flopy.__version__}",
-            modflow_version=f"{ml.version}",
-        )
-    coords = {
-            "lon": ("lon", ds_mf.lon.values[cond_x]),  # x
-            "lat": ("lat", ds_mf.lat.values[cond_y]),  # y
-            "layer": ("layer", ds_mf.layer.values),
-            "z": ("z", ds_params['z'].values),
-            "Time": ("Time", [1]),
-        }
-    data_vars=dict(
-            gw_head=(["Time", "layer", "lat", "lon"], ds_mf['head'].values[:, :, y1:y2, x1:x2]),
-            gw_depth=(["Time", "layer", "lat", "lon"], gw_depth[np.newaxis, :, y1:y2, x1:x2]),
-            indirect_recharge=(["Time", "lat", "lon"], indirect_recharge_hausen[np.newaxis, :, :]),
-            direct_recharge=(["Time", "lat", "lon"], direct_recharge_hausen[np.newaxis, :, :] * (-1)),
-            elevations=(["z", "lat", "lon"], ds_params['elevations'].values[:, y1:y2, x1:x2]),
-            thickness=(["layer", "lat", "lon"], thickness[:, y1:y2, x1:x2]),
-            kf=(["layer", "lat", "lon"], ds_params['kf'].values[:, y1:y2, x1:x2] / 86400),
-            sy=(["layer", "lat", "lon"], sy[:, y1:y2, x1:x2]),
-            kf_fudged=(["layer", "lat", "lon"], kf_fudged[:, y1:y2, x1:x2] / 86400),
-            sy_fudged=(["layer", "lat", "lon"], sy_fudged[:, y1:y2, x1:x2]),
-            rhk=(["lat", "lon"], rhk[y1:y2, x1:x2]),
-            rhk_fudged=(["lat", "lon"], rhk_fudged[y1:y2, x1:x2]),
-            man=(["lat", "lon"], man[y1:y2, x1:x2]),
-            man_fudged=(["lat", "lon"], man_fudged[y1:y2, x1:x2]),
-            rwid=(["lat", "lon"], rwid[y1:y2, x1:x2]),
-            rlen=(["lat", "lon"], rlen[y1:y2, x1:x2]),
-            rarea=(["lat", "lon"], rarea[y1:y2, x1:x2]),
-            rgrd=(["lat", "lon"], ds_mf['sfr_gradient'].values[y1:y2, x1:x2]),
-            sfr_stage=(["Time", "lat", "lon"], ds_mf['sfr_stage'].values[np.newaxis, y1:y2, x1:x2]),
-            sfr_head=(["Time", "lat", "lon"], ds_mf['sfr_head'].values[np.newaxis, y1:y2, x1:x2]),
-            sfr_flow=(["Time", "lat", "lon"], ds_mf['sfr_flow'].values[np.newaxis, y1:y2, x1:x2]),
-            delta_sw_gw_head=(["Time", "lat", "lon"], ds_mf['delta_sw_gw_head'].values[np.newaxis, y1:y2, x1:x2]),
-            delta_rtp_gw_head=(["Time", "lat", "lon"], ds_mf['delta_rtp_gw_head'].values[np.newaxis, y1:y2, x1:x2]),
-        )
-
-    ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
-    ds["indirect_recharge"].attrs["units"] = "mm/day"
-    ds["indirect_recharge"].attrs["long_name"] = "Recharge from percolation"
-    ds["direct_recharge"].attrs["units"] = "mm/day"
-    ds["direct_recharge"].attrs["long_name"] = "Recharge from surface water. Negative values indicate surface water leakage into the groundwater."
-    ds["elevations"].attrs["units"] = "m a.s.l."
-    ds["elevations"].attrs["long_name"] = "layer elevations of the top"
-    ds["thickness"].attrs["units"] = "m"
-    ds["thickness"].attrs["long_name"] = "layer thickness"
-    ds["kf"].attrs["units"] = "m/s"
-    ds["kf"].attrs["long_name"] = "hydraulic conductivity (original)"
-    ds["kf_fudged"].attrs["units"] = "m/s"
-    ds["kf_fudged"].attrs["long_name"] = "hydraulic conductivity (fudged)"
-    ds["sy"].attrs["units"] = "m/s"
-    ds["sy"].attrs["long_name"] = "specific yield (original; calculated using formula of Marotz 1968)"
-    ds["sy_fudged"].attrs["units"] = "m/s"
-    ds["sy_fudged"].attrs["long_name"] = "specific yield (fudged)"
-    ds["gw_head"].attrs["units"] = "m a.s.l."
-    ds["gw_head"].attrs["long_name"] = "Groundwater head"
-    ds["gw_depth"].attrs["units"] = "m"
-    ds["gw_depth"].attrs["long_name"] = "Groundwater depth"
-    ds["sfr_stage"].attrs["units"] = "m"
-    ds["sfr_stage"].attrs["long_name"] = "Streamflow depth"
-    ds["sfr_head"].attrs["units"] = "m a.s.l."
-    ds["sfr_head"].attrs["long_name"] = "Streamflow head"
-    ds["sfr_flow"].attrs["units"] = "m3/s"
-    ds["sfr_flow"].attrs["long_name"] = "Streamflow"
-    ds["rwid"].attrs["units"] = "m"
-    ds["rwid"].attrs["long_name"] = "Reach width"
-    ds["rlen"].attrs["units"] = "m"
-    ds["rlen"].attrs["long_name"] = "Reach length"
-    ds["rarea"].attrs["units"] = "m2"
-    ds["rarea"].attrs["long_name"] = "Reach area of wetted surface"
-    ds["man"].attrs["units"] = ""
-    ds["man"].attrs["long_name"] = "Reach Manning's roughness coefficient"
-    ds["rhk"].attrs["units"] = "m/s"
-    ds["rhk"].attrs["long_name"] = "Reach hydraulic conductivity"
-    ds["rgrd"].attrs["units"] = ""
-    ds["rgrd"].attrs["long_name"] = "Reach gradient"
-    ds["delta_sw_gw_head"].attrs["units"] = "m"
-    ds["delta_sw_gw_head"].attrs["long_name"] = "Difference between surface water head and groundwater head"
-    ds["delta_rtp_gw_head"].attrs["units"] = "m"
-    ds["delta_rtp_gw_head"].attrs["long_name"] = "Difference between elevation of the riverbed and groundwater head"
-    # create spatial reference
-    ds = ds.geo.write_crs("EPSG:25832")
-    ds["spatial_ref"] = spatial_ref
-    ds["spatial_ref"].attrs["GeoTransform"] = f'{xcoords[0]} 50.0 0.0 {ycoords[0]} 0.0 -50.0'  # update spatial reference from parameters_modflow.nc # update spatial reference from parameters_modflow.nc
-    file = base_path / "output" / "wsg_hausen.nc"
+    file = base_path / "output" / "dreisam_moehlin_neumagen.nc"
     comp = dict(zlib=True, complevel=1)  # compress data to save storage
     encoding = {var: comp for var in ds.data_vars}
     ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)

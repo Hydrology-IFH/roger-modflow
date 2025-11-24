@@ -1,4 +1,5 @@
 import sys
+import os
 from pathlib import Path
 import flopy
 import xarray as xr
@@ -12,7 +13,7 @@ import yaml
 
 import click
 
-@click.option("-mr", "--model-run", type=int, default=9491)
+@click.option("-mr", "--model-run", type=int, default=8304)
 @click.option("-c", "--converged", type=int, default=1)
 @click.command("main")
 def main(model_run, converged):
@@ -388,8 +389,8 @@ def main(model_run, converged):
         fbudget = base_path / "output" / f"dmn_run_{model_run}.cbc"
         cbb = flopy.utils.CellBudgetFile(fbudget)
 
-        flowja = ml.oc.output.budget().get_data(text="FLOW-JA-FACE", kstpkper=(0, 0))[0]
         grb_file = base_path / "output" / f"dmn_run_{model_run}.dis.grb"
+        flowja = ml.oc.output.budget().get_data(text="FLOW-JA-FACE", kstpkper=(0, 0))[0]
         residual = flopy.mf6.utils.get_residuals(flowja, grb_file=grb_file)
 
         # load the SFR output file
@@ -397,7 +398,6 @@ def main(model_run, converged):
         df_sfr_ = pd.read_csv(output_file, sep=",")
 
         gw_head = np.where(hds.get_data()[np.newaxis, :, :, :] > 10000, np.nan, hds.get_data()[np.newaxis, :, :, :])
-        gw_depth =  np.where(hds.get_data()[np.newaxis, :, :, :] > 10000, np.nan, np.where(topography[np.newaxis, np.newaxis, :, :] - hds.get_data()[np.newaxis, :, :, :] > 0, topography[np.newaxis, np.newaxis, :, :] - hds.get_data()[np.newaxis, :, :, :], 0))
         gw_sw = cbb.get_data(text="SFR", kstpkper=(0, 0), full3D=True)[0].filled(fill_value=np.nan)[np.newaxis, :, :, :]
         gw_sw = np.nansum(gw_sw[0, ...], axis=0)
 
@@ -475,7 +475,6 @@ def main(model_run, converged):
                 head=(["Time", "layer", "lat", "lon"], np.where(hds.get_data()[np.newaxis, :, :, :] > 10000, np.nan, hds.get_data()[np.newaxis, :, :, :])),
                 depth=(["Time", "layer", "lat", "lon"], np.where(hds.get_data()[np.newaxis, :, :, :] > 10000, np.nan, np.where(topography[np.newaxis, np.newaxis, :, :] - hds.get_data()[np.newaxis, :, :, :] > 0, topography[np.newaxis, np.newaxis, :, :] - hds.get_data()[np.newaxis, :, :, :], 0))),
                 flow_residual=(["Time", "layer", "lat", "lon"], residual[np.newaxis, :, :, :]),
-                specific_discharge=(["Time", "layer", "lat", "lon"], cbb.get_data(text="DATA-SPDIS", kstpkper=(0, 0), full3D=True)[0].filled(fill_value=np.nan)[np.newaxis, :, :, :]),
                 gw_sw=(["Time", "layer", "lat", "lon"], cbb.get_data(text="SFR", kstpkper=(0, 0), full3D=True)[0].filled(fill_value=np.nan)[np.newaxis, :, :, :]),
                 gw_sw_=(["Time", "lat", "lon"], np.nansum(cbb.get_data(text="SFR", kstpkper=(0, 0), full3D=True)[0].filled(fill_value=np.nan), axis=0)[np.newaxis, :, :]),
                 sfr_stage=(["lat", "lon"], sfr_stage),
@@ -486,7 +485,7 @@ def main(model_run, converged):
                 sfr_hydraulic_conductivity=(["lat", "lon"], rhk),
                 sfr_gradient=(["lat", "lon"], rgrd),
                 delta_sw_gw_head=(["lat", "lon"], delta_sw_gw_head),
-                delta_rtp_gw_head=(["lat", "lon"], delta_rtp_gw_head),
+                delta_rtp_gw_head=(["lat", "lon"], delta_rtp_gw_head)
             )
 
         ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
@@ -496,8 +495,6 @@ def main(model_run, converged):
         ds["depth"].attrs["long_name"] = "Groundwater depth"
         ds["flow_residual"].attrs["units"] = "m/day"
         ds["flow_residual"].attrs["long_name"] = "Flow residuals"
-        ds["specific_discharge"].attrs["units"] = "m3/day"
-        ds["specific_discharge"].attrs["long_name"] = "Groundwater flux"
         ds["gw_sw"].attrs["units"] = "m3/day"
         ds["gw_sw"].attrs["long_name"] = "Groundwater-surface water flux"
         ds["gw_sw_"].attrs["units"] = "m3/day"
@@ -520,6 +517,7 @@ def main(model_run, converged):
         ds["delta_sw_gw_head"].attrs["long_name"] = "Difference between surface water and groundwater head"
         ds["delta_rtp_gw_head"].attrs["units"] = "m"
         ds["delta_rtp_gw_head"].attrs["long_name"] = "Difference between elevation of the riverbed and groundwater head"
+
         # create spatial reference
         ds = ds.geo.write_crs("EPSG:25832")
         ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc

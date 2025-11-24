@@ -66,7 +66,6 @@ def main(model_run, converged):
                     head=(["Time", "layer", "lat", "lon"], np.where(hds.get_data()[np.newaxis, :, :, :] > 10000, np.nan, hds.get_data()[np.newaxis, :, :, :])),
                     depth=(["Time", "layer", "lat", "lon"], np.where(hds.get_data()[np.newaxis, :, :, :] > 10000, np.nan, np.where(topography[np.newaxis, np.newaxis, :, :] - hds.get_data()[np.newaxis, :, :, :] > 0, topography[np.newaxis, np.newaxis, :, :] - hds.get_data()[np.newaxis, :, :, :], 0))),
                     flow_residual=(["Time", "layer", "lat", "lon"], residual[np.newaxis, :, :, :]),
-                    specific_discharge=(["Time", "layer", "lat", "lon"], cbb.get_data(text="DATA-SPDIS", kstpkper=(0, 0), full3D=True)[0].filled(fill_value=np.nan)[np.newaxis, :, :, :]),
                     gw_sw=(["Time", "layer", "lat", "lon"], cbb.get_data(text="SFR", kstpkper=(0, 0), full3D=True)[0].filled(fill_value=np.nan)[np.newaxis, :, :, :]),
                 )
 
@@ -77,8 +76,6 @@ def main(model_run, converged):
             ds["depth"].attrs["long_name"] = "Groundwater depth"
             ds["flow_residual"].attrs["units"] = "m/day"
             ds["flow_residual"].attrs["long_name"] = "Flow residuals"
-            ds["specific_discharge"].attrs["units"] = "m3/day"
-            ds["specific_discharge"].attrs["long_name"] = "Groundwater flux"
             ds["gw_sw"].attrs["units"] = "m3/day"
             ds["gw_sw"].attrs["long_name"] = "Groundwater-surface water flux"
             # create spatial reference

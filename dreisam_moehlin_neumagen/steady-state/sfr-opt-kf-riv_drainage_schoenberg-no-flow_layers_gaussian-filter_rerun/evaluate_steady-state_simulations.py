@@ -130,7 +130,7 @@ for model_run in range(0, 10000):
             if water_depth < 0:
                 flow = 0
                 stage = 0
-            df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * stage * rwidth
+            df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow
 
         df_sfr = df_sfr.loc[obs_flow_stage, :]
         sim_water_depth = df_sfr["water_depth"].values
@@ -234,7 +234,7 @@ for model_run in range(0, 10000):
             if water_depth < 0:
                 flow = 0
                 stage = 0
-            df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * stage * rwidth
+            df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow
 
         df_sfr = df_sfr.loc[obs_flow_stage, :]
         sim_water_depth = df_sfr["water_depth"].values

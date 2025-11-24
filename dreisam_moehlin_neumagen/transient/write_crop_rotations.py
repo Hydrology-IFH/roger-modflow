@@ -4,7 +4,11 @@ import geoxarray
 import numpy as onp
 import pandas as pd
 import datetime
+import matplotlib.pyplot as plt
 import roger.lookuptables as lut
+import contextily as ctx
+from matplotlib_map_utils.core.north_arrow import north_arrow
+from matplotlib_map_utils.core.scale_bar import scale_bar
 
 summer_crops = lut.SUMMER_CROPS.tolist()
 winter_crops = lut.WINTER_CROPS.tolist()
@@ -16,9 +20,12 @@ ds_params = xr.open_dataset(params_file)
 xcoords = ds_params.x.values
 ycoords = ds_params.y.values
 mask = ds_params['maskCatch'].values
+cond_catch = mask == 1
+lu_ids = ds_params['lanu'].values
+lu_ids[~cond_catch] = -9999  # set non-catchment area to -9999
 
 # load the netcdf file
-file = base_path / "input" / "crop_rotations_2018-2022.nc"
+file = base_path / "input" / "crops_2018-2022.nc"
 ds_cr_2018_2022 = xr.open_dataset(file)
 spatial_ref = ds_cr_2018_2022.spatial_ref
 lu_ids_2018_2022 = ds_cr_2018_2022['Nutzcode'].values
@@ -26,28 +33,15 @@ cond = onp.isnan(lu_ids_2018_2022)
 lu_ids_2018_2022[cond] = -9999  # set nan to
 lu_ids_2018_2022 = lu_ids_2018_2022.astype(onp.int16)
 
-# calculate area fractions of each crop type
-years = [2018, 2019, 2020, 2021, 2022]
-for t, year in enumerate(years):
-    lu_ids_year = lu_ids_2018_2022[t, :, :]
-    cond = mask == 0
-    lu_ids_year[cond] = -9999
-    unique, counts = onp.unique(lu_ids_year, return_counts=True)
-    total_counts = onp.sum(mask)
-    area_fractions = counts / total_counts
-    print(f"Year: {year}")
-    for i in range(len(unique)):
-        print(f"  lu_id: {unique[i]}, area fraction: {area_fractions[i]:.4f}")
+years_2013_2023 = onp.arange(2013, 2023)
+years_2000_2023 = onp.arange(2000, 2023)
 
-time_2013_2023 = onp.arange(2013, 2023)
-time_2000_2023 = onp.arange(2000, 2023)
-
-lu_ids_2013_2023 = onp.zeros((len(time_2013_2023), lu_ids_2018_2022.shape[1], lu_ids_2018_2022.shape[2]), dtype=onp.int16)
+lu_ids_2013_2023 = onp.zeros((len(years_2013_2023), lu_ids_2018_2022.shape[1], lu_ids_2018_2022.shape[2]), dtype=onp.int16)
 lu_ids_2013_2023[0:5, :, :] = lu_ids_2018_2022
 lu_ids_2013_2023[5:10, :, :] = lu_ids_2018_2022
 lu_ids_2013_2023[-1, :, :] = lu_ids_2018_2022[0, :, :]
 
-lu_ids_2000_2023 = onp.zeros((len(time_2000_2023), lu_ids_2018_2022.shape[1], lu_ids_2018_2022.shape[2]), dtype=onp.int16)
+lu_ids_2000_2023 = onp.zeros((len(years_2000_2023), lu_ids_2018_2022.shape[1], lu_ids_2018_2022.shape[2]), dtype=onp.int16)
 lu_ids_2000_2023[0:5, :, :] = lu_ids_2018_2022
 lu_ids_2000_2023[5:10, :, :] = lu_ids_2018_2022
 lu_ids_2000_2023[10:15, :, :] = lu_ids_2018_2022
@@ -63,10 +57,10 @@ attrs = dict(
 coords = {
         "lon": ("lon", xcoords),  # x
         "lat": ("lat", ycoords),  # y
-        "Time": ("Time", time_2013_2023),
+        "Year": ("Year", years_2013_2023),
     }
 data_vars=dict(
-        crop_type=(["Time", "lat", "lon"], lu_ids_2013_2023),
+        crop_type=(["Year", "lat", "lon"], lu_ids_2013_2023),
     )
 
 ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
@@ -89,10 +83,10 @@ attrs = dict(
 coords = {
         "lon": ("lon", xcoords),  # x
         "lat": ("lat", ycoords),  # y
-        "Time": ("Time", time_2000_2023),
+        "Year": ("Year", years_2000_2023),
     }
 data_vars=dict(
-        crop_type=(["Time", "lat", "lon"], lu_ids_2000_2023),
+        crop_type=(["Year", "lat", "lon"], lu_ids_2000_2023),
     )
 
 ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
@@ -107,80 +101,371 @@ encoding = {var: comp for var in ds.data_vars}
 ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)
 
 # create csv file for crop rotations
+years_header = []
+for year in [2018, 2019, 2020, 2021, 2022]:
+    years_header.append(f"{year}")
+df_crops = pd.DataFrame(columns=years_header)
+for t, year in enumerate([2018, 2019, 2020, 2021, 2022]):
+    lu_ids_year = lu_ids_2018_2022[t, :, :].flatten()
+    df_crops.loc[:, f"{year}"] = lu_ids_year
+_df_crops = df_crops.copy()
+# count occurrences of values in each column
+crop_counts = df_crops.apply(pd.Series.value_counts).fillna(0)
+crop_counts.loc[:, 'total'] = crop_counts.sum(axis=1)
+
+file = base_path / "input" / "crops_2018_2022_summary.csv"
+crop_counts.to_csv(file, sep=";", index=True)
+
+_df_crop_rotations_2018_2022 = df_crops.copy()
+# count occurence of identical crop rotations
+_df_crop_rotations_2018_2022.loc[:, "count"] = _df_crop_rotations_2018_2022.groupby(years_header).cumcount() + 1
+_df_crop_rotations_2018_2022.loc[:, "area_ha"] = _df_crop_rotations_2018_2022["count"] * 0.0625  # 25m x 25m = 625m2 = 0.0625ha
+_df_crop_rotations_2018_2022 = _df_crop_rotations_2018_2022.drop_duplicates(keep='last')
+_df_crop_rotations_2018_2022.loc[:, "area_share"] = _df_crop_rotations_2018_2022["count"] / _df_crop_rotations_2018_2022["count"].sum()
+file = base_path / "input" / "available_crop_rotations_2018_2022.csv"
+_df_crop_rotations_2018_2022.to_csv(file, sep=";", index=False)
+
+for year1, year2 in zip([2018, 2019, 2020, 2021], [2019, 2020, 2021, 2022]):
+    cond1 = _df_crops[f"{year1}"] != 8 & onp.isin(_df_crops[f"{year1}"], summer_crops)
+    cond2 = _df_crops[f"{year2}"] == 8
+    df_crops.loc[cond1 & cond2, f"{year2}"] = 571
+
+for year1, year2 in zip([2018, 2019, 2020, 2021], [2019, 2020, 2021, 2022]):
+    cond1 = _df_crops[f"{year1}"] != 8 & onp.isin(_df_crops[f"{year1}"], winter_crops)
+    cond2 = _df_crops[f"{year2}"] == 8
+    df_crops.loc[cond1 & cond2, f"{year2}"] = 572
+
+for year1, year2 in zip([2018, 2019, 2020, 2021], [2019, 2020, 2021, 2022]):
+    cond1 = _df_crops[f"{year1}"] == 8
+    cond2 = _df_crops[f"{year2}"] == 8
+    df_crops.loc[cond1 & cond2, f"{year2}"] = 573
+
+for year1, year2 in zip([2018, 2019, 2020, 2021], [2019, 2020, 2021, 2022]):
+    cond1 = _df_crops[f"{year1}"] != 81 & onp.isin(_df_crops[f"{year1}"], summer_crops)
+    cond2 = _df_crops[f"{year2}"] == 81
+    df_crops.loc[cond1 & cond2, f"{year2}"] = 591
+
+for year1, year2 in zip([2018, 2019, 2020, 2021], [2019, 2020, 2021, 2022]):
+    cond1 = _df_crops[f"{year1}"] != 81 & onp.isin(_df_crops[f"{year1}"], winter_crops)
+    cond2 = _df_crops[f"{year2}"] == 81
+    df_crops.loc[cond1 & cond2, f"{year2}"] = 592
+
+for year1, year2 in zip([2018, 2019, 2020, 2021], [2019, 2020, 2021, 2022]):
+    cond1 = _df_crops[f"{year1}"] == 81
+    cond2 = _df_crops[f"{year2}"] == 81
+    df_crops.loc[cond1 & cond2, f"{year2}"] = 593
+
+for year1, year2 in zip([2018, 2019, 2020, 2021], [2019, 2020, 2021, 2022]):
+    cond1 = _df_crops[f"{year1}"] != 82 & onp.isin(_df_crops[f"{year1}"], summer_crops)
+    cond2 = _df_crops[f"{year2}"] == 82
+    df_crops.loc[cond1 & cond2, f"{year2}"] = 565
+
+for year1, year2 in zip([2018, 2019, 2020, 2021], [2019, 2020, 2021, 2022]):
+    cond1 = _df_crops[f"{year1}"] != 82 & onp.isin(_df_crops[f"{year1}"], winter_crops)
+    cond2 = _df_crops[f"{year2}"] == 82
+    df_crops.loc[cond1 & cond2, f"{year2}"] = 566
+
+for year1, year2 in zip([2018, 2019, 2020, 2021], [2019, 2020, 2021, 2022]):
+    cond1 = _df_crops[f"{year1}"] == 82
+    cond2 = _df_crops[f"{year2}"] == 82
+    df_crops.loc[cond1 & cond2, f"{year2}"] = 596
+
+for year1, year2 in zip([2018, 2019, 2020, 2021], [2019, 2020, 2021, 2022]):
+    cond1 = _df_crops[f"{year1}"] == 589
+    cond2 = _df_crops[f"{year2}"] == 589
+    df_crops.loc[cond1 & cond2, f"{year2}"] = 591
+
+cond = (_df_crops == 6).any(axis=1)
+df_crops.loc[cond, :] = 6
+
+cond = (_df_crops == 7).any(axis=1)
+df_crops.loc[cond, :] = 7
+
+file = base_path / "input" / "crops_2018_2022.csv"
+df_crops.to_csv(file, sep=";", index=False)
+
 unit_header = [""]
-time_header = ["No"]
-for year in time_2013_2023:
+years_header = ["No"]
+for year in [2018, 2019, 2020, 2021, 2022]:
     unit_header.append("[year_season]")
     unit_header.append("[year_season]")
-    time_header.append(f"{year}_summer")
-    time_header.append(f"{year}_winter")
-df_crop_rotations = pd.DataFrame(columns=time_header)
-df_crop_rotations.loc[:, "No"] = onp.arange(1, lu_ids_2013_2023.shape[1] * lu_ids_2013_2023.shape[2] + 1)
-df_crop_rotations.loc[:, time_header[1]:] = -9999  # initialize with -9999
-idx_xy = onp.arange(1, lu_ids_2013_2023.shape[1] * lu_ids_2013_2023.shape[2] + 1).reshape((lu_ids_2013_2023.shape[1], lu_ids_2013_2023.shape[2]))
-# for t, year in enumerate(time_2013_2023[:-1]):
-#     lu_ids_year = lu_ids_2013_2023[t, :, :].flatten()
-#     lu_ids_summer = onp.zeros(lu_ids_year.shape, dtype=onp.int16)
-#     lu_ids_winter = onp.zeros(lu_ids_year.shape, dtype=onp.int16)
-#     lu_ids_year1 = lu_ids_2013_2023[t+1, :, :].flatten()
-#     lu_ids_summer1 = onp.zeros(lu_ids_year.shape, dtype=onp.int16)
-#     lu_ids_winter1 = onp.zeros(lu_ids_year.shape, dtype=onp.int16)
-#     lu_ids_summer[:] = -9999
-#     lu_ids_winter[:] = -9999
-#     lu_ids_summer1[:] = -9999
-#     lu_ids_winter1[:] = -9999
-#     cond_summer_crops = onp.isin(lu_ids_year, summer_crops)
-#     cond_winter_crops = onp.isin(lu_ids_year, winter_crops)
-#     cond_summer1_crops = onp.isin(lu_ids_year1, summer_crops)
-#     cond_winter1_crops = onp.isin(lu_ids_year1, winter_crops)
-#     lu_ids_summer[cond_summer_crops] = lu_ids_year[cond_summer_crops]
-#     lu_ids_winter[cond_summer_crops] = 599
-#     lu_ids_summer[cond_winter_crops] = 599
-#     lu_ids_winter[cond_winter_crops] = lu_ids_year[cond_winter_crops]
-#     lu_ids_summer1[cond_summer1_crops] = lu_ids_year1[cond_summer1_crops]
-#     lu_ids_winter1[cond_summer1_crops] = 599
-#     lu_ids_summer1[cond_winter1_crops] = 599
-#     lu_ids_winter1[cond_winter1_crops] = lu_ids_year1[cond_winter1_crops]
-#     # lu_ids_summer[cond_winter_crops & cond_summer1_crops] = lu_ids_year1[cond_winter_crops & cond_summer1_crops]
-#     # lu_ids_summer1[cond_winter_crops & cond_summer1_crops] = 599
-#     # cond_both_crops = onp.isin(lu_ids_year, [8, 81, 82])
-#     # cond_both_crops1 = onp.isin(lu_ids_year1, [8, 81, 82])
-#     # lu_ids_summer[cond_both_crops] = lu_ids_year[cond_both_crops]
-#     # lu_ids_winter[cond_both_crops] = lu_ids_year[cond_both_crops]
-#     # lu_ids_summer1[cond_both_crops1] = lu_ids_year1[cond_both_crops1]
-#     # lu_ids_winter1[cond_both_crops1] = lu_ids_year1[cond_both_crops1]
-#     # cond_fallow = lu_ids_year == 599
-#     # lu_ids_summer[cond_fallow] = 599
-#     # lu_ids_winter[cond_fallow] = 599
-#     df_crop_rotations.loc[:, f"{year}_summer"] = lu_ids_summer
-#     df_crop_rotations.loc[:, f"{year}_winter"] = lu_ids_winter
-#     df_crop_rotations.loc[:, f"{year+1}_summer"] = lu_ids_summer1
-#     df_crop_rotations.loc[:, f"{year+1}_winter"] = lu_ids_winter1
-
-for t, year in enumerate(time_2013_2023):
-    lu_ids_year = lu_ids_2013_2023[t, :, :].flatten()
-    lu_ids_summer = onp.zeros(lu_ids_year.shape, dtype=onp.int16)
-    lu_ids_winter = onp.zeros(lu_ids_year.shape, dtype=onp.int16)
-    lu_ids_summer[:] = -9999
-    lu_ids_winter[:] = -9999
-    cond_summer_crops = onp.isin(lu_ids_year, summer_crops)
-    cond_winter_crops = onp.isin(lu_ids_year, winter_crops)
-    lu_ids_summer[cond_summer_crops] = lu_ids_year[cond_summer_crops]
-    lu_ids_winter[cond_summer_crops] = 599
-    lu_ids_summer[cond_winter_crops] = 599
-    lu_ids_winter[cond_winter_crops] = lu_ids_year[cond_winter_crops]
-    cond_both_crops = onp.isin(lu_ids_year, [8, 81, 82])
-    lu_ids_summer[cond_both_crops] = lu_ids_year[cond_both_crops]
-    lu_ids_winter[cond_both_crops] = lu_ids_year[cond_both_crops]
-    cond_fallow = lu_ids_year == 599
-    lu_ids_summer[cond_fallow] = 599
-    lu_ids_winter[cond_fallow] = 599
-    df_crop_rotations.loc[:, f"{year}_summer"] = lu_ids_summer
-    df_crop_rotations.loc[:, f"{year}_winter"] = lu_ids_winter
-
-
-
-file = base_path / "input" / "crop_rotations_2013-2023.csv"
-header = [unit_header, time_header]
-df_crop_rotations.columns = header
+    years_header.append(f"{year}_summer")
+    years_header.append(f"{year}_winter")
+df_crop_rotations = pd.DataFrame(index=range(len(df_crops)), columns=years_header)
+for year1, year2 in zip([2018, 2019, 2020, 2021], [2019, 2020, 2021, 2022]):
+    cond_summer_crops = onp.isin(df_crops[f"{year1}"].values, summer_crops)
+    cond_winter_crops = onp.isin(df_crops[f"{year1}"].values, winter_crops)
+    cond_summer1_crops = onp.isin(df_crops[f"{year2}"].values, summer_crops)
+    cond_winter1_crops = onp.isin(df_crops[f"{year2}"].values, winter_crops)
+    df_crop_rotations.loc[cond_winter1_crops, f"{year1}_winter"] = df_crops.loc[cond_winter1_crops, f"{year2}"]
+    df_crop_rotations.loc[cond_winter1_crops, f"{year2}_summer"] = 599
+    df_crop_rotations.loc[cond_winter1_crops, f"{year2}_winter"] = 599
+    cond_571 = df_crops[f"{year1}"] == 571
+    df_crop_rotations.loc[cond_571, f"{year1}_summer"] = 571
+    df_crop_rotations.loc[cond_571, f"{year1}_winter"] = 574
+    cond_572 = df_crops[f"{year1}"] == 572
+    df_crop_rotations.loc[cond_572, f"{year1}_winter"] = 572
+    df_crop_rotations.loc[cond_572, f"{year2}_summer"] = 573
+    cond_592 = df_crops[f"{year1}"] == 592
+    df_crop_rotations.loc[cond_592, f"{year1}_summer"] = 592
+    df_crop_rotations.loc[cond_592, f"{year1}_winter"] = 595
+    cond_593 = df_crops[f"{year1}"] == 593
+    df_crop_rotations.loc[cond_593, f"{year1}_winter"] = 593
+    df_crop_rotations.loc[cond_593, f"{year2}_summer"] = 594
+    cond_565 = df_crops[f"{year1}"] == 565
+    df_crop_rotations.loc[cond_565, f"{year1}_summer"] = 565
+    df_crop_rotations.loc[cond_565, f"{year1}_winter"] = 597
+    cond_566 = df_crops[f"{year1}"] == 566
+    df_crop_rotations.loc[cond_566, f"{year1}_winter"] = 566
+    df_crop_rotations.loc[cond_566, f"{year2}_summer"] = 596
+    cond_591 = df_crops[f"{year1}"] == 591
+    df_crop_rotations.loc[cond_591, f"{year2}_summer"] = 591
+    df_crop_rotations.loc[cond_591, f"{year1}_winter"] = 590
+file = base_path / "input" / "crop_rotations_2018_2022.csv"
 df_crop_rotations.to_csv(file, sep=";", index=False)
+
+df_crop_rotations.fillna(-9999, inplace=True)
+for i, year in enumerate([2018, 2019, 2020, 2021, 2022]):
+    df_crop_rotations.loc[:, f"{year}_summer"] = df_crop_rotations.loc[:, f"{year}_summer"].astype(onp.int16)
+    df_crop_rotations.loc[:, f"{year}_winter"] = df_crop_rotations.loc[:, f"{year}_winter"].astype(onp.int16)
+
+summer_crops_2018_2022 = onp.zeros(lu_ids_2018_2022.shape, dtype=onp.int16)
+winter_crops_2018_2022 = onp.zeros(lu_ids_2018_2022.shape, dtype=onp.int16)
+for i, year in enumerate([2018, 2019, 2020, 2021, 2022]):
+    summer_crops_2018_2022[i, :, :] = df_crop_rotations.loc[:, f"{year}_summer"].values.reshape(lu_ids_2018_2022.shape[1], lu_ids_2018_2022.shape[2])
+    winter_crops_2018_2022[i, :, :] = df_crop_rotations.loc[:, f"{year}_winter"].values.reshape(lu_ids_2018_2022.shape[1], lu_ids_2018_2022.shape[2])
+
+summer_crops_2013_2023 = onp.zeros((len(years_2013_2023), lu_ids_2018_2022.shape[1], lu_ids_2018_2022.shape[2]), dtype=onp.int16)
+summer_crops_2013_2023[0:5, :, :] = summer_crops_2018_2022
+summer_crops_2013_2023[5:10, :, :] = summer_crops_2018_2022
+summer_crops_2013_2023[-1, :, :] = summer_crops_2018_2022[0, :, :]
+
+winter_crops_2013_2023 = onp.zeros((len(years_2013_2023), lu_ids_2018_2022.shape[1], lu_ids_2018_2022.shape[2]), dtype=onp.int16)
+winter_crops_2013_2023[0:5, :, :] = winter_crops_2018_2022
+winter_crops_2013_2023[5:10, :, :] = winter_crops_2018_2022
+winter_crops_2013_2023[-1, :, :] = winter_crops_2018_2022[0, :, :]
+
+summer_crops_2000_2023 = onp.zeros((len(years_2000_2023), lu_ids_2018_2022.shape[1], lu_ids_2018_2022.shape[2]), dtype=onp.int16)
+summer_crops_2000_2023[0:5, :, :] = summer_crops_2018_2022
+summer_crops_2000_2023[5:10, :, :] = summer_crops_2018_2022
+summer_crops_2000_2023[10:15, :, :] = summer_crops_2018_2022
+summer_crops_2000_2023[15:20, :, :] = summer_crops_2018_2022
+summer_crops_2000_2023[-1, :, :] = summer_crops_2018_2022[0, :, :]
+
+winter_crops_2000_2023 = onp.zeros((len(years_2000_2023), lu_ids_2018_2022.shape[1], lu_ids_2018_2022.shape[2]), dtype=onp.int16)
+winter_crops_2000_2023[0:5, :, :] = winter_crops_2018_2022
+winter_crops_2000_2023[5:10, :, :] = winter_crops_2018_2022
+winter_crops_2000_2023[10:15, :, :] = winter_crops_2018_2022
+winter_crops_2000_2023[15:20, :, :] = winter_crops_2018_2022
+winter_crops_2000_2023[-1, :, :] = winter_crops_2018_2022[0, :, :]
+
+# create xarray dataset
+attrs = dict(
+        date_created=datetime.datetime.today().isoformat(),
+        title="lu_id of RoGeR in the Dreisam-Moehlin-Neumagen catchment for the years 2013-2023",
+        institution="University of Freiburg, Chair of Hydrology",
+    )
+coords = {
+        "lon": ("lon", xcoords),  # x
+        "lat": ("lat", ycoords),  # y
+        "Year": ("Year", years_2013_2023),
+    }
+data_vars=dict(
+        crop_type=(["Year", "lat", "lon"], lu_ids_2013_2023),
+    )
+
+ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
+ds["crop_type"].attrs["units"] = ""
+ds["crop_type"].attrs["long_name"] = "Crop type encoded as lu_id from RoGeR"
+# create spatial reference
+ds = ds.geo.write_crs("EPSG:25832")
+ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
+file = base_path / "input" / "crop_rotations_2013-2023.nc"
+comp = dict(zlib=True, complevel=1)  # compress data to save storage
+encoding = {var: comp for var in ds.data_vars}
+ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)
+
+# create xarray dataset
+attrs = dict(
+        date_created=datetime.datetime.today().isoformat(),
+        title="lu_id of RoGeR in the Dreisam-Moehlin-Neumagen catchment for the years 2000-2023",
+        institution="University of Freiburg, Chair of Hydrology",
+    )
+coords = {
+        "lon": ("lon", xcoords),  # x
+        "lat": ("lat", ycoords),  # y
+        "Year": ("Year", years_2000_2023),
+    }
+data_vars=dict(
+        summer_crops=(["Year", "lat", "lon"], summer_crops_2000_2023),
+        winter_crops=(["Year", "lat", "lon"], winter_crops_2000_2023),
+    )
+
+ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
+ds["summer_crops"].attrs["units"] = ""
+ds["summer_crops"].attrs["long_name"] = "Summer crops encoded as lu_id from RoGeR"
+ds["winter_crops"].attrs["units"] = ""
+ds["winter_crops"].attrs["long_name"] = "Winter crops encoded as lu_id from RoGeR"
+# create spatial reference
+ds = ds.geo.write_crs("EPSG:25832")
+ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
+file = base_path / "input" / "crop_rotations_2000-2023.nc"
+comp = dict(zlib=True, complevel=1)  # compress data to save storage
+encoding = {var: comp for var in ds.data_vars}
+ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)
+
+
+# create xarray dataset
+attrs = dict(
+        date_created=datetime.datetime.today().isoformat(),
+        title="lu_id of RoGeR in the Dreisam-Moehlin-Neumagen catchment for the years 2013-2023",
+        institution="University of Freiburg, Chair of Hydrology",
+    )
+coords = {
+        "lon": ("lon", xcoords),  # x
+        "lat": ("lat", ycoords),  # y
+        "Year": ("Year", years_2013_2023),
+    }
+data_vars=dict(
+        summer_crops=(["Year", "lat", "lon"], summer_crops_2013_2023),
+        winter_crops=(["Year", "lat", "lon"], winter_crops_2013_2023),
+    )
+
+ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
+ds["summer_crops"].attrs["units"] = ""
+ds["summer_crops"].attrs["long_name"] = "Summer crops encoded as lu_id from RoGeR"
+ds["winter_crops"].attrs["units"] = ""
+ds["winter_crops"].attrs["long_name"] = "Winter crops encoded as lu_id from RoGeR"
+# create spatial reference
+ds = ds.geo.write_crs("EPSG:25832")
+ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
+file = base_path / "input" / "crop_rotations_2013-2023.nc"
+comp = dict(zlib=True, complevel=1)  # compress data to save storage
+encoding = {var: comp for var in ds.data_vars}
+ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)
+
+
+unit_header = [""]
+years_header = ["No"]
+for year in years_2000_2023:
+    unit_header.append("[year_season]")
+    unit_header.append("[year_season]")
+    years_header.append(f"{year}_summer")
+    years_header.append(f"{year}_winter")
+df_crop_rotations_2000_2023 = pd.DataFrame(columns=years_header)
+for i, year in enumerate(years_2000_2023):
+    df_crop_rotations_2000_2023.loc[:, f"{year}_summer"] = summer_crops_2000_2023[i, :, :].flatten()
+    df_crop_rotations_2000_2023.loc[:, f"{year}_winter"] = winter_crops_2000_2023[i, :, :].flatten()
+df_crop_rotations_2000_2023.loc[:, "No"] = onp.arange(1, df_crop_rotations_2000_2023.shape[0]+1)
+df_crop_rotations_2000_2023.columns = [unit_header, years_header]
+file = base_path / "input" / "crop_rotations_2000_2023.csv"
+df_crop_rotations_2000_2023.to_csv(file, sep=";", index=False)
+
+unit_header = [""]
+years_header = ["No"]
+for year in years_2013_2023:
+    unit_header.append("[year_season]")
+    unit_header.append("[year_season]")
+    years_header.append(f"{year}_summer")
+    years_header.append(f"{year}_winter")
+df_crop_rotations_2013_2023 = pd.DataFrame(columns=years_header)
+for i, year in enumerate(years_2013_2023):
+    df_crop_rotations_2013_2023.loc[:, f"{year}_summer"] = summer_crops_2013_2023[i, :, :].flatten()
+    df_crop_rotations_2013_2023.loc[:, f"{year}_winter"] = winter_crops_2013_2023[i, :, :].flatten()
+df_crop_rotations_2013_2023.loc[:, "No"] = onp.arange(1, df_crop_rotations_2013_2023.shape[0]+1)
+df_crop_rotations_2013_2023.columns = [unit_header, years_header]
+file = base_path / "input" / "crop_rotations_2013_2023.csv"
+df_crop_rotations_2013_2023.to_csv(file, sep=";", index=False)
+
+cond = (lu_ids_2018_2022 == 6).any(axis=0)
+lu_ids[cond] = 6
+cond = (lu_ids_2018_2022 == 7).any(axis=0)
+lu_ids[cond] = 7
+ll_ga_ids = onp.arange(501, 600).tolist() + [81, 82]
+cond_ga = onp.isin(lu_ids_2018_2022, ll_ga_ids).any(axis=0)
+cond5 = lu_ids == 5
+
+cropland_gaps = onp.zeros(lu_ids.shape, dtype=float)
+cropland_gaps[:, :] = onp.nan
+cropland_gaps[~cond_ga & cond5] = 1.0
+
+cropland_ga = onp.zeros(lu_ids.shape, dtype=float)
+cropland_ga[:, :] = onp.nan
+cropland_5 = onp.zeros(lu_ids.shape, dtype=float)
+cropland_5[:, :] = onp.nan
+cropland_5[cond5] = 1.0
+cropland_ga[cond_ga] = 1.0
+
+print(onp.nansum(cropland_gaps))  # in grid cells
+print(onp.nansum(cropland_gaps) * 0.0625)  # in ha
+print(onp.nansum(cropland_gaps)/onp.nansum(cropland_ga))  # area share of gaps compared to GA cropland
+print(onp.nansum(cropland_gaps)/onp.nansum(mask))  # area share of gaps compared to catchment area
+
+grid_extent = (ds_params.x.values[0], ds_params.x.values[-1], ds_params.y.values[-1], ds_params.y.values[0])
+
+fig, axes = plt.subplots(figsize=(6, 5))
+axes.imshow(cropland_gaps, extent=grid_extent, cmap='Oranges', alpha=1, aspect='equal', vmin=0, vmax=1, zorder=3)
+ctx.add_basemap(axes, source=ctx.providers.OpenStreetMap.Mapnik, crs="EPSG:25832", zorder=1, alpha=0.5)
+plt.xlabel('x-coordinate')
+plt.ylabel('y-coordinate')
+north_arrow(
+    axes, scale=0.2, location="upper right", rotation={"crs": 25832, "reference": "center"}
+)
+scale_bar(axes, location="lower right", style="boxes", bar={"projection": 25832, "minor_type": "none"}, labels={"style": "first_last"})
+plt.tight_layout()
+file = base_path / "figures" / "cropland_gaps.png"
+fig.savefig(file, dpi=300)
+plt.close("all")
+
+fig, axes = plt.subplots(figsize=(6, 5))
+cb = axes.imshow(cropland_ga, extent=grid_extent, cmap='Purples', alpha=1, aspect='equal', vmin=0, vmax=1, zorder=3)
+ctx.add_basemap(axes, source=ctx.providers.OpenStreetMap.Mapnik, crs="EPSG:25832", zorder=1, alpha=0.5)
+plt.xlabel('x-coordinate')
+plt.ylabel('y-coordinate')
+north_arrow(
+    axes, scale=0.2, location="upper right", rotation={"crs": 25832, "reference": "center"}
+)
+scale_bar(axes, location="lower right", style="boxes", bar={"projection": 25832, "minor_type": "none"}, labels={"style": "first_last"})
+plt.tight_layout()
+file = base_path / "figures" / "cropland_GA.png"
+fig.savefig(file, dpi=300)
+plt.close("all")
+
+fig, axes = plt.subplots(figsize=(6, 5))
+cb = axes.imshow(cropland_5, extent=grid_extent, cmap='Greys', alpha=1, aspect='equal', vmin=0, vmax=1, zorder=3)
+ctx.add_basemap(axes, source=ctx.providers.OpenStreetMap.Mapnik, crs="EPSG:25832", zorder=1, alpha=0.5)
+plt.xlabel('x-coordinate')
+plt.ylabel('y-coordinate')
+north_arrow(
+    axes, scale=0.2, location="upper right", rotation={"crs": 25832, "reference": "center"}
+)
+scale_bar(axes, location="lower right", style="boxes", bar={"projection": 25832, "minor_type": "none"}, labels={"style": "first_last"})
+plt.tight_layout()
+file = base_path / "figures" / "cropland_5.png"
+fig.savefig(file, dpi=300)
+plt.close("all")
+
+# # update land use in parameters file
+# lu_ids[~cond_ga & cond5] = 8
+# ds_params['lanu'].values = lu_ids
+# file = base_path / "input" / "parameters_roger_25m.nc"
+# ds_params.to_netcdf(file)
+
+lu_ids[~cond_ga & cond5] = 8
+cond5 = lu_ids == 5
+cropland_gaps = onp.zeros(lu_ids.shape, dtype=float)
+cropland_gaps[:, :] = onp.nan
+cropland_gaps[~cond_ga & cond5] = 1.0
+fig, axes = plt.subplots(figsize=(6, 5))
+axes.imshow(cropland_gaps, extent=grid_extent, cmap='Oranges', alpha=1, aspect='equal', vmin=0, vmax=1, zorder=3)
+ctx.add_basemap(axes, source=ctx.providers.OpenStreetMap.Mapnik, crs="EPSG:25832", zorder=1, alpha=0.5)
+plt.xlabel('x-coordinate')
+plt.ylabel('y-coordinate')
+north_arrow(
+    axes, scale=0.2, location="upper right", rotation={"crs": 25832, "reference": "center"}
+)
+scale_bar(axes, location="lower right", style="boxes", bar={"projection": 25832, "minor_type": "none"}, labels={"style": "first_last"})
+plt.tight_layout()
+file = base_path / "figures" / "cropland_gaps_filled_with_8.png"
+fig.savefig(file, dpi=300)
+plt.close("all")

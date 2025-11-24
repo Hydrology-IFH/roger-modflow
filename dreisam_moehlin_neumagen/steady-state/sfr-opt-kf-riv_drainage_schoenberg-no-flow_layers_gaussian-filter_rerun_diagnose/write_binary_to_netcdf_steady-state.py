@@ -1,4 +1,5 @@
 import sys
+import os
 from pathlib import Path
 import flopy
 import xarray as xr
@@ -37,17 +38,38 @@ def main(model_run, converged):
                 xcoords = ds.x.values
                 ycoords = ds.y.values[::-1]
 
-            # export groundwater head to netcdf
+            # write groundwater head to netcdf
             fhead = base_path / "output" / f"dmn_run_{model_run}.hds"
             hds = flopy.utils.HeadFile(fhead)
 
             fbudget = base_path / "output" / f"dmn_run_{model_run}.cbc"
             cbb = flopy.utils.CellBudgetFile(fbudget)
 
-            flowja = ml.oc.output.budget().get_data(text="FLOW-JA-FACE", kstpkper=(0, 0))[0]
+            flowja = ml.oc.output.budget().get_data(text="FLOW-JA-FACE", kstpkper=(0, 0))[0].squeeze()
             grb_file = base_path / "output" / f"dmn_run_{model_run}.dis.grb"
             residual = flopy.mf6.utils.get_residuals(flowja, grb_file=grb_file)
 
+            # fname = os.path.join(str(base_path / "output"), f"dmn_run_{model_run}.dis.grb")
+            # bgf = flopy.mf6.utils.MfGrdFile(fname)
+            # ia, ja = bgf.ia, bgf.ja
+            # inflow = np.zeros(hds.get_data().shape)
+            # outflow = np.zeros(hds.get_data().shape)
+
+            # for k in range(inflow.shape[0]):
+            #     for i in range(inflow.shape[1]):
+            #         for j in range(inflow.shape[2]):
+            #             cell_nodes = ml.modelgrid.get_node([(k, i, j)])
+            #             if cell_nodes:
+            #                 for celln in cell_nodes:
+            #                     print(f"Printing flows for cell {celln} ({k}, {i}, {j}))")
+            #                     for ipos in range(ia[celln] + 1, ia[celln + 1]):
+            #                         flow = flowja[ipos]
+            #                         cellm = ja[ipos]
+            #                         print(f"Cell {celln} flow with cell {cellm} is {flowja[ipos]}")
+            #                         if flow < 0:
+            #                             outflow[k, i, j] += abs(flow)
+            #                         else:
+            #                             inflow[k, i, j] += flow
             # create xarray dataset
             attrs = dict(
                     date_created=datetime.datetime.today().isoformat(),

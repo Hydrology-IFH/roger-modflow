@@ -63,9 +63,9 @@ def main(nsamples):
     df_params.loc[:, "-7_2_re"] = 20.0
     df_params.loc[:, "-7_3_re"] = 10.0
     df_params.loc[:, "-7_4_re"] = 5.0
-    df_params.loc[:, "-7_2_re1"] = 0.8
-    df_params.loc[:, "-7_3_re1"] = 0.5
-    df_params.loc[:, "-7_4_re1"] = 0.2
+    df_params.loc[:, "-7_2_re1"] = 2.0
+    df_params.loc[:, "-7_3_re1"] = 1.5
+    df_params.loc[:, "-7_4_re1"] = 1.2
     df_params.loc[:, "hausen1_re"] = 1.5
     df_params.loc[:, "hausen2_re"] = 15.
 

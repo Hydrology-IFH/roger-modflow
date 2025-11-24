@@ -368,7 +368,7 @@ def main(model_run):
         if stage_depth < 0:
             flow = 0
             stage_depth = 0
-        df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow * stage_depth * rwidth
+        df_sfr.loc[df_sfr["rno"] == rno, "flow"] = flow
         df_sfr.loc[df_sfr["rno"] == rno, "gw_head"] = ds_mf["head"].values[0, z, y, x]
         df_sfr.loc[df_sfr["rno"] == rno, "gw-sw"] = ds_mf["head"].values[0, z, y, x] - df_sfr_.loc[0, dict_obs_stage_id_inv[rno]]
         df_sfr.loc[df_sfr["rno"] == rno, "sw-gw_flux"] = gw_sw[y, x]
@@ -639,19 +639,6 @@ def main(model_run):
 
         print(f"Layer {layer} flow residual (min, max): {np.nanmin(flow_residuals):.2f}, {np.nanmax(flow_residuals):.2f} m/day")
 
-        fig, axes = plt.subplots(figsize=(4, 4))
-        specific_discharge = ds_mf['specific_discharge'].isel(Time=0, layer=layer).values
-        minmax = np.nanmax(np.abs(specific_discharge))
-        plt.imshow(specific_discharge, extent=grid_extent, cmap='PuOr', aspect='equal', vmin=-minmax, vmax=minmax)
-        plt.colorbar(label='groundwater specific discharge [m/day]', shrink=0.5)
-        plt.grid(zorder=0)
-        plt.xlabel('x-coordinate [km]')
-        plt.ylabel('y-coordinate [km]')
-        plt.tight_layout()
-        i = layer + 1
-        file = Path(__file__).parent / "figures" / f"gw_specific_discharge_steady_state_layer{i}_grid_{model_run}.png"
-        fig.savefig(file, dpi=300)
-        plt.close("all")
 
     hydraulic_conductivities_layers = [hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4]
     for i, hydraulic_conductivities_layer in enumerate(hydraulic_conductivities_layers):

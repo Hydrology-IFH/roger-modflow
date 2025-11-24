@@ -74,6 +74,10 @@ class ModFlowSimulation:
         output_file = base_path / "output" / f"modflow_output_run_{model_run}_pre.nc"
         ds_mf_pre = xr.open_dataset(output_file, engine="h5netcdf")
 
+        # load the previous MODFLOW output
+        output_file = base_path / "output" / f"modflow_output_run_{model_run}_pre1.nc"
+        ds_mf_pre1 = xr.open_dataset(output_file, engine="h5netcdf")
+
         # Temporal discretization (TDIS)
         # One or more models (GWF is the only model supported at present)
         # Zero or more exchanges (instructions for how models are coupled)
@@ -249,7 +253,7 @@ class ModFlowSimulation:
         reaches.iloc[:, 6] = reaches.iloc[:, 6].astype(float)
         reaches.iloc[:, 7] = reaches.iloc[:, 7].astype(float)
         reaches.iloc[:, 8] = reaches.iloc[:, 8].astype(float)
-        reaches.iloc[:, 9] = reaches.iloc[:, 9].astype(float) * 86400  # convert to m/day
+        reaches.iloc[:, 9] = reaches.iloc[:, 9].astype(float) * 86400  # convert from m/s to m/day
         reaches.iloc[:, 10] = reaches.iloc[:, 10].astype(float)
         reaches.iloc[:, 11] = reaches.iloc[:, 11].astype(int)
         reaches.iloc[:, 12] = reaches.iloc[:, 12].astype(float)
@@ -263,7 +267,7 @@ class ModFlowSimulation:
 
         hydraulic_conductivities_layer2[mask72 & mask_custom_hausen2] = hydraulic_conductivities_layer2[mask72 & mask_custom_hausen2] * fudge_parameters["hausen2_re"].values[model_run]
         hydraulic_conductivities_layer3[mask73 & mask_custom_hausen2] = hydraulic_conductivities_layer3[mask73 & mask_custom_hausen2] * fudge_parameters["hausen2_re"].values[model_run]
-
+        
         # smooth transition between fissured and porous aquifers
         hydraulic_conductivities_layer1[np.isnan(hydraulic_conductivities_layer1)] = 0
         hydraulic_conductivities_layer2[np.isnan(hydraulic_conductivities_layer2)] = 0
@@ -308,6 +312,33 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer2[cond2] = hydraulic_conductivities_layer2[cond2] * (1 + fudge_parameters["-7_2_re"].values[model_run] * scale2[cond2])
         hydraulic_conductivities_layer3[cond3] = hydraulic_conductivities_layer3[cond3] * (1 + fudge_parameters["-7_3_re"].values[model_run] * scale3[cond3])
         hydraulic_conductivities_layer4[cond4] = hydraulic_conductivities_layer4[cond4] * (1 + fudge_parameters["-7_4_re"].values[model_run] * scale4[cond4])
+
+        gw_depth_layer2 = topography - ds_mf_pre1['head'].isel(Time=0, layer=1).values
+        gw_depth_layer3 = topography - ds_mf_pre1['head'].isel(Time=0, layer=2).values
+        gw_depth_layer4 = topography - ds_mf_pre1['head'].isel(Time=0, layer=3).values
+
+        cond2 = (gw_depth_layer2 >= 0)
+        cond3 = (gw_depth_layer3 >= 0)
+        cond4 = (gw_depth_layer4 >= 0)
+
+        gw_depth_layer2[cond2] = 0
+        gw_depth_layer3[cond3] = 0
+        gw_depth_layer4[cond4] = 0
+
+        gw_depth_min_layer2 = np.nanmin(gw_depth_layer2)
+        gw_depth_min_layer3 = np.nanmin(gw_depth_layer3)
+        gw_depth_min_layer4 = np.nanmin(gw_depth_layer4)
+
+        scale2 = np.abs(gw_depth_layer2) / np.abs(gw_depth_min_layer2)
+        scale3 = np.abs(gw_depth_layer3) / np.abs(gw_depth_min_layer3)
+        scale4 = np.abs(gw_depth_layer4) / np.abs(gw_depth_min_layer4)
+
+        cond2 = (gw_depth_layer2 < 0) & (hydraulic_conductivities_layer2_ <= 10.0e-07)
+        cond3 = (gw_depth_layer3 < 0) & (hydraulic_conductivities_layer3_ <= 10.0e-07)
+        cond4 = (gw_depth_layer4 < 0) & (hydraulic_conductivities_layer4_ <= 10.0e-07)
+        hydraulic_conductivities_layer2[cond2] = hydraulic_conductivities_layer2[cond2] * (1 + fudge_parameters["-7_2_re1"].values[model_run] * scale2[cond2])
+        hydraulic_conductivities_layer3[cond3] = hydraulic_conductivities_layer3[cond3] * (1 + fudge_parameters["-7_3_re1"].values[model_run] * scale3[cond3])
+        hydraulic_conductivities_layer4[cond4] = hydraulic_conductivities_layer4[cond4] * (1 + fudge_parameters["-7_4_re1"].values[model_run] * scale4[cond4])
 
         # increase the hydraulic conductivities of the reach cell by a factor of xx
         reaches["kf"] = np.nan
@@ -653,7 +684,7 @@ class ModFlowSimulation:
 
         # limit the execution time of the numerical solver
         signal.signal(signal.SIGALRM, handler)
-        signal.alarm(150)  # Set the timeout duration to 60 seconds
+        signal.alarm(180)  # Set the timeout duration to 60 seconds
 
         converged = 0
         self.mf6.prepare_solve(1)
@@ -689,7 +720,7 @@ class ModFlowSimulation:
     def finalize(self):
         self.mf6.finalize()
 
-@click.option("-mr", "--model-run", type=int, default=5)
+@click.option("-mr", "--model-run", type=int, default=9491)
 @click.option("-c", "--converged", type=int, default=1)
 @click.command("main", short_help="Run MODFLOW in steady-state mode")
 def main(model_run, converged):

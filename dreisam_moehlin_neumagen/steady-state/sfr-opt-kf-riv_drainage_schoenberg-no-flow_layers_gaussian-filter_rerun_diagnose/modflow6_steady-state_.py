@@ -32,7 +32,7 @@ def recalc_specific_yield(hydraulic_conductivity, specific_yield_min=0.05, speci
 
 base_path = Path(__file__).parent
 
-file_config = base_path.parent / "config.yml"
+file_config = base_path.parent.parent / "config.yml"
 with open(file_config, "r") as file:
     modflow_config = yaml.safe_load(file)
 
@@ -61,18 +61,14 @@ class ModFlowSimulation:
         self.verbose = verbose
 
         # load MODFLOW parameters
-        path = Path(__file__).parent.parent / "input" / "parameters_modflow.nc"
+        path = base_path.parent.parent / "input" / "parameters_modflow.nc"
         ds_params = xr.open_dataset(path, engine="h5netcdf")
 
-        path = Path(__file__).parent.parent / "input" / "boundary_conditions.nc"
+        path = base_path.parent.parent / "input" / "boundary_conditions.nc"
         ds_bc = xr.open_dataset(path, engine="h5netcdf")
 
         path = base_path / "fudge_parameters_modflow.csv"
         fudge_parameters = pd.read_csv(path, sep=";", skiprows=1)
-
-        # load the previous MODFLOW output
-        output_file = base_path / "output" / f"modflow_output_run_{model_run}.nc"
-        ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
 
         # Temporal discretization (TDIS)
         # One or more models (GWF is the only model supported at present)
@@ -97,7 +93,7 @@ class ModFlowSimulation:
 
         # Create the Flopy iterative model solver (ims) Package object
         ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="all", complexity="COMPLEX", no_ptcrecord="NO_PTC_ALL")
-        
+
         # Now that the overall simulation is set up, we can focus on building the groundwater flow model.  The groundwater flow model will be built by adding packages to it that describe the model characteristics.
         #
         # Define the discretization of the model. All layers are given equal thickness. The `bot` array is build from `H` and the `Nlay` values to indicate top and bottom of each layer, and `delrow` and `delcol` are computed from model size `L` and number of cells `N`. Once these are all computed, the Discretization file is built.
@@ -118,8 +114,6 @@ class ModFlowSimulation:
         mask_boundary_condition_schoenberg = ds_bc["mask_schoenberg_bc"].values
         mask = np.where(mask_boundary_condition_schoenberg, True, mask)
         mask_drainage_area = (ds_params["mask_drainage"].values == 1)
-        mask_custom_hausen1 = (ds_params["mask_kf_18e_3_lower_moehlin"].values == 1)
-        mask_custom_hausen2 = (ds_params["mask_kf_2e_7_lower_moehlin_and_dreisam"].values == 1)
         domain = np.empty_like(topography)
         domain[mask] = 1
         domain[~mask] = -1
@@ -141,8 +135,7 @@ class ModFlowSimulation:
         )
 
         # Create the initial conditions package
-        # use interpolated groundwater heads from well observations as initial conditions
-        gw_heads_interpolated = ds_params["gw_heads_interpolated"].values - 1
+        gw_heads_interpolated = ds_params["gw_heads_interpolated"].values
         gw_heads_interpolated[~mask] = np.nan
         initial_conditions_layers = [gw_heads_interpolated, gw_heads_interpolated, gw_heads_interpolated, gw_heads_interpolated]
         ic = flopy.mf6.modflow.mfgwfic.ModflowGwfic(gwf, pname="ic", strt=initial_conditions_layers)
@@ -239,7 +232,7 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer3[mask433] = hydraulic_conductivities_layer3[mask433] * fudge_parameters["4-3_3"].values[model_run]
 
         # prepare SFR data
-        reaches = pd.read_csv(base_path.parent / "input" / "sfr_packagedata_modified.csv", sep=";")
+        reaches = pd.read_csv(base_path.parent.parent / "input" / "sfr_packagedata_modified.csv", sep=";")
         reaches.iloc[:, 0] = reaches.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
         reaches.iloc[:, 1] = reaches.iloc[:, 1].astype(int) - 1 # convert to zero-based indexing
         reaches.iloc[:, 2] = reaches.iloc[:, 2].astype(int) - 1  # convert to zero-based indexing
@@ -257,40 +250,6 @@ class ModFlowSimulation:
         reaches.iloc[:, 15] = reaches.iloc[:, 15].astype(float)
         reaches.iloc[:, 16] = reaches.iloc[:, 16].astype(int)
 
-        # adjust hydraulic conductivities
-        hydraulic_conductivities_layer2[mask232 & mask_custom_hausen1] = hydraulic_conductivities_layer2[mask232 & mask_custom_hausen1] * fudge_parameters["hausen1_re"].values[model_run]
-        hydraulic_conductivities_layer3[mask233 & mask_custom_hausen1] = hydraulic_conductivities_layer2[mask233 & mask_custom_hausen1] * fudge_parameters["hausen1_re"].values[model_run]
-
-        hydraulic_conductivities_layer2[mask72 & mask_custom_hausen2] = hydraulic_conductivities_layer2[mask72 & mask_custom_hausen2] * fudge_parameters["hausen2_re"].values[model_run]
-        hydraulic_conductivities_layer3[mask73 & mask_custom_hausen2] = hydraulic_conductivities_layer3[mask73 & mask_custom_hausen2] * fudge_parameters["hausen2_re"].values[model_run]
-
-        gw_depth_layer2 = topography - ds_mf['head'].isel(Time=0, layer=1).values
-        gw_depth_layer3 = topography - ds_mf['head'].isel(Time=0, layer=2).values
-        gw_depth_layer4 = topography - ds_mf['head'].isel(Time=0, layer=3).values
-
-        cond2 = (gw_depth_layer2 >= 0)
-        cond3 = (gw_depth_layer3 >= 0)
-        cond4 = (gw_depth_layer4 >= 0)
-
-        gw_depth_layer2[cond2] = 0
-        gw_depth_layer3[cond3] = 0
-        gw_depth_layer4[cond4] = 0
-
-        gw_depth_min_layer2 = np.nanmin(gw_depth_layer2)
-        gw_depth_min_layer3 = np.nanmin(gw_depth_layer3)
-        gw_depth_min_layer4 = np.nanmin(gw_depth_layer4)
-
-        scale2 = np.abs(gw_depth_layer2) / np.abs(gw_depth_min_layer2)
-        scale3 = np.abs(gw_depth_layer3) / np.abs(gw_depth_min_layer3)
-        scale4 = np.abs(gw_depth_layer4) / np.abs(gw_depth_min_layer4)
-
-        cond2 = (gw_depth_layer2 < 0) & (hydraulic_conductivities_layer2_ <= 10.0e-07)
-        cond3 = (gw_depth_layer3 < 0) & (hydraulic_conductivities_layer3_ <= 10.0e-07)
-        cond4 = (gw_depth_layer4 < 0) & (hydraulic_conductivities_layer4_ <= 10.0e-07)
-        hydraulic_conductivities_layer2[cond2] = hydraulic_conductivities_layer2[cond2] * (1 + (fudge_parameters["-7_2_re"].values[model_run] - 1) * scale2[cond2])
-        hydraulic_conductivities_layer3[cond3] = hydraulic_conductivities_layer3[cond3] * (1 + (fudge_parameters["-7_3_re"].values[model_run] - 1) * scale3[cond3])
-        hydraulic_conductivities_layer4[cond4] = hydraulic_conductivities_layer4[cond4] * (1 + (fudge_parameters["-7_4_re"].values[model_run] - 1) * scale4[cond4])
-
         # smooth transition between fissured and porous aquifers
         hydraulic_conductivities_layer1[np.isnan(hydraulic_conductivities_layer1)] = 0
         hydraulic_conductivities_layer2[np.isnan(hydraulic_conductivities_layer2)] = 0
@@ -300,10 +259,10 @@ class ModFlowSimulation:
         _hydraulic_conductivities_layer2 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.5, 1.5], mode="constant")
         _hydraulic_conductivities_layer3 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.5, 1.5], mode="constant")
         _hydraulic_conductivities_layer4 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.5, 1.5], mode="constant")
-        cond1 = (hydraulic_conductivities_layer1_ <= 10.0e-07)
-        cond2 = (hydraulic_conductivities_layer2_ <= 10.0e-07)
-        cond3 = (hydraulic_conductivities_layer3_ <= 10.0e-07)
-        cond4 = (hydraulic_conductivities_layer4_ <= 10.0e-07)
+        cond1 = (hydraulic_conductivities_layer1_ < 10.0e-07)
+        cond2 = (hydraulic_conductivities_layer2_ < 10.0e-07)
+        cond3 = (hydraulic_conductivities_layer3_ < 10.0e-07)
+        cond4 = (hydraulic_conductivities_layer4_ < 10.0e-07)
         hydraulic_conductivities_layer1[cond1] = _hydraulic_conductivities_layer1[cond1]
         hydraulic_conductivities_layer2[cond2] = _hydraulic_conductivities_layer2[cond2]
         hydraulic_conductivities_layer3[cond3] = _hydraulic_conductivities_layer3[cond3]
@@ -369,10 +328,8 @@ class ModFlowSimulation:
         cond = (reaches["kf"] < 10e-6)
         reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkf"].values[model_run]
         reaches["man"] = reaches["man"] * fudge_parameters["man"].values[model_run]
-        # cond = (reaches["rhk"] > 1)
-        # reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * 1.0
 
-        diversions = pd.read_csv(base_path.parent / "input" / "sfr_diversions.csv", sep=";")
+        diversions = pd.read_csv(base_path.parent.parent / "input" / "sfr_diversions.csv", sep=";")
         diversions.iloc[:, 0] = diversions.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
         diversions.iloc[:, 1] = diversions.iloc[:, 1].astype(int) - 1
         diversions.iloc[:, 2] = diversions.iloc[:, 2].astype(int) - 1  # convert to zero-based indexing
@@ -400,7 +357,7 @@ class ModFlowSimulation:
         
         nstrm = len(packagedata)  # number of reaches
 
-        connections = pd.read_csv(base_path.parent / "input" / "sfr_connectiondata.csv", sep=";", header=None)
+        connections = pd.read_csv(base_path.parent.parent / "input" / "sfr_connectiondata.csv", sep=";", header=None)
         for i in range(len(diversions)):
             rno_up = diversions.iloc[i, 0]
             rno_down = diversions.iloc[i, 2] 
@@ -544,7 +501,7 @@ class ModFlowSimulation:
         )
 
         # load the groundwater extraction data
-        groundwater_extraction = pd.read_csv(base_path.parent / "input" / "groundwater_extraction.csv", sep=";")
+        groundwater_extraction = pd.read_csv(base_path.parent.parent / "input" / "groundwater_extraction.csv", sep=";")
         # Create the well package (Neumann boundary condition i.e. second type)
         # pumping rate in m3/day
         wells_q = groundwater_extraction["annual_average"].values.tolist()
@@ -613,7 +570,7 @@ class ModFlowSimulation:
             raise ValueError(f"Platform {platform.system()} not recognized.")
 
         # modflow requires the real path (no symlinks etc.)
-        library_path = self.folder.parent.parent.parent / "bin" / libary_name
+        library_path = self.folder.parent.parent.parent.parent / "bin" / libary_name
         try:
             self.mf6 = XmiWrapper(str(library_path), working_directory=self.working_directory)
         except Exception as e:
@@ -690,28 +647,26 @@ class ModFlowSimulation:
         self.mf6.finalize()
 
 @click.option("-mr", "--model-run", type=int, default=5)
-@click.option("-c", "--converged", type=int, default=1)
 @click.command("main", short_help="Run MODFLOW in steady-state mode")
-def main(model_run, converged):
-    if converged == 1:
-        # initialize the MODFLOW model using XMI
-        modflow_interface = ModFlowSimulation(
-            f"dmn_run_{model_run}",
-            base_path,
-            nlay=4,
-            nrow=modflow_config["nx"],
-            ncol=modflow_config["ny"],
-            rowsize=modflow_config["dx"],
-            colsize=modflow_config["dy"],
-            model_run=model_run,
-            verbose=True
-        )
-        # run MODFLOW for one timestep
-        converged = modflow_interface.step()
-        
-        modflow_interface.finalize()
-        print("MODFLOW (steady-state) finalized")
-        print(f"converged: {converged}")
+def main(model_run):
+    # initialize the MODFLOW model using XMI
+    modflow_interface = ModFlowSimulation(
+        f"dmn_run_{model_run}",
+        base_path,
+        nlay=4,
+        nrow=modflow_config["nx"],
+        ncol=modflow_config["ny"],
+        rowsize=modflow_config["dx"],
+        colsize=modflow_config["dy"],
+        model_run=model_run,
+        verbose=True
+    )
+    # run MODFLOW for one timestep
+    converged = modflow_interface.step()
+    
+    modflow_interface.finalize()
+    print("MODFLOW (steady-state) finalized")
+    print(f"converged: {converged}")
     return
 
 if __name__ == "__main__":

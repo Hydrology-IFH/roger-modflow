@@ -310,7 +310,15 @@ dreisam_moehlin_neumagen/steady-state/input/wsg_hausen.tif
 dreisam_moehlin_neumagen/steady-state/input/wsg_zartener_becken.gpkg
 dreisam_moehlin_neumagen/steady-state/input/wsg_zartener_becken.tif
 dreisam_moehlin_neumagen/transient/input/crop_rotations_2013-2023.csv
-
+dreisam_moehlin_neumagen/transient/input/available_crop_rotations_2018_2022.csv
+dreisam_moehlin_neumagen/transient/input/crop_rotations_2000_2023.csv
+dreisam_moehlin_neumagen/transient/input/crop_rotations_2013_2023.csv
+dreisam_moehlin_neumagen/transient/input/crop_rotations_2018_2022.csv
+dreisam_moehlin_neumagen/transient/input/crops_2018-2022.nc
+dreisam_moehlin_neumagen/transient/input/crops_2018_2022.csv
+dreisam_moehlin_neumagen/transient/input/crops_2018_2022_summary.csv
+dreisam_moehlin_neumagen/transient/input/available_crop_rotations.csv
+dreisam_moehlin_neumagen/transient/input/stress_tests_meteo/
 
 
 **/parameters_roger.csv
