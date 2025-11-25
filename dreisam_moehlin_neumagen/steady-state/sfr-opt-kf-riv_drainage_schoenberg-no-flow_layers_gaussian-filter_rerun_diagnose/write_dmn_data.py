@@ -303,10 +303,12 @@ def main(model_run):
     hydraulic_conductivities_layer3[cond3] = hydraulic_conductivities_layer3[cond3] * (1 + fudge_parameters["-7_3_re1"].values[model_run] * scale3[cond3])
     hydraulic_conductivities_layer4[cond4] = hydraulic_conductivities_layer4[cond4] * (1 + fudge_parameters["-7_4_re1"].values[model_run] * scale4[cond4])
 
+    reaches["indirect_recharge"] = np.nan
     # increase the hydraulic conductivities of the reach cell by a factor of xx
     reaches["kf"] = np.nan
     c_fissured = 1  # factor to increase the hydraulic conductivity in fissured layers
     for rno, z, y, x in zip(reaches.loc[:, "rno"], reaches.loc[:, "k"], reaches.loc[:, "i"], reaches.loc[:, "j"]):
+        reaches.loc[rno, "indirect_recharge"] = indirect_recharge[y, x] * (-1)
         if z == 0:
             kf_riv = hydraulic_conductivities_layer1[y, x] / 86400
             if kf_riv < 10e-6:
@@ -404,6 +406,10 @@ def main(model_run):
     cond = (reaches["kf"] < 10e-6)
     reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkf"].values[model_run]
     reaches["man"] = reaches["man"] * fudge_parameters["man"].values[model_run]
+
+    # adjust streambed conductance for reaches with leakage
+    cond = (reaches["indirect_recharge"] < 0)
+    reaches.loc[cond, "rhk"] = 1.0e-08
 
     rhk_fudged = np.empty_like(topography)
     rhk_fudged[:, :] = np.nan

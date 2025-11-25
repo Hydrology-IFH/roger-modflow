@@ -2,11 +2,11 @@
 cd ..
 python add_streamflow_observation_points_to_diagnose_sfr.py
 cd sfr-opt-kf-riv_drainage_schoenberg-no-flow_layers_gaussian-filter_rerun_diagnose
-python write_fudge_parameters.py
-python modflow6_steady-state.py --model-run 5
-python write_binary_to_netcdf_steady-state_pre.py --model-run 5
-python modflow6_steady-state_rerun.py --model-run 5
-python write_binary_to_netcdf_steady-state_pre1.py --model-run 5
+# python write_fudge_parameters.py
+# python modflow6_steady-state.py --model-run 5
+# python write_binary_to_netcdf_steady-state_pre.py --model-run 5
+# python modflow6_steady-state_rerun.py --model-run 5
+# python write_binary_to_netcdf_steady-state_pre1.py --model-run 5
 python modflow6_steady-state_rerun_rerun.py --model-run 5
 python write_binary_to_netcdf_steady-state_diagnose_sfr.py --model-run 5
 python plot_groundwater_heads_steady-state.py --model-run 5

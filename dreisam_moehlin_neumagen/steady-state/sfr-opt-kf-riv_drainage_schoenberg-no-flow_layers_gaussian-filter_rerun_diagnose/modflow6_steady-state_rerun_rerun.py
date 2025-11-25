@@ -340,10 +340,14 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer3[cond3] = hydraulic_conductivities_layer3[cond3] * (1 + fudge_parameters["-7_3_re1"].values[model_run] * scale3[cond3])
         hydraulic_conductivities_layer4[cond4] = hydraulic_conductivities_layer4[cond4] * (1 + fudge_parameters["-7_4_re1"].values[model_run] * scale4[cond4])
 
+        # adjust streambed conductance for reaches with leakage
+        indirect_recharge = np.nanmean(ds_mf_pre1['gw_sw'].isel(Time=0).values, axis=0) * (-1)
+        reaches["indirect_recharge"] = np.nan
         # increase the hydraulic conductivities of the reach cell by a factor of xx
         reaches["kf"] = np.nan
         c_fissured = 1  # factor to increase the hydraulic conductivity in fissured layers
         for rno, z, y, x in zip(reaches.loc[:, "rno"], reaches.loc[:, "k"], reaches.loc[:, "i"], reaches.loc[:, "j"]):
+            reaches.loc[rno, "indirect_recharge"] = indirect_recharge[y, x]
             if z == 0:
                 kf_riv = hydraulic_conductivities_layer1[y, x] / 86400
                 if kf_riv < 10e-6:
@@ -402,6 +406,10 @@ class ModFlowSimulation:
         reaches["man"] = reaches["man"] * fudge_parameters["man"].values[model_run]
         # cond = (reaches["rhk"] > 1)
         # reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * 1.0
+
+        # adjust streambed conductance for reaches with leakage
+        cond = (reaches["indirect_recharge"] < 0)
+        reaches.loc[cond, "rhk"] = 1.0e-08 * 86400
 
         diversions = pd.read_csv(base_path.parent / "input" / "sfr_diversions.csv", sep=";")
         diversions.iloc[:, 0] = diversions.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
@@ -720,7 +728,7 @@ class ModFlowSimulation:
     def finalize(self):
         self.mf6.finalize()
 
-@click.option("-mr", "--model-run", type=int, default=9491)
+@click.option("-mr", "--model-run", type=int, default=5)
 @click.option("-c", "--converged", type=int, default=1)
 @click.command("main", short_help="Run MODFLOW in steady-state mode")
 def main(model_run, converged):
