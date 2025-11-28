@@ -1,0 +1,40 @@
+Municipality;Station ID;x-coordinate;y-coordinate;cell_x;cell_y;Mean_2013-2023 [m asl.];Standard Deviation [m]
+EX_Bad_Krozingen;0101/071-4 - LUBW;402439;5305371;122;410;246.09;0.83
+EX_Bad_Krozingen;0118/020-6 - LUBW;399181;5311941;56;279;193.02;0.53
+EX_Bad_Krozingen;0159/070-6 - LUBW;403662;5307069;146;376;236.93;0.56
+EX_Bad_Krozingen;0130/070-4 - LUBW;400668;5309056;86;337;200.43;0.74
+EX_Breisach_am_Rhein;0011/070-8 - LUBW;400797;5314359;89;231;192.49;0.41
+EX_Breisach_am_Rhein;0247/020-6 - LUBW;397866;5313214;30;254;193.25;0.27
+EX_Breisach_am_Rhein;0106/020-1 - LUBW;397828;5315182;29;214;191.97;0.29
+EX_Breisach_am_Rhein;PH 007 - Badenova;398831;5314403;49;230;192.18;0.3
+EX_Ehrenkirchen;0160/070-0 - LUBW;405428;5306537;181;387;245.08;0.9
+EX_Ehrenkirchen;0118/070-0 - LUBW;404821;5310255;169;313;213.33;1.15
+EX_Eichstetten;0100/071-0 - LUBW;400664;5305133;86;415;225.47;1.5
+EX_Freiburg_im_Breisgau;2279/070-0 - Stadt Freiburg;409120;5315620;255;205;226.57;0.68
+EX_Freiburg_im_Breisgau;2176/069-8 - Stadt Freiburg;411040;5319920;294;119;223.17;0.13
+EX_Freiburg_im_Breisgau;2170/069-5 - Stadt Freiburg;410540;5318720;284;143;227.56;0.51
+EX_Freiburg_im_Breisgau;2142/070-6 - Stadt Freiburg;409940;5315000;272;218;232.08;0.75
+EX_Freiburg_im_Breisgau;2250/069-0 - Stadt Freiburg;411640;5318400;306;150;233.58;0.52
+EX_Freiburg_im_Breisgau;0107/120-0 - Stadt Freiburg;418400;5315360;441;211;314.16;1.38
+EX_Freiburg_im_Breisgau;2215/069-1 - Stadt Freiburg;410120;5322160;275;75;206.8;0.12
+EX_Freiburg_im_Breisgau;2215/119-8 - Stadt Freiburg;414020;5321320;353;91;219.57;1.03
+EX_Freiburg_im_Breisgau;2070/069-8 - Stadt Freiburg;405040;5317540;174;167;202.35;0.16
+EX_Freiburg_im_Breisgau;2192/070-8 - Stadt Freiburg;410680;5315460;286;209;237.24;0.73
+EX_Freiburg_im_Breisgau;2117/120-0 - Stadt Freiburg;415160;5315640;376;205;280.54;0.16
+EX_Freiburg_im_Breisgau;2219/119-0 - Stadt Freiburg;412980;5320000;332;118;228.37;0.83
+EX_Freiburg_im_Breisgau;2297/069-3 - Stadt Freiburg;410840;5320560;290;107;219.23;0.05
+EX_Freiburg_im_Breisgau;2047/120-2 - Stadt Freiburg;414480;5315160;362;215;273.22;0.42
+EX_Freiburg_im_Breisgau;0926/120-3 - Stadt Freiburg;417280;5315500;418;208;302.35;0.42
+EX_Freiburg_im_Breisgau;0324/069-3 - Stadt Freiburg;407760;5318220;228;153;213.31;0.14
+EX_Freiburg_im_Breisgau;0347/069-2 - Stadt Freiburg;408560;5317360;244;171;220.81;0.17
+EX_Freiburg_im_Breisgau;2117/119-1 - Stadt Freiburg;413160;5317040;336;177;251.78;0.35
+EX_Freiburg_im_Breisgau;0106/120-5 - Stadt Freiburg;418840;5315180;450;214;319.36;1.9
+EX_Freiburg_im_Breisgau;0016/120-1 - Stadt Freiburg;413500;5316680;343;184;256.99;0.2
+EX_Hartheim_am_Rhein;0121/020-0 - LUBW;398205;5310449;37;309;193.88;0.45
+EX_Hartheim_am_Rhein;2037/020-1 - LUBW;396635;5312263;6;273;192.55;0.31
+EX_Kirchzarten;PE 20 - Badenova;419674;5314457;466;229;332.99;1.52
+EX_Kirchzarten;PE 33 - Badenova;420807;5313859;489;241;353.06;1.41
+EX_Kirchzarten;PE 06 - Badenova;420570;5314782;484;222;337.01;1.47
+EX_Schallstadt;0113/070-7 - LUBW;404284;5313033;159;257;215.54;1.15
+EX_Staufen_im_Breisgau;0113/071-9 - LUBW;403954;5304518;152;428;267.05;0.54
+EX_Stegen;PE 39 - Badenova;420740;5315389;488;210;337.42;2.14

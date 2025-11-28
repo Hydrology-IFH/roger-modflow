@@ -1,0 +1,15 @@
+OUTPUT_COLLECT:
+- theta
+- z_gw
+OUTPUT_FREQUENCY: 86400
+OUTPUT_RATE:
+- q_hof
+- q_ss
+dx: 25.0
+dy: 25.0
+identifier: dmn
+nx: 1242
+ny: 1554
+t_origin: '2019-11-01'
+x_origin: 396331.5
+y_origin: 5325918.5

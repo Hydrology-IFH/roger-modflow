@@ -35,7 +35,7 @@ def main(model_run, converged):
                 topography = ds['elevations'].isel(z=0).values
                 spatial_ref = ds.spatial_ref
                 xcoords = ds.x.values
-                ycoords = ds.y.values[::-1]
+                ycoords = ds.y.values
 
             # write groundwater head to netcdf
             fhead = base_path / "output" / f"dmn_run_{model_run}.hds"

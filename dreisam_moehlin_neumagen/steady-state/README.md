@@ -93,8 +93,12 @@ Surface waters are described by river network using Amtliche Digitale Wasserwirt
 MODFLOW requires river reaches. However, river network data is not divided into reaches. In order to provide the required reach data the `sfrmaker` tool can be used. To calculate the river reach data, the `sfrmaker` tool requires the river network to divided into river segments and width and elevation information at the downstream and upstream nodes. The following steps describe the preparation of the data required by of SFR package of MODFLOW:
 
 1. Use `Processing toolbox --> Vector overlay --> Split with lines` in QGIS to split the river network into river segments
-2. Extract the downstream and upstream nodes from the river segments.
-3. Assign the elevations and streambed width to the downstream and upstream nodes and join the data to the river segments.
+2. Extract the downstream and upstream nodes from the river segments. --> `Processing toolbox --> Extract specific vertices`
+3. Assign the elevations and streambed width to the downstream and upstream nodes and join the data to the river segments. 
+--> `Processing toolbox --> Sample raster values` 
+--> `awg_stream_segments.shp --> Properties --> Manage joins to other layers`  
+--> `Rename field` 
+--> `Vector geometry --> Snap points to grid`
 4. Assign to each river segment the downstream connected segment --> `python make_stream_segment_routing.py`
 5. Repair the geometries of the river segments --> `python make_stream_segment_routing.py`
 6. Write the data for the SFR package of MODFLOW using the `sfrmaker` tool --> `python write_sfr_data.py`
@@ -110,7 +114,7 @@ MODFLOW requires river reaches. However, river network data is not divided into 
 
 Workflow:
 1. Run `preprocess_data_for_modflow_state_optimisation.sh`
-2. Run `run_optimisation.sh`. May not work on your local computer. SSD hard drive decrease computation time.
+2. Run `run_optimisation.sh`. May not work on your local computer. SSD hard drive improves computation time. The convergence of the numerical solver is very sensitive to the parameter ranges set in `write_fudge_paramters.py`. Ranges that are too wide lead non-stable numerical solutions.
 3. Run `run_evaluation.sh`
 
 Coordinate system:
