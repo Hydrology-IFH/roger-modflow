@@ -14,7 +14,7 @@ python make_parallel_jobs.py
 # sbatch -p cpu batch_2_slurm.sh
 # cd ../batch_3
 # sbatch -p cpu batch_3_slurm.sh
-cd ../batch_4
+# cd ../batch_4
 sbatch -p cpu batch_4_slurm.sh
 cd ../batch_5
 sbatch -p cpu batch_5_slurm.sh
