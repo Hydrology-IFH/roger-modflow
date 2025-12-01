@@ -6,14 +6,14 @@ conda activate roger-modflow
 python write_fudge_parameters.py
 python make_parallel_jobs.py
 
-cd batch_0
-sbatch -p cpu batch_0_slurm.sh
-cd ../batch_1
-sbatch -p cpu batch_1_slurm.sh
-cd ../batch_2
-sbatch -p cpu batch_2_slurm.sh
-cd ../batch_3
-sbatch -p cpu batch_3_slurm.sh
+# cd batch_0
+# sbatch -p cpu batch_0_slurm.sh
+# cd ../batch_1
+# sbatch -p cpu batch_1_slurm.sh
+# cd ../batch_2
+# sbatch -p cpu batch_2_slurm.sh
+# cd ../batch_3
+# sbatch -p cpu batch_3_slurm.sh
 cd ../batch_4
 sbatch -p cpu batch_4_slurm.sh
 cd ../batch_5
