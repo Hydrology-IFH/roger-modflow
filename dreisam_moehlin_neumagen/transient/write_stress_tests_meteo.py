@@ -34,7 +34,6 @@ def read_meteo(path_to_dir: Path):
     Ta_path = path_to_dir / "TA.txt"
     PREC_path = path_to_dir / "PREC.txt"
     PET_path = path_to_dir / "PET.txt"
-    RS_path = path_to_dir / "RS.txt"
 
     df_PREC = pd.read_csv(
         PREC_path,
@@ -62,20 +61,6 @@ def read_meteo(path_to_dir: Path):
     else:
         df_pet = None
 
-    if os.path.exists(RS_path):
-        df_rs = pd.read_csv(
-            RS_path,
-            sep=r"\s+",
-            skiprows=0,
-            header=0,
-            na_values=-9999,
-        )
-        df_rs.index = pd.to_datetime(dict(year=df_rs.YYYY, month=df_rs.MM, day=df_rs.DD, hour=df_rs.hh, minute=df_rs.mm))
-        df_rs = df_rs.loc[:, ["RS"]]
-        df_rs.index = df_rs.index.rename("Index")
-    else:
-        df_rs = None
-
     df_ta = pd.read_csv(
         Ta_path,
         sep=r"\s+",
@@ -100,7 +85,7 @@ def read_meteo(path_to_dir: Path):
     prec_10mins["PREC"] = 0.
     prec_10mins.loc[df_PREC.index, "PREC"] = df_PREC["PREC"].values.astype(float)
 
-    return prec_10mins, df_pet, df_ta, df_rs
+    return prec_10mins, df_pet, df_ta
 
 
 base_path = Path(__file__).parent  # current directory; change if files are elsewhere
@@ -121,12 +106,12 @@ file = base_path / "input" / "stress_tests_meteo" / "pet_summer_stress_magnitude
 df_pet_summer_stress_magnitude = pd.read_csv(file, sep=";", skiprows=1)
 
 
-meteo_stations = ["259", "684", "757", "1224", "1346", "1443", "2388"]
+meteo_stations = [1443, 684, 1346, 2388, 259, 757]
 durations = [1, 2, 3]
 magnitudes = [0, 1, 2]
 
 for station in meteo_stations:
-    prec_10mins, df_pet, df_ta = read_meteo(meteo_path / station)
+    prec_10mins, df_pet, df_ta = read_meteo(meteo_path / str(station))
     # select summer period of 2018
     prec_10mins_summer_2018 = prec_10mins.loc["2018-06-01":"2018-08-31"]
     df_ta_summer_2018 = df_ta.loc["2018-06-01":"2018-08-31"]
@@ -149,189 +134,12 @@ for station in meteo_stations:
     df_pet_spring_summer_2021 = df_pet.loc["2021-03-01":"2021-08-31"]
     for duration in durations:
         for magnitude in magnitudes:
-            if magnitude == 0 and duration == 2:
-                path_to_dir = base_path / "transient" / "input" / "stress_tests_meteo" / "spring_drought" / f"duration_{duration}" / f"magnitude_{magnitude}" / f"{station}" 
+            if magnitude == 0 and duration == 3:
+                path_to_dir = base_path  / "input" / "stress_tests_meteo" / "spring_drought" / f"duration{duration}_magnitude{magnitude}" / f"{station}" 
                 if not os.path.exists(path_to_dir):
                     os.makedirs(path_to_dir)  
 
-                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / station)
-                # insert spring period of 2020 in spring period of 2019
-                prec_10mins.loc["2019-03-01":"2019-05-31"] = prec_10mins_spring_2020
-                df_ta.loc["2019-03-01":"2019-05-31"] = df_ta_spring_2020
-                df_pet.loc["2019-03-01":"2019-05-31"] = df_pet_spring_2020
-
-                PREC_path = path_to_dir / "PREC.txt"
-                Ta_path = path_to_dir / "TA.txt"
-                PET_path = path_to_dir / "PET.txt"
-
-                # export precipitation to .txt
-                prec_10mins["YYYY"] = prec_10mins.index.year.values
-                prec_10mins["MM"] = prec_10mins.index.month.values
-                prec_10mins["DD"] = prec_10mins.index.day.values
-                prec_10mins["hh"] = prec_10mins.index.hour.values
-                prec_10mins["mm"] = prec_10mins.index.minute.values
-                prec_10mins = prec_10mins.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PREC"]]
-                prec_10mins.to_csv(PREC_path, header=True, index=False, sep="\t")
-
-                # export air temperature to .txt
-                df_ta["YYYY"] = df_ta.index.year.values
-                df_ta["MM"] = df_ta.index.month.values
-                df_ta["DD"] = df_ta.index.day.values
-                df_ta["hh"] = df_ta.index.hour.values
-                df_ta["mm"] = 0
-                df_ta = df_ta.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "TA", "TA_min", "TA_max"]]
-                df_ta.to_csv(Ta_path, header=True, index=False, sep="\t")
-
-                # export potential evapotranspiration to .txt
-                df_pet["YYYY"] = df_pet.index.year.values
-                df_pet["MM"] = df_pet.index.month.values
-                df_pet["DD"] = df_pet.index.day.values
-                df_pet["hh"] = df_pet.index.hour.values
-                df_pet["mm"] = 0
-                df_pet = df_pet.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PET"]]
-                df_pet.to_csv(PET_path, header=True, index=False, sep="\t")
-
-                path_to_dir = base_path / "transient" / "input" / "stress_tests_meteo" / "summer_drought" / f"duration_{duration}" / f"magnitude_{magnitude}" / f"{station}" 
-                if not os.path.exists(path_to_dir):
-                    os.makedirs(path_to_dir)  
-
-                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / station)
-                # insert summer period of 2018 in summer period of 2017
-                prec_10mins.loc["2017-06-01":"2017-08-31"] = prec_10mins_summer_2018
-                df_ta.loc["2017-06-01":"2017-08-31"] = df_ta_summer_2018
-                df_pet.loc["2017-06-01":"2017-08-31"] = df_pet_summer_2018
-
-                PREC_path = path_to_dir / "PREC.txt"
-                Ta_path = path_to_dir / "TA.txt"
-                PET_path = path_to_dir / "PET.txt"
-
-                # export precipitation to .txt
-                prec_10mins["YYYY"] = prec_10mins.index.year.values
-                prec_10mins["MM"] = prec_10mins.index.month.values
-                prec_10mins["DD"] = prec_10mins.index.day.values
-                prec_10mins["hh"] = prec_10mins.index.hour.values
-                prec_10mins["mm"] = prec_10mins.index.minute.values
-                prec_10mins = prec_10mins.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PREC"]]
-                prec_10mins.to_csv(PREC_path, header=True, index=False, sep="\t")
-
-                # export air temperature to .txt
-                df_ta["YYYY"] = df_ta.index.year.values
-                df_ta["MM"] = df_ta.index.month.values
-                df_ta["DD"] = df_ta.index.day.values
-                df_ta["hh"] = df_ta.index.hour.values
-                df_ta["mm"] = 0
-                df_ta = df_ta.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "TA", "TA_min", "TA_max"]]
-                df_ta.to_csv(Ta_path, header=True, index=False, sep="\t")
-
-                # export potential evapotranspiration to .txt
-                df_pet["YYYY"] = df_pet.index.year.values
-                df_pet["MM"] = df_pet.index.month.values
-                df_pet["DD"] = df_pet.index.day.values
-                df_pet["hh"] = df_pet.index.hour.values
-                df_pet["mm"] = 0
-                df_pet = df_pet.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PET"]]
-                df_pet.to_csv(PET_path, header=True, index=False, sep="\t")
-
-                path_to_dir = base_path / "transient" / "input" / "stress_tests_meteo" / "spring-summer_drought" / f"duration_{duration}" / f"magnitude_{magnitude}" / f"{station}" 
-                if not os.path.exists(path_to_dir):
-                    os.makedirs(path_to_dir)  
-
-                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / station)
-                # insert spring period of 2020 in spring period of 2017
-                prec_10mins.loc["2017-03-01":"2017-05-31"] = prec_10mins_spring_2020
-                df_ta.loc["2017-03-01":"2017-05-31"] = df_ta_spring_2020
-                df_pet.loc["2017-03-01":"2017-05-31"] = df_pet_spring_2020
-                # insert summer period of 2018 in summer period of 2017
-                prec_10mins.loc["2017-06-01":"2017-08-31"] = prec_10mins_summer_2018
-                df_ta.loc["2017-06-01":"2017-08-31"] = df_ta_summer_2018
-                df_pet.loc["2017-06-01":"2017-08-31"] = df_pet_summer_2018
-
-                PREC_path = path_to_dir / "PREC.txt"
-                Ta_path = path_to_dir / "TA.txt"
-                PET_path = path_to_dir / "PET.txt"
-
-                # export precipitation to .txt
-                prec_10mins["YYYY"] = prec_10mins.index.year.values
-                prec_10mins["MM"] = prec_10mins.index.month.values
-                prec_10mins["DD"] = prec_10mins.index.day.values
-                prec_10mins["hh"] = prec_10mins.index.hour.values
-                prec_10mins["mm"] = prec_10mins.index.minute.values
-                prec_10mins = prec_10mins.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PREC"]]
-                prec_10mins.to_csv(PREC_path, header=True, index=False, sep="\t")
-
-                # export air temperature to .txt
-                df_ta["YYYY"] = df_ta.index.year.values
-                df_ta["MM"] = df_ta.index.month.values
-                df_ta["DD"] = df_ta.index.day.values
-                df_ta["hh"] = df_ta.index.hour.values
-                df_ta["mm"] = 0
-                df_ta = df_ta.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "TA", "TA_min", "TA_max"]]
-                df_ta.to_csv(Ta_path, header=True, index=False, sep="\t")
-
-                # export potential evapotranspiration to .txt
-                df_pet["YYYY"] = df_pet.index.year.values
-                df_pet["MM"] = df_pet.index.month.values
-                df_pet["DD"] = df_pet.index.day.values
-                df_pet["hh"] = df_pet.index.hour.values
-                df_pet["mm"] = 0
-                df_pet = df_pet.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PET"]]
-                df_pet.to_csv(PET_path, header=True, index=False, sep="\t")
-
-                path_to_dir = base_path / "transient" / "input" / "stress_tests_meteo" / "spring-summer_wetness" / f"duration_{duration}" / f"magnitude_{magnitude}" / f"{station}" 
-                if not os.path.exists(path_to_dir):
-                    os.makedirs(path_to_dir)  
-
-                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / station)
-                # insert spring period of 2015 in spring period of 2020
-                prec_10mins.loc["2020-03-01":"2020-05-31"] = prec_10mins_spring_2015
-                df_ta.loc["2020-03-01":"2020-05-31"] = df_ta_spring_2015
-                df_pet.loc["2020-03-01":"2020-05-31"] = df_pet_spring_2015
-                # insert summer period of 2017 in summer period of 2018
-                prec_10mins.loc["2018-06-01":"2018-08-31"] = prec_10mins_summer_2017
-                df_ta.loc["2018-06-01":"2018-08-31"] = df_ta_summer_2017
-                df_pet.loc["2018-06-01":"2018-08-31"] = df_pet_summer_2017
-                # insert ummer and spring period of 2021 in spring and summer period of 2020
-                prec_10mins.loc["2020-03-01":"2020-08-31"] = prec_10mins_spring_summer_2021
-                df_ta.loc["2020-03-01":"2020-08-31"] = df_ta_spring_summer_2021
-                df_pet.loc["2020-03-01":"2020-08-31"] = df_pet_spring_summer_2021
-
-                PREC_path = path_to_dir / "PREC.txt"
-                Ta_path = path_to_dir / "TA.txt"
-                PET_path = path_to_dir / "PET.txt"
-
-                # export precipitation to .txt
-                prec_10mins["YYYY"] = prec_10mins.index.year.values
-                prec_10mins["MM"] = prec_10mins.index.month.values
-                prec_10mins["DD"] = prec_10mins.index.day.values
-                prec_10mins["hh"] = prec_10mins.index.hour.values
-                prec_10mins["mm"] = prec_10mins.index.minute.values
-                prec_10mins = prec_10mins.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PREC"]]
-                prec_10mins.to_csv(PREC_path, header=True, index=False, sep="\t")
-
-                # export air temperature to .txt
-                df_ta["YYYY"] = df_ta.index.year.values
-                df_ta["MM"] = df_ta.index.month.values
-                df_ta["DD"] = df_ta.index.day.values
-                df_ta["hh"] = df_ta.index.hour.values
-                df_ta["mm"] = 0
-                df_ta = df_ta.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "TA", "TA_min", "TA_max"]]
-                df_ta.to_csv(Ta_path, header=True, index=False, sep="\t")
-
-                # export potential evapotranspiration to .txt
-                df_pet["YYYY"] = df_pet.index.year.values
-                df_pet["MM"] = df_pet.index.month.values
-                df_pet["DD"] = df_pet.index.day.values
-                df_pet["hh"] = df_pet.index.hour.values
-                df_pet["mm"] = 0
-                df_pet = df_pet.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PET"]]
-                df_pet.to_csv(PET_path, header=True, index=False, sep="\t")
-
-            elif magnitude == 0 and duration == 3:
-                path_to_dir = base_path / "transient" / "input" / "stress_tests_meteo" / "spring_drought" / f"duration_{duration}" / f"magnitude_{magnitude}" / f"{station}" 
-                if not os.path.exists(path_to_dir):
-                    os.makedirs(path_to_dir)  
-
-                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / station)
+                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / str(station))
                 # insert spring period of 2020 in spring period of 2019
                 prec_10mins.loc["2019-03-01":"2019-05-31"] = prec_10mins_spring_2020
                 df_ta.loc["2019-03-01":"2019-05-31"] = df_ta_spring_2020
@@ -372,11 +180,11 @@ for station in meteo_stations:
                 df_pet = df_pet.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PET"]]
                 df_pet.to_csv(PET_path, header=True, index=False, sep="\t")
 
-                path_to_dir = base_path / "transient" / "input" / "stress_tests_meteo" / "summer_drought" / f"duration_{duration}" / f"magnitude_{magnitude}" / f"{station}" 
+                path_to_dir = base_path  / "input" / "stress_tests_meteo" / "summer_drought" / f"duration{duration}_magnitude{magnitude}" / f"{station}" 
                 if not os.path.exists(path_to_dir):
                     os.makedirs(path_to_dir)  
 
-                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / station)
+                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / str(station))
                 # insert summer period of 2018 in summer period of 2017
                 prec_10mins.loc["2017-06-01":"2017-08-31"] = prec_10mins_summer_2018
                 df_ta.loc["2017-06-01":"2017-08-31"] = df_ta_summer_2018
@@ -417,11 +225,11 @@ for station in meteo_stations:
                 df_pet = df_pet.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PET"]]
                 df_pet.to_csv(PET_path, header=True, index=False, sep="\t")
 
-                path_to_dir = base_path / "transient" / "input" / "stress_tests_meteo" / "spring-summer_drought" / f"duration_{duration}" / f"magnitude_{magnitude}" / f"{station}" 
+                path_to_dir = base_path  / "input" / "stress_tests_meteo" / "spring-summer_drought" / f"duration{duration}_magnitude{magnitude}" / f"{station}" 
                 if not os.path.exists(path_to_dir):
                     os.makedirs(path_to_dir)  
 
-                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / station)
+                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / str(station))
                 # insert spring period of 2020 in spring period of 2017
                 prec_10mins.loc["2017-03-01":"2017-05-31"] = prec_10mins_spring_2020
                 df_ta.loc["2017-03-01":"2017-05-31"] = df_ta_spring_2020
@@ -470,11 +278,11 @@ for station in meteo_stations:
                 df_pet = df_pet.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PET"]]
                 df_pet.to_csv(PET_path, header=True, index=False, sep="\t")
 
-                path_to_dir = base_path / "transient" / "input" / "stress_tests_meteo" / "spring-summer_wetness" / f"duration_{duration}" / f"magnitude_{magnitude}" / f"{station}" 
+                path_to_dir = base_path  / "input" / "stress_tests_meteo" / "spring-summer_wetness" / f"duration{duration}_magnitude{magnitude}" / f"{station}" 
                 if not os.path.exists(path_to_dir):
                     os.makedirs(path_to_dir)  
 
-                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / station)
+                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / str(station))
                 # insert spring period of 2015 in spring period of 2020
                 prec_10mins.loc["2020-03-01":"2020-05-31"] = prec_10mins_spring_2015
                 df_ta.loc["2020-03-01":"2020-05-31"] = df_ta_spring_2015
@@ -523,58 +331,22 @@ for station in meteo_stations:
                 df_pet = df_pet.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PET"]]
                 df_pet.to_csv(PET_path, header=True, index=False, sep="\t")
 
-            elif magnitude == 1 and duration == 0:
-                path_to_dir = base_path / "transient" / "input" / "stress_tests_meteo" / "spring_drought" / f"duration_{duration}" / f"magnitude_{magnitude}" / f"{station}" 
-                if not os.path.exists(path_to_dir):
-                    os.makedirs(path_to_dir)  
-
-                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / station)
-
             elif magnitude == 1 and duration == 2:
-                path_to_dir = base_path / "transient" / "input" / "stress_tests_meteo" / "spring_drought" / f"duration_{duration}" / f"magnitude_{magnitude}" / f"{station}" 
+                path_to_dir = base_path  / "input" / "stress_tests_meteo" / "spring_drought" / f"duration{duration}_magnitude{magnitude}" / f"{station}" 
                 if not os.path.exists(path_to_dir):
                     os.makedirs(path_to_dir)  
 
-                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / station)
-
-            elif magnitude == 1 and duration == 3:
-                path_to_dir = base_path / "transient" / "input" / "stress_tests_meteo" / "spring_drought" / f"duration_{duration}" / f"magnitude_{magnitude}" / f"{station}" 
-                if not os.path.exists(path_to_dir):
-                    os.makedirs(path_to_dir)  
-
-                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / station)
-
-            elif magnitude == 2 and duration == 0:
-                path_to_dir = base_path / "transient" / "input" / "stress_tests_meteo" / "spring_drought" / f"duration_{duration}" / f"magnitude_{magnitude}" / f"{station}" 
-                if not os.path.exists(path_to_dir):
-                    os.makedirs(path_to_dir)  
-
-                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / station)
-
-            elif magnitude == 2 and duration == 2:
-                path_to_dir = base_path / "transient" / "input" / "stress_tests_meteo" / "spring_drought" / f"duration_{duration}" / f"magnitude_{magnitude}" / f"{station}" 
-                if not os.path.exists(path_to_dir):
-                    os.makedirs(path_to_dir)  
-
-                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / station)
-
-            elif magnitude == 2 and duration == 3:
-                path_to_dir = base_path / "transient" / "input" / "stress_tests_meteo" / "spring_drought" / f"duration_{duration}" / f"magnitude_{magnitude}" / f"{station}" 
-                if not os.path.exists(path_to_dir):
-                    os.makedirs(path_to_dir)  
-
-                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / station)
+                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / str(station))
                 prec_magnitude_spring = df_prec_spring_stress_magnitude.loc[df_prec_spring_stress_magnitude["ID"] == station, f"{magnitude}"].values[0]
                 ta_magnitude_spring = df_ta_spring_stress_magnitude.loc[df_ta_spring_stress_magnitude["ID"] == station, f"{magnitude}"].values[0]
                 pet_magnitude_spring = df_pet_spring_stress_magnitude.loc[df_pet_spring_stress_magnitude["ID"] == station, f"{magnitude}"].values[0]
+                prec_magnitude_summer = df_prec_summer_stress_magnitude.loc[df_prec_summer_stress_magnitude["ID"] == station, f"{magnitude}"].values[0]
+                ta_magnitude_summer = df_ta_summer_stress_magnitude.loc[df_ta_summer_stress_magnitude["ID"] == station, f"{magnitude}"].values[0]
+                pet_magnitude_summer = df_pet_summer_stress_magnitude.loc[df_pet_summer_stress_magnitude["ID"] == station, f"{magnitude}"].values[0]
                 # insert spring period of 2020 in spring period of 2019
-                prec_10mins.loc["2019-03-01":"2019-05-31", "PREC"] = prec_10mins_spring_2020.loc[:, "PREC"] * ((1 + prec_magnitude_spring) / 100)
+                prec_10mins.loc["2019-03-01":"2019-05-31", "PREC"] = prec_10mins_spring_2020.loc[:, "PREC"] * (1 + (prec_magnitude_spring / 100))
                 df_ta.loc["2019-03-01":"2019-05-31", "TA":] = df_ta_spring_2020.loc[:, "TA":] + ta_magnitude_spring
-                df_pet.loc["2019-03-01":"2019-05-31", "PET"] = df_pet_spring_2020.loc[:, "PET"] * ((1 + pet_magnitude_spring) / 100)
-                # insert spring period of 2020 in spring period of 2018
-                prec_10mins.loc["2018-03-01":"2018-05-31", "PREC"] = prec_10mins_spring_2020.loc[:, "PREC"] * ((1 + prec_magnitude_spring) / 100)
-                df_ta.loc["2018-03-01":"2018-05-31", "TA":] = df_ta_spring_2020.loc[:, "TA":] + ta_magnitude_spring
-                df_pet.loc["2018-03-01":"2018-05-31", "PET"] = df_pet_spring_2020.loc[:, "PET"] * ((1 + pet_magnitude_spring) / 100)
+                df_pet.loc["2019-03-01":"2019-05-31", "PET"] = df_pet_spring_2020.loc[:, "PET"] * (1 + ( pet_magnitude_spring / 100))
 
                 PREC_path = path_to_dir / "PREC.txt"
                 Ta_path = path_to_dir / "TA.txt"
@@ -607,19 +379,15 @@ for station in meteo_stations:
                 df_pet = df_pet.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PET"]]
                 df_pet.to_csv(PET_path, header=True, index=False, sep="\t")
 
-                path_to_dir = base_path / "transient" / "input" / "stress_tests_meteo" / "summer_drought" / f"duration_{duration}" / f"magnitude_{magnitude}" / f"{station}" 
+                path_to_dir = base_path  / "input" / "stress_tests_meteo" / "summer_drought" / f"duration{duration}_magnitude{magnitude}" / f"{station}" 
                 if not os.path.exists(path_to_dir):
                     os.makedirs(path_to_dir)  
 
-                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / station)
+                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / str(station))
                 # insert summer period of 2018 in summer period of 2017
-                prec_10mins.loc["2017-06-01":"2017-08-31", "PREC"] = prec_10mins_summer_2018.loc[:, "PREC"]
-                df_ta.loc["2017-06-01":"2017-08-31", "TA":] = df_ta_summer_2018.loc[:, "TA":]
-                df_pet.loc["2017-06-01":"2017-08-31", "PET"] = df_pet_summer_2018.loc[:, "PET"]
-                # insert summer period of 2018 in summer period of 2016
-                prec_10mins.loc["2016-06-01":"2016-08-31", "PREC"] = prec_10mins_summer_2018.loc[:, "PREC"]
-                df_ta.loc["2016-06-01":"2016-08-31", "TA":] = df_ta_summer_2018.loc[:, "TA":]
-                df_pet.loc["2016-06-01":"2016-08-31", "PET"] = df_pet_summer_2018.loc[:, "PET"]
+                prec_10mins.loc["2017-06-01":"2017-08-31", "PREC"] = prec_10mins_summer_2018.loc[:, "PREC"] * (1 + ( prec_magnitude_summer / 100))
+                df_ta.loc["2017-06-01":"2017-08-31", "TA":] = df_ta_summer_2018.loc[:, "TA":] + ta_magnitude_summer
+                df_pet.loc["2017-06-01":"2017-08-31", "PET"] = df_pet_summer_2018.loc[:, "PET"] * (1 + ( pet_magnitude_summer / 100))
 
                 PREC_path = path_to_dir / "PREC.txt"
                 Ta_path = path_to_dir / "TA.txt"
@@ -652,27 +420,19 @@ for station in meteo_stations:
                 df_pet = df_pet.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PET"]]
                 df_pet.to_csv(PET_path, header=True, index=False, sep="\t")
 
-                path_to_dir = base_path / "transient" / "input" / "stress_tests_meteo" / "spring-summer_drought" / f"duration_{duration}" / f"magnitude_{magnitude}" / f"{station}" 
+                path_to_dir = base_path  / "input" / "stress_tests_meteo" / "spring-summer_drought" / f"duration{duration}_magnitude{magnitude}" / f"{station}" 
                 if not os.path.exists(path_to_dir):
                     os.makedirs(path_to_dir)  
 
-                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / station)
+                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / str(station))
                 # insert spring period of 2020 in spring period of 2017
-                prec_10mins.loc["2017-03-01":"2017-05-31", "PREC"] = prec_10mins_spring_2020.loc[:, "PREC"]
-                df_ta.loc["2017-03-01":"2017-05-31", "TA":] = df_ta_spring_2020.loc[:, "TA":]
-                df_pet.loc["2017-03-01":"2017-05-31", "PET"] = df_pet_spring_2020.loc[:, "PET"]
-                # insert spring period of 2020 in spring period of 2016
-                prec_10mins.loc["2016-03-01":"2016-05-31", "PREC"] = prec_10mins_spring_2020.loc[:, "PREC"]
-                df_ta.loc["2016-03-01":"2016-05-31", "TA":] = df_ta_spring_2020.loc[:, "TA":]
-                df_pet.loc["2016-03-01":"2016-05-31", "PET"] = df_pet_spring_2020.loc[:, "PET"]
+                prec_10mins.loc["2017-03-01":"2017-05-31", "PREC"] = prec_10mins_spring_2020.loc[:, "PREC"] * (1 + (prec_magnitude_spring / 100))
+                df_ta.loc["2017-03-01":"2017-05-31", "TA":] = df_ta_spring_2020.loc[:, "TA":] + ta_magnitude_spring
+                df_pet.loc["2017-03-01":"2017-05-31", "PET"] = df_pet_spring_2020.loc[:, "PET"] * (1 + ( pet_magnitude_spring / 100))
                 # insert summer period of 2018 in summer period of 2017
-                prec_10mins.loc["2017-06-01":"2017-08-31", "PREC"] = prec_10mins_summer_2018.loc[:, "PREC"]
-                df_ta.loc["2017-06-01":"2017-08-31", "TA":] = df_ta_summer_2018.loc[:, "TA":]
-                df_pet.loc["2017-06-01":"2017-08-31", "PET"] = df_pet_summer_2018.loc[:, "PET"]
-                # insert summer period of 2018 in summer period of 2016
-                prec_10mins.loc["2016-06-01":"2016-08-31", "PREC"] = prec_10mins_summer_2018.loc[:, "PREC"]
-                df_ta.loc["2016-06-01":"2016-08-31", "TA":] = df_ta_summer_2018.loc[:, "TA":]
-                df_pet.loc["2016-06-01":"2016-08-31", "PET"] = df_pet_summer_2018.loc[:, "PET"]
+                prec_10mins.loc["2017-06-01":"2017-08-31", "PREC"] = prec_10mins_summer_2018.loc[:, "PREC"] * (1 + ( prec_magnitude_summer / 100))
+                df_ta.loc["2017-06-01":"2017-08-31", "TA":] = df_ta_summer_2018.loc[:, "TA":] + ta_magnitude_summer
+                df_pet.loc["2017-06-01":"2017-08-31", "PET"] = df_pet_summer_2018.loc[:, "PET"] * (1 + ( pet_magnitude_summer / 100))
 
                 PREC_path = path_to_dir / "PREC.txt"
                 Ta_path = path_to_dir / "TA.txt"
@@ -704,6 +464,287 @@ for station in meteo_stations:
                 df_pet["mm"] = 0
                 df_pet = df_pet.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PET"]]
                 df_pet.to_csv(PET_path, header=True, index=False, sep="\t")
+
+            elif magnitude == 2 and duration == 3:
+                path_to_dir = base_path  / "input" / "stress_tests_meteo" / "spring_drought" / f"duration{duration}_magnitude{magnitude}" / f"{station}" 
+                if not os.path.exists(path_to_dir):
+                    os.makedirs(path_to_dir)  
+
+                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / str(station))
+                prec_magnitude_spring = df_prec_spring_stress_magnitude.loc[df_prec_spring_stress_magnitude["ID"] == station, f"{magnitude}"].values[0]
+                ta_magnitude_spring = df_ta_spring_stress_magnitude.loc[df_ta_spring_stress_magnitude["ID"] == station, f"{magnitude}"].values[0]
+                pet_magnitude_spring = df_pet_spring_stress_magnitude.loc[df_pet_spring_stress_magnitude["ID"] == station, f"{magnitude}"].values[0]
+                prec_magnitude_summer = df_prec_summer_stress_magnitude.loc[df_prec_summer_stress_magnitude["ID"] == station, f"{magnitude}"].values[0]
+                ta_magnitude_summer = df_ta_summer_stress_magnitude.loc[df_ta_summer_stress_magnitude["ID"] == station, f"{magnitude}"].values[0]
+                pet_magnitude_summer = df_pet_summer_stress_magnitude.loc[df_pet_summer_stress_magnitude["ID"] == station, f"{magnitude}"].values[0]
+                # insert spring period of 2020 in spring period of 2019
+                prec_10mins.loc["2019-03-01":"2019-05-31", "PREC"] = prec_10mins_spring_2020.loc[:, "PREC"] * (1 + (prec_magnitude_spring / 100))
+                df_ta.loc["2019-03-01":"2019-05-31", "TA":] = df_ta_spring_2020.loc[:, "TA":] + ta_magnitude_spring
+                df_pet.loc["2019-03-01":"2019-05-31", "PET"] = df_pet_spring_2020.loc[:, "PET"] * (1 + ( pet_magnitude_spring / 100))
+                # insert spring period of 2020 in spring period of 2018
+                prec_10mins.loc["2018-03-01":"2018-05-31", "PREC"] = prec_10mins_spring_2020.loc[:, "PREC"] * (1 + (prec_magnitude_spring / 100))
+                df_ta.loc["2018-03-01":"2018-05-31", "TA":] = df_ta_spring_2020.loc[:, "TA":] + ta_magnitude_spring
+                df_pet.loc["2018-03-01":"2018-05-31", "PET"] = df_pet_spring_2020.loc[:, "PET"] * (1 + ( pet_magnitude_spring / 100))
+
+                PREC_path = path_to_dir / "PREC.txt"
+                Ta_path = path_to_dir / "TA.txt"
+                PET_path = path_to_dir / "PET.txt"
+
+                # export precipitation to .txt
+                prec_10mins["YYYY"] = prec_10mins.index.year.values
+                prec_10mins["MM"] = prec_10mins.index.month.values
+                prec_10mins["DD"] = prec_10mins.index.day.values
+                prec_10mins["hh"] = prec_10mins.index.hour.values
+                prec_10mins["mm"] = prec_10mins.index.minute.values
+                prec_10mins = prec_10mins.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PREC"]]
+                prec_10mins.to_csv(PREC_path, header=True, index=False, sep="\t")
+
+                # export air temperature to .txt
+                df_ta["YYYY"] = df_ta.index.year.values
+                df_ta["MM"] = df_ta.index.month.values
+                df_ta["DD"] = df_ta.index.day.values
+                df_ta["hh"] = df_ta.index.hour.values
+                df_ta["mm"] = 0
+                df_ta = df_ta.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "TA", "TA_min", "TA_max"]]
+                df_ta.to_csv(Ta_path, header=True, index=False, sep="\t")
+
+                # export potential evapotranspiration to .txt
+                df_pet["YYYY"] = df_pet.index.year.values
+                df_pet["MM"] = df_pet.index.month.values
+                df_pet["DD"] = df_pet.index.day.values
+                df_pet["hh"] = df_pet.index.hour.values
+                df_pet["mm"] = 0
+                df_pet = df_pet.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PET"]]
+                df_pet.to_csv(PET_path, header=True, index=False, sep="\t")
+
+                path_to_dir = base_path  / "input" / "stress_tests_meteo" / "summer_drought" / f"duration{duration}_magnitude{magnitude}" / f"{station}" 
+                if not os.path.exists(path_to_dir):
+                    os.makedirs(path_to_dir)  
+
+                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / str(station))
+                # insert summer period of 2018 in summer period of 2017
+                prec_10mins.loc["2017-06-01":"2017-08-31", "PREC"] = prec_10mins_summer_2018.loc[:, "PREC"] * (1 + ( prec_magnitude_summer / 100))
+                df_ta.loc["2017-06-01":"2017-08-31", "TA":] = df_ta_summer_2018.loc[:, "TA":] + ta_magnitude_summer
+                df_pet.loc["2017-06-01":"2017-08-31", "PET"] = df_pet_summer_2018.loc[:, "PET"] * (1 + ( pet_magnitude_summer / 100))
+                # insert summer period of 2018 in summer period of 2016
+                prec_10mins.loc["2016-06-01":"2016-08-31", "PREC"] = prec_10mins_summer_2018.loc[:, "PREC"] * (1 + ( prec_magnitude_summer / 100))
+                df_ta.loc["2016-06-01":"2016-08-31", "TA":] = df_ta_summer_2018.loc[:, "TA":] + ta_magnitude_summer
+                df_pet.loc["2016-06-01":"2016-08-31", "PET"] = df_pet_summer_2018.loc[:, "PET"] * (1 + ( pet_magnitude_summer / 100))
+
+                PREC_path = path_to_dir / "PREC.txt"
+                Ta_path = path_to_dir / "TA.txt"
+                PET_path = path_to_dir / "PET.txt"
+
+                # export precipitation to .txt
+                prec_10mins["YYYY"] = prec_10mins.index.year.values
+                prec_10mins["MM"] = prec_10mins.index.month.values
+                prec_10mins["DD"] = prec_10mins.index.day.values
+                prec_10mins["hh"] = prec_10mins.index.hour.values
+                prec_10mins["mm"] = prec_10mins.index.minute.values
+                prec_10mins = prec_10mins.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PREC"]]
+                prec_10mins.to_csv(PREC_path, header=True, index=False, sep="\t")
+
+                # export air temperature to .txt
+                df_ta["YYYY"] = df_ta.index.year.values
+                df_ta["MM"] = df_ta.index.month.values
+                df_ta["DD"] = df_ta.index.day.values
+                df_ta["hh"] = df_ta.index.hour.values
+                df_ta["mm"] = 0
+                df_ta = df_ta.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "TA", "TA_min", "TA_max"]]
+                df_ta.to_csv(Ta_path, header=True, index=False, sep="\t")
+
+                # export potential evapotranspiration to .txt
+                df_pet["YYYY"] = df_pet.index.year.values
+                df_pet["MM"] = df_pet.index.month.values
+                df_pet["DD"] = df_pet.index.day.values
+                df_pet["hh"] = df_pet.index.hour.values
+                df_pet["mm"] = 0
+                df_pet = df_pet.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PET"]]
+                df_pet.to_csv(PET_path, header=True, index=False, sep="\t")
+
+                path_to_dir = base_path  / "input" / "stress_tests_meteo" / "spring-summer_drought" / f"duration{duration}_magnitude{magnitude}" / f"{station}" 
+                if not os.path.exists(path_to_dir):
+                    os.makedirs(path_to_dir)  
+
+                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / str(station))
+                # insert spring period of 2020 in spring period of 2017
+                prec_10mins.loc["2017-03-01":"2017-05-31", "PREC"] = prec_10mins_spring_2020.loc[:, "PREC"] * (1 + (prec_magnitude_spring / 100))
+                df_ta.loc["2017-03-01":"2017-05-31", "TA":] = df_ta_spring_2020.loc[:, "TA":] + ta_magnitude_spring
+                df_pet.loc["2017-03-01":"2017-05-31", "PET"] = df_pet_spring_2020.loc[:, "PET"] * (1 + ( pet_magnitude_spring / 100))
+                # insert spring period of 2020 in spring period of 2016
+                prec_10mins.loc["2016-03-01":"2016-05-31", "PREC"] = prec_10mins_spring_2020.loc[:, "PREC"] * (1 + (prec_magnitude_spring / 100))
+                df_ta.loc["2016-03-01":"2016-05-31", "TA":] = df_ta_spring_2020.loc[:, "TA":] + ta_magnitude_spring
+                df_pet.loc["2016-03-01":"2016-05-31", "PET"] = df_pet_spring_2020.loc[:, "PET"] * (1 + ( pet_magnitude_spring / 100))
+                # insert summer period of 2018 in summer period of 2017
+                prec_10mins.loc["2017-06-01":"2017-08-31", "PREC"] = prec_10mins_summer_2018.loc[:, "PREC"] * (1 + ( prec_magnitude_summer / 100))
+                df_ta.loc["2017-06-01":"2017-08-31", "TA":] = df_ta_summer_2018.loc[:, "TA":] + ta_magnitude_summer
+                df_pet.loc["2017-06-01":"2017-08-31", "PET"] = df_pet_summer_2018.loc[:, "PET"] * (1 + ( pet_magnitude_summer / 100))
+                # insert summer period of 2018 in summer period of 2016
+                prec_10mins.loc["2016-06-01":"2016-08-31", "PREC"] = prec_10mins_summer_2018.loc[:, "PREC"] * (1 + ( prec_magnitude_summer / 100))
+                df_ta.loc["2016-06-01":"2016-08-31", "TA":] = df_ta_summer_2018.loc[:, "TA":] + ta_magnitude_summer
+                df_pet.loc["2016-06-01":"2016-08-31", "PET"] = df_pet_summer_2018.loc[:, "PET"] * (1 + ( pet_magnitude_summer / 100))
+
+                PREC_path = path_to_dir / "PREC.txt"
+                Ta_path = path_to_dir / "TA.txt"
+                PET_path = path_to_dir / "PET.txt"
+
+                # export precipitation to .txt
+                prec_10mins["YYYY"] = prec_10mins.index.year.values
+                prec_10mins["MM"] = prec_10mins.index.month.values
+                prec_10mins["DD"] = prec_10mins.index.day.values
+                prec_10mins["hh"] = prec_10mins.index.hour.values
+                prec_10mins["mm"] = prec_10mins.index.minute.values
+                prec_10mins = prec_10mins.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PREC"]]
+                prec_10mins.to_csv(PREC_path, header=True, index=False, sep="\t")
+
+                # export air temperature to .txt
+                df_ta["YYYY"] = df_ta.index.year.values
+                df_ta["MM"] = df_ta.index.month.values
+                df_ta["DD"] = df_ta.index.day.values
+                df_ta["hh"] = df_ta.index.hour.values
+                df_ta["mm"] = 0
+                df_ta = df_ta.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "TA", "TA_min", "TA_max"]]
+                df_ta.to_csv(Ta_path, header=True, index=False, sep="\t")
+
+                # export potential evapotranspiration to .txt
+                df_pet["YYYY"] = df_pet.index.year.values
+                df_pet["MM"] = df_pet.index.month.values
+                df_pet["DD"] = df_pet.index.day.values
+                df_pet["hh"] = df_pet.index.hour.values
+                df_pet["mm"] = 0
+                df_pet = df_pet.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PET"]]
+                df_pet.to_csv(PET_path, header=True, index=False, sep="\t")
+
+            elif magnitude == 2 and duration == 0:
+                path_to_dir = base_path  / "input" / "stress_tests_meteo" / "spring_drought" / f"duration{duration}_magnitude{magnitude}" / f"{station}" 
+                if not os.path.exists(path_to_dir):
+                    os.makedirs(path_to_dir)  
+
+                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / str(station))
+                prec_magnitude_spring = df_prec_spring_stress_magnitude.loc[df_prec_spring_stress_magnitude["ID"] == station, f"{magnitude}"].values[0]
+                ta_magnitude_spring = df_ta_spring_stress_magnitude.loc[df_ta_spring_stress_magnitude["ID"] == station, f"{magnitude}"].values[0]
+                pet_magnitude_spring = df_pet_spring_stress_magnitude.loc[df_pet_spring_stress_magnitude["ID"] == station, f"{magnitude}"].values[0]
+                prec_magnitude_summer = df_prec_summer_stress_magnitude.loc[df_prec_summer_stress_magnitude["ID"] == station, f"{magnitude}"].values[0]
+                ta_magnitude_summer = df_ta_summer_stress_magnitude.loc[df_ta_summer_stress_magnitude["ID"] == station, f"{magnitude}"].values[0]
+                pet_magnitude_summer = df_pet_summer_stress_magnitude.loc[df_pet_summer_stress_magnitude["ID"] == station, f"{magnitude}"].values[0]
+                prec_10mins.loc["2020-03-01":"2020-05-31", "PREC"] = prec_10mins_spring_2020.loc[:, "PREC"] * (1 + (prec_magnitude_spring / 100))
+                df_ta.loc["2020-03-01":"2020-05-31", "TA":] = df_ta_spring_2020.loc[:, "TA":] + ta_magnitude_spring
+                df_pet.loc["2020-03-01":"2020-05-31", "PET"] = df_pet_spring_2020.loc[:, "PET"] * (1 + ( pet_magnitude_spring / 100))
+
+                PREC_path = path_to_dir / "PREC.txt"
+                Ta_path = path_to_dir / "TA.txt"
+                PET_path = path_to_dir / "PET.txt"
+
+                # export precipitation to .txt
+                prec_10mins["YYYY"] = prec_10mins.index.year.values
+                prec_10mins["MM"] = prec_10mins.index.month.values
+                prec_10mins["DD"] = prec_10mins.index.day.values
+                prec_10mins["hh"] = prec_10mins.index.hour.values
+                prec_10mins["mm"] = prec_10mins.index.minute.values
+                prec_10mins = prec_10mins.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PREC"]]
+                prec_10mins.to_csv(PREC_path, header=True, index=False, sep="\t")
+
+                # export air temperature to .txt
+                df_ta["YYYY"] = df_ta.index.year.values
+                df_ta["MM"] = df_ta.index.month.values
+                df_ta["DD"] = df_ta.index.day.values
+                df_ta["hh"] = df_ta.index.hour.values
+                df_ta["mm"] = 0
+                df_ta = df_ta.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "TA", "TA_min", "TA_max"]]
+                df_ta.to_csv(Ta_path, header=True, index=False, sep="\t")
+
+                # export potential evapotranspiration to .txt
+                df_pet["YYYY"] = df_pet.index.year.values
+                df_pet["MM"] = df_pet.index.month.values
+                df_pet["DD"] = df_pet.index.day.values
+                df_pet["hh"] = df_pet.index.hour.values
+                df_pet["mm"] = 0
+                df_pet = df_pet.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PET"]]
+                df_pet.to_csv(PET_path, header=True, index=False, sep="\t")
+
+                path_to_dir = base_path  / "input" / "stress_tests_meteo" / "summer_drought" / f"duration{duration}_magnitude{magnitude}" / f"{station}" 
+                if not os.path.exists(path_to_dir):
+                    os.makedirs(path_to_dir)  
+
+                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / str(station))
+                prec_10mins.loc["2018-06-01":"2018-08-31", "PREC"] = prec_10mins_summer_2018.loc[:, "PREC"] * (1 + ( prec_magnitude_summer / 100))
+                df_ta.loc["2018-06-01":"2018-08-31", "TA":] = df_ta_summer_2018.loc[:, "TA":] + ta_magnitude_summer
+                df_pet.loc["2018-06-01":"2018-08-31", "PET"] = df_pet_summer_2018.loc[:, "PET"] * (1 + ( pet_magnitude_summer / 100))
+
+                PREC_path = path_to_dir / "PREC.txt"
+                Ta_path = path_to_dir / "TA.txt"
+                PET_path = path_to_dir / "PET.txt"
+
+                # export precipitation to .txt
+                prec_10mins["YYYY"] = prec_10mins.index.year.values
+                prec_10mins["MM"] = prec_10mins.index.month.values
+                prec_10mins["DD"] = prec_10mins.index.day.values
+                prec_10mins["hh"] = prec_10mins.index.hour.values
+                prec_10mins["mm"] = prec_10mins.index.minute.values
+                prec_10mins = prec_10mins.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PREC"]]
+                prec_10mins.to_csv(PREC_path, header=True, index=False, sep="\t")
+
+                # export air temperature to .txt
+                df_ta["YYYY"] = df_ta.index.year.values
+                df_ta["MM"] = df_ta.index.month.values
+                df_ta["DD"] = df_ta.index.day.values
+                df_ta["hh"] = df_ta.index.hour.values
+                df_ta["mm"] = 0
+                df_ta = df_ta.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "TA", "TA_min", "TA_max"]]
+                df_ta.to_csv(Ta_path, header=True, index=False, sep="\t")
+
+                # export potential evapotranspiration to .txt
+                df_pet["YYYY"] = df_pet.index.year.values
+                df_pet["MM"] = df_pet.index.month.values
+                df_pet["DD"] = df_pet.index.day.values
+                df_pet["hh"] = df_pet.index.hour.values
+                df_pet["mm"] = 0
+                df_pet = df_pet.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PET"]]
+                df_pet.to_csv(PET_path, header=True, index=False, sep="\t")
+
+                path_to_dir = base_path  / "input" / "stress_tests_meteo" / "spring-summer_drought" / f"duration{duration}_magnitude{magnitude}" / f"{station}" 
+                if not os.path.exists(path_to_dir):
+                    os.makedirs(path_to_dir)  
+
+                prec_10mins, df_pet, df_ta = read_meteo(meteo_path / str(station))
+                prec_10mins.loc["2020-03-01":"2020-05-31", "PREC"] = prec_10mins_spring_2020.loc[:, "PREC"] * (1 + (prec_magnitude_spring / 100))
+                df_ta.loc["2020-03-01":"2020-05-31", "TA":] = df_ta_spring_2020.loc[:, "TA":] + ta_magnitude_spring
+                df_pet.loc["2020-03-01":"2020-05-31", "PET"] = df_pet_spring_2020.loc[:, "PET"] * (1 + ( pet_magnitude_spring / 100))
+                prec_10mins.loc["2018-06-01":"2018-08-31", "PREC"] = prec_10mins_summer_2018.loc[:, "PREC"] * (1 + ( prec_magnitude_summer / 100))
+                df_ta.loc["2018-06-01":"2018-08-31", "TA":] = df_ta_summer_2018.loc[:, "TA":] + ta_magnitude_summer
+                df_pet.loc["2018-06-01":"2018-08-31", "PET"] = df_pet_summer_2018.loc[:, "PET"] * (1 + ( pet_magnitude_summer / 100))
+
+                PREC_path = path_to_dir / "PREC.txt"
+                Ta_path = path_to_dir / "TA.txt"
+                PET_path = path_to_dir / "PET.txt"
+
+                # export precipitation to .txt
+                prec_10mins["YYYY"] = prec_10mins.index.year.values
+                prec_10mins["MM"] = prec_10mins.index.month.values
+                prec_10mins["DD"] = prec_10mins.index.day.values
+                prec_10mins["hh"] = prec_10mins.index.hour.values
+                prec_10mins["mm"] = prec_10mins.index.minute.values
+                prec_10mins = prec_10mins.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PREC"]]
+                prec_10mins.to_csv(PREC_path, header=True, index=False, sep="\t")
+
+                # export air temperature to .txt
+                df_ta["YYYY"] = df_ta.index.year.values
+                df_ta["MM"] = df_ta.index.month.values
+                df_ta["DD"] = df_ta.index.day.values
+                df_ta["hh"] = df_ta.index.hour.values
+                df_ta["mm"] = 0
+                df_ta = df_ta.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "TA", "TA_min", "TA_max"]]
+                df_ta.to_csv(Ta_path, header=True, index=False, sep="\t")
+
+                # export potential evapotranspiration to .txt
+                df_pet["YYYY"] = df_pet.index.year.values
+                df_pet["MM"] = df_pet.index.month.values
+                df_pet["DD"] = df_pet.index.day.values
+                df_pet["hh"] = df_pet.index.hour.values
+                df_pet["mm"] = 0
+                df_pet = df_pet.loc[:, ["YYYY", "MM", "DD", "hh", "mm", "PET"]]
+                df_pet.to_csv(PET_path, header=True, index=False, sep="\t")
+
 
 
 
