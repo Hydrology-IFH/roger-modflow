@@ -15,7 +15,7 @@ winter_crops = lut.WINTER_CROPS.tolist()
 
 base_path = Path(__file__).parent
 
-params_file = base_path / "input" / "parameters_roger_25m_.nc"
+params_file = base_path / "input" / "parameters_roger_25m__.nc"
 ds_params = xr.open_dataset(params_file)
 xcoords = ds_params.x.values
 ycoords = ds_params.y.values
@@ -37,9 +37,9 @@ cond = (lu_ids_2018_2022 == 6).any(axis=0)
 lu_ids[cond] = 6
 cond = (lu_ids_2018_2022 == 7).any(axis=0)
 lu_ids[cond] = 7
-ll_ga_ids = onp.arange(501, 600).tolist() + [81, 82]
-cond_ga = onp.isin(lu_ids_2018_2022, ll_ga_ids).any(axis=0)
-cond5 = lu_ids == 5
+ll_ga_ids = onp.arange(501, 598).tolist() + [599, 8, 81, 82]
+cond_ga = onp.isin(lu_ids_2018_2022, ll_ga_ids).all(axis=0)
+cond5 = (lu_ids == 5)
 
 cropland_gaps = onp.zeros(lu_ids.shape, dtype=float)
 cropland_gaps[:, :] = onp.nan
@@ -55,11 +55,13 @@ cropland_ga[cond_ga] = 1.0
 # update land use ids in cropland gaps with crop rotations from 2018-2022
 lu_ids_updated = lu_ids.copy()
 lu_ids_updated[~cond_catch] = ds_params['lanu'].values[~cond_catch]
-lu_ids_updated[~cond_ga & cond5] = 8
 lu_ids_updated[cond_ga] = 5
+cond5_ = (lu_ids_updated == 5)
+lu_ids_updated[~cond_ga & cond5_] = 8
 
-ds_params["lanu"] = (("y", "x"), lu_ids_updated)
-file = base_path / "input" / "parameters_roger_25m.nc"
+# ds_params["lanu"] = (("y", "x"), lu_ids_updated)
+ds_params['lanu'].values = lu_ids_updated
+file = base_path / "input" / "parameters_roger_25m_.nc"
 ds_params.to_netcdf(file)
 
 years_2013_2023 = onp.arange(2013, 2023)
@@ -319,6 +321,15 @@ for i, year in enumerate([2018, 2019, 2020, 2021, 2022]):
     summer_crops_2018_2022[i, :, :] = df_crop_rotations.loc[:, f"{year}_summer"].values.reshape(lu_ids_2018_2022.shape[1], lu_ids_2018_2022.shape[2])
     winter_crops_2018_2022[i, :, :] = df_crop_rotations.loc[:, f"{year}_winter"].values.reshape(lu_ids_2018_2022.shape[1], lu_ids_2018_2022.shape[2])
 
+# cond_598 = (summer_crops_2018_2022[i, :, :].flatten() == 598)
+# onp.unique_counts(df_crops.loc[cond_598, :].values)
+# cond_catch_ = cond_catch.flatten()
+# df_crops.loc[cond_catch_, :] = -9999
+# onp.unique_counts(df_crops.loc[cond_598, :].values)
+# lu_ids_updated[~cond_catch] = -9999
+# onp.unique_counts(lu_ids_updated.flatten()[cond_598])
+
+
 summer_crops_2013_2023 = onp.zeros((len(years_2013_2023), lu_ids_2018_2022.shape[1], lu_ids_2018_2022.shape[2]), dtype=onp.int16)
 summer_crops_2013_2023[0:5, :, :] = summer_crops_2018_2022
 summer_crops_2013_2023[5:10, :, :] = summer_crops_2018_2022
@@ -535,6 +546,26 @@ cropland_gaps = onp.zeros(lu_ids.shape, dtype=float)
 cropland_gaps[:, :] = onp.nan
 cropland_gaps[cond_598 & cond5] = 1.0
 cropland_gaps[~cond_catch] = onp.nan
+
+
+# lu_ids_2018 = lu_ids_2018_2022[0, :, :]
+# lu_ids_2019 = lu_ids_2018_2022[1, :, :]
+# lu_ids_2020 = lu_ids_2018_2022[2, :, :]
+# lu_ids_2021 = lu_ids_2018_2022[3, :, :]
+# lu_ids_2022 = lu_ids_2018_2022[4, :, :]
+# lu_ids_2018[cond_598 & cond5]
+# summer_crops_2018 = summer_crops_2018_2022[0, :, :]
+# winter_crops_2018 = winter_crops_2018_2022[0, :, :] 
+# summer_crops_2019 = summer_crops_2018_2022[1, :, :]
+# winter_crops_2019 = winter_crops_2018_2022[1, :, :] 
+# summer_crops_2020 = summer_crops_2018_2022[2, :, :]
+# winter_crops_2020 = winter_crops_2018_2022[2, :, :] 
+# summer_crops_2021 = summer_crops_2018_2022[3, :, :]
+# winter_crops_2021 = winter_crops_2018_2022[3, :, :] 
+# summer_crops_2022 = summer_crops_2018_2022[4, :, :]
+# winter_crops_2022 = winter_crops_2018_2022[4, :, :]
+# summer_crops_2018[cond_598 & cond5]
+# winter_crops_2018[cond_598 & cond5]
 
 fig, axes = plt.subplots(figsize=(6, 5))
 axes.imshow(cropland_gaps, extent=grid_extent, cmap='Oranges', alpha=1, aspect='equal', vmin=0, vmax=1, zorder=3)
