@@ -28,16 +28,17 @@ cond_kf0 = (ds_params['TP'].values <= 0) & cond_catch
 kf = onp.copy(ds_params['TP'].values)
 kf[cond_kf0] = 0.1
 ds_params['TP'].values = kf
-
-onp.unique(ds_params['LK'].values[cond_zsoil0])
+cond_lk0 = (ds_params['LK'].values <= 0) & cond_catch
+lk = onp.copy(ds_params['LK'].values)
+lk[cond_lk0] = 5.
+ds_params['LK'].values = lk
+zgw = onp.copy(ds_params['gwfa_gew'].values)
+zgw[cond_zsoil0] = z_soil[cond_zsoil0] + 10.0
+zgw[zgw < 0] = z_soil[zgw < 0] + 10.0
+zgw[zgw <= z_soil] = z_soil[zgw <= z_soil] + 10.0
+ds_params['gwfa_gew'].values = zgw
 
 file = base_path / "input" / "parameters_roger_25m.nc"
 ds_params.to_netcdf(file)
 ds_params.close()
-
-params_file = base_path / "input" / "parameters_roger_25m.nc"
-ds_params = xr.open_dataset(params_file)
-
-cond_zsoil0 = (ds_params['GRUND'].values <= 0) & cond_catch
-z_soil = onp.copy(ds_params['GRUND'].values)
 

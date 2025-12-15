@@ -242,7 +242,7 @@ class ModFlowSimulation:
         reaches.iloc[:, 6] = reaches.iloc[:, 6].astype(float)
         reaches.iloc[:, 7] = reaches.iloc[:, 7].astype(float)
         reaches.iloc[:, 8] = reaches.iloc[:, 8].astype(float)
-        reaches.iloc[:, 9] = 5 * 10e-7 * 86400  # convert from m/s to m/day
+        reaches.iloc[:, 9] = 1 * 10e-7 * 86400  # convert from m/s to m/day
         reaches.iloc[:, 10] = reaches.iloc[:, 10].astype(float)
         reaches.iloc[:, 11] = reaches.iloc[:, 11].astype(int)
         reaches.iloc[:, 12] = reaches.iloc[:, 12].astype(float)
@@ -618,7 +618,7 @@ class ModFlowSimulation:
 
         # limit the execution time of the numerical solver
         signal.signal(signal.SIGALRM, handler)
-        signal.alarm(150)  # Set the timeout duration to 150 seconds
+        signal.alarm(90)  # Set the timeout duration to 90 seconds
 
         converged = 0
         self.mf6.prepare_solve(1)

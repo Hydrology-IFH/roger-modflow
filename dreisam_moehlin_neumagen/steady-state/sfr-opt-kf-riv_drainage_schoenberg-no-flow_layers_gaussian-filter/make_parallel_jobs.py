@@ -21,7 +21,7 @@ for i in range(10):
     shutil.copy(base_path / "write_binary_to_netcdf_steady-state_.py", path_dir / "write_binary_to_netcdf_steady-state.py")
     shutil.copy(base_path / "cleanup.py", path_dir / "cleanup.py")
 
-start = [0, 1000, 2000, 3000, 4538, 5537, 6535, 7298, 8297, 9296]
+start = [0, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000]
 end = [999, 1999, 2999, 3999, 4999, 5999, 6999, 7999, 8999, 9999]
 for j in range(10):
     path_dir = base_path / f"batch_{j}"

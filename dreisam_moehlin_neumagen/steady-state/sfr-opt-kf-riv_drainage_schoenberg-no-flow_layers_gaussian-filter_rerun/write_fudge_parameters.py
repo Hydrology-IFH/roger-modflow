@@ -37,28 +37,28 @@ def main(nsamples):
     fudge_parameters_metrics = pd.read_csv(file, sep=";", skiprows=0)
     df_params = fudge_parameters_metrics.loc[:, :"offset"].join(df_params_)
 
-    df_params.iloc[:34, :] = 1.
-    df_params.loc[:33, "kf_riv"] = 1.0
-    df_params.loc[:33, "rhkp"] = 0.004
-    df_params.loc[:33, "rhkf"] = 0.001
-    df_params.loc[:33, "man"] = 1.0
+    # df_params.iloc[:34, :] = 1.
+    # df_params.loc[:33, "kf_riv"] = 1.0
+    # df_params.loc[:33, "rhkp"] = 0.004
+    # df_params.loc[:33, "rhkf"] = 0.001
+    # df_params.loc[:33, "man"] = 1.0
 
-    df_params.loc[:33, "-8_1"] = 500.
-    df_params.loc[:33, "-7_1"] = 100.0 
-    df_params.loc[:33, "-7_2"] = 3.2
-    df_params.loc[:33, "-7_3"] = 3.1
-    df_params.loc[:33, "-7_4"] = 3.0
+    # df_params.loc[:33, "-8_1"] = 500.
+    # df_params.loc[:33, "-7_1"] = 100.0 
+    # df_params.loc[:33, "-7_2"] = 3.2
+    # df_params.loc[:33, "-7_3"] = 3.1
+    # df_params.loc[:33, "-7_4"] = 3.0
 
-    df_params.loc[:33, "1.8-3_2"] = 0.18 
-    df_params.loc[:33, "3-3_2"] = 5.5 
-    df_params.loc[:33, "4-3_2"] = 1.5
-    df_params.loc[:33, "1.8-3_3"] = 0.15
-    df_params.loc[:33, "3-3_3"] = 4.5
-    df_params.loc[:33, "4-3_3"] = 1.5
-    df_params.loc[:33, "1.8-3_4"] = 0.5
+    # df_params.loc[:33, "1.8-3_2"] = 0.18 
+    # df_params.loc[:33, "3-3_2"] = 5.5 
+    # df_params.loc[:33, "4-3_2"] = 1.5
+    # df_params.loc[:33, "1.8-3_3"] = 0.15
+    # df_params.loc[:33, "3-3_3"] = 4.5
+    # df_params.loc[:33, "4-3_3"] = 1.5
+    # df_params.loc[:33, "1.8-3_4"] = 0.5
 
-    df_params.loc[:33, "rch"] = 1.0
-    df_params.loc[:33, "offset"] = 3.0
+    # df_params.loc[:33, "rch"] = 1.0
+    # df_params.loc[:33, "offset"] = 3.0
 
     df_params.loc[:, "-7_2_re"] = 20.0
     df_params.loc[:, "-7_3_re"] = 10.0

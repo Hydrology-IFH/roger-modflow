@@ -618,7 +618,7 @@ class ModFlowSimulation:
 
         # limit the execution time of the numerical solver
         signal.signal(signal.SIGALRM, handler)
-        signal.alarm(150)  # Set the timeout duration to 150 seconds
+        signal.alarm(90)  # Set the timeout duration to 90 seconds
 
         converged = 0
         self.mf6.prepare_solve(1)
