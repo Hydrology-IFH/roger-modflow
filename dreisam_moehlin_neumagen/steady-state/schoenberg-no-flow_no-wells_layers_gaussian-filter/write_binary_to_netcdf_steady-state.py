@@ -40,9 +40,6 @@ def main(model_run):
         fhead = base_path / "output" / f"dmn_run_{model_run}.hds"
         hds = flopy.utils.HeadFile(fhead)
 
-        fbudget = base_path / "output" / f"dmn_run_{model_run}.cbc"
-        cbb = flopy.utils.CellBudgetFile(fbudget)
-
         flowja = ml.oc.output.budget().get_data(text="FLOW-JA-FACE", kstpkper=(0, 0))[0]
         grb_file = base_path / "output" / f"dmn_run_{model_run}.dis.grb"
         residual = flopy.mf6.utils.get_residuals(flowja, grb_file=grb_file)

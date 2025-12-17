@@ -6,61 +6,103 @@ import click
 @click.command("main")
 def main(model_run):
 
-    base_path = Path(__file__).parent
-    file = base_path / "output" / f"dmn_run_{model_run}.dis.grb"
-    os.remove(file)
+    try:
+        base_path = Path(__file__).parent
+        file = base_path / "output" / f"dmn_run_{model_run}.dis.grb"
+        os.remove(file)
+    except FileNotFoundError:
+        pass
 
-    base_path = Path(__file__).parent
-    file = base_path / "output" / f"dmn_run_{model_run}.lst"
-    os.remove(file)
+    try:
+        base_path = Path(__file__).parent
+        file = base_path / "output" / f"dmn_run_{model_run}.lst"
+        os.remove(file)
+    except FileNotFoundError:
+        pass
 
-    base_path = Path(__file__).parent
-    file = base_path / "output" / f"dmn_run_{model_run}.sto"
-    os.remove(file)
+    try:
+        base_path = Path(__file__).parent
+        file = base_path / "output" / f"dmn_run_{model_run}.sto"
+        os.remove(file)
+    except FileNotFoundError:
+        pass
 
-    base_path = Path(__file__).parent
-    file = base_path / "output" / f"dmn_run_{model_run}.cbc"
-    os.remove(file)
+    try:
+        base_path = Path(__file__).parent
+        file = base_path / "output" / f"dmn_run_{model_run}.cbc"
+        os.remove(file)
+    except FileNotFoundError:
+        pass
 
-    base_path = Path(__file__).parent
-    file = base_path / "output" / f"dmn_run_{model_run}.npf"
-    os.remove(file)
+    try:
+        base_path = Path(__file__).parent
+        file = base_path / "output" / f"dmn_run_{model_run}.npf"
+        os.remove(file)
+    except FileNotFoundError:
+        pass
 
-    base_path = Path(__file__).parent
-    file = base_path / "output" / f"dmn_run_{model_run}.ic"
-    os.remove(file)
+    try:
+        base_path = Path(__file__).parent
+        file = base_path / "output" / f"dmn_run_{model_run}.ic"
+        os.remove(file)
+    except FileNotFoundError:
+        pass
 
-    base_path = Path(__file__).parent
-    file = base_path / "output" / f"dmn_run_{model_run}.rcha"
-    os.remove(file)
+    try:
+        base_path = Path(__file__).parent
+        file = base_path / "output" / f"dmn_run_{model_run}.rcha"
+        os.remove(file)
+    except FileNotFoundError:
+        pass
 
-    base_path = Path(__file__).parent
-    file = base_path / "output" / f"dmn_run_{model_run}.chd"
-    os.remove(file)
+    try:
+        base_path = Path(__file__).parent
+        file = base_path / "output" / f"dmn_run_{model_run}.chd"
+        os.remove(file)
+    except FileNotFoundError:
+        pass
 
-    base_path = Path(__file__).parent
-    file = base_path / "output" / f"dmn_run_{model_run}.dis"
-    os.remove(file)
+    try:
+        base_path = Path(__file__).parent
+        file = base_path / "output" / f"dmn_run_{model_run}.dis"
+        os.remove(file)
+    except FileNotFoundError:
+        pass
 
-    base_path = Path(__file__).parent
-    file = base_path / "output" / f"dmn_run_{model_run}.tdis"
-    os.remove(file)
+    try:
+        base_path = Path(__file__).parent
+        file = base_path / "output" / f"dmn_run_{model_run}.tdis"
+        os.remove(file)
+    except FileNotFoundError:
+        pass
 
-    base_path = Path(__file__).parent
-    file = base_path / "output" / f"dmn_run_{model_run}.oc"
-    os.remove(file)
+    try:
+        base_path = Path(__file__).parent
+        file = base_path / "output" / f"dmn_run_{model_run}.oc"
+        os.remove(file)
+    except FileNotFoundError:
+        pass
 
-    base_path = Path(__file__).parent
-    file = base_path / "output" / f"dmn_run_{model_run}.nam"
-    os.remove(file)
+    try:
+        base_path = Path(__file__).parent
+        file = base_path / "output" / f"dmn_run_{model_run}.nam"
+        os.remove(file)
+    except FileNotFoundError:
+        pass
 
-    base_path = Path(__file__).parent
-    file = base_path / "output" / f"dmn_run_{model_run}.hds"
-    os.remove(file)
+    try:
+        base_path = Path(__file__).parent
+        file = base_path / "output" / f"dmn_run_{model_run}.hds"
+        os.remove(file)
+    except FileNotFoundError:
+        pass
 
-    base_path = Path(__file__).parent
-    file = base_path / "output" / f"dmn_run_{model_run}.ims"
-    os.remove(file)
+    try:
+        base_path = Path(__file__).parent
+        file = base_path / "output" / f"dmn_run_{model_run}.ims"
+        os.remove(file)
+    except FileNotFoundError:
+        pass
     return
 
 
