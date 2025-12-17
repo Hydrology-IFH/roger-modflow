@@ -325,9 +325,9 @@ class ModFlowSimulation:
 
         # fudge streambed conductivity
         cond = (reaches["kf"] >= 10e-6)
-        reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * 1.5
+        reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkp"].values[model_run]
         cond = (reaches["kf"] < 10e-6)
-        reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * 1.5
+        reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkf"].values[model_run]
         reaches["man"] = reaches["man"] * fudge_parameters["man"].values[model_run]
 
         # modify the manning"s n and hydraulic conductivity of the streambed based on the degree of alteration (5=partly, 6=strongly, 7=very strongly)
@@ -619,7 +619,7 @@ class ModFlowSimulation:
 
         # limit the execution time of the numerical solver
         signal.signal(signal.SIGALRM, handler)
-        signal.alarm(150)  # Set the timeout duration to 60 seconds
+        signal.alarm(90)  # Set the timeout duration to 90 seconds
 
         converged = 0
         self.mf6.prepare_solve(1)

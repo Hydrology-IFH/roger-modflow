@@ -91,20 +91,20 @@ def main(model_run):
     diff_sim_obs = sim - obs
     cm = plt.get_cmap('PuOr')
     cm.set_bad(color='grey')
-    grid_extent = (0, (777*50)/1000, (621*50)/1000, 0)
+    grid_extent = (ds_mf.lon.values[0] / 1000, ds_mf.lon.values[-1] / 1000, ds_mf.lat.values[-1] / 1000, ds_mf.lat.values[0] / 1000)
     fig, axes = plt.subplots(figsize=(4, 4))
     topography[~mask] = np.nan
     # wells_y = np.array([266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]) * 50
     # wells_x = np.array([66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496]) * 50
     # plt.scatter(wells_x, wells_y, marker='x', s=5, c='black')
-    wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-    wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
-    plt.scatter(wells_obs_x/1000, wells_obs_y/1000, c=diff_sim_obs, s=5, cmap=cm, vmin=-5, vmax=5)
+    wells_obs_y = observed_groundwater_heads["y-coordinate"].values / 1000   # row IDs of the observation wells
+    wells_obs_x = observed_groundwater_heads["x-coordinate"].values / 1000   # column IDs of the observation wells
+    plt.scatter(wells_obs_x, wells_obs_y, c=diff_sim_obs, s=5, cmap=cm, vmin=-5, vmax=5)
     plt.colorbar(label='[m]', shrink=0.45)
     plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5, extent=grid_extent)
     plt.grid(zorder=0)
-    plt.xlabel('Distance in x-direction [km]')
-    plt.ylabel('Distance in y-direction [km]')
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
     fig.tight_layout()
     file = Path(__file__).parent / "figures" / f"difference_sim_obs_{model_run}.png"
     fig.savefig(file, dpi=300)
@@ -122,51 +122,62 @@ def main(model_run):
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
-    grid_extent = (0, 777*50, 621*50, 0)
+    grid_extent = (ds_mf.lon.values[0] / 1000, ds_mf.lon.values[-1] / 1000, ds_mf.lat.values[-1] / 1000, ds_mf.lat.values[0] / 1000)
+    fig, axes = plt.subplots(figsize=(4, 4))
+    plt.imshow(groundwater_heads[:, :] - gw_heads_interpolated, cmap='PuOr', aspect='equal', vmin=-10, vmax=10, extent=grid_extent)
+    plt.colorbar(label='[m]', shrink=0.45)
+    plt.grid(zorder=0)
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
+    plt.tight_layout()
+    file = Path(__file__).parent / "figures" / f"difference_sim_{model_run}_int.png"
+    fig.savefig(file, dpi=300)
+    plt.close(fig)
+
+    grid_extent = (ds_mf.lon.values[0] / 1000, ds_mf.lon.values[-1] / 1000, ds_mf.lat.values[-1] / 1000, ds_mf.lat.values[0] / 1000)
     fig, axes = plt.subplots(figsize=(4, 4))
     topography[~mask] = np.nan
     wells_y = np.array([266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]) * 50
     wells_x = np.array([66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496]) * 50
     plt.scatter(wells_x, wells_y, marker='x', s=5, c='black')
-    wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-    wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+    wells_obs_y = observed_groundwater_heads["y-coordinate"].values   # row IDs of the observation wells
+    wells_obs_x = observed_groundwater_heads["x-coordinate"].values   # column IDs of the observation wells
     plt.scatter(wells_obs_x, wells_obs_y, c=sim, s=5, cmap="viridis", vmin=150, vmax=400)
     plt.colorbar(label='[m]', shrink=0.45)
     plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5, extent=grid_extent)
     plt.grid(zorder=0)
-    plt.xlabel('Distance in x-direction [m]')
-    plt.ylabel('Distance in y-direction [m]')
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
     plt.tight_layout()
     file = Path(__file__).parent / "figures" / f"groundwater_heads_sim{model_run}.png"
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
-    grid_extent = (0, 777*50, 621*50, 0)
+    grid_extent = (ds_mf.lon.values[0] / 1000, ds_mf.lon.values[-1] / 1000, ds_mf.lat.values[-1] / 1000, ds_mf.lat.values[0] / 1000)
     fig, axes = plt.subplots(figsize=(4, 4))
     topography[~mask] = np.nan
     wells_y = np.array([266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]) * 50
     wells_x = np.array([66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496]) * 50
     plt.scatter(wells_x, wells_y, marker='x', s=5, c='black')
-    wells_obs_y = observed_groundwater_heads["Zelle_y"].values * 50  # row IDs of the observation wells
-    wells_obs_x = observed_groundwater_heads["Zelle_x"].values * 50  # column IDs of the observation wells
+    wells_obs_y = observed_groundwater_heads["y-coordinate"].values   # row IDs of the observation wells
+    wells_obs_x = observed_groundwater_heads["x-coordinate"].values   # column IDs of the observation wells
     plt.scatter(wells_obs_x, wells_obs_y, c=obs, s=5, cmap="viridis", vmin=150, vmax=400)
     plt.colorbar(label='[m]', shrink=0.45)
     plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5, extent=grid_extent)
     plt.grid(zorder=0)
-    plt.xlabel('Distance in x-direction [m]')
-    plt.ylabel('Distance in y-direction [m]')
+    plt.xlabel('x-coordinate [km]')
+    plt.ylabel('y-coordinate [km]')
     plt.tight_layout()
     file = Path(__file__).parent / "figures" / "observed_groundwater_heads.png"
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
-
     fig, axes = plt.subplots(figsize=(4, 4))
-    axes.scatter(obs_depths, sim_depths, marker='.', s=5, c='black')
+    axes.scatter(obs_depths[:-2], sim_depths[:-2], marker='.', s=5, c='black')
     axes.set_ylabel('Simulated groundwater depth [m]')
     axes.set_xlabel('Observed groundwater depth [m]')
-    axes.set_xlim(np.nanmin(sim_depths) - 1, np.nanmax(sim_depths) + 1)
-    axes.set_ylim(np.nanmin(sim_depths) - 1, np.nanmax(sim_depths) + 1)
+    axes.set_xlim(np.nanmin(sim_depths[:-2]) - 1, np.nanmax(sim_depths[:-2]) + 1)
+    axes.set_ylim(np.nanmin(sim_depths[:-2]) - 1, np.nanmax(sim_depths[:-2]) + 1)
     axes.plot(axes.get_xlim(), axes.get_ylim(), ls="--", c=".3", zorder=1, alpha=0.5)
     # axes.text(axes.get_xlim()[0] + 0.1, axes.get_ylim()[1] - 0.1, f"ME: {df_params_metrics.loc[model_run, 'ME']:.2f} m")
     fig.tight_layout()
@@ -175,7 +186,7 @@ def main(model_run):
     plt.close(fig)
 
     fig, axes = plt.subplots(figsize=(4, 4))
-    axes.scatter(obs_depths, sim_depths, marker='.', s=5, c='black')
+    axes.scatter(obs_depths[:-2], sim_depths[:-2], marker='.', s=5, c='black')
     axes.set_ylabel('Simulated groundwater depth [m]')
     axes.set_xlabel('Observed groundwater depth [m]')
     axes.set_xlim(0, 30)
@@ -187,9 +198,8 @@ def main(model_run):
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
-
     fig, axes = plt.subplots(figsize=(4, 4))
-    axes.scatter(range(len(diff_sim_obs)), diff_sim_obs, marker='.', s=5, c='black')
+    axes.scatter(range(len(diff_sim_obs[:-2])), diff_sim_obs[:-2], marker='.', s=5, c='black')
     axes.set_ylabel('Bias [m]')
     axes.set_xlabel('# Observation well')
     axes.axhline(y=0, color='grey', linestyle='--', zorder=1, alpha=0.5)

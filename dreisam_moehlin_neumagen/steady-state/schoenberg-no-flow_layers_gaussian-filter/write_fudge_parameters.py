@@ -85,12 +85,6 @@ def main(nsamples):
     df_params.loc[25, "offset"] = 10.0
 
     # constrain parameters by upper layers (i.e. kf of lower layer is equal or less than kf of upper layer)
-    cond = (df_params["-7_3"] >= df_params["-7_2"])
-    df_params.loc[cond, "-7_3"] = df_params.loc[cond, "-7_2"]
-
-    cond = (df_params["-7_4"] >= df_params["-7_3"])
-    df_params.loc[cond, "-7_4"] = df_params.loc[cond, "-7_3"] * 0.5
-
     cond = (df_params["4-3_3"] >= df_params["4-3_2"])
     df_params.loc[cond, "4-3_3"] = df_params.loc[cond, "4-3_2"]
 

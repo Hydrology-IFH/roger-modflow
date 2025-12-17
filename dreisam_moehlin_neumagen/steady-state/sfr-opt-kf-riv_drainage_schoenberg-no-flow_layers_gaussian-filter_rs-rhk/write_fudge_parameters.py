@@ -59,7 +59,7 @@ def main(nsamples):
     df_params.loc[:33, "kf_riv"] = 1.0
     df_params.loc[:33, "rhkp"] = 1.0
     df_params.loc[:33, "rhkf"] = 1.0
-    df_params.loc[:33, "rhk_scale"] = 7*10e-7
+    df_params.loc[:33, "rhk_scale"] = 2 * 10e-7
     df_params.loc[:33, "rhk_shape"] = 2.0
     df_params.loc[:33, "man"] = 1.0
 
@@ -79,7 +79,7 @@ def main(nsamples):
     df_params.loc[:33, "-4_4"] = 0.2
 
     df_params.loc[:33, "rch"] = 1.0
-    df_params.loc[:33, "offset"] = 3.0
+    df_params.loc[:33, "offset"] = 1.0
 
     df_params.loc[0, "rch"] = 1.25
     df_params.loc[1, "rch"] = 1.2

@@ -47,9 +47,9 @@ gdf['purpose'] = gdf['purpose'].str.replace('ß', 'ss')
 cond = gdf['purpose'].str.contains('stillgelegt', case=False, na=False)
 gdf = gdf[~cond]
 
-# remove if more than 2 years of data is missing
+# remove if more than 3 years of data is missing
 gdf_ = gdf.loc[:, "2013":"2023"]
-cond = gdf_.isnull().sum(axis=1) < 2
+cond = gdf_.isnull().sum(axis=1) < 3
 gdf = gdf.loc[cond, :]
 
 # convert to m3/day

@@ -63,7 +63,7 @@ for rno, z, y, x in zip(gdf_reaches.loc[:, "rno"] - 1, gdf_reaches.loc[:, "k"], 
     elif z == 2:
         gdf_reaches.loc[rno, "kf"] = hydraulic_conductivities_layer3[y, x] / 86400
     elif z == 3:
-        gdf_reaches.loc[rno, "kf"] = hydraulic_conductivities_layer4[y, x] / 86400
+        gdf_reaches.loc[rno, "kf"] = hydraulic_conductivities_layer3[y, x] / 86400
 
 # assign manning coefficient and streambed hydraulic conductivity to each reach based on the rasters
 for idx, row in gdf_reaches.iterrows():
@@ -99,11 +99,6 @@ gdf_reaches.loc[cond, "man"] = gdf_reaches["man"].median()
 cond = (gdf_reaches["rhk"] <= 10e-9)
 gdf_reaches.loc[cond, "rhk"] = 10e-9
 gdf_reaches.loc[:, "rhk"] = gdf_reaches["rhk"].interpolate()
-
-cond = (gdf_reaches["kf"] < 10e-7)
-gdf_reaches.loc[cond, "rwid"] = gdf_reaches.loc[cond, "rwid"] * 0.6
-cond = (gdf_reaches["rwid"] <= 1)
-gdf_reaches.loc[cond, "rwid"] = 1.0
 
 gdf_reaches["k"] = gdf_reaches["k"] + 1
 gdf_reaches["i"] = gdf_reaches["i"] + 1

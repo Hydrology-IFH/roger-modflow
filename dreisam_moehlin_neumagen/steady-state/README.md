@@ -101,11 +101,12 @@ MODFLOW requires river reaches. However, river network data is not divided into 
 --> `Vector geometry --> Snap points to grid`
 4. Assign to each river segment the downstream connected segment --> `python make_stream_segment_routing.py`
 5. Repair the geometries of the river segments --> `python make_stream_segment_routing.py`
-6. Write the data for the SFR package of MODFLOW using the `sfrmaker` tool --> `python write_sfr_data.py`
-7. Check `input/model_SFR.chk` for errors and load `input/sfr_routing.shp` and `input/sfr_outlets.shp` in QGIS to make visual check.
-8. Assign the hydraulic conductivity of the streambed and Manning's coeffecient to the SFR packagedata --> `python make_diversions.py`
-9. Identify the diversions (i.e. river reaches with with downstream connections) --> `python make_diversions.py`
-10. Identify the streamflow observation points. Collect the information in `input/streamflow_observation_points.csv`. Then, run `python make_diversions.py`.
+6. Make manual correction of the stream widths in `awgn_stream_segments_connected_repaired.shp` using QGIS --> `awgn_stream_segments_connected_repaired_corrected-width.shp`
+7. Write the data for the SFR package of MODFLOW using the `sfrmaker` tool --> `python write_sfr_data.py`
+8. Check `input/model_SFR.chk` for errors and load `input/sfr_routing.shp` and `input/sfr_outlets.shp` in QGIS to make visual check.
+9. Assign the hydraulic conductivity of the streambed and Manning's coeffecient to the SFR packagedata --> `python make_diversions.py`
+10. Identify the diversions (i.e. river reaches with with downstream connections) --> `python make_diversions.py`
+11. Identify the streamflow observation points. Collect the information in `input/streamflow_observation_points.csv`. Then, run `python make_diversions.py`.
 
 ## Observations
 

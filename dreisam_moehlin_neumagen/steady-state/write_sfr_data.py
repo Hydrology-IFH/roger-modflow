@@ -114,7 +114,7 @@ _domain[mask] = 1
 _domain[~mask] = 0
 
 # load shapefile with river segments
-custom_segments = sfrmaker.Lines.from_shapefile(shapefile=base_path / "input" / "awgn_stream_segments_connected_repaired.shp",
+custom_segments = sfrmaker.Lines.from_shapefile(shapefile=base_path / "input" / "awgn_stream_segments_connected_repaired_corrected-width.shp",
                                              id_column="segment",  # arguments to sfrmaker.Lines.from_shapefile
                                              routing_column="to_segment",
                                              width1_column="width_up",
@@ -136,13 +136,12 @@ sfrdata = custom_segments.to_sfr(grid=flopy_grid, model=gwf, active_area=file_ac
                                  model_length_units="meters", consolidate_conductance=True, one_reach_per_cell=False)
 
 # modify reach data
-sfrdata.reach_data.loc[:, "width"] = sfrdata.reach_data.loc[:, "width"] * 0.8
 cond = np.isnan(sfrdata.reach_data["width"])
 sfrdata.reach_data.loc[cond, "width"] = 1.0  # set width to 1 m where it is NaN
 cond_widht0 = (sfrdata.reach_data.loc[:, "width"] <= 1.0)
 sfrdata.reach_data.loc[cond_widht0, "width"] = 1.0  # set width to 1 m if it is smaller than 1 m
-cond_widht18 = (sfrdata.reach_data.loc[:, "width"] >= 18.0)
-sfrdata.reach_data.loc[cond_widht18, "width"] = 18.0  # set width to 18 m if it is larger than 18 m
+cond_widht17 = (sfrdata.reach_data.loc[:, "width"] >= 17.0)
+sfrdata.reach_data.loc[cond_widht17, "width"] = 17.0  # set width to 17 m if it is larger than 17 m
 sfrdata.reach_data.loc[:, "strthick"] = 1  # set the stream thickness (in meters)
 sfrdata.reach_data.loc[:, "strhc1"] = 1.0  # set the streambed hydraulic conductivity (in meters per day)
 sfrdata.reach_data.loc[:, "thts"] = 0.035  # set the Manning"s roughness coefficient (dimensionless)
@@ -156,13 +155,12 @@ sfrdata.set_streambed_top_elevations_from_dem(dem_file,
                                               buffer_distance=100)
 sfrdata.update_slopes(default_slope=0.01, minimum_slope=0.001, maximum_slope=0.45)  # update slopes based on the new streambed top elevations
 
-sfrdata.reach_data.loc[:, "width"] = sfrdata.reach_data.loc[:, "width"] * 0.8
 cond = np.isnan(sfrdata.reach_data["width"])
 sfrdata.reach_data.loc[cond, "width"] = 1.0  # set width to 1 m where it is NaN
 cond_widht0 = (sfrdata.reach_data.loc[:, "width"] <= 1.0)
 sfrdata.reach_data.loc[cond_widht0, "width"] = 1.0  # set width to 1 m if it is smaller than 1 m
-cond_widht18 = (sfrdata.reach_data.loc[:, "width"] >= 18.0)
-sfrdata.reach_data.loc[cond_widht18, "width"] = 18.0  # set width to 18 m if it is larger than 18 m
+cond_widht17 = (sfrdata.reach_data.loc[:, "width"] >= 17.0)
+sfrdata.reach_data.loc[cond_widht17, "width"] = 17.0  # set width to 17 m if it is larger than 17 m
 
 # assign the layer
 for rno, i, j in zip(sfrdata.reach_data["rno"], sfrdata.reach_data["i"], sfrdata.reach_data["j"]):
