@@ -900,7 +900,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         ncol=config_modflow["nx"],
         rowsize=config_modflow["dx"],
         colsize=config_modflow["dy"],
-        model_run=7344,
+        model_run=5,
         verbose=True
     )
 
@@ -934,11 +934,12 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         # update recharge and pass it to MODFLOW
         # recharge = ds_roger_simulation["q_ss"].isel(time=i).values.flatten()
         recharge_ = aggregate_to_finer_resolution(ds_bc["recharge"].values, config_modflow['dx'], 25, method="keep")
-        recharge = recharge_.flatten() * recharge_weights[i]  # apply recharge weight
+        recharge = recharge_.flatten()
         recharge[(groundwater_depth <= soildepth)] = 0 # constrain recharge to zero where groundwater depth is equal to soil depth
         recharge = recharge.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64) / 1000  # mm/day to m/day
-        recharge = aggregate_to_coarser_resolution(recharge, 25, config_modflow['dx'], method="average")
-        recharge = recharge.flatten()
+        recharge_vertical = aggregate_to_coarser_resolution(recharge, 25, config_modflow['dx'], method="average")
+        recharge_lateral = (ds_bc["lateral_inflow_bc_mmday"].values) / 1000
+        recharge = (recharge_vertical.flatten() + recharge_lateral.flatten()) * recharge_weights[i]
         modflow_interface.set_recharge(recharge)
 
         # update well rate and pass it to MODFLOW
