@@ -21,8 +21,7 @@ with open(file_config, "r") as file:
 
 # load the topography and elevation of the aquifer layers
 topography = ds_params['elevations'].isel(z=0).values
-# derive the model domain from the topography
-mask = np.isfinite(topography)
+mask = (ds_params["mask_porous_aquifer"].values == 1)
 # set Schoenberg to inactive
 mask_schoenberg = (ds_params['mask_schoenberg'].values == 1)
 mask = np.where(mask_schoenberg, False, mask)

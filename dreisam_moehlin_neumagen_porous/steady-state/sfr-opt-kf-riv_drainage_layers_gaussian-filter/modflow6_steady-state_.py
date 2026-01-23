@@ -100,19 +100,19 @@ class ModFlowSimulation:
 
         # Create the discretization package
         # load elevation data of the layers
+        mask = (ds_params["mask_porous_aquifer"].values == 1)
         topography = ds_params["elevations"].isel(z=0).values
         elevation_bottom_layer1 = ds_params["elevations"].isel(z=1).values
         elevation_bottom_layer2 = ds_params["elevations"].isel(z=2).values
         elevation_bottom_layer3 = ds_params["elevations"].isel(z=3).values
         elevation_bottom_layer4 = ds_params["elevations"].isel(z=4).values
+        topography[~mask] = np.nan
+        elevation_bottom_layer1[~mask] = np.nan
+        elevation_bottom_layer2[~mask] = np.nan
+        elevation_bottom_layer3[~mask] = np.nan
+        elevation_bottom_layer4[~mask] = np.nan
         elevation_bottom_layers = [elevation_bottom_layer1, elevation_bottom_layer2, elevation_bottom_layer3, elevation_bottom_layer4]
 
-        mask = np.isfinite(topography)
-        # set Schoenberg to inactive
-        mask_schoenberg = (ds_params["mask_schoenberg"].values == 1)
-        mask = np.where(mask_schoenberg, False, mask)
-        mask_boundary_condition_schoenberg = ds_bc["mask_schoenberg_bc"].values
-        mask = np.where(mask_boundary_condition_schoenberg, True, mask)
         mask_drainage_area = (ds_params["mask_drainage"].values == 1)
         domain = np.empty_like(topography)
         domain[mask] = 1
@@ -150,6 +150,16 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer2_ = ds_params["kf"].isel(layer=1).values / 86400
         hydraulic_conductivities_layer3_ = ds_params["kf"].isel(layer=2).values / 86400
         hydraulic_conductivities_layer4_ = ds_params["kf"].isel(layer=3).values / 86400
+
+        hydraulic_conductivities_layer1[~mask] = np.nan
+        hydraulic_conductivities_layer2[~mask] = np.nan
+        hydraulic_conductivities_layer3[~mask] = np.nan
+        hydraulic_conductivities_layer4[~mask] = np.nan
+
+        hydraulic_conductivities_layer1_[~mask] = np.nan
+        hydraulic_conductivities_layer2_[~mask] = np.nan
+        hydraulic_conductivities_layer3_[~mask] = np.nan
+        hydraulic_conductivities_layer4_[~mask] = np.nan
         
         # fudge parameters
         mask1 = (hydraulic_conductivities_layer1_ <= 10e-10)
@@ -242,7 +252,7 @@ class ModFlowSimulation:
         reaches.iloc[:, 6] = reaches.iloc[:, 6].astype(float)
         reaches.iloc[:, 7] = reaches.iloc[:, 7].astype(float)
         reaches.iloc[:, 8] = reaches.iloc[:, 8].astype(float)
-        reaches.iloc[:, 9] = reaches.iloc[:, 9].astype(float)
+        reaches.iloc[:, 9] = reaches.iloc[:, 9].astype(float) * 86400  # convert from m/s to m/day
         reaches.iloc[:, 10] = reaches.iloc[:, 10].astype(float)
         reaches.iloc[:, 11] = reaches.iloc[:, 11].astype(int)
         reaches.iloc[:, 12] = reaches.iloc[:, 12].astype(float)
@@ -328,6 +338,14 @@ class ModFlowSimulation:
         cond = (reaches["kf"] < 10e-6)
         reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkf"].values[model_run]
         reaches["man"] = reaches["man"] * fudge_parameters["man"].values[model_run]
+
+        # modify the manning"s n and hydraulic conductivity of the streambed based on the degree of alteration (5=partly, 6=strongly, 7=very strongly)
+        cond = (reaches["ss"] == 5)
+        reaches.loc[cond, "rhk"] = 50e-7 * 86400
+        cond = (reaches["ss"] == 6)
+        reaches.loc[cond, "rhk"] = 10e-9 * 86400
+        cond = (reaches["ss"] == 7)
+        reaches.loc[cond, "rhk"] = 50e-10 * 86400
 
         diversions = pd.read_csv(base_path.parent.parent / "input" / "sfr_diversions.csv", sep=";")
         diversions.iloc[:, 0] = diversions.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
@@ -461,17 +479,32 @@ class ModFlowSimulation:
         )
             
         # Recharge package (Neumann boundary condition i.e. second type)
-        recharge = ds_bc["recharge"].values / 1000  # convert mm/day to m/day
-        rcha = flopy.mf6.ModflowGwfrcha(gwf, recharge=recharge * fudge_parameters["rch"].values[model_run], fixed_cell=True, pname="rcha")
+        recharge_vertical = (ds_bc["recharge"].values * fudge_parameters["rch"].values[model_run]) / 1000
+        recharge_vertical[~mask] = 0
+        recharge_lateral = (ds_bc["lateral_inflow_bc_mmday"].values * fudge_parameters["bcf"].values[model_run]) / 1000
+        recharge = recharge_vertical + recharge_lateral
+        rcha = flopy.mf6.ModflowGwfrcha(gwf, recharge=recharge, fixed_cell=True, pname="rcha")
 
         # streamflow routing package (SFR)
+        sfr_spd = [
+            [449, "inflow", 0.1 * 86400 * fudge_parameters["bcsfr"].values[model_run]], # Eschbach
+            [137, "inflow", 0.2 * 86400 * fudge_parameters["bcsfr"].values[model_run]],  # Ibenbach
+            [168, "inflow", 0.5 * 86400 * fudge_parameters["bcsfr"].values[model_run]],  # Wagensteigbach
+            [103, "inflow", 0.2 * 86400 * fudge_parameters["bcsfr"].values[model_run]],  # Rotbach
+            [6, "inflow", 0.7 * 86400 * fudge_parameters["bcsfr"].values[model_run]],  # Brugga
+            [3633, "inflow", 0.2 * 86400 * fudge_parameters["bcsfr"].values[model_run]],  # Moehlin
+            [3539, "inflow", 0.2 * 86400 * fudge_parameters["bcsfr"].values[model_run]],
+            [1155, "inflow", 0.1 * 86400 * fudge_parameters["bcsfr"].values[model_run]],  # Muehlbach
+            [1272, "inflow", 1.0 * 86400 * fudge_parameters["bcsfr"].values[model_run]],  # Neumagen
+        ]
+
         ls_obs = [(str(key), str(modflow_config["sfr_obs"][key][0]), (int(modflow_config["sfr_obs"][key][1]),)) for key in modflow_config["sfr_obs"].keys()]
         obs_dict = {
             (f"{name}_sfr.obs.csv", "binary"): ls_obs
         }
         sfr = flopy.mf6.modflow.mfgwfsfr.ModflowGwfsfr(gwf, pname="sfr",
             time_conversion=86400, length_conversion=1.0, nreaches=nstrm, packagedata=packagedata, 
-            connectiondata=connectiondata, diversions=diversiondata, save_flows=True,
+            connectiondata=connectiondata, diversions=diversiondata, perioddata=sfr_spd, save_flows=True,
             maximum_depth_change=0.001, maximum_iterations=500, observations=obs_dict)
         # Create the drainage package (Neumann boundary condition i.e. second type)
         for x, y in zip(reaches.iloc[:, 2], reaches.iloc[:, 3]):
@@ -610,7 +643,7 @@ class ModFlowSimulation:
 
         # limit the execution time of the numerical solver
         signal.signal(signal.SIGALRM, handler)
-        signal.alarm(120)  # Set the timeout duration to 60 seconds
+        signal.alarm(45)  # Set the timeout duration to 30 seconds
 
         converged = 0
         self.mf6.prepare_solve(1)

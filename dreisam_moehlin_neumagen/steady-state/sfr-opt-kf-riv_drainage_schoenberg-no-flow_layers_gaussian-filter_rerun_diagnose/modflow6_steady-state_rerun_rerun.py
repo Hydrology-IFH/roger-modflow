@@ -399,17 +399,16 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer4[~mask] = np.nan
 
         # fudge streambed conductivity
-        cond = (reaches["kf"] >= 10e-6)
+        cond_eschbach1 = reaches["line_id"].isin([513])  # Eschbach reach
+        cond_eschbach2 = reaches["line_id"].isin([514, 515, 516])  # Eschbach reach
+        cond_eschbach = reaches["line_id"].isin([513, 514, 515, 516])  # Eschbach reach
+        reaches.loc[cond_eschbach1, "rhk"] = reaches.loc[cond_eschbach1, "rhk"] * 1.0 # set specific streambed conductance for Eschbach reach
+        reaches.loc[cond_eschbach2, "rhk"] = reaches.loc[cond_eschbach2, "rhk"] * 0.1 # set specific streambed conductance for Eschbach reach
+        cond = (reaches["kf"] >= 10e-6) & (~cond_eschbach)
         reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkp"].values[model_run]
-        cond = (reaches["kf"] < 10e-6)
+        cond = (reaches["kf"] < 10e-6) & (~cond_eschbach)
         reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkf"].values[model_run]
         reaches["man"] = reaches["man"] * fudge_parameters["man"].values[model_run]
-        # cond = (reaches["rhk"] > 1)
-        # reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * 1.0
-
-        # # adjust streambed conductance for reaches with leakage
-        # cond = (reaches["indirect_recharge"] < 0)
-        # reaches.loc[cond, "rhk"] = 1.0e-08 * 86400
 
         diversions = pd.read_csv(base_path.parent / "input" / "sfr_diversions.csv", sep=";")
         diversions.iloc[:, 0] = diversions.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing

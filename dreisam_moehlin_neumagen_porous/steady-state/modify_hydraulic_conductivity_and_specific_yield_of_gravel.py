@@ -33,3 +33,6 @@ with h5netcdf.File(path, "a", decode_vlen_strings=False) as f:
     var_obj[1, :, :] = sy_layer2
     var_obj[2, :, :] = sy_layer3
 
+    var_obj = f.variables.get("kf_")
+    var_obj[:, :, :] = np.array(f.variables.get("kf")[:, :, :])/86400
+

@@ -1,6 +1,5 @@
 from pathlib import Path
 import h5netcdf
-import shutil
 import rasterio
 from pathlib import Path
 import numpy as np

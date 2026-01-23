@@ -1,6 +1,7 @@
 import pandas as pd
 from pathlib import Path
 import geopandas as gpd
+import numpy as np
 
 base_path = Path(__file__).parent
 

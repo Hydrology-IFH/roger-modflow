@@ -34,17 +34,23 @@ def main(model_run):
     path = Path(__file__).parent.parent / "input" / "parameters_modflow.nc"
     ds_params = xr.open_dataset(path, engine="h5netcdf")
 
+    mask = (ds_params["mask_porous_aquifer"].values == 1)
+
     topography = ds_params['elevations'].isel(z=0).values
     elevation_bottom_layer1 = ds_params['elevations'].isel(z=1).values
     elevation_bottom_layer2 = ds_params['elevations'].isel(z=2).values
     elevation_bottom_layer3 = ds_params['elevations'].isel(z=3).values
     elevation_bottom_layer4 = ds_params['elevations'].isel(z=4).values
+
+    topography[~mask] = np.nan
+    elevation_bottom_layer1[~mask] = np.nan
+    elevation_bottom_layer2[~mask] = np.nan
+    elevation_bottom_layer3[~mask] = np.nan
+    elevation_bottom_layer4[~mask] = np.nan
+
     elevation_bottom_layers = [elevation_bottom_layer1, elevation_bottom_layer2, elevation_bottom_layer3, elevation_bottom_layer4]
     elevation_layers = [topography, elevation_bottom_layer1, elevation_bottom_layer2, elevation_bottom_layer3, elevation_bottom_layer4]
 
-    mask_ = np.isfinite(topography)
-    mask_schoenberg = ds_params['mask_schoenberg'].values
-    mask = mask_ & (mask_schoenberg == False)
     domain = np.empty_like(topography)
     domain[mask] = 1
     domain[~mask] = -1
@@ -59,6 +65,16 @@ def main(model_run):
     hydraulic_conductivities_layer2_ = ds_params['kf'].isel(layer=1).values / 86400
     hydraulic_conductivities_layer3_ = ds_params['kf'].isel(layer=2).values / 86400
     hydraulic_conductivities_layer4_ = ds_params['kf'].isel(layer=3).values / 86400
+
+    hydraulic_conductivities_layer1[~mask] = np.nan
+    hydraulic_conductivities_layer2[~mask] = np.nan
+    hydraulic_conductivities_layer3[~mask] = np.nan
+    hydraulic_conductivities_layer4[~mask] = np.nan
+
+    hydraulic_conductivities_layer1_[~mask] = np.nan
+    hydraulic_conductivities_layer2_[~mask] = np.nan
+    hydraulic_conductivities_layer3_[~mask] = np.nan
+    hydraulic_conductivities_layer4_[~mask] = np.nan
     
     # fudge parameters
     mask1 = (hydraulic_conductivities_layer1_ <= 10e-10)

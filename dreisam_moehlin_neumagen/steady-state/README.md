@@ -51,24 +51,24 @@ The Hydrogeology is described by 4 layers using a raster format with 50 m x 50 m
 - `input/parameters_modflow.nc`: Variable `kf` contains the hydraulic conductivities derived from the LGRB geodataset
 - `input/parameters_modflow.nc`: Variable `elevations` describes the surface topography and the bottom elevation of the four layers
 
-## Recharge
+## Recharge (Neumann boundary condition or second order boundary condition)
 The annual average recharge is derived by RoGeR simulations.
 
 - `input/recharge_roger_50m.tif`: Annual average groundwater recharge of the period 2013-2022 simulated by RoGeR using a 50 m x 50 m resolution
 - `input/boundary_conditions.nc`: Variable `recharge` contains annual average groundwater recharge of the period 2013-2022 simulated by RoGeR 
 
-## Constant head
+## Constant head (Dirichlet boundary condition or first order boundary condition)
 Constant head is set at the boundary to the upper rhine aquifer. To define the depth of the constant head, we used a map with interpolated groundwater heads of Baden-Wuerttemberg. The interpolation is based on measured groundwater heads.
 
 - `input/groundwater_heads_interpolated_50m.tif`: Interpolated groundwater heads of Dreisam-Moehlin-Neumagen catchment
 - `input/boundary_conditions.nc`: Variable `constant_head_porous_aquifer` contains the groundwater heads of the constant head boundary condition derived by the interpolated groundwater heads.
 
-## No flow boundaries
+## No flow boundaries (Neumann boundary condition or second order boundary condition)
 No flow boundary is set at the boundary to the black forest and Schoenberg. We assigned a no flow boundary to the Schoenberg due to very complex hydrogeologic conditions (e.g. layers of opalinus clay).
 
 - `input/parameters_modflow.nc`: Variable `mask_schoenberg` defines the no flow boundary of the Schoenberg. 
 
-## Wells
+## Wells (Neumann boundary condition or second order boundary condition)
 Drinking water wells are considered for groundwater extraction. We use average annual extraction rates based on the data provided by the drinking water suppliers
 
 - `prepare_groundwater_extraction_data.py`: Writes `input/groundwater_extraction.gpkg`
@@ -100,16 +100,15 @@ MODFLOW requires river reaches. However, river network data is not divided into 
 --> `Rename field` 
 --> `Vector geometry --> Snap points to grid`
 4. Assign to each river segment the downstream connected segment --> `python make_stream_segment_routing.py`
-5. Repair the geometries of the river segments --> `python make_stream_segment_routing.py`
-6. Make manual correction of the stream widths in `awgn_stream_segments_connected_repaired.shp` using QGIS --> `awgn_stream_segments_connected_repaired_corrected-width.shp`
+5. Repair the geometries of the river segments --> `python repair_geometries_of_stream_sehments.py`
+6. Make manual correction of the stream widths in `awgn_stream_segments_connected_repaired.shp` using QGIS or spatial join with already corrected data including black forest (see `dreisam_moehlin_neumagen`) --> `awgn_stream_segments_connected_repaired_corrected-width.shp`
 7. Write the data for the SFR package of MODFLOW using the `sfrmaker` tool --> `python write_sfr_data.py`
 8. Check `input/model_SFR.chk` for errors and load `input/sfr_routing.shp` and `input/sfr_outlets.shp` in QGIS to make visual check.
 9. Assign the hydraulic conductivity of the streambed and Manning's coeffecient to the SFR packagedata --> `python make_diversions.py`
 10. Identify the diversions (i.e. river reaches with with downstream connections) --> `python make_diversions.py`
-11. Identify the streamflow observation points. Collect the information in `input/streamflow_observation_points.csv`. Then, run `python make_diversions.py`.
+11. Identify the streamflow observation points. Collect the information in `input/streamflow_observation_points.csv`. Then, run `python add_streamflow_observation_points_to_sfr.py`.
 
 ## Observations
-
 - `observed_groundwater_heads_avg.csv`: Average groundwater heads of the period 2013 - 2023
 - `observed_streamflow.csv`: Average streamflow and water depth of the period 2013 - 2023
 

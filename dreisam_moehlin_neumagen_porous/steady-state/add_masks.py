@@ -16,7 +16,7 @@ shutil.copy(path1, path2)
 
 # add mask of Schoenberg to parameters_modflow.nc
 src = rasterio.open(str(base_path / "input" / "schoenberg.tif"))
-mask_schoenberg = src.read(1)
+schoenberg_mask = src.read(1)
 # add mask of subatchments to parameters_modflow.nc
 src = rasterio.open(str(base_path / "input" / "mask_upper_dreisam.tif"))
 mask_upper_dreisam = src.read(1)
@@ -41,15 +41,13 @@ mask_kf_18e_3_lower_moehlin = src.read(1)
 src = rasterio.open(str(base_path / "input" / "mask_kf_2e-7_lower_moehlin_and_dreisam.tif"))
 mask_kf_2e_7_lower_moehlin_and_dreisam = src.read(1)
 src = rasterio.open(str(base_path / "input" / "mask_black_forest.tif"))
-mask_black_forest = src.read(1)
+_mask_black_forest = src.read(1)
 
 with xr.open_dataset(base_path / "input" / "parameters_modflow.nc") as ds:
     topography = ds['elevations'].isel(z=0).values
     spatial_ref = ds.spatial_ref
     xcoords = ds.x.values
     ycoords = ds.y.values[::-1]
-
-mask_catchment = np.where(np.isfinite(topography) & (mask_schoenberg == 0) & (mask_black_forest == 0), 1, 0)
 
 path = str(base_path / "input" / "parameters_modflow.nc")
 with h5netcdf.File(path, "a", decode_vlen_strings=False) as f:
@@ -59,13 +57,20 @@ with h5netcdf.File(path, "a", decode_vlen_strings=False) as f:
     mask_zarten_brugga = np.where((mask_zarten_brugga == 1) & (kf_layer2 > 8.64), 1, 0)
     mask_zarten_gravel_north = np.where((mask_zarten_gravel_north == 1) & (kf_layer2 > 8.64), 1, 0)
     mask_staufen_gravel = np.where((mask_staufen_gravel == 1) & (kf_layer2 > 8.64), 1, 0)
+    topography = f.variables.get("elevations")[0, :, :]
+    mask_black_forest = np.where((_mask_black_forest == 1) & (np.isfinite(topography)), 1, 0)
+    mask_porous_aquifer = np.where((np.isfinite(topography)), 1, 0)
+    mask_porous_aquifer[(mask_black_forest == 1) | (schoenberg_mask == 1)] = 0
+    mask_porous_aquifer[:, 609:] = 0
+    mask_porous_aquifer[507:, :] = 0
+    mask_porous_aquifer[470:472, 163:165] = 0
     try:
         v = f.create_variable("mask_schoenberg", ("y", "x"), int, compression="gzip", compression_opts=1)
-        v[:, :] = mask_schoenberg
+        v[:, :] = schoenberg_mask 
         v.attrs.update(long_name="Mask of Schoenberg", units="", grid_mapping="spatial_ref", coordinates="spatial_ref")
     except ValueError:
         var_obj = f.variables.get("mask_schoenberg")
-        var_obj[:, :] = mask_schoenberg
+        var_obj[:, :] = schoenberg_mask
     try:
         v = f.create_variable("mask_upper_dreisam", ("y", "x"), int, compression="gzip", compression_opts=1)
         v[:, :] = mask_upper_dreisam
@@ -144,9 +149,25 @@ with h5netcdf.File(path, "a", decode_vlen_strings=False) as f:
         var_obj = f.variables.get("mask_black_forest")
         var_obj[:, :] = mask_black_forest
     try:
-        v = f.create_variable("mask_catchment", ("y", "x"), int, compression="gzip", compression_opts=1)
-        v[:, :] = mask_catchment
-        v.attrs.update(long_name="Mask of catchment area", units="", grid_mapping="spatial_ref", coordinates="spatial_ref")
+        v = f.create_variable("mask_porous_aquifer", ("y", "x"), int, compression="gzip", compression_opts=1)
+        v[:, :] = mask_porous_aquifer
+        v[470:472, 163:165] = 0
+        v.attrs.update(long_name="Mask of Porous Aquifer", units="", grid_mapping="spatial_ref", coordinates="spatial_ref")
     except ValueError:
-        var_obj = f.variables.get("mask_catchment")
-        var_obj[:, :] = mask_catchment
+        var_obj = f.variables.get("mask_porous_aquifer")
+        var_obj[:, :] = mask_porous_aquifer
+    try:
+        v = f.create_variable("topography", ("y", "x"), float, compression="gzip", compression_opts=1)
+        v[:, :] = topography
+        v.attrs.update(long_name="Topography", units="m a.s.l.", grid_mapping="spatial_ref", coordinates="spatial_ref")
+    except ValueError:
+        var_obj = f.variables.get("topography")
+        var_obj[:, :] = topography
+
+    try:
+        v = f.create_variable("kf_", ("layer", "y", "x"), float, compression="gzip", compression_opts=1)
+        v[:, :, :] = np.array(f.variables.get("kf")[:, :, :])/86400
+        v.attrs.update(long_name="hydraulic conductivity", units="m/s", grid_mapping="spatial_ref", coordinates="spatial_ref")
+    except ValueError:
+        var_obj = f.variables.get("kf_")
+        var_obj[:, :, :] = np.array(f.variables.get("kf")[:, :, :])/86400

@@ -13,22 +13,22 @@ def main(nsamples):
               "-7_1": [1.0, 100.0], 
               "-6_1": [0.9, 10], 
               "-5_1": [0.9, 10],
-              "-7_2": [1.0, 10.0], 
+              "-7_2": [1.0, 20.0], 
               "-5_2": [0.9, 10], 
               "-4_2": [0.5, 2.5],
               "1-3_2": [1.0, 7.5], 
               "1.8-3_2": [0.1, 1.0], 
               "3-3_2": [1.5, 7.5],  
               "4-3_2": [1.0, 5.0],
-              "-7_3": [1.0, 10.0], 
-              "-5_3": [0.5, 2.5], 
+              "-7_3": [1.0, 20.0], 
+              "-5_3": [0.5, 5.0], 
               "-4_3": [0.5, 10.0],
               "1-3_3": [0.1, 10.0], 
               "1.8-3_3": [0.1, 1.0], 
               "3-3_3": [1.5, 7.5],  
               "4-3_3": [1.0, 5.0],
               "-7_4": [1.0, 10.0], 
-              "-5_4": [0.5, 1.5], 
+              "-5_4": [0.5, 5.0], 
               "-4_4": [0.1, 2.0],
               "1.8-3_4": [0.1, 1.0],
               "kf_riv": [1.0, 1.2],
@@ -37,6 +37,8 @@ def main(nsamples):
               "man": [0.9, 1.1],
               "rch": [0.9, 1.1],
               "offset": [0., 3.0],
+              "bcf": [0.5, 2.0],
+              "bcsfr": [0.7, 1.3],
     }
 
     nrows = nsamples
@@ -53,30 +55,36 @@ def main(nsamples):
         # write parameters to dataframe
         df_params.loc[:, param] = values.flatten()
 
-    df_params.iloc[:34, :] = 1.
-    df_params.loc[:33, "kf_riv"] = 1.0
-    df_params.loc[:33, "rhkp"] = 0.01
-    df_params.loc[:33, "rhkf"] = 0.001
-    df_params.loc[:33, "man"] = 1.0
+    df_params.iloc[:36, :] = 1.
+    df_params.loc[:35, "kf_riv"] = 1.0
+    df_params.loc[:35, "rhkp"] = 0.008
+    df_params.loc[:35, "rhkf"] = 0.001
+    df_params.loc[:35, "man"] = 1.0
 
-    df_params.loc[:33, "-8_1"] = 500.
-    df_params.loc[:33, "-7_1"] = 100.0 
-    df_params.loc[:33, "-7_2"] = 2.2
-    df_params.loc[:33, "-7_3"] = 2.1
-    df_params.loc[:33, "-7_4"] = 2.0
+    df_params.loc[:35, "-8_1"] = 500.
+    df_params.loc[:35, "-7_1"] = 100.0 
+    df_params.loc[:35, "-7_2"] = 10.0
+    df_params.loc[:35, "-7_3"] = 10.0
+    df_params.loc[:35, "-7_4"] = 10.0
 
-    df_params.loc[:33, "1.8-3_2"] = 0.5 
-    df_params.loc[:33, "3-3_2"] = 5.5 
-    df_params.loc[:33, "4-3_2"] = 1.5
-    df_params.loc[:33, "1.8-3_3"] = 0.5
-    df_params.loc[:33, "3-3_3"] = 4.5
-    df_params.loc[:33, "4-3_3"] = 1.5
-    df_params.loc[:33, "1.8-3_4"] = 0.5
-    df_params.loc[:33, "-4_3"] = 8.0
-    df_params.loc[:33, "-4_4"] = 0.5
+    df_params.loc[:35, "-5_2"] = 3.0
+    df_params.loc[:35, "-5_3"] = 3.0
+    df_params.loc[:35, "-5_4"] = 3.0
 
-    df_params.loc[:33, "rch"] = 1.0
-    df_params.loc[:33, "offset"] = 1.0
+    df_params.loc[:35, "1.8-3_2"] = 0.5 
+    df_params.loc[:35, "3-3_2"] = 2.2 
+    df_params.loc[:35, "4-3_2"] = 1.5
+    df_params.loc[:35, "1.8-3_3"] = 0.4
+    df_params.loc[:35, "3-3_3"] = 2.2
+    df_params.loc[:35, "4-3_3"] = 1.5
+    df_params.loc[:35, "1.8-3_4"] = 0.4
+    df_params.loc[:35, "-4_3"] = 2.0
+    df_params.loc[:35, "-4_4"] = 0.1
+
+    df_params.loc[:35, "rch"] = 1.0
+    df_params.loc[:35, "bcf"] = 1.0
+    df_params.loc[:35, "bcsfr"] = 1.0
+    df_params.loc[:35, "offset"] = 1.0
 
     df_params.loc[0, "rch"] = 1.25
     df_params.loc[1, "rch"] = 1.2
@@ -151,7 +159,7 @@ def main(nsamples):
                                   "-7_3", "-5_3","-4_3", "1-3_3", "1.8-3_3", "3-3_3", "4-3_3",
                                   "-7_4", "-5_4","-4_4", "1.8-3_4",
                                   "kf_riv", "rhkp", "rhkf", "man",
-                                  "rch", "offset"]]
+                                  "rch", "offset", "bcf", "bcsfr"]]
 
     # write parameters to csv
     df_params.columns = [
@@ -160,13 +168,13 @@ def main(nsamples):
          "[-]", "[-]", "[-]", "[-]", "[-]", "[-]", "[-]",
          "[-]", "[-]", "[-]", "[-]",
          "[-]", "[-]", "[-]", "[-]",
-         "[-]", "[m]"],
+         "[-]", "[m]", "[-]", "[-]"],
         ["-8_1", "-7_1", "-6_1", "-5_1", 
          "-7_2", "-5_2", "-4_2", "1-3_2", "1.8-3_2", "3-3_2", "4-3_2",  
          "-7_3", "-5_3", "-4_3", "1-3_3", "1.8-3_3", "3-3_3", "4-3_3",
          "-7_4", "-5_4", "-4_4", "1.8-3_4",
          "kf_riv", "rhkp", "rhkf", "man",
-         "rch", "offset"],
+         "rch", "offset", "bcf", "bcsfr"],
     ]
     df_params.to_csv(base_path / "fudge_parameters_modflow.csv", index=False, sep=";")
     return

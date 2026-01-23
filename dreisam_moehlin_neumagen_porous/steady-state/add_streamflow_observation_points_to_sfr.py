@@ -15,7 +15,7 @@ file = base_path / "input" / "sfr_observation_points.csv"
 df_observation_points = pd.read_csv(file, sep=";")
 
 # load SFR reach data
-file = base_path / "input" / "sfr_packagedata.csv"
+file = base_path / "input" / "sfr_packagedata_modified.csv"
 df_reaches = pd.read_csv(file, sep=";")
 df_reaches["rno"] = df_reaches["rno"] - 1
 df_reaches["i"] = df_reaches["i"] - 1

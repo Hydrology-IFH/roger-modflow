@@ -56,6 +56,9 @@ def main(offset, plot):
     # load MODFLOW parameters
     path = Path(__file__).parent / "input" / "parameters_modflow.nc"
     ds_params = xr.open_dataset(path, engine="h5netcdf")
+    spatial_ref = ds_params.spatial_ref
+    xcoords = ds_params.x.values
+    ycoords = ds_params.y.values[::-1]
 
     # load topography
     topography = ds_params['elevations'].isel(z=0).values
@@ -138,17 +141,22 @@ def main(offset, plot):
     constant_head_porous_aquifer_depth = _topography - constant_head_porous_aquifer
 
     # write boundary condtions to netcdf
-    params_file = base_path / "input" / "boundary_conditions.nc"
-    with h5netcdf.File(params_file, "w", decode_vlen_strings=False) as f:
+    file = base_path / "input" / "boundary_conditions.nc"
+    with h5netcdf.File(file, "w", decode_vlen_strings=False) as f:
         f.attrs.update(
         date_created=datetime.datetime.today().isoformat(),
         title="Boundary conditions for the porous aquifer of the Dreisam-Möhlin-Neumagen catchment",
         institution="University of Freiburg, Chair of Hydrology",
         references="",
         comment="",
+        spatial_ref="EPSG:25832",
+        x_origin=396331.5,
+        y_origin=5325918.5,
         )
         dict_dim = {"lat": len(ds_params['y'].values), "lon": len(ds_params['x'].values), 'scalar': 1}
         f.dimensions = dict_dim
+        v = f.create_variable("spatial_ref", ("scalar",), int, compression="gzip", compression_opts=1)
+        v[:] = spatial_ref.values
         v = f.create_variable("lon", ("lon",), float, compression="gzip", compression_opts=1)
         v.attrs["long_name"] = "X-coordinate"
         v.attrs["units"] = "m"

@@ -32,12 +32,7 @@ elevation_bottom_layer3 = ds_params["elevations"].isel(z=3).values
 elevation_bottom_layer4 = ds_params["elevations"].isel(z=4).values
 elevation_bottom_layers = np.stack([elevation_bottom_layer1, elevation_bottom_layer2, elevation_bottom_layer3, elevation_bottom_layer4], axis=0)
 
-mask = np.isfinite(topography)
-# set Schoenberg to inactive
-mask_schoenberg = (ds_params["mask_schoenberg"].values == 1)
-mask = np.where(mask_schoenberg, False, mask)
-mask_boundary_condition_schoenberg = ds_bc["mask_schoenberg_bc"].values
-mask = np.where(mask_boundary_condition_schoenberg, True, mask)
+mask = (ds_params["mask_porous_aquifer"].values == 1)
 
 # define the domain for the model
 domain = np.empty_like(mask)
@@ -114,7 +109,7 @@ _domain[mask] = 1
 _domain[~mask] = 0
 
 # load shapefile with river segments
-custom_segments = sfrmaker.Lines.from_shapefile(shapefile=base_path / "input" / "awgn_stream_segments_connected_repaired.shp",
+custom_segments = sfrmaker.Lines.from_shapefile(shapefile=base_path / "input" / "awgn_stream_segments_connected_repaired_corrected-width.shp",
                                              id_column="segment",  # arguments to sfrmaker.Lines.from_shapefile
                                              routing_column="to_segment",
                                              width1_column="width_up",
@@ -132,11 +127,11 @@ custom_segments.df.loc[cond2, "width2"] = 1
 
 # make the data for the SFR package
 file_active_area = base_path / "input" / "active_area_grid.shp"
-sfrdata = custom_segments.to_sfr(grid=flopy_grid, model=gwf, active_area=file_active_area, 
+sfrdata = custom_segments.to_sfr(grid=flopy_grid, model=gwf,
                                  model_length_units="meters", consolidate_conductance=True, one_reach_per_cell=False)
 
 # modify reach data
-sfrdata.reach_data.loc[:, "width"] = sfrdata.reach_data.loc[:, "width"] * 0.8
+sfrdata.reach_data.loc[:, "width"] = sfrdata.reach_data.loc[:, "width"]
 cond = np.isnan(sfrdata.reach_data["width"])
 sfrdata.reach_data.loc[cond, "width"] = 1.0  # set width to 1 m where it is NaN
 cond_widht0 = (sfrdata.reach_data.loc[:, "width"] <= 1.0)
@@ -156,7 +151,7 @@ sfrdata.set_streambed_top_elevations_from_dem(dem_file,
                                               buffer_distance=100)
 sfrdata.update_slopes(default_slope=0.01, minimum_slope=0.001, maximum_slope=0.45)  # update slopes based on the new streambed top elevations
 
-sfrdata.reach_data.loc[:, "width"] = sfrdata.reach_data.loc[:, "width"] * 0.8
+sfrdata.reach_data.loc[:, "width"] = sfrdata.reach_data.loc[:, "width"]
 cond = np.isnan(sfrdata.reach_data["width"])
 sfrdata.reach_data.loc[cond, "width"] = 1.0  # set width to 1 m where it is NaN
 cond_widht0 = (sfrdata.reach_data.loc[:, "width"] <= 1.0)

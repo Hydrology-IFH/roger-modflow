@@ -1,8 +1,14 @@
 import pandas as pd
 from pathlib import Path
 import geopandas as gpd
+import h5netcdf
+import numpy as np
 
 base_path = Path(__file__).parent
+
+path = str(base_path / "input" / "parameters_modflow.nc")
+with h5netcdf.File(path, "r", decode_vlen_strings=False) as f:
+    mask = (f.variables.get("mask_porous_aquifer")[:, :] == 1)
 
 path = base_path / "input" / "groundwater_extraction_.gpkg"
 gdf = gpd.read_file(path)
@@ -61,6 +67,18 @@ cond = gdf['municipality'].isin(['Kirchzarten', 'Oberried', 'Buchenbach', 'Stege
 gdf.loc[cond, 'layer'] = 3
 
 gdf_ = pd.concat([gdf, gdf_cerdia])
+
+# remove rows outside porous aquifer
+rows_to_keep = []
+for idx, row in gdf_.iterrows():
+    cell_x = row['cell_x']
+    cell_y = row['cell_y']
+    if mask[cell_y, cell_x]:
+        rows_to_keep.append(True)
+    else:
+        rows_to_keep.append(False)
+
+gdf_ = gdf_.loc[rows_to_keep, :]
 
 # write to file
 output_path = base_path / "input" / "groundwater_extraction.gpkg"

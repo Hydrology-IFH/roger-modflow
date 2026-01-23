@@ -41,7 +41,7 @@ mask_kf_18e_3_lower_moehlin = src.read(1)
 src = rasterio.open(str(base_path / "input" / "mask_kf_2e-7_lower_moehlin_and_dreisam.tif"))
 mask_kf_2e_7_lower_moehlin_and_dreisam = src.read(1)
 src = rasterio.open(str(base_path / "input" / "mask_black_forest.tif"))
-mask_black_forest = src.read(1)
+_mask_black_forest = src.read(1)
 
 with xr.open_dataset(base_path / "input" / "parameters_modflow.nc") as ds:
     topography = ds['elevations'].isel(z=0).values
@@ -57,6 +57,12 @@ with h5netcdf.File(path, "a", decode_vlen_strings=False) as f:
     mask_zarten_brugga = np.where((mask_zarten_brugga == 1) & (kf_layer2 > 8.64), 1, 0)
     mask_zarten_gravel_north = np.where((mask_zarten_gravel_north == 1) & (kf_layer2 > 8.64), 1, 0)
     mask_staufen_gravel = np.where((mask_staufen_gravel == 1) & (kf_layer2 > 8.64), 1, 0)
+    topography = f.variables.get("elevations")[0, :, :]
+    mask_black_forest = np.where((_mask_black_forest == 1) & (np.isfinite(topography)), 1, 0)
+    mask_porous_aquifer = np.where((np.isfinite(topography)), 1, 0)
+    mask_porous_aquifer[(mask_black_forest == 1) | (schoenberg_mask == 1)] = 0
+    mask_porous_aquifer[:, 609:] = 0
+    mask_porous_aquifer[507:, :] = 0
     try:
         v = f.create_variable("mask_schoenberg", ("y", "x"), int, compression="gzip", compression_opts=1)
         v[:, :] = schoenberg_mask 
@@ -141,3 +147,10 @@ with h5netcdf.File(path, "a", decode_vlen_strings=False) as f:
     except ValueError:
         var_obj = f.variables.get("mask_black_forest")
         var_obj[:, :] = mask_black_forest
+    try:
+        v = f.create_variable("mask_porous_aquifer", ("y", "x"), int, compression="gzip", compression_opts=1)
+        v[:, :] = mask_porous_aquifer
+        v.attrs.update(long_name="Mask of Porous Aquifer", units="", grid_mapping="spatial_ref", coordinates="spatial_ref")
+    except ValueError:
+        var_obj = f.variables.get("mask_porous_aquifer")
+        var_obj[:, :] = mask_porous_aquifer

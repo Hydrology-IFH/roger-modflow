@@ -6,7 +6,7 @@ import subprocess
 base_path = Path(__file__).parent
 dir_name = base_path.name
 
-subprocess.Popen(f"mkdir -p $TMPDIR/roger-modflow/dreisam_moehlin_neumagen/steady-state/{dir_name}/output", shell=True)
+subprocess.Popen(f"mkdir -p $TMPDIR/roger-modflow/dreisam_moehlin_neumagen_porous/steady-state/{dir_name}/output", shell=True)
 
 # make directories of parallel jobs
 for i in range(10):

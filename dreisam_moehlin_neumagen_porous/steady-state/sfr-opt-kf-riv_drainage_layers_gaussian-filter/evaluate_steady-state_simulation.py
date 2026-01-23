@@ -60,25 +60,24 @@ def main(model_run):
 
     # load the topography and elevation of the aquifer layers
     topography = ds_params['elevations'].isel(z=0).values
-    # derive the model domain from the topography
-    mask = np.isfinite(topography)
+    mask = (ds_params["mask_porous_aquifer"].values == 1)
     # set Schoenberg to inactive
     mask_schoenberg = (ds_params['mask_schoenberg'].values == 1)
     mask = np.where(mask_schoenberg, False, mask)
-
-    elevation_bottom_layer1 = ds_params['elevations'].isel(z=1).values
-    elevation_bottom_layer2 = ds_params['elevations'].isel(z=2).values
-    elevation_bottom_layer3 = ds_params['elevations'].isel(z=3).values
-    elevation_bottom_layer4 = ds_params['elevations'].isel(z=4).values
-    elevation_bottom_layers = [elevation_bottom_layer1, elevation_bottom_layer2, elevation_bottom_layer3, elevation_bottom_layer4]
 
     topography = ds_params['elevations'].isel(z=0).values
     elevation_bottom_layer1 = ds_params['elevations'].isel(z=1).values
     elevation_bottom_layer2 = ds_params['elevations'].isel(z=2).values
     elevation_bottom_layer3 = ds_params['elevations'].isel(z=3).values
     elevation_bottom_layer4 = ds_params['elevations'].isel(z=4).values
+
+    topography[~mask] = np.nan
+    elevation_bottom_layer1[~mask] = np.nan
+    elevation_bottom_layer2[~mask] = np.nan
+    elevation_bottom_layer3[~mask] = np.nan
+    elevation_bottom_layer4[~mask] = np.nan
+
     elevation_bottom_layers = [elevation_bottom_layer1, elevation_bottom_layer2, elevation_bottom_layer3, elevation_bottom_layer4]
-    elevation_layers = [topography, elevation_bottom_layer1, elevation_bottom_layer2, elevation_bottom_layer3, elevation_bottom_layer4]
 
     mask_ = np.isfinite(topography)
     mask_schoenberg = ds_params['mask_schoenberg'].values
@@ -382,7 +381,7 @@ def main(model_run):
     file = base_path / "output" / f"dmn_run_{model_run}_sfr.csv"
     df_sfr.to_csv(file, sep=";")
 
-    obs_flow_stage = ["FALKENSTEIG", "EBNET", "OBERAMBRINGEN", "UNTERMUENSTERTAL", "WIESNECK", "SANKTWILHELM", "OBERRIED", "ZASTLER"]
+    obs_flow_stage = ["EBNET", "OBERAMBRINGEN", "WIESNECK"]
     df_sfr = df_sfr.loc[obs_flow_stage, :]
     sim_water_depth = df_sfr["water_depth"].values
     sim_water_depth[sim_water_depth < 0] = 0

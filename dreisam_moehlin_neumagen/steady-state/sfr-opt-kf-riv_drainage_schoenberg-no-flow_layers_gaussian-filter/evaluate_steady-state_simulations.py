@@ -144,8 +144,8 @@ for model_run in range(0, 10000):
         df_params_metrics.loc[model_run, "RABIAS_sfr"] = np.nanmean(np.abs((sim_streamflow - obs_streamflow) / obs_streamflow))
         df_params_metrics.loc[model_run, "r_rank_sfr"] = sp.stats.spearmanr(sim_streamflow, obs_streamflow)[0]
         df_params_metrics.loc[model_run, "r_lin_sfr"] = sp.stats.pearsonr(sim_streamflow, obs_streamflow)[0]
-        df_params_metrics.loc[model_run, "r_rank_multi"] = (41/49) * df_params_metrics.loc[model_run, "r_rank"] + (8/49) * df_params_metrics.loc[model_run, "r_rank_sfr"]
-        df_params_metrics.loc[model_run, "MAE_multi"] = (41/49) * df_params_metrics.loc[model_run, "MAE"] + (8/49) * df_params_metrics.loc[model_run, "MAE_sfr"]
+        df_params_metrics.loc[model_run, "r_rank_multi"] = (41/47) * df_params_metrics.loc[model_run, "r_rank"] + (8/47) * df_params_metrics.loc[model_run, "r_rank_sfr"]
+        df_params_metrics.loc[model_run, "MAE_multi"] = (41/47) * df_params_metrics.loc[model_run, "MAE"] + (8/47) * df_params_metrics.loc[model_run, "MAE_sfr"]
 
 # save the metrics
 path = base_path / "fudge_parameters_metrics_porous.csv"
@@ -250,8 +250,8 @@ for model_run in range(0, 10000):
         df_params_metrics.loc[model_run, "RABIAS_sfr"] = np.nanmean(np.abs((sim_streamflow - obs_streamflow) / obs_streamflow))
         df_params_metrics.loc[model_run, "r_rank_sfr"] = sp.stats.spearmanr(sim_streamflow, obs_streamflow)[0]
         df_params_metrics.loc[model_run, "r_lin_sfr"] = sp.stats.pearsonr(sim_streamflow, obs_streamflow)[0]
-        df_params_metrics.loc[model_run, "r_rank_multi"] = (41/51) * df_params_metrics.loc[model_run, "r_rank"] + (8/51) * df_params_metrics.loc[model_run, "r_rank_sfr"]
-        df_params_metrics.loc[model_run, "MAE_multi"] = (41/51) * df_params_metrics.loc[model_run, "MAE"] + (8/51) * df_params_metrics.loc[model_run, "MAE_sfr"]
+        df_params_metrics.loc[model_run, "r_rank_multi"] = (41/49) * df_params_metrics.loc[model_run, "r_rank"] + (8/49) * df_params_metrics.loc[model_run, "r_rank_sfr"]
+        df_params_metrics.loc[model_run, "MAE_multi"] = (41/49) * df_params_metrics.loc[model_run, "MAE"] + (8/49) * df_params_metrics.loc[model_run, "MAE_sfr"]
 
 
 # save the metrics

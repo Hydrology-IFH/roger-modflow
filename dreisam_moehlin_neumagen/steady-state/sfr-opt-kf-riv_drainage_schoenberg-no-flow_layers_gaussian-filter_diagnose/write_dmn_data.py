@@ -334,9 +334,14 @@ def main(model_run):
                           specific_yield_layer4])
 
     # fudge streambed conductivity
-    cond = (reaches["kf"] >= 10e-6)
+    cond_eschbach1 = reaches["line_id"].isin([513])  # Eschbach reach
+    cond_eschbach2 = reaches["line_id"].isin([514, 515, 516])  # Eschbach reach
+    cond_eschbach = reaches["line_id"].isin([513, 514, 515, 516])  # Eschbach reach
+    reaches.loc[cond_eschbach1, "rhk"] = reaches.loc[cond_eschbach1, "rhk"] * 1.0 # set specific streambed conductance for Eschbach reach
+    reaches.loc[cond_eschbach2, "rhk"] = reaches.loc[cond_eschbach2, "rhk"] * 0.1 # set specific streambed conductance for Eschbach reach
+    cond = (reaches["kf"] >= 10e-6) & (~cond_eschbach)
     reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkp"].values[model_run]
-    cond = (reaches["kf"] < 10e-6)
+    cond = (reaches["kf"] < 10e-6) & (~cond_eschbach)
     reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkf"].values[model_run]
     reaches["man"] = reaches["man"] * fudge_parameters["man"].values[model_run]
 

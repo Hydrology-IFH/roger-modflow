@@ -93,6 +93,7 @@ class ModFlowSimulation:
 
         # Create the Flopy iterative model solver (ims) Package object
         ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="all", complexity="COMPLEX", no_ptcrecord="NO_PTC_ALL")
+        ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="all", complexity="MODERATE", no_ptcrecord="NO_PTC_ALL")
         
         # Now that the overall simulation is set up, we can focus on building the groundwater flow model.  The groundwater flow model will be built by adding packages to it that describe the model characteristics.
         #
@@ -227,7 +228,8 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer4[mask234] = hydraulic_conductivities_layer4[mask234] * fudge_parameters["1.8-3_4"].values[model_run]
 
         hydraulic_conductivities_layer2[mask332] = hydraulic_conductivities_layer2[mask332] * fudge_parameters["3-3_2"].values[model_run]
-        hydraulic_conductivities_layer3[mask333] = hydraulic_conductivities_layer3[mask333] * fudge_parameters["3-3_3"].values[model_run]
+        # hydraulic_conductivities_layer3[mask333] = hydraulic_conductivities_layer3[mask333] * fudge_parameters["3-3_3"].values[model_run]
+        hydraulic_conductivities_layer3[mask333] = hydraulic_conductivities_layer3[mask333] * 3.3
 
         hydraulic_conductivities_layer2[mask432] = hydraulic_conductivities_layer2[mask432] * fudge_parameters["4-3_2"].values[model_run]
         hydraulic_conductivities_layer3[mask433] = hydraulic_conductivities_layer3[mask433] * fudge_parameters["4-3_3"].values[model_run]
@@ -324,11 +326,22 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer4[~mask] = np.nan
 
         # fudge streambed conductivity
-        cond = (reaches["kf"] >= 10e-6)
+        cond_eschbach1 = reaches["line_id"].isin([513])  # Eschbach reach
+        cond_eschbach2 = reaches["line_id"].isin([514, 515, 516])  # Eschbach reach
+        cond_eschbach = reaches["line_id"].isin([513, 514, 515, 516])  # Eschbach reach
+        reaches.loc[cond_eschbach1, "rhk"] = reaches.loc[cond_eschbach1, "rhk"] * 1.0 # set specific streambed conductance for Eschbach reach
+        reaches.loc[cond_eschbach2, "rhk"] = reaches.loc[cond_eschbach2, "rhk"] * 0.1 # set specific streambed conductance for Eschbach reach
+        cond = (reaches["kf"] >= 10e-6) & (~cond_eschbach)
         reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkp"].values[model_run]
-        cond = (reaches["kf"] < 10e-6)
+        cond = (reaches["kf"] < 10e-6) & (~cond_eschbach)
         reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkf"].values[model_run]
         reaches["man"] = reaches["man"] * fudge_parameters["man"].values[model_run]
+
+        # cond = (reaches["kf"] >= 10e-6)
+        # reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkp"].values[model_run]
+        # cond = (reaches["kf"] < 10e-6)
+        # reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkf"].values[model_run]
+        # reaches["man"] = reaches["man"] * fudge_parameters["man"].values[model_run]
 
         # modify the manning"s n and hydraulic conductivity of the streambed based on the degree of alteration (5=partly, 6=strongly, 7=very strongly)
         cond = (reaches["ss"] == 5)

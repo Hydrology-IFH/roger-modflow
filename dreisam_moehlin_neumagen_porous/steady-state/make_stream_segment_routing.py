@@ -3,7 +3,7 @@ import geopandas as gpd
 
 base_path = Path(__file__).parent
 
-outlet_segment_ids = [137, 792, 603, 282, 806, 882, 463]
+outlet_segment_ids = [43, 272, 222, 221, 119, 218, 281, 329, 164]
 
 #TODO: generate stream segments in QGIS ("Split with lines") by splitting the river network at confluences and outlets 
 # identify and assign the downstream segments
@@ -56,18 +56,15 @@ def find_downstream(row):
 gdf_segments["to_segment"] = gdf_segments.apply(find_downstream, axis=1)
 
 # enforce Dreisam
-cond = (gdf_segments["segment"] == 810)
-gdf_segments.loc[cond, "to_segment"] = 809
-cond = (gdf_segments["segment"] == 808)
-gdf_segments.loc[cond, "to_segment"] = 807
-# enforce Brugga
-cond = (gdf_segments["segment"] == 641)
-gdf_segments.loc[cond, "to_segment"] = 640
-# enforce Moehlin
-cond = (gdf_segments["segment"] == 144)
-gdf_segments.loc[cond, "to_segment"] = 143
-cond = (gdf_segments["segment"] == 766)
-gdf_segments.loc[cond, "to_segment"] = 97
+cond = (gdf_segments["segment"] == 283)
+gdf_segments.loc[cond, "to_segment"] = 282
+cond = (gdf_segments["segment"] == 282)
+gdf_segments.loc[cond, "to_segment"] = 281
+# enforce Neumagen
+cond = (gdf_segments["segment"] == 19)
+gdf_segments.loc[cond, "to_segment"] = 18
+cond = (gdf_segments["segment"] == 17)
+gdf_segments.loc[cond, "to_segment"] = 16
 cond = (gdf_segments["segment"] == 9)
 gdf_segments.loc[cond, "to_segment"] = 8
 

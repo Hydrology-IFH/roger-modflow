@@ -1,4 +1,5 @@
 import sys
+import os
 from pathlib import Path
 import flopy
 import xarray as xr
@@ -9,7 +10,7 @@ import flopy.utils.binaryfile as bf
 
 import click
 
-@click.option("-mr", "--model-run", type=int, default=9491)
+@click.option("-mr", "--model-run", type=int, default=8304)
 @click.option("-c", "--converged", type=int, default=1)
 @click.command("main")
 def main(model_run, converged):
@@ -48,6 +49,27 @@ def main(model_run, converged):
             grb_file = base_path / "output" / f"dmn_run_{model_run}.dis.grb"
             residual = flopy.mf6.utils.get_residuals(flowja, grb_file=grb_file)
 
+            # fname = os.path.join(str(base_path / "output"), f"dmn_run_{model_run}.dis.grb")
+            # bgf = flopy.mf6.utils.MfGrdFile(fname)
+            # ia, ja = bgf.ia, bgf.ja
+            # inflow = np.zeros(hds.get_data().shape)
+            # outflow = np.zeros(hds.get_data().shape)
+
+            # for k in range(inflow.shape[0]):
+            #     for i in range(inflow.shape[1]):
+            #         for j in range(inflow.shape[2]):
+            #             cell_nodes = ml.modelgrid.get_node([(k, i, j)])
+            #             if cell_nodes:
+            #                 for celln in cell_nodes:
+            #                     print(f"Printing flows for cell {celln} ({k}, {i}, {j}))")
+            #                     for ipos in range(ia[celln] + 1, ia[celln + 1]):
+            #                         flow = flowja[ipos]
+            #                         cellm = ja[ipos]
+            #                         print(f"Cell {celln} flow with cell {cellm} is {flowja[ipos]}")
+            #                         if flow < 0:
+            #                             outflow[k, i, j] += abs(flow)
+            #                         else:
+            #                             inflow[k, i, j] += flow
             # create xarray dataset
             attrs = dict(
                     date_created=datetime.datetime.today().isoformat(),
@@ -81,7 +103,7 @@ def main(model_run, converged):
             # create spatial reference
             ds = ds.geo.write_crs("EPSG:25832")
             ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
-            file = base_path / "output" / f"modflow_output_run_{model_run}_pre1.nc"
+            file = base_path / "output" / f"modflow_output_run_{model_run}.nc"
             comp = dict(zlib=True, complevel=1)  # compress data to save storage
             encoding = {var: comp for var in ds.data_vars}
             ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)
