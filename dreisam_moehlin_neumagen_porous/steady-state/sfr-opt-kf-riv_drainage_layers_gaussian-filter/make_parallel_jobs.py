@@ -52,7 +52,7 @@ for j in range(10):
     script_name = f"batch_{j}_slurm"
     lines = []
     lines.append("#!/bin/bash\n")
-    lines.append("#SBATCH --time=72:00:00\n")
+    lines.append("#SBATCH --time=48:00:00\n")
     lines.append("#SBATCH --nodes=1\n")
     lines.append("#SBATCH --ntasks=1\n")
     lines.append("#SBATCH --cpus-per-task=1\n")
@@ -72,7 +72,7 @@ for j in range(10):
     lines.append(f"cd /pfs/work9/workspace/scratch/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/steady-state/{dir_name}/batch_{j}\n")
     lines.append("\n")
     lines.append("mkdir ${TMPDIR}/roger-modflow\n")
-    lines.append("mkdir ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen\n")
+    lines.append("mkdir ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous\n")
     lines.append("mkdir ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/steady-state\n")
     lines.append("cp -r /pfs/work9/workspace/scratch/fr_rs1092-workspace/roger-modflow/bin ${TMPDIR}/roger-modflow\n")
     lines.append("cp -r /pfs/work9/workspace/scratch/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/steady-state/config.yml ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/steady-state\n")

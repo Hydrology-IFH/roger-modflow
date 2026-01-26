@@ -136,7 +136,7 @@ class ModFlowSimulation:
 
         # Create the initial conditions package
         # use interpolated groundwater heads from well observations as initial conditions
-        gw_heads_interpolated = ds_params["gw_heads_interpolated"].values - 1
+        gw_heads_interpolated = ds_params["gw_heads_interpolated"].values
         gw_heads_interpolated[~mask] = np.nan
         initial_conditions_layers = [gw_heads_interpolated, gw_heads_interpolated, gw_heads_interpolated, gw_heads_interpolated]
         ic = flopy.mf6.modflow.mfgwfic.ModflowGwfic(gwf, pname="ic", strt=initial_conditions_layers)

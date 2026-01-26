@@ -197,7 +197,7 @@ class ModFlowSimulation:
 
         # Create the Flopy temporal discretization object
         tdis = flopy.mf6.modflow.mftdis.ModflowTdis(
-            sim, pname="tdis", time_units="DAYS", start_date_time=time_origin, nper=2, perioddata=[(0.0, 1.0, 1.0), (1.0, ndays, 1.0)]
+            sim, pname="tdis", time_units="DAYS", start_date_time=time_origin, nper=2, perioddata=[(1.0, 1, 1), (1.0, int(ndays), 1)]
         )
         # tdis = flopy.mf6.modflow.mftdis.ModflowTdis(
         #     sim, pname="tdis", time_units="DAYS", nper=1, perioddata=[(1.0, ndays, 1.0)]
@@ -253,7 +253,7 @@ class ModFlowSimulation:
 
         # Create the initial conditions package
         # use interpolated groundwater heads from well observations as initial conditions
-        gw_heads_interpolated = ds_params["gw_heads_interpolated"].values - 1
+        gw_heads_interpolated = ds_params["gw_heads_interpolated"].values - 4.0
         gw_heads_interpolated[~mask] = np.nan
         initial_conditions_layers = [gw_heads_interpolated, gw_heads_interpolated, gw_heads_interpolated, gw_heads_interpolated]
         ic = flopy.mf6.modflow.mfgwfic.ModflowGwfic(gwf, pname="ic", strt=initial_conditions_layers)
@@ -566,11 +566,11 @@ class ModFlowSimulation:
         specific_storage[2]["data"] = specific_yield[2]["data"] * thickness_layer3
         specific_storage[3]["data"] = specific_yield[3]["data"] * thickness_layer4
 
+        # sto = flopy.mf6.ModflowGwfsto(gwf, pname="sto",
+        #     iconvert=1, ss=specific_storage, sy=specific_yield, transient=True)
+        
         sto = flopy.mf6.ModflowGwfsto(gwf, pname="sto",
             iconvert=1, ss=specific_storage, sy=specific_yield, steady_state={0: True}, transient={1: True})
-        
-        # sto = flopy.mf6.ModflowGwfsto(gwf, pname="sto",
-        #     iconvert=1, ss=specific_storage, sy=specific_yield, transient={0: True})
 
         # Create the constant head package (Dirichlet boundary condition i.e. first type)
         mask_boundary_condition_porous_aquifer = ds_bc["mask_porous_aquifer_bc"].values
@@ -879,14 +879,15 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     # NDAYS = ds_roger_simulation.dims["time"] # number of simulation days
     
     # NDAYS = 365 * 11 + 2
-    NDAYS = 10
+    NDAYS = 30
     NDAYS = int(NDAYS)
     path = Path(__file__).parent.parent / "input" / "boundary_conditions.nc"
     ds_bc = xr.open_dataset(path, engine="h5netcdf")
     # generate random arrays for testing
     RNG = np.random.default_rng(42)
-    recharge_weights = RNG.uniform(0, 1, size=NDAYS)
+    recharge_weights = RNG.uniform(0.9, 1.1, size=NDAYS)
     recharge_weights[0] = 1.0  # first day has weight 1.0 
+    recharge_weights[1:] = recharge_weights[1:] * 0.1
 
     # initialize the MODFLOW model using XMI
     # f"{stress_test_meteo}-m{stress_test_meteo_magnitude}-d{stress_test_meteo_duration}_{_irrig}_{_yellow_mustard}_{_soil_compaction}",
@@ -924,7 +925,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         groundwater_head = np.zeros(config_modflow['ny'] * config_modflow['nx'])
         modflow_interface.get_groundwater_head(groundwater_head)
         groundwater_head = groundwater_head.reshape(config_modflow['ny'], config_modflow['nx'])
-        print(groundwater_head[200, 200])
+        print(groundwater_head[211, 441])
         # aggregate groundwater head to the resolution of RoGeR
         groundwater_head = aggregate_to_finer_resolution(groundwater_head, config_modflow['dx'], 25, method="keep")
         # RoGeR requires depth of groundwater head (in meters)
@@ -940,6 +941,8 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         recharge_vertical = aggregate_to_coarser_resolution(recharge, 25, config_modflow['dx'], method="average")
         recharge_lateral = (ds_bc["lateral_inflow_bc_mmday"].values) / 1000
         recharge = (recharge_vertical.flatten() + recharge_lateral.flatten()) * recharge_weights[i]
+        print(recharge_weights[i])
+        print(np.nanmean(recharge_vertical.flatten() * recharge_weights[i]))
         modflow_interface.set_recharge(recharge)
 
         # update well rate and pass it to MODFLOW
