@@ -4,6 +4,7 @@ import flopy
 import xarray as xr
 import geoxarray
 import numpy as np
+import pandas as pd
 import datetime
 
 import click
@@ -31,13 +32,32 @@ def main():
             topography = ds['elevations'].isel(z=0).values
             spatial_ref = ds.spatial_ref
             xcoords = ds.x.values
-            ycoords = ds.y.values[::-1]
+            ycoords = ds.y.values
 
         # export groundwater head to netcdf
         fhead = base_path / "output" / "test.hds"
         hds = flopy.utils.HeadFile(fhead)
         ntimesteps = hds.get_alldata().shape[0]
         timesteps = np.arange(ntimesteps)
+
+        fbudget = base_path / "output" / "test.cbc"
+        cbb = flopy.utils.CellBudgetFile(fbudget)
+
+        cbb_headers = cbb.headers
+        file = base_path / "output" / "cbb_headers.csv"
+        cbb_headers_df = pd.DataFrame(cbb_headers)
+        cbb_headers_df.to_csv(file, index=False, sep=";")
+
+        # recharge = cbb.get_data(text="RCH", kstpkper=(2, 0), full3D=True)[0].filled(fill_value=np.nan)
+        # np.nanmax(recharge)
+
+        # wel = cbb.get_data(text="WEL", kstpkper=(3, 0), full3D=True)[0].filled(fill_value=np.nan)
+        # np.nanmax(wel)
+
+        # sfr = cbb.get_data(text="SFR", kstpkper=(1, 0), full3D=True)[0].filled(fill_value=np.nan)
+
+        # recharge = ml.oc.output.budget().get_data(text="RCH", kstpkper=(0, 0))[0]
+
 
         # create xarray dataset
         attrs = dict(

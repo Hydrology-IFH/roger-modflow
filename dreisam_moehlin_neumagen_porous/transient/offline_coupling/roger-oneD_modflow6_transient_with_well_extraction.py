@@ -180,6 +180,9 @@ class ModFlowSimulation:
         path = Path(__file__).parent.parent / "input" / "boundary_conditions.nc"
         ds_bc = xr.open_dataset(path, engine="h5netcdf")
 
+        path = Path(__file__).parent.parent / "input" / "initial_conditions.nc"
+        ds_ic = xr.open_dataset(path, engine="h5netcdf")
+
         path = base_path.parent / "fudge_parameters_modflow.csv"
         fudge_parameters = pd.read_csv(path, sep=";", skiprows=1)
 
@@ -197,11 +200,8 @@ class ModFlowSimulation:
 
         # Create the Flopy temporal discretization object
         tdis = flopy.mf6.modflow.mftdis.ModflowTdis(
-            sim, pname="tdis", time_units="DAYS", start_date_time=time_origin, nper=2, perioddata=[(1.0, 1, 1), (1.0, int(ndays), 1)]
+            sim, pname="tdis", time_units="DAYS", start_date_time=time_origin, nper=1, perioddata=[(1.0, int(ndays), 1.1)]
         )
-        # tdis = flopy.mf6.modflow.mftdis.ModflowTdis(
-        #     sim, pname="tdis", time_units="DAYS", nper=1, perioddata=[(1.0, ndays, 1.0)]
-        # )
 
         # Create the Flopy groundwater flow (gwf) model object
         model_nam_file = "{}.nam".format(name)
@@ -252,10 +252,16 @@ class ModFlowSimulation:
         )
 
         # Create the initial conditions package
-        # use interpolated groundwater heads from well observations as initial conditions
-        gw_heads_interpolated = ds_params["gw_heads_interpolated"].values - 4.0
-        gw_heads_interpolated[~mask] = np.nan
-        initial_conditions_layers = [gw_heads_interpolated, gw_heads_interpolated, gw_heads_interpolated, gw_heads_interpolated]
+        # use the steady-state simulation results as initial conditions for the transient simulation
+        initial_conditions_layer1 = ds_ic["head"].values[0, 0, :, :] - 4
+        initial_conditions_layer2 = ds_ic["head"].values[0, 1, :, :] - 4
+        initial_conditions_layer3 = ds_ic["head"].values[0, 2, :, :] - 4
+        initial_conditions_layer4 = ds_ic["head"].values[0, 3, :, :] - 4
+        initial_conditions_layer1[~mask] = np.nan
+        initial_conditions_layer2[~mask] = np.nan
+        initial_conditions_layer3[~mask] = np.nan
+        initial_conditions_layer4[~mask] = np.nan
+        initial_conditions_layers = [initial_conditions_layer1, initial_conditions_layer2, initial_conditions_layer3, initial_conditions_layer4]
         ic = flopy.mf6.modflow.mfgwfic.ModflowGwfic(gwf, pname="ic", strt=initial_conditions_layers)
 
         # Create the node property flow package with hydraulic conducitivities
@@ -570,7 +576,7 @@ class ModFlowSimulation:
         #     iconvert=1, ss=specific_storage, sy=specific_yield, transient=True)
         
         sto = flopy.mf6.ModflowGwfsto(gwf, pname="sto",
-            iconvert=1, ss=specific_storage, sy=specific_yield, steady_state={0: True}, transient={1: True})
+            iconvert=1, ss=specific_storage, sy=specific_yield, transient=True)
 
         # Create the constant head package (Dirichlet boundary condition i.e. first type)
         mask_boundary_condition_porous_aquifer = ds_bc["mask_porous_aquifer_bc"].values
@@ -607,9 +613,9 @@ class ModFlowSimulation:
         recharge[:, 2] = recharge_locations[1]
         recharge = recharge.tolist()
 
-        recharge = flopy.mf6.ModflowGwfrch(gwf, fixed_cell=False,
+        recharge = flopy.mf6.ModflowGwfrch(gwf, fixed_cell=True,
                             print_input=False, print_flows=False,
-                            save_flows=False, boundnames=None,
+                            save_flows=True, boundnames=None,
                             maxbound=self.modflow_basin.sum(), stress_period_data=recharge)
         
         # streamflow routing package (SFR)
@@ -670,9 +676,9 @@ class ModFlowSimulation:
         wells[:, 2] = groundwater_extraction["cell_x"].values.astype(np.int32) - 1
         wells = wells.tolist()
 
-        wells = flopy.mf6.ModflowGwfwel(gwf, print_input=False, print_flows=False, save_flows=False,
-                                    maxbound=n_wells, stress_period_data=wells,
-                                    boundnames=False, auto_flow_reduce=0.1)
+        wells = flopy.mf6.ModflowGwfwel(gwf, print_input=False, print_flows=False, save_flows=True,
+                                        maxbound=n_wells, stress_period_data=wells,
+                                        boundnames=False)
         # Create the output control package
         headfile = "{}.hds".format(name)
         head_filerecord = [headfile]
@@ -690,6 +696,7 @@ class ModFlowSimulation:
         # Create the MODFLOW 6 Input Files and Run the Model
         # Once all the flopy objects are created, it is very easy to create all of the input files and run the model.
         sim.write_simulation()  # write the MODFLOW6 files
+        # sim.run_simulation()  # run the MODFLOW6 model
 
         self.load_bmi()
 
@@ -778,6 +785,9 @@ class ModFlowSimulation:
         """Set pumping rate, value in m/day"""
         well_tag = self.mf6.get_var_address("Q", self.name, "WEL_0")
         self.mf6.set_value(well_tag, well_rate)
+        test = self.mf6.get_value_ptr(well_tag)
+        print(np.sum(test))
+
 
     def get_groundwater_head(self, groundwater_head):
         """Get groundwater head from upper layer, value in m"""
@@ -885,9 +895,9 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     ds_bc = xr.open_dataset(path, engine="h5netcdf")
     # generate random arrays for testing
     RNG = np.random.default_rng(42)
-    recharge_weights = RNG.uniform(0.9, 1.1, size=NDAYS)
+    recharge_weights = RNG.uniform(0.1, 10, size=NDAYS)
     recharge_weights[0] = 1.0  # first day has weight 1.0 
-    recharge_weights[1:] = recharge_weights[1:] * 0.1
+    recharge_weights[1:] = 0.0
 
     # initialize the MODFLOW model using XMI
     # f"{stress_test_meteo}-m{stress_test_meteo_magnitude}-d{stress_test_meteo_duration}_{_irrig}_{_yellow_mustard}_{_soil_compaction}",
@@ -925,7 +935,9 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         groundwater_head = np.zeros(config_modflow['ny'] * config_modflow['nx'])
         modflow_interface.get_groundwater_head(groundwater_head)
         groundwater_head = groundwater_head.reshape(config_modflow['ny'], config_modflow['nx'])
-        print(groundwater_head[211, 441])
+        print(groundwater_head[42, 322])
+        print(groundwater_head[214, 450])
+        print(groundwater_head[210, 462])
         # aggregate groundwater head to the resolution of RoGeR
         groundwater_head = aggregate_to_finer_resolution(groundwater_head, config_modflow['dx'], 25, method="keep")
         # RoGeR requires depth of groundwater head (in meters)
@@ -941,19 +953,13 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         recharge_vertical = aggregate_to_coarser_resolution(recharge, 25, config_modflow['dx'], method="average")
         recharge_lateral = (ds_bc["lateral_inflow_bc_mmday"].values) / 1000
         recharge = (recharge_vertical.flatten() + recharge_lateral.flatten()) * recharge_weights[i]
-        print(recharge_weights[i])
-        print(np.nanmean(recharge_vertical.flatten() * recharge_weights[i]))
         modflow_interface.set_recharge(recharge)
 
         # update well rate and pass it to MODFLOW
         well_extraction_rate = np.zeros((n_wells,), dtype=np.float64)
-        well_extraction_rate[:] = groundwater_extraction["annual_average"].values.astype(np.float64) * (-1)
+        well_extraction_rate[:] = groundwater_extraction[f"{year}"].values.astype(np.float64) / 365
+        well_extraction_rate[cond_drinking_water_supply] = well_extraction_rate[cond_drinking_water_supply] * daily_weights_drinking_water_supply_year_doy
         modflow_interface.set_well_rate(well_extraction_rate)
-    
-        # well_extraction_rate = np.zeros((n_wells,), dtype=np.float32)
-        # well_extraction_rate[:] = groundwater_extraction[f"{year}"].values.astype(np.float32) / 365
-        # well_extraction_rate[cond_drinking_water_supply] = well_extraction_rate[cond_drinking_water_supply] * daily_weights_drinking_water_supply_year_doy
-        # modflow_interface.set_well_rate(well_extraction_rate)
 
         # run MODFLOW for one timestep
         modflow_interface.step()

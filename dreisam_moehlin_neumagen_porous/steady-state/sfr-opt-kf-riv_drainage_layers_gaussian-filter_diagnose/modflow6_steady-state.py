@@ -335,7 +335,8 @@ class ModFlowSimulation:
 
         # fudge streambed conductivity
         cond = (reaches["kf"] >= 10e-6)
-        reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkp"].values[model_run]
+        # reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkp"].values[model_run]
+        reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * 0.008
         cond = (reaches["kf"] < 10e-6)
         reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkf"].values[model_run]
         reaches["man"] = reaches["man"] * fudge_parameters["man"].values[model_run]
