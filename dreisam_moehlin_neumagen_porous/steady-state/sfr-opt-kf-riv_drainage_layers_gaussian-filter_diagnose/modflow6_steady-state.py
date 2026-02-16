@@ -332,6 +332,14 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer2[~mask] = np.nan
         hydraulic_conductivities_layer3[~mask] = np.nan
         hydraulic_conductivities_layer4[~mask] = np.nan
+        hydraulic_conductivities_layer1[hydraulic_conductivities_layer1 > 1000] = 1000
+        hydraulic_conductivities_layer2[hydraulic_conductivities_layer2 > 1000] = 1000
+        hydraulic_conductivities_layer3[hydraulic_conductivities_layer3 > 1000] = 1000
+        hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 > 1000] = 1000
+        hydraulic_conductivities_layer1[hydraulic_conductivities_layer1 < 10e-6] = 10e-6
+        hydraulic_conductivities_layer2[hydraulic_conductivities_layer2 < 10e-6] = 10e-6
+        hydraulic_conductivities_layer3[hydraulic_conductivities_layer3 < 10e-6] = 10e-6
+        hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 < 10e-6] = 10e-6
 
         # fudge streambed conductivity
         cond = (reaches["kf"] >= 10e-6)
@@ -483,8 +491,8 @@ class ModFlowSimulation:
         sfr_spd = [
             [449, "inflow", 0.1 * 86400 * fudge_parameters["bcsfr"].values[model_run]], # Eschbach
             [137, "inflow", 0.2 * 86400 * fudge_parameters["bcsfr"].values[model_run]],  # Ibenbach
-            [168, "inflow", 0.5 * 86400 * fudge_parameters["bcsfr"].values[model_run]],  # Wagensteigbach
-            [103, "inflow", 0.2 * 86400 * fudge_parameters["bcsfr"].values[model_run]],  # Rotbach
+            [168, "inflow", 0.35 * 86400 * fudge_parameters["bcsfr"].values[model_run]],  # Wagensteigbach
+            [103, "inflow", 0.54 * 86400 * fudge_parameters["bcsfr"].values[model_run]],  # Rotbach
             [6, "inflow", 0.7 * 86400 * fudge_parameters["bcsfr"].values[model_run]],  # Brugga
             [3633, "inflow", 0.2 * 86400 * fudge_parameters["bcsfr"].values[model_run]],  # Moehlin
             [3539, "inflow", 0.2 * 86400 * fudge_parameters["bcsfr"].values[model_run]],

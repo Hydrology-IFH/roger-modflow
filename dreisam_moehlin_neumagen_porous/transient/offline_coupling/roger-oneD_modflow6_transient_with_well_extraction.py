@@ -11,6 +11,7 @@ import xarray as xr
 import xesmf as xe
 import pandas as pd
 import scipy
+import shutil
 import click
 
 base_path = Path(__file__).parent
@@ -146,6 +147,7 @@ class ModFlowSimulation:
     def __init__(
         self,
         name,
+        stress_test_scenario,
         folder,
         time_origin,
         ndays,
@@ -158,12 +160,13 @@ class ModFlowSimulation:
         verbose=False
     ):
         self.name = name.upper()  # MODFLOW requires the name to be uppercase
+        self.stress_test_scenario = stress_test_scenario
         self.folder = folder
         self.nrow = nrow
         self.ncol = ncol
         self.rowsize = rowsize
         self.colsize = colsize
-        self.working_directory = os.path.join(folder, "output")
+        self.working_directory = os.path.join(folder, f"output/{stress_test_scenario}")
         if not os.path.exists(self.working_directory):
             os.makedirs(self.working_directory)
         self.verbose = verbose
@@ -200,15 +203,15 @@ class ModFlowSimulation:
 
         # Create the Flopy temporal discretization object
         tdis = flopy.mf6.modflow.mftdis.ModflowTdis(
-            sim, pname="tdis", time_units="DAYS", start_date_time=time_origin, nper=1, perioddata=[(1.0, int(ndays), 1.1)]
+            sim, pname="tdis", time_units="DAYS", start_date_time=time_origin, nper=2, perioddata=[(0.0, 1.0, 1.0), (float(ndays), int(ndays), 1.0)]
         )
 
         # Create the Flopy groundwater flow (gwf) model object
         model_nam_file = "{}.nam".format(name)
-        gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file, save_flows=True, newtonoptions="NEWTON")
+        gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file, save_flows=True, newtonoptions="NEWTON UNDER_RELAXATION")
 
         # Create the Flopy iterative model solver (ims) Package object
-        ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="all", complexity="COMPLEX", no_ptcrecord="NO_PTC_ALL")
+        ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="summary", complexity="COMPLEX", no_ptcrecord="NO_PTC_ALL")
         # ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="summary", linear_acceleration="bicgstab")
 
         # Now that the overall simulation is set up, we can focus on building the groundwater flow model.  The groundwater flow model will be built by adding packages to it that describe the model characteristics.
@@ -252,11 +255,11 @@ class ModFlowSimulation:
         )
 
         # Create the initial conditions package
-        # use the steady-state simulation results as initial conditions for the transient simulation
-        initial_conditions_layer1 = ds_ic["head"].values[0, 0, :, :] - 4
-        initial_conditions_layer2 = ds_ic["head"].values[0, 1, :, :] - 4
-        initial_conditions_layer3 = ds_ic["head"].values[0, 2, :, :] - 4
-        initial_conditions_layer4 = ds_ic["head"].values[0, 3, :, :] - 4
+        # use interpolated groundwater head values at start date as initial conditions
+        initial_conditions_layer1 = ds_ic['initial_head_porous'].values
+        initial_conditions_layer2 = ds_ic['initial_head_porous'].values
+        initial_conditions_layer3 = ds_ic['initial_head_porous'].values
+        initial_conditions_layer4 = ds_ic['initial_head_porous'].values
         initial_conditions_layer1[~mask] = np.nan
         initial_conditions_layer2[~mask] = np.nan
         initial_conditions_layer3[~mask] = np.nan
@@ -455,6 +458,15 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer2[~mask] = np.nan
         hydraulic_conductivities_layer3[~mask] = np.nan
         hydraulic_conductivities_layer4[~mask] = np.nan
+        # constrain hydraulic conductivities to a reasonable range to avoid numerical issues
+        hydraulic_conductivities_layer1[hydraulic_conductivities_layer1 > 1000] = 1000  # m/day
+        hydraulic_conductivities_layer2[hydraulic_conductivities_layer2 > 1000] = 1000
+        hydraulic_conductivities_layer3[hydraulic_conductivities_layer3 > 1000] = 1000
+        hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 > 1000] = 1000
+        hydraulic_conductivities_layer1[hydraulic_conductivities_layer1 < 10e-6] = 10e-6
+        hydraulic_conductivities_layer2[hydraulic_conductivities_layer2 < 10e-6] = 10e-6
+        hydraulic_conductivities_layer3[hydraulic_conductivities_layer3 < 10e-6] = 10e-6
+        hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 < 10e-6] = 10e-6
 
         # fudge streambed conductivity
         cond = (reaches["kf"] >= 10e-6)
@@ -522,7 +534,7 @@ class ModFlowSimulation:
 
         hydraulic_conductivities_layers = [hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4]
         npf = flopy.mf6.modflow.mfgwfnpf.ModflowGwfnpf(
-            gwf, pname="npf", icelltype=1, k=hydraulic_conductivities_layers, wetdry=0.5, save_flows=True, save_specific_discharge="budget save file"
+            gwf, pname="npf", icelltype=1, k=hydraulic_conductivities_layers, wetdry=0.5, save_flows=False,
         )
 
         # create the storage package
@@ -567,16 +579,17 @@ class ModFlowSimulation:
         thickness_layer2 = elevation_bottom_layer1 - elevation_bottom_layer2
         thickness_layer3 = elevation_bottom_layer2 - elevation_bottom_layer3
         thickness_layer4 = elevation_bottom_layer3 - elevation_bottom_layer4
-        specific_storage[0]["data"] = specific_yield[0]["data"] * thickness_layer1
-        specific_storage[1]["data"] = specific_yield[1]["data"] * thickness_layer2
-        specific_storage[2]["data"] = specific_yield[2]["data"] * thickness_layer3
-        specific_storage[3]["data"] = specific_yield[3]["data"] * thickness_layer4
-
-        # sto = flopy.mf6.ModflowGwfsto(gwf, pname="sto",
-        #     iconvert=1, ss=specific_storage, sy=specific_yield, transient=True)
+        specific_storage_layer1 = specific_yield_layer1 * thickness_layer1
+        specific_storage_layer2 = specific_yield_layer2 * thickness_layer2
+        specific_storage_layer3 = specific_yield_layer3 * thickness_layer3
+        specific_storage_layer4 = specific_yield_layer4 * thickness_layer4
+        specific_storage[0]["data"] = specific_storage_layer1
+        specific_storage[1]["data"] = specific_storage_layer2
+        specific_storage[2]["data"] = specific_storage_layer3
+        specific_storage[3]["data"] = specific_storage_layer4
         
         sto = flopy.mf6.ModflowGwfsto(gwf, pname="sto",
-            iconvert=1, ss=specific_storage, sy=specific_yield, transient=True)
+            iconvert=1, ss=specific_storage, sy=specific_yield, steady_state={0: True}, transient={1: True}, save_flows=False)
 
         # Create the constant head package (Dirichlet boundary condition i.e. first type)
         mask_boundary_condition_porous_aquifer = ds_bc["mask_porous_aquifer_bc"].values
@@ -602,41 +615,44 @@ class ModFlowSimulation:
             pname="chd",
             maxbound=len(chd_rec),
             stress_period_data=chd_rec,
-            save_flows=True,
+            save_flows=False,
         )
             
         # Recharge package (Neumann boundary condition i.e. second type)
-        recharge = np.zeros((self.modflow_basin.sum(), 4), dtype=np.int32)
+        recharge_spd = np.zeros((self.modflow_basin.sum(), 4), dtype=np.int32)
         recharge_locations = np.where(self.modflow_basin == True)  # only set recharge where modflow_basin is True
         # 0: layer, 1: y-idx, 2: x-idx, 3: rate
-        recharge[:, 1] = recharge_locations[0]
-        recharge[:, 2] = recharge_locations[1]
-        recharge = recharge.tolist()
+        recharge_spd[:, 1] = recharge_locations[0]
+        recharge_spd[:, 2] = recharge_locations[1]
+        recharge_spd = recharge_spd.tolist()
 
         recharge = flopy.mf6.ModflowGwfrch(gwf, fixed_cell=True,
                             print_input=False, print_flows=False,
                             save_flows=True, boundnames=None,
-                            maxbound=self.modflow_basin.sum(), stress_period_data=recharge)
+                            maxbound=self.modflow_basin.sum(), stress_period_data=recharge_spd)
         
+        # Evapotranspiration package (Neumann boundary condition i.e. second type) to represent capillary fringe and ectraction of irrigation water by plants
+        cpr_irr_spd = np.zeros((self.modflow_basin.sum(), 9), dtype=np.int32)
+        cpr_irr_locations = np.where(self.modflow_basin == True)  # only set recharge where modflow_basin is True
+        # 0: layer, 1: y-idx, 2: x-idx, 3: rate
+        cpr_irr_spd[:, 1] = cpr_irr_locations[0]
+        cpr_irr_spd[:, 2] = cpr_irr_locations[1]
+        cpr_irr_spd = cpr_irr_spd.tolist()
+        cpr_irr = flopy.mf6.ModflowGwfevt(gwf, fixed_cell=True,
+                                          print_input=False, print_flows=False,
+                                          save_flows=True, boundnames=None,
+                                          maxbound=self.modflow_basin.sum(), stress_period_data=cpr_irr_spd)
+
+
+
         # streamflow routing package (SFR)
-        sfr_spd = [
-            [449, "inflow", 0.1 * 86400 * fudge_parameters["bcsfr"].values[model_run]], # Eschbach
-            [137, "inflow", 0.2 * 86400 * fudge_parameters["bcsfr"].values[model_run]],  # Ibenbach
-            [168, "inflow", 0.5 * 86400 * fudge_parameters["bcsfr"].values[model_run]],  # Wagensteigbach
-            [103, "inflow", 0.2 * 86400 * fudge_parameters["bcsfr"].values[model_run]],  # Rotbach
-            [6, "inflow", 0.7 * 86400 * fudge_parameters["bcsfr"].values[model_run]],  # Brugga
-            [3633, "inflow", 0.2 * 86400 * fudge_parameters["bcsfr"].values[model_run]],  # Moehlin
-            [3539, "inflow", 0.2 * 86400 * fudge_parameters["bcsfr"].values[model_run]],
-            [1155, "inflow", 0.1 * 86400 * fudge_parameters["bcsfr"].values[model_run]],  # Muehlbach
-            [1272, "inflow", 1.0 * 86400 * fudge_parameters["bcsfr"].values[model_run]],  # Neumagen
-        ]
         ls_obs = [(str(key), str(config_modflow["sfr_obs"][key][0]), (int(config_modflow["sfr_obs"][key][1]),)) for key in config_modflow["sfr_obs"].keys()]
         obs_dict = {
             (f"{name}_sfr.obs.csv", "binary"): ls_obs
         }
         sfr = flopy.mf6.modflow.mfgwfsfr.ModflowGwfsfr(gwf, pname="sfr",
             time_conversion=86400, length_conversion=1.0, nreaches=nstrm, packagedata=packagedata, 
-            connectiondata=connectiondata, diversions=diversiondata, perioddata=sfr_spd, save_flows=True,
+            connectiondata=connectiondata, diversions=diversiondata, save_flows=True,
             maximum_depth_change=0.001, maximum_iterations=500, observations=obs_dict)
         # Create the drainage package (Neumann boundary condition i.e. second type)
         for x, y in zip(reaches.iloc[:, 2], reaches.iloc[:, 3]):
@@ -678,13 +694,14 @@ class ModFlowSimulation:
 
         wells = flopy.mf6.ModflowGwfwel(gwf, print_input=False, print_flows=False, save_flows=True,
                                         maxbound=n_wells, stress_period_data=wells,
-                                        boundnames=False)
+                                        boundnames=False, auto_flow_reduce=0.1)
+        
         # Create the output control package
         headfile = "{}.hds".format(name)
         head_filerecord = [headfile]
         budgetfile = "{}.cbc".format(name)
         budget_filerecord = [budgetfile]
-        saverecord = [("HEAD", "ALL"), ("BUDGET", "ALL")]
+        saverecord = [("HEAD", "FIRST"), ("HEAD", "FREQUENCY", 7), ("HEAD", "LAST"), ("BUDGET", "FIRST"), ("BUDGET", "FREQUENCY", 7), ("BUDGET", "LAST")]
         oc = flopy.mf6.modflow.mfgwfoc.ModflowGwfoc(
             gwf,
             pname="oc",
@@ -696,7 +713,6 @@ class ModFlowSimulation:
         # Create the MODFLOW 6 Input Files and Run the Model
         # Once all the flopy objects are created, it is very easy to create all of the input files and run the model.
         sim.write_simulation()  # write the MODFLOW6 files
-        # sim.run_simulation()  # run the MODFLOW6 model
 
         self.load_bmi()
 
@@ -735,7 +751,7 @@ class ModFlowSimulation:
             return self.bmi_return(success, self.working_directory)
 
         # modflow requires the real path (no symlinks etc.)
-        config_file = self.folder / "output" / "mfsim.nam"
+        config_file = self.folder / "output" / self.stress_test_scenario / "mfsim.nam"
         if not os.path.exists(config_file):
             raise FileNotFoundError(f"Config file {config_file} not found on disk. Did you create the model first (load_from_disk = False)?")
 
@@ -743,7 +759,7 @@ class ModFlowSimulation:
             # initialize the model
             self.mf6.initialize(str(config_file))
         except:
-            return self.bmi_return(success, str(self.folder / "output"))
+            return self.bmi_return(success, str(self.folder / "output" / self.stress_test_scenario))
 
         if self.verbose:
             print("MODFLOW model initialized")
@@ -766,17 +782,17 @@ class ModFlowSimulation:
         mask = self.modflow_basin.flatten()  # mask of active cells
         self.mf6.set_value(recharge_tag, recharge[mask])
 
-    def set_capillary_rise(self, cpr):
-        """Set capillary rise, value in m/day"""
+    def set_cpr_irr_rate(self, cpr_irr):
+        """Set capillary rise (+ extracted irrigation water), value in m/day"""
         cpr_tag = self.mf6.get_var_address("RATE", self.name, "EVT_0")
-        self.mf6.set_value(cpr_tag, cpr)
+        self.mf6.set_value(cpr_tag, cpr_irr)
 
-    def set_evt_surface(self, val):
+    def set_cpr_irr_surface(self, val):
         """Set elevation of the ET surface, value in m"""
         tag = self.mf6.get_var_address("SURFACE", self.name, "EVT_0")
         self.mf6.set_value(tag, val)
 
-    def set_evt_depth(self, val):
+    def set_cpr_irr_depth(self, val):
         """Set ET extinction depth, value in m"""
         tag = self.mf6.get_var_address("DEPTH", self.name, "EVT_0")
         self.mf6.set_value(tag, val)
@@ -785,15 +801,17 @@ class ModFlowSimulation:
         """Set pumping rate, value in m/day"""
         well_tag = self.mf6.get_var_address("Q", self.name, "WEL_0")
         self.mf6.set_value(well_tag, well_rate)
-        test = self.mf6.get_value_ptr(well_tag)
-        print(np.sum(test))
 
+    def set_sfr_inflow(self, sfr_inflow):
+        """Set surface water inflow rate, value in m3/day"""
+        sfr_tag = self.mf6.get_var_address("inflow", self.name, "SFR")
+        self.mf6.set_value(sfr_tag, sfr_inflow)
 
     def get_groundwater_head(self, groundwater_head):
-        """Get groundwater head from upper layer, value in m"""
+        """Get groundwater head from second layer, value in m"""
         head_tag = self.mf6.get_var_address("X", self.name)
         mask = self.modflow_basin.flatten()  # mask of active cells
-        groundwater_head[mask] = self.mf6.get_value_ptr(head_tag)[:self.n_active_cells_per_layer]
+        groundwater_head[mask] = self.mf6.get_value_ptr(head_tag)[self.n_active_cells_per_layer:self.n_active_cells_per_layer*2]
 
     def get_recharge(self, recharge):
         """Get recharge, value in m/day"""
@@ -805,6 +823,11 @@ class ModFlowSimulation:
         """Get well rate, value in m/day"""
         well_tag = self.mf6.get_var_address("Q", self.name, "WEL_0")
         well_rate = self.mf6.get_value_ptr(well_tag)
+
+    def get_sfr_inflow(self, sfr_inflow):
+        """Get surface water inflow rate, value in m3/day"""
+        sfr_tag = self.mf6.get_var_address("inflow", self.name, "SFR")
+        sfr_inflow = self.mf6.get_value_ptr(sfr_tag)
 
     def step(self):
         if self.mf6.get_current_time() > self.end_time:
@@ -843,36 +866,63 @@ class ModFlowSimulation:
 @click.option("-stm", "--stress-test-meteo", type=click.Choice(["base", "base_2000-2024", "spring-drought", "summer-drought", "spring-summer-drought", "spring-summer-wet"]), default="base", help="Type of meteorological stress test")
 @click.option("-stmm", "--stress-test-meteo-magnitude", type=click.Choice([0, 1, 2]), default=0, help="Magnitude of meteorological stress test")
 @click.option("-stmd", "--stress-test-meteo-duration", type=click.Choice([0, 2, 3]), default=0, help="Duration of meteorological stress test in consecutive years")
-@click.option("-irr", "--irrigation", type=bool, default=False, is_flag=True, help="Enable irrigation")
-@click.option("-ym", "--yellow-mustard", type=bool, default=False, is_flag=True, help="Enable catch crop using yellow mustard")
-@click.option("-sc", "--soil-compaction", type=bool, default=False, is_flag=True, help="Enable soil compaction")
+@click.option("-irr", "--irrigation", type=click.Choice(["no-irrigation", "irrigation"]), default="no-irrigation", help="Enable irrigation")
+@click.option("-ym", "--yellow-mustard", type=click.Choice(["no-yellow-mustard", "yellow-mustard"]), default="no-yellow-mustard", help="Enable catch crop using yellow mustard")
+@click.option("-sc", "--soil-compaction", type=click.Choice(["no-soil-compaction", "soil-compaction"]), default="soil-compaction", help="Enable soil compaction")
+@click.option("-gco", "--grain-corn-only", type=click.Choice(["no-grain-corn-only", "grain-corn-only"]), default="no-grain-corn-only", help="Enable grain corn monoculture (no crop rotation)")
+@click.option("-stwe", "--stress-test-well-extraction", type=click.Choice(["no-stress", "ta-dependent-20", "ta-dependent-40"]), default="no-stress", help="Enable stress test for well extraction")
 @click.command("main", short_help="Run MODFLOW in transient mode coupled with RoGeR.")
-def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_duration, irrigation, yellow_mustard, soil_compaction):
+def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_duration, irrigation, yellow_mustard, soil_compaction, grain_corn_only, stress_test_well_extraction):
     if stress_test_meteo == "base_2000-2024":
         time_origin = "2000-01-01"
+        date_time = pd.date_range(start="2000-01-01", end="2024-12-31", freq="D")
     else:
         time_origin = "2013-01-01"
+        date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="D")
 
-    if irrigation:
-        _irrig = "irr"
+    if grain_corn_only == "no-grain-corn-only":
+        _grain_corn_only = ""
     else:
-        _irrig = "noirr"
-
-    if yellow_mustard:
-        _yellow_mustard = "ym"
-    else:
-        _yellow_mustard = "noym"
-
-    if soil_compaction:
-        _soil_compaction = "sc"
-    else:
-        _soil_compaction = "nosc"
-
-    # roger_output_path = base_path.parent.parent.parent.parent / "roger" / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output"
-    # ds_roger_simulation = xr.open_dataset(roger_output_path / f"ONED_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{_irrig}_{_yellow_mustard}_{_soil_compaction}.nc")
+        _grain_corn_only = "_grain-corn-only"
+    
+    # load the soil depth from the RoGeR parameters file
     ds_roger_parameters = xr.open_dataset(base_path.parent.parent.parent.parent / "roger" / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "parameters_roger.nc")  
     soildepth = ds_roger_parameters["GRUND"].values.flatten() / 100  # convert from cm to m
 
+    # load the topography of the model domain and aggregate it to the resolution of RoGeR
+    path = Path(__file__).parent.parent / "input" / "parameters_modflow.nc"
+    with xr.open_dataset(path, engine="h5netcdf") as ds_params_modflow:
+        topography_ = ds_params_modflow["elevations"].values[0, :, :]  # m a.s.l.
+        topography = aggregate_to_finer_resolution(topography_, config_modflow['dx'], 25, method="keep")
+
+    # get number of reaches from the modified sfr_packagedata.csv
+    n_reaches = pd.read_csv(base_path.parent / "input" / "sfr_packagedata_modified.csv", sep=";").shape[0]
+
+    # load discharge data
+    df_discharge_dreisam = pd.read_csv(base_path.parent / "input" / "2013-2023" / "discharge_dreisam.csv", sep=";", index_col=0, skiprows=1)
+    df_discharge_moehlin = pd.read_csv(base_path.parent / "input" / "2013-2023" / "discharge_moehlin.csv", sep=";", index_col=0, skiprows=1)
+    df_discharge_neumagen = pd.read_csv(base_path.parent / "input" / "2013-2023" / "discharge_neumagen.csv", sep=";", index_col=0, skiprows=1)
+    df_discharge_rotbach = pd.read_csv(base_path.parent / "input" / "2013-2023" / "discharge_rotbach.csv", sep=";", index_col=0, skiprows=1)
+    # add DOY and year columns
+    df_discharge_dreisam["DOY"] = pd.to_datetime(df_discharge_dreisam.index).dayofyear
+    df_discharge_dreisam["year"] = pd.to_datetime(df_discharge_dreisam.index).year
+    df_discharge_moehlin["DOY"] = pd.to_datetime(df_discharge_moehlin.index).dayofyear
+    df_discharge_moehlin["year"] = pd.to_datetime(df_discharge_moehlin.index).year
+    df_discharge_neumagen["DOY"] = pd.to_datetime(df_discharge_neumagen.index).dayofyear
+    df_discharge_neumagen["year"] = pd.to_datetime(df_discharge_neumagen.index).year
+    df_discharge_rotbach["DOY"] = pd.to_datetime(df_discharge_rotbach.index).dayofyear
+    df_discharge_rotbach["year"] = pd.to_datetime(df_discharge_rotbach.index).year
+
+    # load average lateral recharge of the years 2013-2023
+    path = Path(__file__).parent.parent / "input" / "boundary_conditions.nc"
+    ds_bc = xr.open_dataset(path, engine="h5netcdf")
+
+    # load lateral recharge anomalies to scale the recharge to daily values
+    df_lateral_recharge_anomaly = pd.read_csv(base_path.parent / "input" / "2013-2023" / "lateral_recharge_anomaly.csv", sep=";", index_col=0, skiprows=1)
+    df_lateral_recharge_anomaly["DOY"] = pd.to_datetime(df_lateral_recharge_anomaly.index).dayofyear
+    df_lateral_recharge_anomaly["year"] = pd.to_datetime(df_lateral_recharge_anomaly.index).year
+
+    # load groundwater extraction data
     groundwater_extraction = pd.read_csv(base_path.parent / "input" / "groundwater_extraction.csv", sep=";")
     groundwater_extraction["cell_y"] = groundwater_extraction["cell_y"].astype(int)
     groundwater_extraction["cell_x"] = groundwater_extraction["cell_x"].astype(int)
@@ -884,25 +934,18 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     n_wells = len(groundwater_extraction)
     cond_drinking_water_supply = groundwater_extraction["purpose"].isin(['Badenova WW Ebnet', 'Badenova WW Hausen', 'Eigenwasserversorgung', 'oeffentliche Wasserversorgung']).values
 
+    # load daily weights for drinking water supply wells to scale the pumping rates of the drinking water supply wells in the well package
     daily_weights_drinking_water_supply = pd.read_csv(base_path.parent / "input" / "daily_weights_drinking_water_supply.csv", sep=";", index_col=0)
 
-    # NDAYS = ds_roger_simulation.dims["time"] # number of simulation days
-    
-    # NDAYS = 365 * 11 + 2
-    NDAYS = 30
-    NDAYS = int(NDAYS)
-    path = Path(__file__).parent.parent / "input" / "boundary_conditions.nc"
-    ds_bc = xr.open_dataset(path, engine="h5netcdf")
-    # generate random arrays for testing
-    RNG = np.random.default_rng(42)
-    recharge_weights = RNG.uniform(0.1, 10, size=NDAYS)
-    recharge_weights[0] = 1.0  # first day has weight 1.0 
-    recharge_weights[1:] = 0.0
+    # get number of days in the simulation which also used as number of time steps in MODFLOW
+    NDAYS = len(date_time)
+    doys = date_time.dayofyear.values
+    years = date_time.year.values
 
     # initialize the MODFLOW model using XMI
-    # f"{stress_test_meteo}-m{stress_test_meteo_magnitude}-d{stress_test_meteo_duration}_{_irrig}_{_yellow_mustard}_{_soil_compaction}",
     modflow_interface = ModFlowSimulation(
-        "test",
+        "dmn_run_1806",
+        f"modflow_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{irrigation}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}",
         base_path,
         time_origin=time_origin,
         ndays=float(NDAYS),
@@ -911,33 +954,166 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         ncol=config_modflow["nx"],
         rowsize=config_modflow["dx"],
         colsize=config_modflow["dy"],
-        model_run=5,
+        model_run=1806,
         verbose=True
     )
 
-    # doys = ds_roger_simulation["time"].dt.dayofyear.values
-    # years = ds_roger_simulation["time"].dt.year.values
-    doys = np.array([(i % 365) + 1 for i in range(NDAYS)])
-    years = np.array([2013 + (i // 365) for i in range(NDAYS)])
+    # initialize the model running in steady-state mode
+    year = years[0]
+    doy = doys[0]
+    daily_weights_drinking_water_supply_year_doy = daily_weights_drinking_water_supply.loc[int(year), f"{int(doy)}"]
+    discharge_dreisam_year_doy = df_discharge_dreisam.loc[(df_discharge_dreisam["year"] == year) & (df_discharge_dreisam["DOY"] == doy), "Q"].values[0]
+    discharge_moehlin_year_doy = df_discharge_moehlin.loc[(df_discharge_moehlin["year"] == year) & (df_discharge_moehlin["DOY"] == doy), "Q"].values[0]
+    discharge_neumagen_year_doy = df_discharge_neumagen.loc[(df_discharge_neumagen["year"] == year) & (df_discharge_neumagen["DOY"] == doy), "Q"].values[0]
+    discharge_rotbach_year_doy = df_discharge_rotbach.loc[(df_discharge_rotbach["year"] == year) & (df_discharge_rotbach["DOY"] == doy), "Q"].values[0]
+    lateral_recharge_anomaly_year_doy = df_lateral_recharge_anomaly.loc[(df_lateral_recharge_anomaly["year"] == year) & (df_lateral_recharge_anomaly["DOY"] == doy), "anomaly"].values[0]
 
-    # read topography
-    path = Path(__file__).parent.parent / "input" / "parameters_modflow.nc"
-    with xr.open_dataset(path, engine="h5netcdf") as ds_params_modflow:
-        topography_ = ds_params_modflow["elevations"].values[0, :, :]  # m a.s.l.
-        topography = aggregate_to_finer_resolution(topography_, config_modflow['dx'], 25, method="keep")
+    # load recharge data of the current year
+    file = f"recharge_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{irrigation}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}_year{year}.nc"
+    path = Path(__file__).parent.parent / "input" / file
+    with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_recharge:
+        recharge_year = ds_recharge["recharge"].values
+        recharge_year[recharge_year < 0] = 0  # set negative recharge to zero
 
+    # load capillary rise data of the current year
+    file = f"capillary_rise_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{irrigation}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}_year{year}.nc"
+    path = Path(__file__).parent.parent / "input" / file
+    with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_capillary_rise:
+        capillary_rise_year = ds_capillary_rise["capillary_rise"].values
+        capillary_rise_year[capillary_rise_year < 0] = 0  # set negative capillary rise to zero
+    
+    if irrigation == "irrigation":
+        # load irrigation data of the current year
+        file = f"irrigation_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}_year{year}.nc"
+        path = Path(__file__).parent.parent / "input" / file
+        with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_irrigation:
+            irrigation_year = ds_irrigation["irrigation"].values
+            irrigation_year[irrigation_year < 0] = 0  # set negative irrigation to zero
+                
+    # update groundwater head
+    groundwater_head = np.zeros(config_modflow['ny'] * config_modflow['nx'])
+    modflow_interface.get_groundwater_head(groundwater_head)
+    groundwater_head = groundwater_head.reshape(config_modflow['ny'], config_modflow['nx'])
+    print(groundwater_head[213, 465])
+    # aggregate groundwater head to the resolution of RoGeR
+    groundwater_head = aggregate_to_finer_resolution(groundwater_head, config_modflow['dx'], 25, method="keep")
+    # RoGeR requires depth of groundwater head (in meters)
+    groundwater_depth = topography.flatten() - groundwater_head.flatten()
+    groundwater_depth[(groundwater_depth <= soildepth)] = soildepth[(groundwater_depth <= soildepth)] + 0.05
+
+    # update recharge and pass it to MODFLOW
+    recharge_ = recharge_year[doy - 1, :, :]
+    recharge = recharge_.flatten()
+    recharge[(groundwater_depth <= soildepth)] = 0 # constrain recharge to zero where groundwater depth is equal to soil depth
+    recharge = recharge.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64) / 1000  # mm/day to m/day
+    recharge_vertical = aggregate_to_coarser_resolution(recharge, 25, config_modflow['dx'], method="average")
+    recharge_vertical[recharge_vertical > 0.1] = 0.1  # constrain recharge to 0.1 m/day
+    recharge_lateral = ((ds_bc["lateral_inflow_bc_mmday"].values) / 1000) * (1 + lateral_recharge_anomaly_year_doy)  # mm/day to m/day
+    recharge_lateral[recharge_lateral > 0.1] = 0.1  # constrain lateral recharge to 0.1 m/day
+    recharge = (recharge_vertical.flatten() + recharge_lateral.flatten())
+    recharge[recharge > 0.1] = 0.1  # constrain recharge to 0.1 m/day
+    modflow_interface.set_recharge(recharge)
+
+    # update capillary rise and pass it to MODFLOW
+    capillary_rise_ = capillary_rise_year[doy - 1, :, :]
+    capillary_rise = capillary_rise_.flatten()
+    capillary_rise = capillary_rise.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64) / 1000  # mm/day to m/day
+    capillary_rise = aggregate_to_coarser_resolution(capillary_rise, 25, config_modflow['dx'], method="average")
+    capillary_rise[capillary_rise > 0.003] = 0.003  # constrain capillary rise to 0.0031 m/day
+    # set ET extinction depth to 3 m for the entire model domain
+    extinction_depth = np.zeros((len(capillary_rise.flatten()),), dtype=np.float64) + 3
+    modflow_interface.set_cpr_irr_depth(extinction_depth)
+    # set ET surface to the current groundwater head for the entire model domain
+    modflow_interface.set_cpr_irr_surface(groundwater_head.flatten())
+    capillary_rise_irrigation = capillary_rise.flatten()
+    modflow_interface.set_cpr_irr_rate(capillary_rise_irrigation)
+
+    # update well rate and pass it to MODFLOW
+    well_extraction_rate = np.zeros((n_wells,), dtype=np.float64)
+    well_extraction_rate[:] = groundwater_extraction[f"{year}"].values.astype(np.float64)
+    well_extraction_rate[cond_drinking_water_supply] = well_extraction_rate[cond_drinking_water_supply] * daily_weights_drinking_water_supply_year_doy
+    well_extraction_rate[~cond_drinking_water_supply] = well_extraction_rate[~cond_drinking_water_supply] / 365.25
+    well_extraction_rate[:] = -well_extraction_rate[:]  # extraction is negative
+    modflow_interface.set_well_rate(well_extraction_rate)
+
+    # update SFR inflow and pass it to MODFLOW
+    sfr_inflow = np.zeros((n_reaches,), dtype=np.float64)
+    # set Eschbach inflow to the observed discharge of the current year and day
+    sfr_inflow[449] = discharge_rotbach_year_doy * 86400 * (0.1/0.548)
+    # set Ibenbach inflow to the observed discharge of the current year and day
+    sfr_inflow[137] = discharge_rotbach_year_doy * 86400 * (0.1/0.548)
+    # set Wagensteigbach inflow to the observed discharge of the current year and day
+    sfr_inflow[168] = discharge_rotbach_year_doy * 86400 * (0.354/0.548)
+    # set Rotbach inflow to the observed discharge of the current year and day
+    sfr_inflow[103] = discharge_rotbach_year_doy * 86400
+    # set Brugga inflow to the observed discharge
+    sfr_inflow[6] = discharge_dreisam_year_doy * 86400 * (0.7/2.8)
+    # set Moehlin inflow to the observed discharge of the current year and day
+    sfr_inflow[3633] = discharge_moehlin_year_doy * 86400 * 0.5
+    sfr_inflow[3539] = discharge_moehlin_year_doy * 86400 * 0.5
+    # set Muehlbach inflow to the observed discharge of the current year and day
+    sfr_inflow[1155] = discharge_moehlin_year_doy * 86400 * (0.1/0.33)
+    # set Neumagen inflow to the observed discharge of the current year and day
+    sfr_inflow[1272] = discharge_neumagen_year_doy * 86400
+    modflow_interface.set_sfr_inflow(sfr_inflow)
+
+    # run MODFLOW for one timestep
+    modflow_interface.step()
+    print("MODFLOW (initial steady-state) finalized")
+
+    # run the transient simulation
     for i in range(NDAYS):
         year = years[i]
         doy = doys[i]
         daily_weights_drinking_water_supply_year_doy = daily_weights_drinking_water_supply.loc[int(year), f"{int(doy)}"]
+        discharge_dreisam_year_doy = df_discharge_dreisam.loc[(df_discharge_dreisam["year"] == year) & (df_discharge_dreisam["DOY"] == doy), "Q"].values[0]
+        discharge_moehlin_year_doy = df_discharge_moehlin.loc[(df_discharge_moehlin["year"] == year) & (df_discharge_moehlin["DOY"] == doy), "Q"].values[0]
+        discharge_neumagen_year_doy = df_discharge_neumagen.loc[(df_discharge_neumagen["year"] == year) & (df_discharge_neumagen["DOY"] == doy), "Q"].values[0]
+        discharge_rotbach_year_doy = df_discharge_rotbach.loc[(df_discharge_rotbach["year"] == year) & (df_discharge_rotbach["DOY"] == doy), "Q"].values[0]
+        lateral_recharge_anomaly_year_doy = df_lateral_recharge_anomaly.loc[(df_lateral_recharge_anomaly["year"] == year) & (df_lateral_recharge_anomaly["DOY"] == doy), "anomaly"].values[0]
+
+        # load recharge data of the current year
+        file = f"recharge_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{irrigation}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}_year{year}.nc"
+        path = Path(__file__).parent.parent / "input" / file
+        if i == 0:
+            with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_recharge:
+                recharge_year = ds_recharge["recharge"].values
+                recharge_year[recharge_year < 0] = 0  # set negative recharge to zero
+        elif  years[i - 1] < year and i > 0:
+            with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_recharge:
+                recharge_year = ds_recharge["recharge"].values
+                recharge_year[recharge_year < 0] = 0  # set negative recharge to zero
+
+        # load capillary rise data of the current year
+        file = f"capillary_rise_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{irrigation}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}_year{year}.nc"
+        path = Path(__file__).parent.parent / "input" / file
+        if i == 0:
+            with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_capillary_rise:
+                capillary_rise_year = ds_capillary_rise["capillary_rise"].values
+                capillary_rise_year[capillary_rise_year < 0] = 0  # set negative capillary rise to zero
+        elif  years[i - 1] < year and i > 0:
+            with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_capillary_rise:
+                capillary_rise_year = ds_capillary_rise["capillary_rise"].values
+                capillary_rise_year[capillary_rise_year < 0] = 0  # set negative capillary rise to zero
+
+        if irrigation == "irrigation":
+            # load irrigation data of the current year
+            file = f"irrigation_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}_year{year}.nc"
+            path = Path(__file__).parent.parent / "input" / file
+            if i == 0:
+                with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_irrigation:
+                    irrigation_year = ds_irrigation["irrigation"].values
+                    irrigation_year[irrigation_year < 0] = 0  # set negative irrigation to zero
+            elif  years[i - 1] < year and i > 0:
+                with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_irrigation:
+                    irrigation_year = ds_irrigation["irrigation"].values
+                    irrigation_year[irrigation_year < 0] = 0  # set negative irrigation to zero
                     
         # update groundwater head
         groundwater_head = np.zeros(config_modflow['ny'] * config_modflow['nx'])
         modflow_interface.get_groundwater_head(groundwater_head)
         groundwater_head = groundwater_head.reshape(config_modflow['ny'], config_modflow['nx'])
-        print(groundwater_head[42, 322])
-        print(groundwater_head[214, 450])
-        print(groundwater_head[210, 462])
+        print(groundwater_head[213, 465])
         # aggregate groundwater head to the resolution of RoGeR
         groundwater_head = aggregate_to_finer_resolution(groundwater_head, config_modflow['dx'], 25, method="keep")
         # RoGeR requires depth of groundwater head (in meters)
@@ -945,21 +1121,70 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         groundwater_depth[(groundwater_depth <= soildepth)] = soildepth[(groundwater_depth <= soildepth)] + 0.05
 
         # update recharge and pass it to MODFLOW
-        # recharge = ds_roger_simulation["q_ss"].isel(time=i).values.flatten()
-        recharge_ = aggregate_to_finer_resolution(ds_bc["recharge"].values, config_modflow['dx'], 25, method="keep")
+        recharge_ = recharge_year[doy - 1, :, :]
         recharge = recharge_.flatten()
         recharge[(groundwater_depth <= soildepth)] = 0 # constrain recharge to zero where groundwater depth is equal to soil depth
         recharge = recharge.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64) / 1000  # mm/day to m/day
         recharge_vertical = aggregate_to_coarser_resolution(recharge, 25, config_modflow['dx'], method="average")
-        recharge_lateral = (ds_bc["lateral_inflow_bc_mmday"].values) / 1000
-        recharge = (recharge_vertical.flatten() + recharge_lateral.flatten()) * recharge_weights[i]
+        recharge_vertical[recharge_vertical > 0.1] = 0.1  # constrain recharge to 0.1 m/day i.e. 100 mm/day
+        recharge_lateral = ((ds_bc["lateral_inflow_bc_mmday"].values) / 1000) * (1 + lateral_recharge_anomaly_year_doy)  # mm/day to m/day
+        recharge_lateral[recharge_lateral > 0.1] = 0.1  # constrain lateral recharge to 0.1 m/day i.e. 100 mm/day
+        recharge = (recharge_vertical.flatten() + recharge_lateral.flatten())  # set recharge to zero for testing
         modflow_interface.set_recharge(recharge)
+
+        # update capillary rise and pass it to MODFLOW
+        capillary_rise_ = capillary_rise_year[doy - 1, :, :]
+        capillary_rise = capillary_rise_.flatten()
+        capillary_rise = capillary_rise.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64) / 1000  # mm/day to m/day
+        capillary_rise = aggregate_to_coarser_resolution(capillary_rise, 25, config_modflow['dx'], method="average")
+        capillary_rise[capillary_rise > 0.003] = 0.003  # constrain capillary rise to 0.003 m/day i.e. 3 mm/day
+        # set ET extinction depth to 3 m for the entire model domain
+        extinction_depth = np.zeros((len(capillary_rise.flatten()),), dtype=np.float64) + 3
+        modflow_interface.set_cpr_irr_depth(extinction_depth)
+        # set ET surface to the current groundwater head for the entire model domain
+        modflow_interface.set_cpr_irr_surface(groundwater_head.flatten())
+
+        if irrigation == "irrigation":
+            # update irrigation and pass it to MODFLOW as capillary rise (i.e. evapotranspiration) since the water is extracted from the groundwater by plants
+            irrigation_ = irrigation_year[doy - 1, :, :]
+            irrigation = irrigation_.flatten()
+            irrigation = irrigation.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64) / 1000  # mm/day to m/day
+            irrigation = aggregate_to_coarser_resolution(irrigation, 25, config_modflow['dx'], method="average")
+            irrigation[irrigation > 0.03] = 0.03  # constrain irrigation to 0.03 m/day
+            capillary_rise_irrigation = capillary_rise.flatten() + irrigation.flatten()
+        else:
+            capillary_rise_irrigation = capillary_rise.flatten()
+
+        modflow_interface.set_cpr_irr_rate(capillary_rise_irrigation)
 
         # update well rate and pass it to MODFLOW
         well_extraction_rate = np.zeros((n_wells,), dtype=np.float64)
-        well_extraction_rate[:] = groundwater_extraction[f"{year}"].values.astype(np.float64) / 365
+        well_extraction_rate[:] = groundwater_extraction[f"{year}"].values.astype(np.float64)
         well_extraction_rate[cond_drinking_water_supply] = well_extraction_rate[cond_drinking_water_supply] * daily_weights_drinking_water_supply_year_doy
+        well_extraction_rate[~cond_drinking_water_supply] = well_extraction_rate[~cond_drinking_water_supply] / 365.25
+        well_extraction_rate[:] = -well_extraction_rate[:]  # extraction is negative
         modflow_interface.set_well_rate(well_extraction_rate)
+
+        # update SFR inflow and pass it to MODFLOW
+        sfr_inflow = np.zeros((n_reaches,), dtype=np.float64)
+        # set Eschbach inflow to the observed discharge of the current year and day
+        sfr_inflow[449] = discharge_rotbach_year_doy * 86400 * (0.1/0.548)
+        # set Ibenbach inflow to the observed discharge of the current year and day
+        sfr_inflow[137] = discharge_rotbach_year_doy * 86400 * (0.1/0.548)
+        # set Wagensteigbach inflow to the observed discharge of the current year and day
+        sfr_inflow[168] = discharge_rotbach_year_doy * 86400 * (0.354/0.548)
+        # set Rotbach inflow to the observed discharge of the current year and day
+        sfr_inflow[103] = discharge_rotbach_year_doy * 86400
+        # set Brugga inflow to the observed discharge
+        sfr_inflow[6] = discharge_dreisam_year_doy * 86400 * (0.7/2.8)
+        # set Moehlin inflow to the observed discharge of the current year and day
+        sfr_inflow[3633] = discharge_moehlin_year_doy * 86400 * 0.5
+        sfr_inflow[3539] = discharge_moehlin_year_doy * 86400 * 0.5
+        # set Muehlbach inflow to the observed discharge of the current year and day
+        sfr_inflow[1155] = discharge_moehlin_year_doy * 86400 * (0.1/0.33)
+        # set Neumagen inflow to the observed discharge of the current year and day
+        sfr_inflow[1272] = discharge_neumagen_year_doy * 86400
+        modflow_interface.set_sfr_inflow(sfr_inflow)
 
         # run MODFLOW for one timestep
         modflow_interface.step()

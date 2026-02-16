@@ -24,7 +24,7 @@ def main():
             verbosity_level=0,
         )
 
-        ml = sim.get_model("test")
+        ml = sim.get_model("dmn_run_1806")
         nlayers = np.arange(ml.modelgrid.nlay)
 
         # load spatial reference and coordinates
@@ -35,12 +35,12 @@ def main():
             ycoords = ds.y.values
 
         # export groundwater head to netcdf
-        fhead = base_path / "output" / "test.hds"
+        fhead = base_path / "output" / "dmn_run_1806.hds"
         hds = flopy.utils.HeadFile(fhead)
         ntimesteps = hds.get_alldata().shape[0]
         timesteps = np.arange(ntimesteps)
 
-        fbudget = base_path / "output" / "test.cbc"
+        fbudget = base_path / "output" / "dmn_run_1806.cbc"
         cbb = flopy.utils.CellBudgetFile(fbudget)
 
         cbb_headers = cbb.headers
@@ -86,7 +86,7 @@ def main():
         # create spatial reference
         ds = ds.geo.write_crs("EPSG:25832")
         ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
-        file = base_path / "output" / "test.nc"
+        file = base_path / "output" / "dmn_run_1806.nc"
         comp = dict(zlib=True, complevel=1)  # compress data to save storage
         encoding = {var: comp for var in ds.data_vars}
         ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)

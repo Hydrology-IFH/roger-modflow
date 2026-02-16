@@ -1,0 +1,913 @@
+from pathlib import Path
+import numpy as np
+import scipy as sp
+import xarray as xr
+import pandas as pd
+import geopandas as gpd
+import rasterio
+import matplotlib.pyplot as plt
+import gstools as gs
+from scipy.optimize import OptimizeWarning
+from scipy.spatial import cKDTree
+import h5netcdf
+import datetime
+import warnings
+import h5py
+
+# Set random seed for reproducibility
+np.random.seed(42)
+
+
+def plot_measurement_points(x, y, heads, fig_name='measurement_points'):
+    """Plot measurement point locations and values"""
+    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
+    scatter = ax.scatter(x, y, c=heads, s=100, cmap='viridis', 
+                         edgecolors='black', linewidths=0.5)
+    fig.colorbar(scatter, ax=ax, label='Groundwater Head (m)')
+    ax.set_xlabel('X-coordinate', fontsize=12)
+    ax.set_ylabel('Y-coordinate', fontsize=12)
+    ax.grid(True, alpha=0.3)
+    ax.axis('equal')
+    fig.tight_layout()
+    file = base_path / 'figures' / 'universal_kriging' / f'{fig_name}.png'
+    fig.savefig(file, dpi=250, bbox_inches='tight')
+    plt.close(fig)
+
+def idw_interpolation(x, y, heads, grid_resolution=50, grid_extent=(0, 1000, 0, 1000), power=2, 
+                     smoothing=0, max_neighbors=None):
+    """
+    Perform Inverse Distance Weighting (IDW) interpolation
+    
+    Parameters:
+    -----------
+    x, y : arrays
+        Coordinates of measurement points
+    heads : array
+        Groundwater head values
+    grid_resolution : int
+        Number of grid points in each direction
+    power : float
+        Power parameter for IDW (typically 1-3)
+        Higher values = more weight to nearby points
+    smoothing : float
+        Smoothing parameter added to distances to avoid division by zero
+        and reduce influence of very close points
+    max_neighbors : int, optional
+        Maximum number of neighbors to use for interpolation
+        If None, uses all points
+    
+    Returns:
+    --------
+    grid_x, grid_y : arrays
+        Grid coordinates
+    interpolated_heads : array
+        Interpolated head values
+    interpolation_variance : array
+        Variance estimate (based on distance-weighted variance)
+    """
+    # Create interpolation grid
+    grid_x = np.linspace(grid_extent[0], grid_extent[1], int((grid_extent[1] - grid_extent[0]) / grid_resolution) + 1)
+    grid_y = np.linspace(grid_extent[2], grid_extent[3], int((grid_extent[2] - grid_extent[3]) / grid_resolution) + 1)
+    X, Y = np.meshgrid(grid_x, grid_y)
+    
+    # Flatten grid for easier computation
+    grid_points = np.column_stack([X.ravel(), Y.ravel()])
+    
+    # Build KD-tree for efficient nearest neighbor search
+    tree = cKDTree(np.column_stack([x, y]))
+    
+    # Initialize output arrays
+    interpolated = np.zeros(len(grid_points))
+    variance = np.zeros(len(grid_points))
+    
+    # Determine number of neighbors to use
+    n_neighbors = len(x) if max_neighbors is None else min(max_neighbors, len(x))
+    
+    # Interpolate for each grid point
+    for i, point in enumerate(grid_points):
+        # Find nearest neighbors
+        distances, indices = tree.query(point, k=n_neighbors)
+        
+        # Add smoothing parameter to avoid division by zero
+        distances = distances + smoothing
+        
+        # Calculate weights using inverse distance
+        weights = 1.0 / (distances ** power)
+        
+        # Normalize weights
+        weights = weights / np.sum(weights)
+        
+        # Calculate interpolated value
+        interpolated[i] = np.sum(weights * heads[indices])
+        
+        # Calculate variance estimate (weighted variance of nearby points)
+        local_mean = np.sum(weights * heads[indices])
+        variance[i] = np.sum(weights * (heads[indices] - local_mean) ** 2)
+    
+    # Reshape back to grid
+    interpolated_heads = interpolated.reshape(X.shape)
+    interpolation_variance = variance.reshape(X.shape)
+    
+    return grid_x, grid_y, interpolated_heads, interpolation_variance
+
+
+def analyze_variogram(x, y, heads, max_dist=None, fig_name='variogram_analysis'):
+    """
+    Perform variogram analysis to determine spatial correlation structure
+    
+    Parameters:
+    -----------
+    x, y : arrays
+        Coordinates of measurement points
+    heads : array
+        Groundwater head values
+    max_dist : float, optional
+        Maximum distance for variogram calculation
+    
+    Returns:
+    --------
+    model : GSTools CovModel
+        Fitted variogram model
+    """
+    # Calculate maximum distance if not provided
+    if max_dist is None:
+        # Use approximately 1/3 of the maximum distance
+        distances = np.sqrt((x[:, None] - x[None, :]) ** 2 + 
+                          (y[:, None] - y[None, :]) ** 2)
+        max_dist = np.percentile(distances[distances > 0], 50)
+
+    # adaptive binning
+    # distances = distances[distances > 0]
+    # distances = np.sort(distances)
+    # max_st_dist = np.percentile(distances, 75)  # Use 75th percentile
+    
+    # n_pairs = len(distances)
+    # max_dist = np.percentile(distances, 75)  # Use 75th percentile
+    
+    # # Calculate how many bins we can support
+    # n_bins_possible = n_pairs // 20
+    # n_bins = min(n_bins_possible, 30)
+    # n_bins = max(n_bins, 10)  # At least 10 bins
+    
+    # # Create bins with approximately equal number of pairs
+    # percentiles = np.linspace(0, 100, n_bins + 1)
+    # bin_edges = np.percentile(distances[distances <= max_dist], percentiles)
+    # bin_edges = np.unique(bin_edges) 
+    
+    # Calculate experimental variogram with more bins
+    bin_edges = np.linspace(0, max_dist, 30)
+    bin_center, gamma = gs.vario_estimate((x, y), heads, bin_edges=bin_edges)
+    
+    # Remove any NaN or infinite values
+    valid_mask = np.isfinite(gamma) & np.isfinite(bin_center) & (bin_center > 0)
+    bin_center = bin_center[valid_mask]
+    gamma = gamma[valid_mask]
+    
+    # Try multiple model types and fitting strategies
+    models_to_try = [
+        ('Gaussian', gs.Gaussian),
+        ('Exponential', gs.Exponential),
+        ('Spherical', gs.Spherical),
+    ]
+    
+    best_model = None
+    best_score = np.inf
+    
+    for model_name, ModelClass in models_to_try:
+        try:
+            # Initialize model with reasonable default parameters
+            model = ModelClass(dim=2)
+            
+            # Estimate initial parameters
+            var_init = np.var(heads) * 0.8  # Initial variance
+            len_init = max_dist / 3  # Initial correlation length
+            nugget_init = np.var(heads) * 0.1  # Initial nugget
+            
+            # Set initial parameters
+            model.var = var_init
+            model.len_scale = len_init
+            model.nugget = nugget_init
+            
+            # Try to fit with increased maxfev
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", OptimizeWarning)
+                warnings.simplefilter("ignore", RuntimeWarning)
+                
+                try:
+                    # Fit with more iterations and bounds
+                    fit_result = model.fit_variogram(
+                        bin_center, 
+                        gamma, 
+                        nugget=True,
+                        max_eval=10000,  # Increased iterations
+                        weights='inv',   # Use inverse distance weighting
+                    )
+                    
+                    # Calculate fit quality (RMSE)
+                    predicted = model.variogram(bin_center)
+                    rmse = np.sqrt(np.mean((gamma - predicted) ** 2))
+                    
+                    if rmse < best_score and model.var > 0 and model.len_scale > 0:
+                        best_score = rmse
+                        best_model = model
+                        best_model_name = model_name
+                        
+                except (RuntimeError, ValueError) as e:
+                    print(f"   Warning: {model_name} fitting failed: {str(e)[:50]}...")
+                    continue
+                    
+        except Exception as e:
+            print(f"   Warning: Could not fit {model_name} model: {str(e)[:50]}...")
+            continue
+    
+    # If no model fitted successfully, use manual parameters
+    if best_model is None:
+        print("   Warning: Automatic fitting failed. Using manual parameters.")
+        best_model = gs.Gaussian(dim=2)
+        best_model.var = np.var(heads) * 0.7
+        best_model.len_scale = max_dist / 3
+        best_model.nugget = np.var(heads) * 0.1
+        best_model_name = "Gaussian (manual)"
+    
+    print(f"\nBest Variogram Model: {best_model_name}")
+    print(f"  Variance (sill): {best_model.var:.2f}")
+    print(f"  Correlation length: {best_model.len_scale:.2f}")
+    print(f"  Nugget: {best_model.nugget:.2f}")
+    if best_score < np.inf:
+        print(f"  RMSE (variogram): {best_score:.4f}")
+    
+    # Plot experimental and fitted variogram
+    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
+    ax.scatter(bin_center, gamma, label='Experimental variogram', 
+                color='red', s=50, alpha=0.7, zorder=3)
+    
+    # Plot fitted model
+    x_plot = np.linspace(0, max(bin_center), 100)
+    ax.plot(x_plot, best_model.variogram(x_plot), 
+             label=f'Fitted model ({best_model_name})', linewidth=2.5, zorder=2)
+    
+    # Add sill line
+    ax.axhline(y=best_model.var + best_model.nugget, 
+                color='gray', linestyle='--', alpha=0.5, 
+                label='Sill', zorder=1)
+    
+    ax.set_xlabel('Distance (m)', fontsize=12)
+    ax.set_ylabel('Semivariance', fontsize=12)
+    ax.legend(fontsize=11)
+    ax.grid(True, alpha=0.3)
+    ax.set_xlim(0, max(bin_center) * 1.05)
+    ax.set_ylim(0, max(gamma) * 1.1)
+    fig.tight_layout()
+    file = base_path / 'figures' / 'universal_kriging' / f'{fig_name}.png'
+    fig.savefig(file, dpi=250, bbox_inches='tight')
+    plt.close(fig)
+    
+    return best_model, best_score, best_model_name
+
+
+def universal_kriging_interpolation(x, y, heads, model, grid_resolution=50, grid_extent=(0, 1000, 0, 1000),
+                                   use_idw_trend=False, idw_power=2):
+    """
+    Perform Universal Kriging with linear trend or IDW-based trend
+    
+    Parameters:
+    -----------
+    x, y : arrays
+        Coordinates of measurement points
+    heads : array
+        Groundwater head values
+    model : GSTools CovModel
+        Variogram model
+    grid_resolution : int
+        Number of grid points in each direction
+    use_idw_trend : bool
+        If True, use IDW interpolation as the trend component
+        If False, use linear drift functions
+    idw_power : float
+        Power parameter for IDW trend (if use_idw_trend=True)
+    
+    Returns:
+    --------
+    grid_x, grid_y : arrays
+        Grid coordinates
+    interpolated_heads : array
+        Interpolated head values
+    kriging_variance : array
+        Kriging variance
+    krige : Krige instance
+        The kriging object
+    """
+    # Create interpolation grid
+    grid_x = np.linspace(grid_extent[0], grid_extent[1], int((grid_extent[1] - grid_extent[0]) / grid_resolution) + 1)
+    grid_y = np.linspace(grid_extent[2], grid_extent[3], int((grid_extent[2] - grid_extent[3]) / grid_resolution) + 1)
+    
+    if use_idw_trend:
+        # Use IDW as external drift
+        print("   Using IDW interpolation as external drift...")
+        
+        # First, compute IDW interpolation as trend
+        _, _, idw_trend, _ = idw_interpolation(
+            x, y, heads, 
+            grid_resolution=grid_resolution,
+            grid_extent=grid_extent, 
+            power=idw_power,
+            smoothing=1.0,
+            max_neighbors=10
+        )
+        
+        # Define drift function based on IDW
+        # We need to create a callable that GSTools can use
+        from scipy.interpolate import RegularGridInterpolator
+        
+        # Create interpolator for the IDW trend
+        idw_interpolator = RegularGridInterpolator(
+            (grid_x, grid_y), 
+            idw_trend.T,
+            method='linear',
+            bounds_error=False,
+            fill_value=None
+        )
+        
+        # Define drift function
+        def drift_idw(x_pts, y_pts):
+            """External drift based on IDW"""
+            points = np.column_stack([y_pts.ravel(), x_pts.ravel()])
+            return idw_interpolator(points).reshape(x_pts.shape)
+        
+        # Perform Universal Kriging with IDW trend
+        krige = gs.krige.Universal(
+            model=model,
+            cond_pos=[x, y],
+            cond_val=heads,
+            drift_functions=[drift_idw]
+        )
+        
+    else:
+        # Use traditional linear drift functions
+        print("   Using linear drift functions...")
+        
+        # Define drift functions (linear trend in x and y)
+        def drift_x(x, y):
+            return x
+        
+        def drift_y(x, y):
+            return y
+        
+        # Perform Universal Kriging
+        krige = gs.krige.Universal(
+            model=model,
+            cond_pos=[x, y],
+            cond_val=heads,
+            drift_functions=[drift_x, drift_y]
+        )
+    
+    # Interpolate on the grid
+    interpolated_heads, kriging_variance = krige.structured([grid_x, grid_y])
+    
+    return grid_x, grid_y, interpolated_heads.T, kriging_variance.T, krige
+
+
+def plot_interpolation_results(grid_x, grid_y, interpolated_heads,
+                               kriging_variance, topography, x, y, heads, depths, mask, method='Ordinary', fig_name='kriging_results'):
+    """Plot interpolation results and kriging variance"""
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+    
+    # Plot interpolated surface
+    rows, cols = np.where(mask)
+    y1, y2 = rows.min(), rows.max()
+    x1, x2 = cols.min(), cols.max()
+    X, Y = np.meshgrid(grid_x[x1:x2+1], grid_y[y1:y2+1])
+
+    interpolated_heads[~mask] = np.nan
+    kriging_variance[~mask] = np.nan
+    interpolated_heads = interpolated_heads[y1:y2+1, x1:x2+1]
+    kriging_variance = kriging_variance[y1:y2+1, x1:x2+1]
+    topography = topography[y1:y2+1, x1:x2+1]
+    
+    contour = ax1.contourf(X, Y, interpolated_heads, levels=20, 
+                          cmap='viridis', alpha=0.8)
+    ax1.scatter(x, y, c=heads, s=80, cmap='viridis', 
+               edgecolors='white', linewidths=1.5, label='Measurements')
+    contour_lines = ax1.contour(X, Y, interpolated_heads, levels=10, 
+                                colors='black', alpha=0.4, linewidths=0.5)
+    ax1.clabel(contour_lines, inline=True, fontsize=8)
+    
+    cbar1 = plt.colorbar(contour, ax=ax1, label='Groundwater Head (m)')
+    ax1.set_xlabel('X-coordinate', fontsize=12)
+    ax1.set_ylabel('Y-coordinate', fontsize=12)
+    ax1.set_title(f'Interpolated Heads', fontsize=14)
+    ax1.axis('equal')
+    ax1.grid(True, alpha=0.3)
+    
+    # Plot kriging variance (uncertainty)
+    variance_plot = ax2.contourf(X, Y, kriging_variance, levels=20, 
+                                cmap='Reds', alpha=0.8)
+    ax2.scatter(x, y, c='blue', s=80, marker='x', 
+               linewidths=2, label='Measurements')
+    
+    cbar2 = plt.colorbar(variance_plot, ax=ax2, 
+                        label='Variance (m²)')
+    ax2.set_xlabel('X-coordinate', fontsize=12)
+    ax2.set_ylabel('Y-coordinate', fontsize=12)
+    ax2.set_title(f'Uncertainty', fontsize=14)
+    ax2.axis('equal')
+    ax2.grid(True, alpha=0.3)
+
+    fig.tight_layout()
+    file = base_path / 'figures' / 'universal_kriging' / f'{method.lower()}_{fig_name}.png'
+    fig.savefig(file, dpi=250, bbox_inches='tight')
+    plt.close(fig)
+
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+    depths_array = np.where(topography - interpolated_heads > 25, 25, topography - interpolated_heads)
+    contour = ax1.contourf(X, Y, depths_array, levels=10, 
+                          cmap='viridis', alpha=0.8, vmin=0, vmax=25)
+    ax1.scatter(x, y, c=depths, s=80, cmap='viridis', vmin=0, vmax=25,  
+               edgecolors='white', linewidths=1.5, label='Measurements')
+    contour_lines = ax1.contour(X, Y, depths_array, levels=10, 
+                                colors='black', alpha=0.4, linewidths=0.5)
+    ax1.clabel(contour_lines, inline=True, fontsize=8)
+    
+    cbar1 = plt.colorbar(contour, ax=ax1, label='Groundwater depth (m)')
+    ax1.set_xlabel('X-coordinate', fontsize=12)
+    ax1.set_ylabel('Y-coordinate', fontsize=12)
+    ax1.set_title(f'Interpolated Depths', fontsize=14)
+    ax1.axis('equal')
+    ax1.grid(True, alpha=0.3)
+    
+    # Plot kriging variance (uncertainty)
+    variance_plot = ax2.contourf(X, Y, kriging_variance, levels=20, 
+                                cmap='Reds', alpha=0.8)
+    ax2.scatter(x, y, c='blue', s=80, marker='x', 
+               linewidths=2, label='Measurements')
+    
+    cbar2 = plt.colorbar(variance_plot, ax=ax2, 
+                        label='Variance (m²)')
+    ax2.set_xlabel('X-coordinate', fontsize=12)
+    ax2.set_ylabel('Y-coordinate', fontsize=12)
+    ax2.set_title(f'Uncertainty', fontsize=14)
+    ax2.axis('equal')
+    ax2.grid(True, alpha=0.3)
+
+    fig.tight_layout()
+    file = base_path / 'figures' / 'universal_kriging' / f'{method.lower()}_{fig_name}_depth.png'
+    fig.savefig(file, dpi=250, bbox_inches='tight')
+    plt.close(fig)
+
+
+def plot_comparison(grid_x, grid_y, interpolated_heads1, interpolated_heads2, topography, mask, fig_name='comparison_results'):
+    """Plot interpolation results and kriging variance"""
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+    
+    # Plot interpolated surface
+    rows, cols = np.where(mask)
+    y1, y2 = rows.min(), rows.max()
+    x1, x2 = cols.min(), cols.max()
+    X, Y = np.meshgrid(grid_x[x1:x2+1], grid_y[y1:y2+1])
+
+    interpolated_heads1[~mask] = np.nan
+    interpolated_heads1 = interpolated_heads1[y1:y2+1, x1:x2+1]
+    interpolated_heads2[~mask] = np.nan
+    interpolated_heads2 = interpolated_heads2[y1:y2+1, x1:x2+1]
+    topography = topography[y1:y2+1, x1:x2+1]
+    
+    contour = ax1.contourf(X, Y, interpolated_heads1, levels=20, 
+                          cmap='viridis', alpha=0.8)
+    contour_lines = ax1.contour(X, Y, interpolated_heads1, levels=10, 
+                                colors='black', alpha=0.4, linewidths=0.5)
+    ax1.clabel(contour_lines, inline=True, fontsize=8)
+    
+    cbar1 = plt.colorbar(contour, ax=ax1, label='Groundwater Head (m)')
+    ax1.set_xlabel('X-coordinate', fontsize=12)
+    ax1.set_ylabel('Y-coordinate', fontsize=12)
+    ax1.set_title(f'Interpolated Heads', fontsize=14)
+    ax1.axis('equal')
+    ax1.grid(True, alpha=0.3)
+    
+    contour = ax2.contourf(X, Y, interpolated_heads2, levels=20, 
+                          cmap='viridis', alpha=0.8)
+    contour_lines = ax2.contour(X, Y, interpolated_heads2, levels=10, 
+                                colors='black', alpha=0.4, linewidths=0.5)
+    ax2.clabel(contour_lines, inline=True, fontsize=8)
+    
+    cbar2 = plt.colorbar(contour, ax=ax2, label='Groundwater Head (m)')
+    ax2.set_xlabel('X-coordinate', fontsize=12)
+    ax2.set_ylabel('Y-coordinate', fontsize=12)
+    ax2.set_title(f'Interpolated Heads', fontsize=14)
+    ax2.axis('equal')
+    ax2.grid(True, alpha=0.3)
+
+    fig.tight_layout()
+    file = base_path / 'figures' / 'universal_kriging' / f'{fig_name}.png'
+    fig.savefig(file, dpi=250, bbox_inches='tight')
+    plt.close(fig)
+
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+    depths_array1 = np.where(topography - interpolated_heads1 > 25, 25, topography - interpolated_heads1)
+    contour = ax1.contourf(X, Y, depths_array1, levels=10, 
+                          cmap='viridis', alpha=0.8, vmin=0, vmax=25)
+    contour_lines = ax1.contour(X, Y, depths_array1, levels=10, 
+                                colors='black', alpha=0.4, linewidths=0.5)
+    ax1.clabel(contour_lines, inline=True, fontsize=8)
+    
+    cbar1 = plt.colorbar(contour, ax=ax1, label='Groundwater depth (m)')
+    ax1.set_xlabel('X-coordinate', fontsize=12)
+    ax1.set_ylabel('Y-coordinate', fontsize=12)
+    ax1.set_title(f'Interpolated Depths', fontsize=14)
+    ax1.axis('equal')
+    ax1.grid(True, alpha=0.3)
+    
+    depths_array2 = np.where(topography - interpolated_heads2 > 25, 25, topography - interpolated_heads2)
+    contour = ax2.contourf(X, Y, depths_array2, levels=10, 
+                          cmap='viridis', alpha=0.8, vmin=0, vmax=25)
+    contour_lines = ax2.contour(X, Y, depths_array2, levels=10, 
+                                colors='black', alpha=0.4, linewidths=0.5)
+    ax2.clabel(contour_lines, inline=True, fontsize=8)
+    
+    cbar2 = plt.colorbar(contour, ax=ax2, label='Groundwater depth (m)')
+    ax2.set_xlabel('X-coordinate', fontsize=12)
+    ax2.set_ylabel('Y-coordinate', fontsize=12)
+    ax2.set_title(f'Interpolated Depths', fontsize=14)
+    ax2.axis('equal')
+    ax2.grid(True, alpha=0.3)
+
+    fig.tight_layout()
+    file = base_path / 'figures' / 'universal_kriging' / f'{fig_name}_depth.png'
+    fig.savefig(file, dpi=250, bbox_inches='tight')
+    plt.close(fig)
+
+
+base_path = Path(__file__).parent
+
+# observations wells in the prous aquifer close to the fissured aquifer
+observation_well_ids_porous = ['0160_070-1', '0113_071-9', '2317_071-5', '2064_120-9', '0101_120-2', '2027_120-2', '0107_119-3', '0104_071-8', '2047_120-2', '0109_119-2', 'PE 01', 'PE 39', 'PE 41']
+ids_to_remove = ['0190_069-0', '0118_070-0', '0122_069-1', '0831_018-1', '0131_069-2', '2311_120-2']  # wells with inconsistent data
+
+# load MODFLOW parameters
+path = base_path / "input" / "parameters_modflow.nc"
+ds_params = xr.open_dataset(path, engine="h5netcdf")
+spatial_ref = ds_params.spatial_ref
+xcoords = ds_params.x.values
+ycoords = ds_params.y.values
+topography = ds_params['topography'].values
+mask = np.isfinite(topography)
+mask_porous = ds_params['mask_porous_aquifer'].values == 1
+mask_fissured = (ds_params['mask_black_forest'].values == 1) & np.isfinite(topography)
+grid_extent = (xcoords[0], xcoords[-1], ycoords[0], ycoords[-1])
+
+# load locations of observation wells
+file = base_path / "observations" / "groundwater_observation_wells.gpkg"
+groundwater_observation_wells = gpd.read_file(file)
+groundwater_observation_wells['station_id'] = groundwater_observation_wells['station_id'].str.replace('/', '_')
+# remove wells outside grid_extent
+groundwater_observation_wells = groundwater_observation_wells.cx[grid_extent[0]:grid_extent[1], grid_extent[2]:grid_extent[3]]
+# remove wells with inconsistent data
+groundwater_observation_wells = groundwater_observation_wells[
+    ~groundwater_observation_wells['station_id'].isin(ids_to_remove)
+]
+
+# load groundwater heads time series
+file = base_path / "observations" / "groundwater_head_time_series_filled.csv"
+_df_gw_heads = pd.read_csv(file, sep=";", index_col=0)
+_df_gw_heads.index = pd.to_datetime(_df_gw_heads.index, format="%Y-%m-%d")
+date_time = pd.date_range(start="1990-01-01", end="2023-12-31", freq="D")
+df_gw_heads = pd.DataFrame(index=date_time)
+df_gw_heads = df_gw_heads.join(_df_gw_heads, how="left")
+# monthly resample to reduce data size
+df_gw_heads = df_gw_heads.resample('ME').mean()
+file = base_path / "observations" / "groundwater_head_time_series_monthly_filled.csv"
+df_gw_heads.to_csv(file, sep=";")
+
+ds = xr.Dataset()
+ds["spatial_ref"] = spatial_ref
+file = base_path / "observations" / "monthly_universal_kriging.nc"
+ds.to_netcdf(file, engine="h5netcdf")
+ds.close()
+
+file = base_path / "observations" / "monthly_universal_kriging.nc"
+with h5netcdf.File(file, "a", decode_vlen_strings=False) as f:
+    f.attrs.update(
+    date_created=datetime.datetime.today().isoformat(),
+    title="Interpolated groundwater heads of monthly average groundwater heads using universal kriging with IDW drift in the Dreisam-Möhlin-Neumagen catchment",
+    institution="University of Freiburg, Chair of Hydrology",
+    references="",
+    comment="",
+    spatial_ref="EPSG:25832",
+    x_origin=396331.5,
+    y_origin=5325918.5,
+    )
+    dict_dim = {"y": len(ds_params['y'].values), "x": len(ds_params['x'].values), "Time": len(df_gw_heads.index), 'scalar': 1}
+    f.dimensions = dict_dim
+    v = f.create_variable("x", ("x",), float, compression="gzip", compression_opts=1)
+    v.attrs["long_name"] = "X-coordinate"
+    v.attrs["units"] = "m"
+    v[:] = xcoords
+    v = f.create_variable("y", ("y",), float, compression="gzip", compression_opts=1)
+    v.attrs["long_name"] = "Y-coordinate"
+    v.attrs["units"] = "m"
+    v[:] = ycoords
+    v = f.create_variable('cell_width', ('scalar',), float)
+    v.attrs['long_name'] = 'Cell width'
+    v.attrs['units'] = 'm'
+    v[:] = 50.0
+    v = f.create_variable("Time", ("Time",), float, compression="gzip", compression_opts=1)
+    v.attrs["long_name"] = "Time"
+    v.attrs["units"] = "months since 2013-01-01"
+    v[:] = np.arange(len(df_gw_heads.index))
+
+    v = f.create_variable(
+        "interpolated_gw_heads_porous", ("Time", "y", "x"), np.float64, compression="gzip", compression_opts=1
+    )
+    v.attrs.update(long_name="Interpolated groundwater heads of the porous aquifer", units="m a.s.l.", grid_mapping="spatial_ref", coordinates="spatial_ref")
+
+    # v = f.create_variable(
+    #     "interpolated_gw_heads_fissured", ("Time", "y", "x"), np.float64, compression="gzip", compression_opts=1
+    # )
+    # v.attrs.update(long_name="Interpolated groundwater heads of the fissured aquifer", units="m a.s.l.", grid_mapping="spatial_ref", coordinates="spatial_ref")
+
+    # v = f.create_variable(
+    #     "interpolated_gw_heads", ("Time", "y", "x"), np.float64, compression="gzip", compression_opts=1
+    # )
+    # v.attrs.update(long_name="Interpolated groundwater heads", units="m a.s.l.", grid_mapping="spatial_ref", coordinates="spatial_ref")
+
+    v = f.create_variable(
+        "uncertainty_porous", ("Time", "y", "x"), np.float64, compression="gzip", compression_opts=1
+    )
+    v.attrs.update(long_name="Variance of the interpolated groundwater heads of the porous aquifer", units="m2", grid_mapping="spatial_ref", coordinates="spatial_ref")
+
+    # v = f.create_variable(
+    #     "uncertainty_fissured", ("Time", "y", "x"), np.float64, compression="gzip", compression_opts=1
+    # )
+    # v.attrs.update(long_name="Variance of the interpolated groundwater heads of the fissured aquifer", units="m2", grid_mapping="spatial_ref", coordinates="spatial_ref")
+
+    # v = f.create_variable(
+    #     "uncertainty_combined", ("Time", "y", "x"), np.float64, compression="gzip", compression_opts=1
+    # )
+    # v.attrs.update(long_name="Variance of the interpolated groundwater heads", units="m2", grid_mapping="spatial_ref", coordinates="spatial_ref")
+
+    v = f.create_variable(
+        "rmse_porous", ("Time",), np.float64, compression="gzip", compression_opts=1
+    )
+    v.attrs.update(long_name="Root mean square error of the universal kriging of the porous aquifer", units="")
+
+    # v = f.create_variable(
+    #     "rmse_fissured", ("Time",), np.float64, compression="gzip", compression_opts=1
+    # )
+    # v.attrs.update(long_name="Root mean square error of the universal kriging of the fissured aquifer", units="")
+
+    # v = f.create_variable(
+    #     "rmse_combined", ("Time",), np.float64, compression="gzip", compression_opts=1
+    # )
+    # v.attrs.update(long_name="Root mean square error of the universal kriging", units="")
+    vlen_str_dtype = h5py.special_dtype(vlen=str)
+    v = f.create_variable(
+        "model_type_porous", ("Time",), dtype=vlen_str_dtype, compression="gzip", compression_opts=1
+    )
+    v.attrs.update(long_name="Variogram model type of the universal kriging of the porous aquifer", units="")
+
+    # v = f.create_variable(
+    #     "model_type_fissured", ("Time",), dtype=vlen_str_dtype, compression="gzip", compression_opts=1
+    # )
+    # v.attrs.update(long_name="Variogram model type of the universal kriging of the fissured aquifer", units="")
+
+    # v = f.create_variable(
+    #     "model_type_combined", ("Time",), dtype=vlen_str_dtype, compression="gzip", compression_opts=1
+    # )
+    # v.attrs.update(long_name="Variogram model type of the universal kriging", units="")
+
+
+# load interpolated groundwater heads
+src = rasterio.open(str(base_path / "input" / "groundwater_heads_interpolated_50m.tif"))
+gw_heads_interpolated = src.read(1)
+
+# sample locations with pseudo observations in the fissured area
+gw_heads_interpolated_fissured = np.where(mask_fissured, gw_heads_interpolated, np.nan)
+# get extent of finite values
+rows, cols = np.where(np.isfinite(gw_heads_interpolated_fissured))
+min_row, max_row = rows.min(), rows.max()
+min_col, max_col = cols.min(), cols.max()
+
+x_ = np.random.uniform(xcoords[min_col], xcoords[max_col], 400)
+y_ = np.random.uniform(ycoords[min_row], ycoords[max_row], 400)
+# remove points outside mask
+x = []
+y = []
+for i in range(len(x_)):
+    row, col = src.index(x_[i], y_[i])
+    if mask_fissured[row, col]:
+        x.append(x_[i])
+        y.append(y_[i])
+
+x_fissured = np.array(x)
+y_fissured = np.array(y)
+print(len(x_fissured), "measurement points in fissured area")
+
+
+# loop over rows and perform interpolation for each time step
+for month_i, timestamp in enumerate(df_gw_heads.index):
+    year_month = timestamp.strftime("%Y-%m")
+    df_gw_heads_initial = df_gw_heads.loc[timestamp, :].to_frame()
+    df_gw_heads_initial.columns = ['groundwater_head']
+
+    path = base_path / "observations" / "groundwater_observation_wells.gpkg"
+    _gdf_gw_heads_initial = gpd.read_file(path)
+    # remove wells outside grid_extent
+    gdf_gw_heads_initial = _gdf_gw_heads_initial.cx[grid_extent[0]:grid_extent[1], grid_extent[2]:grid_extent[3]]
+    gdf_gw_heads_initial["station_id"] = gdf_gw_heads_initial["station_id"].str.replace('/', '_')
+    gdf_gw_heads_initial = gdf_gw_heads_initial[
+        ~gdf_gw_heads_initial['station_id'].isin(ids_to_remove)
+    ]
+    gdf_gw_heads_initial.index = gdf_gw_heads_initial["station_id"]
+    # merge with groundwater heads
+    gdf_gw_heads_initial = gdf_gw_heads_initial.join(df_gw_heads_initial, how='left')
+    _gdf_gw_heads_initial = gdf_gw_heads_initial[gdf_gw_heads_initial['station_id'].isin(observation_well_ids_porous)]
+
+    # load interpolated groundwater heads
+    src = rasterio.open(str(base_path / "input" / "groundwater_heads_interpolated_50m.tif"))
+    gw_heads_interpolated = src.read(1)
+
+    df_diff = pd.DataFrame(index=_gdf_gw_heads_initial.index)
+    df_diff['difference'] = np.nan
+    df_diff['observed_head'] = _gdf_gw_heads_initial['groundwater_head']
+    df_diff['interpolated_head'] = np.nan
+    for idx, row in _gdf_gw_heads_initial.iterrows():
+        x = row.geometry.x
+        y = row.geometry.y
+        row, col = src.index(x, y)
+        head_interpolated = gw_heads_interpolated[row, col]
+        head_observed = _gdf_gw_heads_initial.loc[idx, 'groundwater_head']
+        diff = head_observed - head_interpolated
+        df_diff.loc[idx, 'difference'] = diff
+        df_diff.loc[idx, 'interpolated_head'] = head_interpolated
+    df_diff.loc['avg', 'difference'] = df_diff['difference'].mean()
+    df_diff.loc['std', 'difference'] = df_diff['difference'].std()
+    # save to csv
+    file = base_path / 'figures' / 'universal_kriging' / f'interpolation_difference_observed_interpolated_heads_{year_month}.csv'
+    df_diff.to_csv(file, sep=";", index=True)
+
+
+    """Main execution function"""
+    print("=" * 70)
+    print("Spatial Interpolation of Groundwater Heads using GSTools")
+    print("=" * 70)
+
+    # remove rows with NaN groundwater heads
+    gdf_gw_heads_initial = gdf_gw_heads_initial.dropna(subset=['groundwater_head'])
+    x_porous = gdf_gw_heads_initial.geometry.x.values
+    y_porous = gdf_gw_heads_initial.geometry.y.values
+    heads_porous = gdf_gw_heads_initial['groundwater_head'].values
+    depths_porous = np.zeros_like(x_porous)
+    for i in range(len(x_porous)):
+        row, col = src.index(x_porous[i], y_porous[i])
+        depths_porous[i] = topography[row, col] - heads_porous[i]
+
+    # Plot measurement points
+    plot_measurement_points(x_porous, y_porous, heads_porous, fig_name=f'measurement_points_porous_{year_month}')
+
+    # Step 2: Variogram analysis
+    print("\n2. Performing variogram analysis...")
+    model, rmse_porous, model_type_porous = analyze_variogram(x_porous, y_porous, heads_porous, fig_name=f'variogram_analysis_porous_{year_month}')
+    # Step 4: Universal Kriging
+    print("\n4. Performing Universal Kriging interpolation...")
+    grid_x, grid_y, idw_heads, idw_variance = idw_interpolation(
+        x_porous, y_porous, heads_porous, grid_extent=grid_extent
+    )
+    idw_heads = np.where(idw_heads > topography, topography, idw_heads)
+    plot_interpolation_results(grid_x, grid_y, idw_heads, idw_variance, topography,
+                                x_porous, y_porous, heads_porous, depths_porous, mask_porous, method='IDW', fig_name=f'results_porous_{year_month}')
+
+    grid_x, grid_y, uk_heads, uk_variance, uk_krige = universal_kriging_interpolation(
+        x_porous, y_porous, heads_porous, model, grid_extent=grid_extent, use_idw_trend=True, idw_power=2
+    )
+    # get kriged heads at observation points
+    heads_porous_kriged = np.zeros_like(x_porous)
+    for i in range(len(x_porous)):
+        row, col = src.index(x_porous[i], y_porous[i])
+        head = uk_heads[row, col]
+        heads_porous_kriged[i] = head
+
+    interpolated_heads_porous = uk_heads.copy()
+    interpolated_heads_porous = np.where(interpolated_heads_porous > topography, topography, interpolated_heads_porous)
+    interpolated_heads_porous = np.where(mask_porous, interpolated_heads_porous, np.nan)
+    variance_porous = uk_variance.copy()
+    variance_porous = np.where(mask_porous, variance_porous, np.nan)
+    uk_heads = np.where(uk_heads > topography, topography, uk_heads)
+    plot_interpolation_results(grid_x, grid_y, uk_heads, uk_variance, topography,
+                                x_porous, y_porous, heads_porous, depths_porous, mask_porous, method='Universal', fig_name=f'kriging_results_porous_{year_month}')
+    
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.scatter(heads_porous, heads_porous_kriged, c='black', s=20)
+    ax.set_xlim(np.floor(np.min([heads_porous.min() - 5, heads_porous_kriged.min() - 5])), np.ceil(np.max([heads_porous.max() + 5, heads_porous_kriged.max() + 5])))
+    ax.set_ylim(np.floor(np.min([heads_porous.min() - 5, heads_porous_kriged.min() - 5])), np.ceil(np.max([heads_porous.max() + 5, heads_porous_kriged.max() + 5])))
+    # make 1:1 line
+    ax.plot([ax.get_xlim()[0], ax.get_xlim()[1]], [ax.get_xlim()[0], ax.get_xlim()[1]], 'k--', lw=2)
+    ax.set_xlabel('Observed Groundwater Head (m)')
+    ax.set_ylabel('Kriged Groundwater Head (m)')
+    plt.grid(True)
+    fig.tight_layout()
+    file = base_path / 'figures' / 'universal_kriging' / f'comparison_observed_kriged_heads_porous_{year_month}.png'
+    fig.savefig(file, dpi=250, bbox_inches='tight')
+
+    # calculate RMSE
+    rmse_porous = np.sqrt(np.mean((heads_porous - heads_porous_kriged) ** 2))
+    print(f'RMSE (empirical): {rmse_porous:.2f}')
+    # heads_fissured = np.zeros_like(x_fissured)
+    # for i in range(len(x_fissured)):
+    #     row, col = src.index(x_fissured[i], y_fissured[i])
+    #     head = gw_heads_interpolated_fissured[row, col] + (df_diff['difference'].mean() * 50)
+    #     if head > topography[row, col]:
+    #         head = topography[row, col] - 10  # ensure heads are below topography
+    #     heads_fissured[i] = head
+    # depths_fissured = np.zeros_like(x_fissured)
+    # for i in range(len(x_fissured)):
+    #     row, col = src.index(x_fissured[i], y_fissured[i])
+    #     depths_fissured[i] = topography[row, col] - heads_fissured[i]
+
+    # print("=" * 70)
+    # print("Spatial Interpolation of Groundwater Heads using GSTools")
+    # print("=" * 70)
+
+    # plot_measurement_points(x_fissured, y_fissured, heads_fissured, fig_name=f'measurement_points_fissured_{year_month}')
+
+    # # Step 2: Variogram analysis
+    # print("\n2. Performing variogram analysis...")
+    # model, rmse_fissured, model_type_fissured = analyze_variogram(x_fissured, y_fissured, heads_fissured, fig_name=f'variogram_analysis_fissured_{year_month}')
+    # # Step 4: Universal Kriging
+    # print("\n4. Performing Universal Kriging interpolation...")
+    # grid_x, grid_y, idw_heads, idw_variance = idw_interpolation(
+    #     x_fissured, y_fissured, heads_fissured, grid_extent=grid_extent
+    # )
+    # idw_heads = np.where(idw_heads > topography, topography, idw_heads)
+    # plot_interpolation_results(grid_x, grid_y, idw_heads, idw_variance, topography,
+    #                             x_fissured, y_fissured, heads_fissured, depths_fissured, mask_fissured, method='IDW', fig_name=f'results_fissured_{year_month}')
+    # grid_x, grid_y, uk_heads, uk_variance, uk_krige = universal_kriging_interpolation(
+    #     x_fissured, y_fissured, heads_fissured, model, grid_extent=grid_extent, use_idw_trend=True, idw_power=2
+    # )
+    # uk_heads = np.where(uk_heads > topography, topography, uk_heads)
+    # interpolated_heads_fissured = uk_heads.copy()
+    # variance_fissured = uk_variance.copy()
+    # plot_interpolation_results(grid_x, grid_y, uk_heads, uk_variance, topography,
+    #                             x_fissured, y_fissured, heads_fissured, depths_fissured, mask_fissured, method='Universal', fig_name=f'kriging_results_fissured_{year_month}')
+
+    # x_combined = np.concatenate([x_porous, x_fissured])
+    # y_combined = np.concatenate([y_porous, y_fissured])
+    # heads_combined = np.concatenate([heads_porous, heads_fissured])
+    # depths_combined = np.concatenate([depths_porous, depths_fissured])
+
+    # print("=" * 70)
+    # print("Spatial Interpolation of Groundwater Heads using GSTools")
+    # print("=" * 70)
+
+    # plot_measurement_points(x_combined, y_combined, heads_combined, fig_name=f'measurement_points_combined_{year_month}')
+
+    # # Step 2: Variogram analysis
+    # print("\n2. Performing variogram analysis...")
+    # model, rmse_combined, model_type_combined = analyze_variogram(x_combined, y_combined, heads_combined, fig_name=f'variogram_analysis_combined_{year_month}')
+    # # Step 4: Universal Kriging
+    # print("\n4. Performing Universal Kriging interpolation...")
+    # grid_x, grid_y, idw_heads, idw_variance = idw_interpolation(
+    #     x_combined, y_combined, heads_combined, grid_extent=grid_extent
+    # )
+    # idw_heads = np.where(idw_heads > topography, topography, idw_heads) 
+    # plot_interpolation_results(grid_x, grid_y, idw_heads, idw_variance, topography,
+    #                             x_combined, y_combined, heads_combined, depths_combined, mask, method='IDW', fig_name=f'results_combined_{year_month}')
+    # grid_x, grid_y, uk_heads, uk_variance, uk_krige = universal_kriging_interpolation(
+    #     x_combined, y_combined, heads_combined, model, grid_extent=grid_extent, use_idw_trend=True, idw_power=2
+    # )
+    # uk_heads = np.where(uk_heads > topography, topography, uk_heads)
+    # interpolated_heads_combined = uk_heads.copy()
+    # variance_combined = uk_variance.copy()
+    # plot_interpolation_results(grid_x, grid_y, uk_heads, uk_variance, topography,
+    #                         x_combined, y_combined, heads_combined, depths_combined, mask, method='Universal', fig_name=f'kriging_results_combined_{year_month}')
+
+    # plot_comparison(grid_x, grid_y, interpolated_heads_combined, gw_heads_interpolated + df_diff['difference'].mean(), topography, mask, fig_name=f'comparison_{year_month}')
+
+
+    file = base_path / "observations" / "monthly_universal_kriging.nc"
+    with h5netcdf.File(file, "a", decode_vlen_strings=False) as f:
+        var_obj = f.variables.get("interpolated_gw_heads_porous")
+        var_obj[month_i, :, :] = interpolated_heads_porous
+        # var_obj = f.variables.get("interpolated_gw_heads_fissured")
+        # var_obj[month_i, :, :] = interpolated_heads_fissured
+        # var_obj = f.variables.get("interpolated_gw_heads")
+        # var_obj[month_i, :, :] = interpolated_heads_combined
+        var_obj = f.variables.get("uncertainty_porous")
+        var_obj[month_i, :, :] = variance_porous
+        # var_obj = f.variables.get("uncertainty_fissured")
+        # var_obj[month_i, :, :] = variance_fissured
+        # var_obj = f.variables.get("uncertainty_combined")
+        # var_obj[month_i, :, :] = variance_combined
+        var_obj = f.variables.get("rmse_porous")
+        var_obj[month_i] = rmse_porous
+        # var_obj = f.variables.get("rmse_fissured")
+        # var_obj[month_i] = rmse_fissured
+        # var_obj = f.variables.get("rmse_combined")
+        # var_obj[month_i] = rmse_combined
+        var_obj = f.variables.get("model_type_porous")
+        var_obj[month_i] = model_type_porous
+        # var_obj = f.variables.get("model_type_fissured")
+        # var_obj[month_i] = model_type_fissured
+        # var_obj = f.variables.get("model_type_combined")
+        # var_obj[month_i] = model_type_combined

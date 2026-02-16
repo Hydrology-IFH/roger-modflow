@@ -324,6 +324,14 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer2[~mask] = np.nan
         hydraulic_conductivities_layer3[~mask] = np.nan
         hydraulic_conductivities_layer4[~mask] = np.nan
+        hydraulic_conductivities_layer1[hydraulic_conductivities_layer1 > 1000] = 1000
+        hydraulic_conductivities_layer2[hydraulic_conductivities_layer2 > 1000] = 1000
+        hydraulic_conductivities_layer3[hydraulic_conductivities_layer3 > 1000] = 1000
+        hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 > 1000] = 1000
+        hydraulic_conductivities_layer1[hydraulic_conductivities_layer1 < 10e-6] = 10e-6
+        hydraulic_conductivities_layer2[hydraulic_conductivities_layer2 < 10e-6] = 10e-6
+        hydraulic_conductivities_layer3[hydraulic_conductivities_layer3 < 10e-6] = 10e-6
+        hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 < 10e-6] = 10e-6
 
         # fudge streambed conductivity
         cond_eschbach1 = reaches["line_id"].isin([513])  # Eschbach reach
