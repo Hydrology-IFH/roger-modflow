@@ -885,7 +885,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         _grain_corn_only = "_grain-corn-only"
     
     # load the soil depth from the RoGeR parameters file
-    ds_roger_parameters = xr.open_dataset(base_path.parent.parent.parent.parent / "roger" / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "parameters_roger.nc")  
+    ds_roger_parameters = xr.open_dataset(base_path.parent / "input"/ "parameters_roger.nc")  
     soildepth = ds_roger_parameters["GRUND"].values.flatten() / 100  # convert from cm to m
 
     # load the topography of the model domain and aggregate it to the resolution of RoGeR
