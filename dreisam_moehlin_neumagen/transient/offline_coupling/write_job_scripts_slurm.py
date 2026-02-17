@@ -121,7 +121,7 @@ def main():
         lines.append("cp -r %s/roger-oneD_modflow6_transient_with_well_extraction.py ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling\n" % (base_path_bwhpc_modflow)) 
         lines.append("cp -r %s/config_modflow.yml ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient\n" % (base_path_bwhpc_modflow))
         lines.append("cp -r %s/input ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient\n" % (base_path_bwhpc_modflow))
-        lines.append("cp -r %s/fudge_parameters_modflow.csv ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient\n" % (str(base_path_ws_modflow.parent)))
+        lines.append("cp -r %s/fudge_parameters_modflow.csv ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient\n" % (str(base_path_ws_modflow.parent)))
         for year in years:
             input_file = script_name.replace("modflow_", "recharge_") + f"_year{year}.nc"
             lines.append("cp -r %s/output/%s ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/input/\n" % (base_path_bwhpc_roger, input_file))
