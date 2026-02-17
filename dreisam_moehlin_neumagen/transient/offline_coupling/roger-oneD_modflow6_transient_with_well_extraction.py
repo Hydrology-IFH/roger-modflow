@@ -924,7 +924,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
 
     # initialize the MODFLOW model using XMI
     modflow_interface = ModFlowSimulation(
-        "dmn_run_1519",
+        "dmn_run_944",
         f"{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{irrigation}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}",
         base_path,
         time_origin=time_origin,
@@ -934,7 +934,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         ncol=config_modflow["nx"],
         rowsize=config_modflow["dx"],
         colsize=config_modflow["dy"],
-        model_run=1519,
+        model_run=944,
         verbose=True
     )
 
