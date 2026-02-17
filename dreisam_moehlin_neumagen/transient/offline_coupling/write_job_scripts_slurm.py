@@ -81,13 +81,13 @@ def main():
                         scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --soil-compaction soil-compaction --irrigation irrigation --yellow-mustard yellow-mustard' % (stress_test_meteo, magnitude, duration))
                         scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --soil-compaction soil-compaction --grain-corn-only grain-corn-only' % (stress_test_meteo, magnitude, duration))
 
-                        script_names_modflow.append('modflow_%s_magnitude%s_duration%s_no-irrigation_no-yellow-mustard_soil-compaction' % (stress_test_meteo, magnitude, duration))
-                        script_names_modflow.append('modflow_%s_magnitude%s_duration%s_no-irrigation_no-yellow-mustard_no-soil-compaction' % (stress_test_meteo, magnitude, duration))
-                        script_names_modflow.append('modflow_%s_magnitude%s_duration%s_irrigation_no-yellow-mustard_soil-compaction' % (stress_test_meteo, magnitude, duration))
-                        script_names_modflow.append('modflow_%s_magnitude%s_duration%s_no-irrigation_yellow-mustard_soil-compaction' % (stress_test_meteo, magnitude, duration))
-                        script_names_modflow.append('modflow_%s_magnitude%s_duration%s_irrigation_yellow-mustard_no-soil-compaction' % (stress_test_meteo, magnitude, duration))
-                        script_names_modflow.append('modflow_%s_magnitude%s_duration%s_no-irrigation_yellow-mustard_no-soil-compaction' % (stress_test_meteo, magnitude, duration))
-                        script_names_modflow.append('modflow_%s_magnitude%s_duration%s_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only' % (stress_test_meteo, magnitude, duration))
+                        script_names_modflow.append('modflow_%s-magnitude%s-duration%s_no-irrigation_no-yellow-mustard_soil-compaction' % (stress_test_meteo, magnitude, duration))
+                        script_names_modflow.append('modflow_%s-magnitude%s-duration%s_no-irrigation_no-yellow-mustard_no-soil-compaction' % (stress_test_meteo, magnitude, duration))
+                        script_names_modflow.append('modflow_%s-magnitude%s-duration%s_irrigation_no-yellow-mustard_soil-compaction' % (stress_test_meteo, magnitude, duration))
+                        script_names_modflow.append('modflow_%s-magnitude%s-duration%s_no-irrigation_yellow-mustard_soil-compaction' % (stress_test_meteo, magnitude, duration))
+                        script_names_modflow.append('modflow_%s-magnitude%s-duration%s_irrigation_yellow-mustard_no-soil-compaction' % (stress_test_meteo, magnitude, duration))
+                        script_names_modflow.append('modflow_%s-magnitude%s-duration%s_no-irrigation_yellow-mustard_no-soil-compaction' % (stress_test_meteo, magnitude, duration))
+                        script_names_modflow.append('modflow_%s-magnitude%s-duration%s_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only' % (stress_test_meteo, magnitude, duration))
     jobs = []
     years = np.arange(2013, 2024).tolist()
     # xx = [0, 1, 2, 3, 4, 5, 6, 70, 71, 72, 73, 74, 75, 76, 21, 22, 23, 24, 25, 26, 27, 42, 43, 44, 45, 46, 47, 48, 77, 78, 79, 80, 81]
