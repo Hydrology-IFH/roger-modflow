@@ -616,7 +616,7 @@ for month_i, timestamp in enumerate(df_gw_heads.index):
     heads_fissured = np.zeros_like(x_fissured)
     for i in range(len(x_fissured)):
         row, col = src.index(x_fissured[i], y_fissured[i])
-        head = gw_heads_interpolated_fissured[row, col] + (df_diff['difference'].mean() * 50)
+        head = gw_heads_interpolated_fissured[row, col] + (df_diff['difference'].mean() * 5)
         if head > topography[row, col]:
             head = topography[row, col] - 1
         heads_fissured[i] = head

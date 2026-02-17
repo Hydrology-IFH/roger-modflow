@@ -208,7 +208,7 @@ class ModFlowSimulation:
 
         # Create the Flopy groundwater flow (gwf) model object
         model_nam_file = "{}.nam".format(name)
-        gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file, save_flows=True, newtonoptions="NEWTON UNDER_RELAXATION")
+        gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file, save_flows=True, newtonoptions="NEWTON")
 
         # Create the Flopy iterative model solver (ims) Package object
         ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="summary", complexity="COMPLEX", no_ptcrecord="NO_PTC_ALL")
@@ -368,6 +368,16 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer2[mask432] = hydraulic_conductivities_layer2[mask432] * fudge_parameters["4-3_2"].values[model_run]
         hydraulic_conductivities_layer3[mask433] = hydraulic_conductivities_layer3[mask433] * fudge_parameters["4-3_3"].values[model_run]
 
+        # constrain hydraulic conductivities to a reasonable range to avoid numerical issues
+        hydraulic_conductivities_layer1[hydraulic_conductivities_layer1 > 1000] = 1000  # m/day
+        hydraulic_conductivities_layer2[hydraulic_conductivities_layer2 > 1000] = 1000
+        hydraulic_conductivities_layer3[hydraulic_conductivities_layer3 > 1000] = 1000
+        hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 > 1000] = 1000
+        hydraulic_conductivities_layer1[hydraulic_conductivities_layer1 < 10e-6] = 10e-6
+        hydraulic_conductivities_layer2[hydraulic_conductivities_layer2 < 10e-6] = 10e-6
+        hydraulic_conductivities_layer3[hydraulic_conductivities_layer3 < 10e-6] = 10e-6
+        hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 < 10e-6] = 10e-6
+
         # prepare SFR data
         reaches = pd.read_csv(base_path.parent / "input" / "sfr_packagedata_modified.csv", sep=";")
         reaches.iloc[:, 0] = reaches.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
@@ -458,15 +468,6 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer2[~mask] = np.nan
         hydraulic_conductivities_layer3[~mask] = np.nan
         hydraulic_conductivities_layer4[~mask] = np.nan
-        # constrain hydraulic conductivities to a reasonable range to avoid numerical issues
-        hydraulic_conductivities_layer1[hydraulic_conductivities_layer1 > 1000] = 1000  # m/day
-        hydraulic_conductivities_layer2[hydraulic_conductivities_layer2 > 1000] = 1000
-        hydraulic_conductivities_layer3[hydraulic_conductivities_layer3 > 1000] = 1000
-        hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 > 1000] = 1000
-        hydraulic_conductivities_layer1[hydraulic_conductivities_layer1 < 10e-6] = 10e-6
-        hydraulic_conductivities_layer2[hydraulic_conductivities_layer2 < 10e-6] = 10e-6
-        hydraulic_conductivities_layer3[hydraulic_conductivities_layer3 < 10e-6] = 10e-6
-        hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 < 10e-6] = 10e-6
 
         # fudge streambed conductivity
         cond = (reaches["kf"] >= 10e-6)
@@ -643,8 +644,6 @@ class ModFlowSimulation:
                                           save_flows=True, boundnames=None,
                                           maxbound=self.modflow_basin.sum(), stress_period_data=cpr_irr_spd)
 
-
-
         # streamflow routing package (SFR)
         ls_obs = [(str(key), str(config_modflow["sfr_obs"][key][0]), (int(config_modflow["sfr_obs"][key][1]),)) for key in config_modflow["sfr_obs"].keys()]
         obs_dict = {
@@ -701,7 +700,7 @@ class ModFlowSimulation:
         head_filerecord = [headfile]
         budgetfile = "{}.cbc".format(name)
         budget_filerecord = [budgetfile]
-        saverecord = [("HEAD", "FIRST"), ("HEAD", "FREQUENCY", 7), ("HEAD", "LAST"), ("BUDGET", "FIRST"), ("BUDGET", "FREQUENCY", 7), ("BUDGET", "LAST")]
+        saverecord = [("HEAD", "FIRST"), ("HEAD", "FREQUENCY", 1), ("HEAD", "LAST"), ("BUDGET", "FIRST"), ("BUDGET", "FREQUENCY", 1), ("BUDGET", "LAST")]
         oc = flopy.mf6.modflow.mfgwfoc.ModflowGwfoc(
             gwf,
             pname="oc",
@@ -994,7 +993,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     groundwater_head = np.zeros(config_modflow['ny'] * config_modflow['nx'])
     modflow_interface.get_groundwater_head(groundwater_head)
     groundwater_head = groundwater_head.reshape(config_modflow['ny'], config_modflow['nx'])
-    print(groundwater_head[213, 465])
+    print(groundwater_head[214, 450])
     # aggregate groundwater head to the resolution of RoGeR
     groundwater_head = aggregate_to_finer_resolution(groundwater_head, config_modflow['dx'], 25, method="keep")
     # RoGeR requires depth of groundwater head (in meters)
@@ -1002,7 +1001,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     groundwater_depth[(groundwater_depth <= soildepth)] = soildepth[(groundwater_depth <= soildepth)] + 0.05
 
     # update recharge and pass it to MODFLOW
-    recharge_ = recharge_year[doy - 1, :, :]
+    recharge_ = recharge_year[1, :, :]
     recharge = recharge_.flatten()
     recharge[(groundwater_depth <= soildepth)] = 0 # constrain recharge to zero where groundwater depth is equal to soil depth
     recharge = recharge.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64) / 1000  # mm/day to m/day
@@ -1014,19 +1013,9 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     recharge[recharge > 0.1] = 0.1  # constrain recharge to 0.1 m/day
     modflow_interface.set_recharge(recharge)
 
-    # update capillary rise and pass it to MODFLOW
-    capillary_rise_ = capillary_rise_year[doy - 1, :, :]
-    capillary_rise = capillary_rise_.flatten()
-    capillary_rise = capillary_rise.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64) / 1000  # mm/day to m/day
-    capillary_rise = aggregate_to_coarser_resolution(capillary_rise, 25, config_modflow['dx'], method="average")
-    capillary_rise[capillary_rise > 0.003] = 0.003  # constrain capillary rise to 0.0031 m/day
     # set ET extinction depth to 3 m for the entire model domain
-    extinction_depth = np.zeros((len(capillary_rise.flatten()),), dtype=np.float64) + 3
+    extinction_depth = np.zeros((len(recharge),), dtype=np.float64) + 3
     modflow_interface.set_cpr_irr_depth(extinction_depth)
-    # set ET surface to the current groundwater head for the entire model domain
-    modflow_interface.set_cpr_irr_surface(groundwater_head.flatten())
-    capillary_rise_irrigation = capillary_rise.flatten()
-    modflow_interface.set_cpr_irr_rate(capillary_rise_irrigation)
 
     # update well rate and pass it to MODFLOW
     well_extraction_rate = np.zeros((n_wells,), dtype=np.float64)
@@ -1039,22 +1028,22 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     # update SFR inflow and pass it to MODFLOW
     sfr_inflow = np.zeros((n_reaches,), dtype=np.float64)
     # set Eschbach inflow to the observed discharge of the current year and day
-    sfr_inflow[449] = discharge_rotbach_year_doy * 86400 * (0.1/0.548)
+    sfr_inflow[449] = discharge_rotbach_year_doy * 86400 * (0.1/0.548) * 0.1  # decrease discharge by factor 0.1 for initial steady state
     # set Ibenbach inflow to the observed discharge of the current year and day
-    sfr_inflow[137] = discharge_rotbach_year_doy * 86400 * (0.1/0.548)
+    sfr_inflow[137] = discharge_rotbach_year_doy * 86400 * (0.1/0.548) * 0.1
     # set Wagensteigbach inflow to the observed discharge of the current year and day
-    sfr_inflow[168] = discharge_rotbach_year_doy * 86400 * (0.354/0.548)
+    sfr_inflow[168] = discharge_rotbach_year_doy * 86400 * (0.354/0.548) * 0.1
     # set Rotbach inflow to the observed discharge of the current year and day
-    sfr_inflow[103] = discharge_rotbach_year_doy * 86400
+    sfr_inflow[103] = discharge_rotbach_year_doy * 86400 * 0.1
     # set Brugga inflow to the observed discharge
-    sfr_inflow[6] = discharge_dreisam_year_doy * 86400 * (0.7/2.8)
+    sfr_inflow[6] = discharge_dreisam_year_doy * 86400 * (0.7/2.8) * 0.1
     # set Moehlin inflow to the observed discharge of the current year and day
-    sfr_inflow[3633] = discharge_moehlin_year_doy * 86400 * 0.5
-    sfr_inflow[3539] = discharge_moehlin_year_doy * 86400 * 0.5
+    sfr_inflow[3633] = discharge_moehlin_year_doy * 86400 * 0.5 * 0.1
+    sfr_inflow[3539] = discharge_moehlin_year_doy * 86400 * 0.5 * 0.1
     # set Muehlbach inflow to the observed discharge of the current year and day
-    sfr_inflow[1155] = discharge_moehlin_year_doy * 86400 * (0.1/0.33)
+    sfr_inflow[1155] = discharge_moehlin_year_doy * 86400 * (0.1/0.33) * 0.1
     # set Neumagen inflow to the observed discharge of the current year and day
-    sfr_inflow[1272] = discharge_neumagen_year_doy * 86400
+    sfr_inflow[1272] = discharge_neumagen_year_doy * 86400 * 0.1
     modflow_interface.set_sfr_inflow(sfr_inflow)
 
     # run MODFLOW for one timestep
@@ -1113,7 +1102,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         groundwater_head = np.zeros(config_modflow['ny'] * config_modflow['nx'])
         modflow_interface.get_groundwater_head(groundwater_head)
         groundwater_head = groundwater_head.reshape(config_modflow['ny'], config_modflow['nx'])
-        print(groundwater_head[213, 465])
+        print(groundwater_head[214, 450])
         # aggregate groundwater head to the resolution of RoGeR
         groundwater_head = aggregate_to_finer_resolution(groundwater_head, config_modflow['dx'], 25, method="keep")
         # RoGeR requires depth of groundwater head (in meters)
@@ -1138,9 +1127,6 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         capillary_rise = capillary_rise.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64) / 1000  # mm/day to m/day
         capillary_rise = aggregate_to_coarser_resolution(capillary_rise, 25, config_modflow['dx'], method="average")
         capillary_rise[capillary_rise > 0.003] = 0.003  # constrain capillary rise to 0.003 m/day i.e. 3 mm/day
-        # set ET extinction depth to 3 m for the entire model domain
-        extinction_depth = np.zeros((len(capillary_rise.flatten()),), dtype=np.float64) + 3
-        modflow_interface.set_cpr_irr_depth(extinction_depth)
         # set ET surface to the current groundwater head for the entire model domain
         modflow_interface.set_cpr_irr_surface(groundwater_head.flatten())
 

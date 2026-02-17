@@ -983,6 +983,12 @@ plot_conditional_realizations(grid_x, grid_y, realizations, topography, x_combin
 
 plot_comparison(grid_x, grid_y, uk_heads, gw_heads_interpolated + df_diff['difference'].mean(), topography, mask)
 
+initial_heads_combined = gw_heads_interpolated.copy()
+initial_heads_combined[mask_porous] = interpolated_heads_porous[mask_porous]
+print("Mean difference between observed and interpolated heads at observation points:", df_diff['difference'].mean())
+initial_heads_combined[mask_fissured] = gw_heads_interpolated[mask_fissured] + (df_diff['difference'].mean()/0.2)
+initial_heads_combined = np.where(initial_heads_combined > topography, topography - 1, initial_heads_combined)
+
 ds = xr.Dataset()
 ds["spatial_ref"] = spatial_ref
 file = base_path / "input" / "initial_conditions.nc"
@@ -1019,7 +1025,7 @@ with h5netcdf.File(file, "a", decode_vlen_strings=False) as f:
     v = f.create_variable(
         "initial_head", ("y", "x"), np.float64, compression="gzip", compression_opts=1
     )
-    v[:, :] = uk_heads[:, :]
+    v[:, :] = initial_heads_combined[:, :]
     v.attrs.update(long_name="Interpolated heads", units=" ", grid_mapping="spatial_ref", coordinates="spatial_ref")
 
     v = f.create_variable(
