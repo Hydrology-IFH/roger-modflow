@@ -277,8 +277,8 @@ def plot_outliers(
     ax.scatter(outliers.index, outliers, color='red', 
                s=100, marker='x', label='Outliers', zorder=5)
     
-    ax.set_xlabel('Date')
-    ax.set_ylabel('Groundwater Level')
+    ax.set_xlabel('Zeit')
+    ax.set_ylabel('GW-Hoehe [m ü. M.]')
     ax.set_title(title)
     ax.legend()
     ax.grid(True, alpha=0.3)
@@ -483,8 +483,8 @@ for column in df_gw_heads.columns:
     elif fill_method in ["nan"]:
         ax.scatter(df_gw_heads_filled.index, df_gw_heads_filled[column], color="black", s=15, label="Cleaned Data", zorder=2)
     ax.set_xlim(df_gw_heads_filled.index.min(), df_gw_heads_filled.index.max())
-    ax.set_xlabel("Date")
-    ax.set_ylabel("Groundwater head (m)")
+    ax.set_xlabel("Zeit")
+    ax.set_ylabel("GW-Hoehe [m ü. M.]")
     ax.set_title(f"{column} - {method_name} ({outlier_pct:.1f}% outliers)")
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)

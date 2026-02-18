@@ -22,9 +22,9 @@ def plot_measurement_points(x, y, heads, fig_name='measurement_points'):
     fig, ax = plt.subplots(1, 1, figsize=(10, 6))
     scatter = ax.scatter(x, y, c=heads, s=100, cmap='viridis', 
                          edgecolors='black', linewidths=0.5)
-    fig.colorbar(scatter, ax=ax, label='Groundwater Head (m)')
-    ax.set_xlabel('X-coordinate', fontsize=12)
-    ax.set_ylabel('Y-coordinate', fontsize=12)
+    fig.colorbar(scatter, ax=ax, label='GW-Hoehe [m ü. M.]')
+    ax.set_xlabel('X-Koordinate', fontsize=12)
+    ax.set_ylabel('Y-Koordinate', fontsize=12)
     ax.grid(True, alpha=0.3)
     ax.axis('equal')
     fig.tight_layout()
@@ -219,7 +219,7 @@ def analyze_variogram(x, y, heads, max_dist=None, fig_name='variogram_analysis')
     
     # Plot experimental and fitted variogram
     fig, ax = plt.subplots(1, 1, figsize=(10, 6))
-    ax.scatter(bin_center, gamma, label='Experimental variogram', 
+    ax.scatter(bin_center, gamma, label='Variogram', 
                 color='red', s=50, alpha=0.7, zorder=3)
     
     # Plot fitted model
@@ -448,15 +448,15 @@ def plot_interpolation_results(grid_x, grid_y, interpolated_heads,
     contour = ax1.contourf(X, Y, interpolated_heads, levels=20, 
                           cmap='viridis', alpha=0.8)
     ax1.scatter(x, y, c=heads, s=80, cmap='viridis', 
-               edgecolors='white', linewidths=1.5, label='Measurements')
+               edgecolors='white', linewidths=1.5, label='GW-Pegel')
     contour_lines = ax1.contour(X, Y, interpolated_heads, levels=10, 
                                 colors='black', alpha=0.4, linewidths=0.5)
     ax1.clabel(contour_lines, inline=True, fontsize=8)
     
-    cbar1 = plt.colorbar(contour, ax=ax1, label='Groundwater Head (m)')
-    ax1.set_xlabel('X-coordinate', fontsize=12)
-    ax1.set_ylabel('Y-coordinate', fontsize=12)
-    ax1.set_title(f'Interpolated Heads', fontsize=14)
+    cbar1 = plt.colorbar(contour, ax=ax1, label='GW-Hoehe [m ü. M.]')
+    ax1.set_xlabel('X-Koordinate', fontsize=12)
+    ax1.set_ylabel('Y-Koordinate', fontsize=12)
+    ax1.set_title(f'Interpolierte GW-Höhe', fontsize=14)
     ax1.axis('equal')
     ax1.grid(True, alpha=0.3)
     
@@ -468,8 +468,8 @@ def plot_interpolation_results(grid_x, grid_y, interpolated_heads,
     
     cbar2 = plt.colorbar(variance_plot, ax=ax2, 
                         label='Variance (m²)')
-    ax2.set_xlabel('X-coordinate', fontsize=12)
-    ax2.set_ylabel('Y-coordinate', fontsize=12)
+    ax2.set_xlabel('X-Koordinate', fontsize=12)
+    ax2.set_ylabel('Y-Koordinate', fontsize=12)
     ax2.set_title(f'Uncertainty', fontsize=14)
     ax2.axis('equal')
     ax2.grid(True, alpha=0.3)
@@ -485,15 +485,15 @@ def plot_interpolation_results(grid_x, grid_y, interpolated_heads,
     contour = ax1.contourf(X, Y, depths_array, levels=10, 
                           cmap='viridis', alpha=0.8, vmin=0, vmax=25)
     ax1.scatter(x, y, c=depths, s=80, cmap='viridis', vmin=0, vmax=25,  
-               edgecolors='white', linewidths=1.5, label='Measurements')
+               edgecolors='white', linewidths=1.5, label='GW-Pegel')
     contour_lines = ax1.contour(X, Y, depths_array, levels=10, 
                                 colors='black', alpha=0.4, linewidths=0.5)
     ax1.clabel(contour_lines, inline=True, fontsize=8)
     
-    cbar1 = plt.colorbar(contour, ax=ax1, label='Groundwater depth (m)')
-    ax1.set_xlabel('X-coordinate', fontsize=12)
-    ax1.set_ylabel('Y-coordinate', fontsize=12)
-    ax1.set_title(f'Interpolated Depths', fontsize=14)
+    cbar1 = plt.colorbar(contour, ax=ax1, label='GWFA [m]')
+    ax1.set_xlabel('X-Koordinate', fontsize=12)
+    ax1.set_ylabel('Y-Koordinate', fontsize=12)
+    ax1.set_title(f'Interpolierte GWFA', fontsize=14)
     ax1.axis('equal')
     ax1.grid(True, alpha=0.3)
     
@@ -504,10 +504,10 @@ def plot_interpolation_results(grid_x, grid_y, interpolated_heads,
                linewidths=2, label='Measurements')
     
     cbar2 = plt.colorbar(variance_plot, ax=ax2, 
-                        label='Variance (m²)')
-    ax2.set_xlabel('X-coordinate', fontsize=12)
-    ax2.set_ylabel('Y-coordinate', fontsize=12)
-    ax2.set_title(f'Uncertainty', fontsize=14)
+                        label='Varianz (m²)')
+    ax2.set_xlabel('X-Koordinate', fontsize=12)
+    ax2.set_ylabel('Y-Koordinate', fontsize=12)
+    ax2.set_title(f'Unsicherheit', fontsize=14)
     ax2.axis('equal')
     ax2.grid(True, alpha=0.3)
 
@@ -534,10 +534,10 @@ def plot_conditional_realizations(grid_x, grid_y, realizations, topography, x, y
                             cmap='viridis', alpha=0.8)
         ax.scatter(x, y, c=heads, s=60, cmap='viridis', 
                   edgecolors='white', linewidths=1)
-        plt.colorbar(contour, ax=ax, label='Groundwater Head (m)')
-        ax.set_xlabel('X-coordinate', fontsize=11)
-        ax.set_ylabel('Y-coordinate', fontsize=11)
-        ax.set_title(f'Realization {i+1}', fontsize=13)
+        plt.colorbar(contour, ax=ax, label='GW-Hoehe [m ü. M.]')
+        ax.set_xlabel('X-Koordinate', fontsize=11)
+        ax.set_ylabel('Y-Koordinate', fontsize=11)
+        ax.set_title(f'Realisierung {i+1}', fontsize=13)
         ax.axis('equal')
         ax.grid(True, alpha=0.3)
     
@@ -555,10 +555,10 @@ def plot_conditional_realizations(grid_x, grid_y, realizations, topography, x, y
                             cmap='viridis', alpha=0.8, vmin=0, vmax=25)
         ax.scatter(x, y, c=depths, s=60, cmap='viridis', vmin=0, vmax=25,
                   edgecolors='white', linewidths=1)
-        plt.colorbar(contour, ax=ax, label='Groundwater depth (m)')
-        ax.set_xlabel('X-coordinate', fontsize=11)
-        ax.set_ylabel('Y-coordinate', fontsize=11)
-        ax.set_title(f'Realization {i+1}', fontsize=13)
+        plt.colorbar(contour, ax=ax, label='GWFA [m]')
+        ax.set_xlabel('X-Koordinate', fontsize=11)
+        ax.set_ylabel('Y-Koordinate', fontsize=11)
+        ax.set_title(f'Realisierung {i+1}', fontsize=13)
         ax.axis('equal')
         ax.grid(True, alpha=0.3)
     
@@ -589,10 +589,10 @@ def plot_comparison(grid_x, grid_y, interpolated_heads1, interpolated_heads2, to
                                 colors='black', alpha=0.4, linewidths=0.5)
     ax1.clabel(contour_lines, inline=True, fontsize=8)
     
-    cbar1 = plt.colorbar(contour, ax=ax1, label='Groundwater Head (m)')
-    ax1.set_xlabel('X-coordinate', fontsize=12)
-    ax1.set_ylabel('Y-coordinate', fontsize=12)
-    ax1.set_title(f'Interpolated Heads', fontsize=14)
+    cbar1 = plt.colorbar(contour, ax=ax1, label='GW-Hoehe [m ü. M.]')
+    ax1.set_xlabel('X-Koordinate', fontsize=12)
+    ax1.set_ylabel('Y-Koordinate', fontsize=12)
+    ax1.set_title(f'Interpolierte GW-Hoehe', fontsize=14)
     ax1.axis('equal')
     ax1.grid(True, alpha=0.3)
     
@@ -602,10 +602,10 @@ def plot_comparison(grid_x, grid_y, interpolated_heads1, interpolated_heads2, to
                                 colors='black', alpha=0.4, linewidths=0.5)
     ax2.clabel(contour_lines, inline=True, fontsize=8)
     
-    cbar2 = plt.colorbar(contour, ax=ax2, label='Groundwater Head (m)')
-    ax2.set_xlabel('X-coordinate', fontsize=12)
-    ax2.set_ylabel('Y-coordinate', fontsize=12)
-    ax2.set_title(f'Interpolated Heads', fontsize=14)
+    cbar2 = plt.colorbar(contour, ax=ax2, label='GW-Hoehe [m ü. M.]')
+    ax2.set_xlabel('X-Koordinate', fontsize=12)
+    ax2.set_ylabel('Y-Koordinate', fontsize=12)
+    ax2.set_title(f'Interpolierte GW-Hoehe', fontsize=14)
     ax2.axis('equal')
     ax2.grid(True, alpha=0.3)
 
@@ -623,10 +623,10 @@ def plot_comparison(grid_x, grid_y, interpolated_heads1, interpolated_heads2, to
                                 colors='black', alpha=0.4, linewidths=0.5)
     ax1.clabel(contour_lines, inline=True, fontsize=8)
     
-    cbar1 = plt.colorbar(contour, ax=ax1, label='Groundwater depth (m)')
-    ax1.set_xlabel('X-coordinate', fontsize=12)
-    ax1.set_ylabel('Y-coordinate', fontsize=12)
-    ax1.set_title(f'Interpolated Depths', fontsize=14)
+    cbar1 = plt.colorbar(contour, ax=ax1, label='GWFA [m]')
+    ax1.set_xlabel('X-Koordinate', fontsize=12)
+    ax1.set_ylabel('Y-Koordinate', fontsize=12)
+    ax1.set_title(f'Interpolierte GWFA', fontsize=14)
     ax1.axis('equal')
     ax1.grid(True, alpha=0.3)
     
@@ -637,10 +637,10 @@ def plot_comparison(grid_x, grid_y, interpolated_heads1, interpolated_heads2, to
                                 colors='black', alpha=0.4, linewidths=0.5)
     ax2.clabel(contour_lines, inline=True, fontsize=8)
     
-    cbar2 = plt.colorbar(contour, ax=ax2, label='Groundwater depth (m)')
-    ax2.set_xlabel('X-coordinate', fontsize=12)
-    ax2.set_ylabel('Y-coordinate', fontsize=12)
-    ax2.set_title(f'Interpolated Depths', fontsize=14)
+    cbar2 = plt.colorbar(contour, ax=ax2, label='GWFA [m]')
+    ax2.set_xlabel('X-Koordinate', fontsize=12)
+    ax2.set_ylabel('Y-Koordinate', fontsize=12)
+    ax2.set_title(f'Interpolierte GWFA', fontsize=14)
     ax2.axis('equal')
     ax2.grid(True, alpha=0.3)
 
@@ -794,8 +794,8 @@ ax.set_xlim(np.floor(np.min([heads_porous.min() - 5, heads_porous_kriged.min() -
 ax.set_ylim(np.floor(np.min([heads_porous.min() - 5, heads_porous_kriged.min() - 5])), np.ceil(np.max([heads_porous.max() + 5, heads_porous_kriged.max() + 5])))
 # make 1:1 line
 ax.plot([ax.get_xlim()[0], ax.get_xlim()[1]], [ax.get_xlim()[0], ax.get_xlim()[1]], 'k--', lw=2)
-ax.set_xlabel('Observed Groundwater Head (m)')
-ax.set_ylabel('Kriged Groundwater Head (m)')
+ax.set_xlabel('Gemessene GW-Hoehe [m ü. M.]')
+ax.set_ylabel('Kriging GW-Hoehe [m ü. M.]')
 plt.grid(True)
 fig.tight_layout()
 file = base_path / 'figures' / 'initial_conditions' / f'comparison_observed_kriged_heads_porous_initial.png'
@@ -889,8 +889,8 @@ ax.set_xlim(np.floor(np.min([heads_fissured.min() - 5, heads_fissured_kriged.min
 ax.set_ylim(np.floor(np.min([heads_fissured.min() - 5, heads_fissured_kriged.min() - 5])), np.ceil(np.max([heads_fissured.max() + 5, heads_fissured_kriged.max() + 5])))
 # make 1:1 line
 ax.plot([ax.get_xlim()[0], ax.get_xlim()[1]], [ax.get_xlim()[0], ax.get_xlim()[1]], 'k--', lw=2)
-ax.set_xlabel('Observed Groundwater Head (m)')
-ax.set_ylabel('Kriged Groundwater Head (m)')
+ax.set_xlabel('Gemessene GW-Hoehe [m ü. M.]')
+ax.set_ylabel('Kriging GW-Hoehe [m ü. M.]')
 plt.grid(True)
 fig.tight_layout()
 file = base_path / 'figures' / 'initial_conditions' / f'comparison_observed_kriged_heads_fissured_initial.png'
@@ -960,8 +960,8 @@ ax.set_xlim(np.floor(np.min([heads_combined.min() - 5, heads_combined_kriged.min
 ax.set_ylim(np.floor(np.min([heads_combined.min() - 5, heads_combined_kriged.min() - 5])), np.ceil(np.max([heads_combined.max() + 5, heads_combined_kriged.max() + 5])))
 # make 1:1 line
 ax.plot([ax.get_xlim()[0], ax.get_xlim()[1]], [ax.get_xlim()[0], ax.get_xlim()[1]], 'k--', lw=2)
-ax.set_xlabel('Observed Groundwater Head (m)')
-ax.set_ylabel('Kriged Groundwater Head (m)')
+ax.set_xlabel('Gemessene GW-Hoehe [m ü. M.]')
+ax.set_ylabel('Kriging GW-Hoehe [m ü. M.]')
 plt.grid(True)
 fig.tight_layout()
 file = base_path / 'figures' / 'initial_conditions' / f'comparison_observed_kriged_heads_combined_initial.png'

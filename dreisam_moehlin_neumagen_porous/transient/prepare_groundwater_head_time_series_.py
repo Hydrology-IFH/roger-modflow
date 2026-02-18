@@ -164,8 +164,8 @@ def plot_outliers(
     ax.scatter(outliers.index, outliers, color='red', 
                s=100, marker='x', label='Outliers', zorder=5)
     
-    ax.set_xlabel('Date')
-    ax.set_ylabel('Groundwater Level')
+    ax.set_xlabel('Zeit')
+    ax.set_ylabel('GW-Hoehe [m ü. M.]')
     ax.set_title(title)
     ax.legend()
     ax.grid(True, alpha=0.3)
@@ -329,8 +329,8 @@ for column in df_gw_heads.columns:
     ax.scatter(df_gw_heads_filled.index[_mask_outlier.values], df_gw_heads_filled.loc[_mask_outlier.values, column].values, color="red", s=20, label="Removed Outliers", zorder=3)
     ax.plot(df_gw_heads_filled.index, df_gw_heads_filled[column], color="black", linewidth=1, markersize=1, marker="o", label="Cleaned Data", zorder=1)
     ax.set_xlim(df_gw_heads_filled.index.min(), df_gw_heads_filled.index.max())
-    ax.set_xlabel("Date")
-    ax.set_ylabel("Groundwater head (m)")
+    ax.set_xlabel("Zeit")
+    ax.set_ylabel("GW-Hoehe [m ü. M.]")
     ax.grid(True, alpha=0.3)
     fig.tight_layout()
     file = base_path / "figures" / "groundwater_time_series" / f"{column}_time_series.png"

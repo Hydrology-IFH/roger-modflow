@@ -23,9 +23,9 @@ def plot_measurement_points(x, y, heads, fig_name='measurement_points'):
     fig, ax = plt.subplots(1, 1, figsize=(10, 6))
     scatter = ax.scatter(x, y, c=heads, s=100, cmap='viridis', 
                          edgecolors='black', linewidths=0.5)
-    fig.colorbar(scatter, ax=ax, label='Groundwater Head (m)')
-    ax.set_xlabel('X-coordinate', fontsize=12)
-    ax.set_ylabel('Y-coordinate', fontsize=12)
+    fig.colorbar(scatter, ax=ax, label='GW-Hoehe [m ü. M]')
+    ax.set_xlabel('X-Koordinate', fontsize=12)
+    ax.set_ylabel('Y-Koordinate', fontsize=12)
     ax.grid(True, alpha=0.3)
     ax.axis('equal')
     fig.tight_layout()
@@ -280,7 +280,7 @@ def fit_variogram_model_from_timeseries(timeseries_dict, well_coords_dict_porous
     
     # Plot combined variogram
     fig, ax = plt.subplots(1, 1, figsize=(10, 6))
-    ax.scatter(bin_center, gamma, label='Experimental variogram', 
+    ax.scatter(bin_center, gamma, label='Variogram', 
                color='red', s=50, alpha=0.7, zorder=3)
     
     x_plot = np.linspace(0, max(bin_center), 100)
@@ -291,8 +291,8 @@ def fit_variogram_model_from_timeseries(timeseries_dict, well_coords_dict_porous
                color='gray', linestyle='--', alpha=0.5, 
                label='Sill', zorder=1)
     
-    ax.set_xlabel('Distance (m)', fontsize=12)
-    ax.set_ylabel('Semivariance', fontsize=12)
+    ax.set_xlabel('Distanz (m)', fontsize=12)
+    ax.set_ylabel('Semivarianz', fontsize=12)
     ax.legend(fontsize=11)
     ax.grid(True, alpha=0.3)
     fig.tight_layout()
@@ -433,10 +433,10 @@ def plot_interpolation_results(grid_x, grid_y, interpolated_heads,
                                 colors='black', alpha=0.4, linewidths=0.5)
     ax1.clabel(contour_lines, inline=True, fontsize=8)
     
-    cbar1 = plt.colorbar(contour, ax=ax1, label='Groundwater Head (m)')
-    ax1.set_xlabel('X-coordinate', fontsize=12)
-    ax1.set_ylabel('Y-coordinate', fontsize=12)
-    ax1.set_title(f'{method} Kriging - Interpolated Heads', fontsize=14)
+    cbar1 = plt.colorbar(contour, ax=ax1, label='GW-Hoehe [m ü. M]')
+    ax1.set_xlabel('X-Koordinate', fontsize=12)
+    ax1.set_ylabel('Y-Koordinate', fontsize=12)
+    ax1.set_title(f'{method} Kriging - Interpolierte GW-Hoehe', fontsize=14)
     ax1.axis('equal')
     ax1.grid(True, alpha=0.3)
     
@@ -446,10 +446,10 @@ def plot_interpolation_results(grid_x, grid_y, interpolated_heads,
     ax2.scatter(x, y, c='blue', s=80, marker='x', 
                linewidths=2, label='Measurements')
     
-    cbar2 = plt.colorbar(variance_plot, ax=ax2, label='Variance (m²)')
-    ax2.set_xlabel('X-coordinate', fontsize=12)
-    ax2.set_ylabel('Y-coordinate', fontsize=12)
-    ax2.set_title('Kriging Uncertainty', fontsize=14)
+    cbar2 = plt.colorbar(variance_plot, ax=ax2, label='Varianz (m²)')
+    ax2.set_xlabel('X-Koordinate', fontsize=12)
+    ax2.set_ylabel('Y-Koordinate', fontsize=12)
+    ax2.set_title('Kriging Unsicherheit', fontsize=14)
     ax2.axis('equal')
     ax2.grid(True, alpha=0.3)
 
@@ -471,10 +471,10 @@ def plot_interpolation_results(grid_x, grid_y, interpolated_heads,
                                 colors='black', alpha=0.4, linewidths=0.5)
     ax1.clabel(contour_lines, inline=True, fontsize=8)
     
-    cbar1 = plt.colorbar(contour, ax=ax1, label='Groundwater depth (m)')
-    ax1.set_xlabel('X-coordinate', fontsize=12)
-    ax1.set_ylabel('Y-coordinate', fontsize=12)
-    ax1.set_title('Interpolated Depths', fontsize=14)
+    cbar1 = plt.colorbar(contour, ax=ax1, label='GWFA [m]')
+    ax1.set_xlabel('X-Koordinate', fontsize=12)
+    ax1.set_ylabel('Y-Koordinate', fontsize=12)
+    ax1.set_title('Interpolierte GWFA', fontsize=14)
     ax1.axis('equal')
     ax1.grid(True, alpha=0.3)
     
@@ -482,10 +482,10 @@ def plot_interpolation_results(grid_x, grid_y, interpolated_heads,
                                 cmap='Reds', alpha=0.8)
     ax2.scatter(x, y, c='blue', s=80, marker='x', linewidths=2)
     
-    cbar2 = plt.colorbar(variance_plot, ax=ax2, label='Variance (m²)')
-    ax2.set_xlabel('X-coordinate', fontsize=12)
-    ax2.set_ylabel('Y-coordinate', fontsize=12)
-    ax2.set_title('Uncertainty', fontsize=14)
+    cbar2 = plt.colorbar(variance_plot, ax=ax2, label='Varianz (m²)')
+    ax2.set_xlabel('X-Koordinate', fontsize=12)
+    ax2.set_ylabel('Y-Koordinate', fontsize=12)
+    ax2.set_title('Kriging Unsicherheit', fontsize=14)
     ax2.axis('equal')
     ax2.grid(True, alpha=0.3)
 
