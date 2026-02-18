@@ -745,8 +745,8 @@ class ModFlowSimulation:
         try:
             self.mf6 = XmiWrapper(str(library_path), working_directory=self.working_directory)
         except Exception as e:
-            print(f"Failed to load {library_path}")
-            print("with message: " + str(e))
+            click.echo(f"Failed to load {library_path}")
+            click.echo("with message: " + str(e))
             return self.bmi_return(success, self.working_directory)
 
         # modflow requires the real path (no symlinks etc.)
@@ -761,7 +761,7 @@ class ModFlowSimulation:
             return self.bmi_return(success, str(self.folder / "output" / self.stress_test_scenario))
 
         if self.verbose:
-            print("MODFLOW model initialized")
+            click.echo("MODFLOW model initialized")
 
         
         self.end_time = self.mf6.get_end_time()
@@ -852,7 +852,7 @@ class ModFlowSimulation:
         self.mf6.finalize_time_step()
 
         if self.verbose:
-            print(f'MODFLOW timestep {int(self.mf6.get_current_time())} converged in {round(time() - t0, 2)} seconds')
+            click.echo(f'MODFLOW timestep {int(self.mf6.get_current_time())} converged in {round(time() - t0, 2)} seconds')
         
         # If next step exists, prepare timestep. Otherwise the data set through the bmi
         # will be overwritten when preparing the next timestep.
@@ -993,7 +993,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     groundwater_head = np.zeros(config_modflow['ny'] * config_modflow['nx'])
     modflow_interface.get_groundwater_head(groundwater_head)
     groundwater_head = groundwater_head.reshape(config_modflow['ny'], config_modflow['nx'])
-    print(groundwater_head[214, 450])
+    click.echo(groundwater_head[214, 450])
     # aggregate groundwater head to the resolution of RoGeR
     groundwater_head = aggregate_to_finer_resolution(groundwater_head, config_modflow['dx'], 25, method="keep")
     # RoGeR requires depth of groundwater head (in meters)
@@ -1048,7 +1048,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
 
     # run MODFLOW for one timestep
     modflow_interface.step()
-    print("MODFLOW (initial steady-state) finalized")
+    click.echo("MODFLOW (initial steady-state) finalized")
 
     # run the transient simulation
     for i in range(NDAYS):
@@ -1102,7 +1102,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         groundwater_head = np.zeros(config_modflow['ny'] * config_modflow['nx'])
         modflow_interface.get_groundwater_head(groundwater_head)
         groundwater_head = groundwater_head.reshape(config_modflow['ny'], config_modflow['nx'])
-        print(groundwater_head[214, 450])
+        click.echo(groundwater_head[214, 450])
         # aggregate groundwater head to the resolution of RoGeR
         groundwater_head = aggregate_to_finer_resolution(groundwater_head, config_modflow['dx'], 25, method="keep")
         # RoGeR requires depth of groundwater head (in meters)
@@ -1176,7 +1176,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         modflow_interface.step()
 
     modflow_interface.finalize()
-    print("MODFLOW (transient) finalized")
+    click.echo("MODFLOW (transient) finalized")
 
 if __name__ == "__main__":
     main()

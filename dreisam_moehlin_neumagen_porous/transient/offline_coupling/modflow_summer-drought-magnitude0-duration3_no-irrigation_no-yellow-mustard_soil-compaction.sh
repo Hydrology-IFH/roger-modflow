@@ -47,8 +47,10 @@ cp -r /pfs/10/work/fr_rs1092-workspace/roger/examples/catchment_scale/dreisam_mo
 cp -r /pfs/10/work/fr_rs1092-workspace/roger/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed/output/capillary_rise_summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction_year2023.nc ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/
 sleep 120
 cd ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling
+echo "Start simulation ..."
 python roger-oneD_modflow6_transient_with_well_extraction.py --stress-test-meteo summer-drought --stress-test-meteo-magnitude 0 --stress-test-meteo-duration 3 --soil-compaction soil-compaction
+echo "... finalised simulation"
 # Move output from local SSD to global workspace
 echo "Move output to /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/modflow_summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction"
 mkdir -p /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/modflow_summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction
-mv -v "${TMPDIR}"/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/modflow_summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/modflow_summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction
+mv -v "${TMPDIR}"/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/modflow_summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output
