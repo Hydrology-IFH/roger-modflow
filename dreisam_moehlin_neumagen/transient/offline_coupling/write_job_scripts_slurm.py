@@ -98,7 +98,7 @@ def main():
         output_path_ws = base_path_ws_modflow / "output" / script_name
         lines = []
         lines.append("#!/bin/bash\n")
-        lines.append("#SBATCH --time=24:00:00\n")
+        lines.append("#SBATCH --time=72:00:00\n")
         lines.append("#SBATCH --ntasks=1\n")
         lines.append("#SBATCH --cpus-per-task=1\n")
         lines.append("#SBATCH --mem=32000\n")
