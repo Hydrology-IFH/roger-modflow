@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --time=12:00:00
+#SBATCH --time=24:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=32000
@@ -52,5 +52,4 @@ python roger-oneD_modflow6_transient_with_well_extraction.py --stress-test-meteo
 echo "... finalised simulation"
 # Move output from local SSD to global workspace
 echo "Move output to /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/modflow_spring-summer-drought-magnitude2-duration0_no-irrigation_yellow-mustard_no-soil-compaction"
-mkdir -p /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/modflow_spring-summer-drought-magnitude2-duration0_no-irrigation_yellow-mustard_no-soil-compaction
 mv -v "${TMPDIR}"/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/modflow_spring-summer-drought-magnitude2-duration0_no-irrigation_yellow-mustard_no-soil-compaction /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output
