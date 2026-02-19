@@ -936,7 +936,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         daily_weights_drinking_water_supply = pd.read_csv(base_path.parent / "input" / "daily_weights_drinking_water_supply.csv", sep=";", index_col=0)
         groundwater_extraction = pd.read_csv(base_path.parent / "input" / "groundwater_extraction.csv", sep=";")
     elif stress_test_well_extraction == "stress" and stress_test_meteo in ["summer-drought", "spring-summer-drought"]:
-        daily_weights_drinking_water_supply = pd.read_csv(base_path.parent / "input" / "stress_tests_well_extraction" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "daily_weights_drinking_water_supply.csv", sep=";", index_col=0)
+        daily_weights_drinking_water_supply = pd.read_csv(base_path.parent / "input" / "stress_tests_well_extraction" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "daily_weights_drinking_water_supply.csv", sep=";", index_col=0, skiprows=1)
         groundwater_extraction = pd.read_csv(base_path.parent / "input" / "stress_tests_well_extraction" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "groundwater_extraction.csv", sep=";")
 
     groundwater_extraction["cell_y"] = groundwater_extraction["cell_y"].astype(int)
@@ -973,7 +973,11 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     # initialize the model running in steady-state mode
     year = years[0]
     doy = doys[0]
-    daily_weights_drinking_water_supply_year_doy = daily_weights_drinking_water_supply.loc[int(year), f"{int(doy)}"]
+    if stress_test_well_extraction == "stress":
+        cond_doy_year = (date_time.dayofyear == doy) & (date_time.year == year)
+        daily_weights_drinking_water_supply_year_doy = daily_weights_drinking_water_supply.loc[cond_doy_year, "weights"].values[0]
+    else:
+        daily_weights_drinking_water_supply_year_doy = daily_weights_drinking_water_supply.loc[int(year), f"{int(doy)}"]
     discharge_dreisam_year_doy = df_discharge_dreisam.loc[(df_discharge_dreisam["year"] == year) & (df_discharge_dreisam["DOY"] == doy), "Q"].values[0]
     discharge_moehlin_year_doy = df_discharge_moehlin.loc[(df_discharge_moehlin["year"] == year) & (df_discharge_moehlin["DOY"] == doy), "Q"].values[0]
     discharge_neumagen_year_doy = df_discharge_neumagen.loc[(df_discharge_neumagen["year"] == year) & (df_discharge_neumagen["DOY"] == doy), "Q"].values[0]
@@ -1067,7 +1071,11 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     for i in range(NDAYS):
         year = years[i]
         doy = doys[i]
-        daily_weights_drinking_water_supply_year_doy = daily_weights_drinking_water_supply.loc[int(year), f"{int(doy)}"]
+        if stress_test_well_extraction == "stress":
+            cond_doy_year = (date_time.dayofyear == doy) & (date_time.year == year)
+            daily_weights_drinking_water_supply_year_doy = daily_weights_drinking_water_supply.loc[cond_doy_year, "weights"].values[0]
+        else:
+            daily_weights_drinking_water_supply_year_doy = daily_weights_drinking_water_supply.loc[int(year), f"{int(doy)}"]
         discharge_dreisam_year_doy = df_discharge_dreisam.loc[(df_discharge_dreisam["year"] == year) & (df_discharge_dreisam["DOY"] == doy), "Q"].values[0]
         discharge_moehlin_year_doy = df_discharge_moehlin.loc[(df_discharge_moehlin["year"] == year) & (df_discharge_moehlin["DOY"] == doy), "Q"].values[0]
         discharge_neumagen_year_doy = df_discharge_neumagen.loc[(df_discharge_neumagen["year"] == year) & (df_discharge_neumagen["DOY"] == doy), "Q"].values[0]
