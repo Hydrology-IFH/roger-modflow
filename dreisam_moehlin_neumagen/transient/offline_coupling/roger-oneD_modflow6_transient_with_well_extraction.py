@@ -1052,7 +1052,11 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         groundwater_depth[(groundwater_depth <= soildepth)] = soildepth[(groundwater_depth <= soildepth)] + 0.05
 
         # update recharge and pass it to MODFLOW
-        recharge_ = recharge_year[doy - 1, :, :]
+        try:
+            recharge_ = recharge_year[doy - 1, :, :]
+        except IndexError:
+            click.echo(f"IndexError: doy {doy} of year {year} is out of bounds for recharge. Setting recharge to zero for this timestep.")
+            recharge_ = np.zeros((config_modflow['ny'], config_modflow['nx'])) 
         recharge = recharge_.flatten()
         recharge[(groundwater_depth <= soildepth)] = 0 # constrain recharge to zero where groundwater depth is equal to soil depth
         recharge = recharge.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64) / 1000  # mm/day to m/day
@@ -1062,7 +1066,11 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         modflow_interface.set_recharge(recharge)
 
         # update capillary rise and pass it to MODFLOW
-        capillary_rise_ = capillary_rise_year[doy - 1, :, :]
+        try:
+            capillary_rise_ = capillary_rise_year[doy - 1, :, :]
+        except IndexError:
+            click.echo(f"IndexError: doy {doy} of year {year} is out of bounds for capillary rise. Setting capillary rise to zero for this timestep.")
+            capillary_rise_ = np.zeros((config_modflow['ny'], config_modflow['nx']))
         capillary_rise = capillary_rise_.flatten()
         capillary_rise = capillary_rise.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64) / 1000  # mm/day to m/day
         capillary_rise = aggregate_to_coarser_resolution(capillary_rise, 25, config_modflow['dx'], method="average")

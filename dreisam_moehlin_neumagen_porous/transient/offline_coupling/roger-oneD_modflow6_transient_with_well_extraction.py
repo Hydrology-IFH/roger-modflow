@@ -898,10 +898,16 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     n_reaches = pd.read_csv(base_path.parent / "input" / "sfr_packagedata_modified.csv", sep=";").shape[0]
 
     # load discharge data
-    df_discharge_dreisam = pd.read_csv(base_path.parent / "input" / "2013-2023" / "discharge_dreisam.csv", sep=";", index_col=0, skiprows=1)
-    df_discharge_moehlin = pd.read_csv(base_path.parent / "input" / "2013-2023" / "discharge_moehlin.csv", sep=";", index_col=0, skiprows=1)
-    df_discharge_neumagen = pd.read_csv(base_path.parent / "input" / "2013-2023" / "discharge_neumagen.csv", sep=";", index_col=0, skiprows=1)
-    df_discharge_rotbach = pd.read_csv(base_path.parent / "input" / "2013-2023" / "discharge_rotbach.csv", sep=";", index_col=0, skiprows=1)
+    if stress_test_meteo == "base":
+        df_discharge_dreisam = pd.read_csv(base_path.parent / "input" / "2013-2023" / "discharge_dreisam.csv", sep=";", index_col=0, skiprows=1)
+        df_discharge_moehlin = pd.read_csv(base_path.parent / "input" / "2013-2023" / "discharge_moehlin.csv", sep=";", index_col=0, skiprows=1)
+        df_discharge_neumagen = pd.read_csv(base_path.parent / "input" / "2013-2023" / "discharge_neumagen.csv", sep=";", index_col=0, skiprows=1)
+        df_discharge_rotbach = pd.read_csv(base_path.parent / "input" / "2013-2023" / "discharge_rotbach.csv", sep=";", index_col=0, skiprows=1)
+    elif stress_test_meteo in ["spring-drought", "summer-drought", "spring-summer-drought"]:
+        df_discharge_dreisam = pd.read_csv(base_path.parent / "input" / "stress_test_discharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "Dreisam" / "Q.csv", sep=";", index_col=0, skiprows=1)
+        df_discharge_moehlin = pd.read_csv(base_path.parent / "input" / "stress_test_discharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "Moehlin" / "Q.csv", sep=";", index_col=0, skiprows=1)
+        df_discharge_neumagen = pd.read_csv(base_path.parent / "input" / "stress_test_discharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "Neumagen" / "Q.csv", sep=";", index_col=0, skiprows=1)
+        df_discharge_rotbach = pd.read_csv(base_path.parent / "input" / "stress_test_discharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "Rotbach" / "Q.csv", sep=";", index_col=0, skiprows=1)
     # add DOY and year columns
     df_discharge_dreisam["DOY"] = pd.to_datetime(df_discharge_dreisam.index).dayofyear
     df_discharge_dreisam["year"] = pd.to_datetime(df_discharge_dreisam.index).year
@@ -917,7 +923,10 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     ds_bc = xr.open_dataset(path, engine="h5netcdf")
 
     # load lateral recharge anomalies to scale the recharge to daily values
-    df_lateral_recharge_anomaly = pd.read_csv(base_path.parent / "input" / "2013-2023" / "lateral_recharge_anomaly.csv", sep=";", index_col=0, skiprows=1)
+    if stress_test_meteo == "base":
+        df_lateral_recharge_anomaly = pd.read_csv(base_path.parent / "input" / "2013-2023" / "lateral_recharge_anomaly.csv", sep=";", index_col=0, skiprows=1)
+    elif stress_test_meteo in ["spring-drought", "summer-drought", "spring-summer-drought"]:
+        df_lateral_recharge_anomaly = pd.read_csv(base_path.parent / "input" / "stress_test_lateral_recharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "lateral_recharge_anomaly.csv", sep=";", index_col=0, skiprows=1)
     df_lateral_recharge_anomaly["DOY"] = pd.to_datetime(df_lateral_recharge_anomaly.index).dayofyear
     df_lateral_recharge_anomaly["year"] = pd.to_datetime(df_lateral_recharge_anomaly.index).year
 
@@ -1110,7 +1119,11 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         groundwater_depth[(groundwater_depth <= soildepth)] = soildepth[(groundwater_depth <= soildepth)] + 0.05
 
         # update recharge and pass it to MODFLOW
-        recharge_ = recharge_year[doy - 1, :, :]
+        try:
+            recharge_ = recharge_year[doy - 1, :, :]
+        except IndexError:
+            click.echo(f"IndexError: doy {doy} of year {year} is out of bounds for recharge. Setting recharge to zero for this timestep.")
+            recharge_ = np.zeros((config_modflow['ny'], config_modflow['nx'])) 
         recharge = recharge_.flatten()
         recharge[(groundwater_depth <= soildepth)] = 0 # constrain recharge to zero where groundwater depth is equal to soil depth
         recharge = recharge.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64) / 1000  # mm/day to m/day
@@ -1122,7 +1135,11 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         modflow_interface.set_recharge(recharge)
 
         # update capillary rise and pass it to MODFLOW
-        capillary_rise_ = capillary_rise_year[doy - 1, :, :]
+        try:
+            capillary_rise_ = capillary_rise_year[doy - 1, :, :]
+        except IndexError:
+            click.echo(f"IndexError: doy {doy} of year {year} is out of bounds for capillary rise. Setting capillary rise to zero for this timestep.")
+            capillary_rise_ = np.zeros((config_modflow['ny'], config_modflow['nx']))
         capillary_rise = capillary_rise_.flatten()
         capillary_rise = capillary_rise.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64) / 1000  # mm/day to m/day
         capillary_rise = aggregate_to_coarser_resolution(capillary_rise, 25, config_modflow['dx'], method="average")
