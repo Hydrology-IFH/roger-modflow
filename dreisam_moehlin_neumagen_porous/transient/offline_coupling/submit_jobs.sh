@@ -49,6 +49,8 @@ sbatch -p compute modflow_summer-drought-magnitude2-duration3_no-irrigation_yell
 sbatch -p compute modflow_summer-drought-magnitude2-duration3_irrigation_yellow-mustard_no-soil-compaction.sh
 sbatch -p compute modflow_summer-drought-magnitude2-duration3_no-irrigation_yellow-mustard_no-soil-compaction.sh
 sbatch -p compute modflow_summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only.sh
+sbatch -p compute modflow_summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress.sh
+sbatch -p compute modflow_summer-drought-magnitude2-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress.sh
 sbatch -p compute modflow_spring-summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction.sh
 sbatch -p compute modflow_spring-summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_no-soil-compaction.sh
 sbatch -p compute modflow_spring-summer-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction.sh
@@ -71,7 +73,7 @@ sbatch -p compute modflow_spring-summer-drought-magnitude2-duration3_irrigation_
 sbatch -p compute modflow_spring-summer-drought-magnitude2-duration3_no-irrigation_yellow-mustard_no-soil-compaction.sh
 sbatch -p compute modflow_spring-summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only.sh
 sbatch -p compute modflow_spring-summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress.sh
-sbatch -p compute modflow_spring-summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress.sh
+sbatch -p compute modflow_spring-summer-drought-magnitude2-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress.sh
 sbatch -p compute modflow_spring-summer-wet-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction.sh
 sbatch -p compute modflow_spring-summer-wet-magnitude0-duration0_no-irrigation_no-yellow-mustard_no-soil-compaction.sh
 sbatch -p compute modflow_spring-summer-wet-magnitude0-duration0_irrigation_no-yellow-mustard_soil-compaction.sh

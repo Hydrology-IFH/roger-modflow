@@ -68,9 +68,10 @@ def compress_files(file_list, output_file, compression_level=6):
 @click.option("-ym", "--yellow-mustard", type=click.Choice(["no-yellow-mustard", "yellow-mustard"]), default="no-yellow-mustard", help="Enable catch crop using yellow mustard")
 @click.option("-sc", "--soil-compaction", type=click.Choice(["no-soil-compaction", "soil-compaction"]), default="no-soil-compaction", help="Enable soil compaction")
 @click.option("-gco", "--grain-corn-only", type=click.Choice(["no-grain-corn-only", "grain-corn-only"]), default="no-grain-corn-only", help="Enable grain corn monoculture (no crop rotation)")
+@click.option("-stwe", "--stress-test-well-extraction", type=click.Choice(["no-stress", "stress", "ta-dependent-20", "ta-dependent-40"]), default="no-stress", help="Enable stress test for well extraction")
 @click.option("-mr", "--model-run", type=int, default=1806)
 @click.command("main")
-def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_duration, irrigation, yellow_mustard, soil_compaction, grain_corn_only, model_run):
+def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_duration, irrigation, yellow_mustard, soil_compaction, grain_corn_only, stress_test_well_extraction, model_run):
     try:
         print(sys.version)
         print(f"flopy version: {flopy.__version__}")
@@ -82,6 +83,11 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         else:
             _grain_corn_only = "_grain-corn-only"
 
+        if stress_test_well_extraction == "no-stress":
+            _stress_test_well_extraction = ""
+        else:
+            _stress_test_well_extraction = "_well-extraction-stress"
+
         sim = flopy.mf6.MFSimulation.load(
             sim_ws=base_path / "output",
             exe_name="mf6",
@@ -92,7 +98,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         ml = sim.get_model(f"dmn_run_{model_run}")
         nlayers = np.arange(ml.modelgrid.nlay)
 
-        stress_test_name = f"modflow_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{irrigation}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}"
+        stress_test_name = f"modflow_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{irrigation}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}{_stress_test_well_extraction}"
 
         # load spatial reference and coordinates
         with xr.open_dataset(base_path.parent / "input" / "parameters_modflow.nc") as ds:

@@ -89,11 +89,11 @@ def main():
                         script_names_modflow.append('modflow_%s-magnitude%s-duration%s_no-irrigation_yellow-mustard_no-soil-compaction' % (stress_test_meteo, magnitude, duration))
                         script_names_modflow.append('modflow_%s-magnitude%s-duration%s_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only' % (stress_test_meteo, magnitude, duration))
 
-                        if stress_test_meteo in ["spring-summer-drought", "summer-droght"] and magnitude == 2 and duration == 3:
+                        if stress_test_meteo in ["spring-summer-drought", "summer-drought"] and magnitude == 2 and duration == 3:
                             scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --soil-compaction soil-compaction --irrigation no-irrigation --stress-test-well-extraction stress' % (stress_test_meteo, magnitude, duration))
                             scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --soil-compaction soil-compaction --irrigation irrigation --stress-test-well-extraction stress' % (stress_test_meteo, magnitude, duration))
                             script_names_modflow.append('modflow_%s-magnitude%s-duration%s_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress' % (stress_test_meteo, magnitude, duration))
-                            script_names_modflow.append('modflow_%s-magnitude%s-duration%s_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress' % (stress_test_meteo, magnitude, duration))
+                            script_names_modflow.append('modflow_%s-magnitude%s-duration%s_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress' % (stress_test_meteo, magnitude, duration))
 
     jobs = []
     years = np.arange(2013, 2024).tolist()
@@ -130,14 +130,14 @@ def main():
         lines.append("cp -r %s/input ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient\n" % (str(base_path_ws_modflow.parent)))
         lines.append("cp -r %s/fudge_parameters_modflow.csv ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient\n" % (str(base_path_ws_modflow.parent)))
         for year in years:
-            input_file = script_name.replace("modflow_", "recharge_") + f"_year{year}.nc"
+            input_file = script_name.replace("modflow_", "recharge_").replace("_well-extraction-stress", "") + f"_year{year}.nc"
             lines.append("cp -r %s/output/%s ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/\n" % (base_path_bwhpc_roger, input_file))
         for year in years:
-            input_file = script_name.replace("modflow_", "capillary_rise_") + f"_year{year}.nc"
+            input_file = script_name.replace("modflow_", "capillary_rise_").replace("_well-extraction-stress", "") + f"_year{year}.nc"
             lines.append("cp -r %s/output/%s ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/\n" % (base_path_bwhpc_roger, input_file))
         for year in years:
             if "_irrigation_" in script_name:
-                input_file = script_name.replace("modflow_", "irrigation_") + f"_year{year}.nc"
+                input_file = script_name.replace("modflow_", "irrigation_").replace("_well-extraction-stress", "") + f"_year{year}.nc"
                 lines.append("cp -r %s/output/%s ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/\n" % (base_path_bwhpc_roger, input_file))
         lines.append('sleep 120\n')
         lines.append("cd ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling\n")
