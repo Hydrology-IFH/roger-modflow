@@ -869,7 +869,7 @@ class ModFlowSimulation:
 @click.option("-ym", "--yellow-mustard", type=click.Choice(["no-yellow-mustard", "yellow-mustard"]), default="no-yellow-mustard", help="Enable catch crop using yellow mustard")
 @click.option("-sc", "--soil-compaction", type=click.Choice(["no-soil-compaction", "soil-compaction"]), default="soil-compaction", help="Enable soil compaction")
 @click.option("-gco", "--grain-corn-only", type=click.Choice(["no-grain-corn-only", "grain-corn-only"]), default="no-grain-corn-only", help="Enable grain corn monoculture (no crop rotation)")
-@click.option("-stwe", "--stress-test-well-extraction", type=click.Choice(["no-stress", "ta-dependent-20", "ta-dependent-40"]), default="no-stress", help="Enable stress test for well extraction")
+@click.option("-stwe", "--stress-test-well-extraction", type=click.Choice(["no-stress", "stress", "ta-dependent-20", "ta-dependent-40"]), default="no-stress", help="Enable stress test for well extraction")
 @click.command("main", short_help="Run MODFLOW in transient mode coupled with RoGeR.")
 def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_duration, irrigation, yellow_mustard, soil_compaction, grain_corn_only, stress_test_well_extraction):
     if stress_test_meteo == "base_2000-2024":
@@ -904,10 +904,10 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         df_discharge_neumagen = pd.read_csv(base_path.parent / "input" / "2013-2023" / "discharge_neumagen.csv", sep=";", index_col=0, skiprows=1)
         df_discharge_rotbach = pd.read_csv(base_path.parent / "input" / "2013-2023" / "discharge_rotbach.csv", sep=";", index_col=0, skiprows=1)
     elif stress_test_meteo in ["spring-drought", "summer-drought", "spring-summer-drought"]:
-        df_discharge_dreisam = pd.read_csv(base_path.parent / "input" / "stress_test_discharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "Dreisam" / "Q.csv", sep=";", index_col=0, skiprows=1)
-        df_discharge_moehlin = pd.read_csv(base_path.parent / "input" / "stress_test_discharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "Moehlin" / "Q.csv", sep=";", index_col=0, skiprows=1)
-        df_discharge_neumagen = pd.read_csv(base_path.parent / "input" / "stress_test_discharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "Neumagen" / "Q.csv", sep=";", index_col=0, skiprows=1)
-        df_discharge_rotbach = pd.read_csv(base_path.parent / "input" / "stress_test_discharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "Rotbach" / "Q.csv", sep=";", index_col=0, skiprows=1)
+        df_discharge_dreisam = pd.read_csv(base_path.parent / "input" / "stress_tests_discharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "Dreisam" / "Q.csv", sep=";", index_col=0, skiprows=1)
+        df_discharge_moehlin = pd.read_csv(base_path.parent / "input" / "stress_tests_discharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "Moehlin" / "Q.csv", sep=";", index_col=0, skiprows=1)
+        df_discharge_neumagen = pd.read_csv(base_path.parent / "input" / "stress_tests_discharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "Neumagen" / "Q.csv", sep=";", index_col=0, skiprows=1)
+        df_discharge_rotbach = pd.read_csv(base_path.parent / "input" / "stress_tests_discharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "Rotbach" / "Q.csv", sep=";", index_col=0, skiprows=1)
     # add DOY and year columns
     df_discharge_dreisam["DOY"] = pd.to_datetime(df_discharge_dreisam.index).dayofyear
     df_discharge_dreisam["year"] = pd.to_datetime(df_discharge_dreisam.index).year
@@ -926,12 +926,19 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     if stress_test_meteo == "base":
         df_lateral_recharge_anomaly = pd.read_csv(base_path.parent / "input" / "2013-2023" / "lateral_recharge_anomaly.csv", sep=";", index_col=0, skiprows=1)
     elif stress_test_meteo in ["spring-drought", "summer-drought", "spring-summer-drought"]:
-        df_lateral_recharge_anomaly = pd.read_csv(base_path.parent / "input" / "stress_test_lateral_recharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "lateral_recharge_anomaly.csv", sep=";", index_col=0, skiprows=1)
+        df_lateral_recharge_anomaly = pd.read_csv(base_path.parent / "input" / "stress_tests_lateral_recharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "lateral_recharge_anomaly.csv", sep=";", index_col=0, skiprows=1)
     df_lateral_recharge_anomaly["DOY"] = pd.to_datetime(df_lateral_recharge_anomaly.index).dayofyear
     df_lateral_recharge_anomaly["year"] = pd.to_datetime(df_lateral_recharge_anomaly.index).year
 
     # load groundwater extraction data
-    groundwater_extraction = pd.read_csv(base_path.parent / "input" / "groundwater_extraction.csv", sep=";")
+    # load daily weights for drinking water supply wells to scale the pumping rates of the drinking water supply wells in the well package
+    if stress_test_well_extraction == "no-stress":
+        daily_weights_drinking_water_supply = pd.read_csv(base_path.parent / "input" / "daily_weights_drinking_water_supply.csv", sep=";", index_col=0)
+        groundwater_extraction = pd.read_csv(base_path.parent / "input" / "groundwater_extraction.csv", sep=";")
+    elif stress_test_well_extraction == "stress" and stress_test_meteo in ["summer-drought", "spring-summer-drought"]:
+        daily_weights_drinking_water_supply = pd.read_csv(base_path.parent / "input" / "stress_tests_well_extraction" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "daily_weights_drinking_water_supply.csv", sep=";", index_col=0)
+        groundwater_extraction = pd.read_csv(base_path.parent / "input" / "stress_tests_well_extraction" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "groundwater_extraction.csv", sep=";")
+
     groundwater_extraction["cell_y"] = groundwater_extraction["cell_y"].astype(int)
     groundwater_extraction["cell_x"] = groundwater_extraction["cell_x"].astype(int)
     groundwater_extraction["layer"] = groundwater_extraction["layer"].astype(int)
@@ -941,9 +948,6 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     groundwater_extraction["layer"] = groundwater_extraction["layer"].values - 1
     n_wells = len(groundwater_extraction)
     cond_drinking_water_supply = groundwater_extraction["purpose"].isin(['Badenova WW Ebnet', 'Badenova WW Hausen', 'Eigenwasserversorgung', 'oeffentliche Wasserversorgung']).values
-
-    # load daily weights for drinking water supply wells to scale the pumping rates of the drinking water supply wells in the well package
-    daily_weights_drinking_water_supply = pd.read_csv(base_path.parent / "input" / "daily_weights_drinking_water_supply.csv", sep=";", index_col=0)
 
     # get number of days in the simulation which also used as number of time steps in MODFLOW
     NDAYS = len(date_time)

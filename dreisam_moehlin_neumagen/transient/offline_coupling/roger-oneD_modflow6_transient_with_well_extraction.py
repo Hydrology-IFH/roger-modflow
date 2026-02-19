@@ -903,7 +903,14 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     source_rnos = sfr_connections[sfr_connections.iloc[:, -3:].isna().all(axis=1)].iloc[:, 0].tolist()
 
     # load groundwater extraction data
-    groundwater_extraction = pd.read_csv(base_path.parent / "input" / "groundwater_extraction.csv", sep=";")
+    # load daily weights for drinking water supply wells to scale the pumping rates of the drinking water supply wells in the well package
+    if stress_test_well_extraction == "no-stress":
+        daily_weights_drinking_water_supply = pd.read_csv(base_path.parent / "input" / "daily_weights_drinking_water_supply.csv", sep=";", index_col=0)
+        groundwater_extraction = pd.read_csv(base_path.parent / "input" / "groundwater_extraction.csv", sep=";")
+    elif stress_test_well_extraction == "stress" and stress_test_meteo in ["summer-drought", "spring-summer-drought"]:
+        daily_weights_drinking_water_supply = pd.read_csv(base_path.parent / "input" / "stress_tests_well_extraction" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "daily_weights_drinking_water_supply.csv", sep=";", index_col=0)
+        groundwater_extraction = pd.read_csv(base_path.parent / "input" / "stress_tests_well_extraction" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "groundwater_extraction.csv", sep=";")
+
     groundwater_extraction["cell_y"] = groundwater_extraction["cell_y"].astype(int)
     groundwater_extraction["cell_x"] = groundwater_extraction["cell_x"].astype(int)
     groundwater_extraction["layer"] = groundwater_extraction["layer"].astype(int)
@@ -913,9 +920,6 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     groundwater_extraction["layer"] = groundwater_extraction["layer"].values - 1
     n_wells = len(groundwater_extraction)
     cond_drinking_water_supply = groundwater_extraction["purpose"].isin(['Badenova WW Ebnet', 'Badenova WW Hausen', 'Eigenwasserversorgung', 'oeffentliche Wasserversorgung']).values
-
-    # load daily weights for drinking water supply wells to scale the pumping rates of the drinking water supply wells in the well package
-    daily_weights_drinking_water_supply = pd.read_csv(base_path.parent / "input" / "daily_weights_drinking_water_supply.csv", sep=";", index_col=0)
 
     # get number of days in the simulation which also used as number of time steps in MODFLOW
     NDAYS = len(date_time)
