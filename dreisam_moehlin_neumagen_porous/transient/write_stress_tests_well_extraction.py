@@ -1,22 +1,8 @@
 from pathlib import Path
-import numpy as np
-import xarray as xr
 import pandas as pd
 import os
 
 base_path = Path(__file__).parent
-
-# Load MODFLOW parameters
-path = base_path / "input" / "parameters_modflow.nc"
-ds_params = xr.open_dataset(path, engine="h5netcdf")
-spatial_ref = ds_params.spatial_ref
-xcoords = ds_params.x.values
-ycoords = ds_params.y.values
-topography = ds_params['topography'].values
-mask_combined = np.isfinite(topography)
-mask_porous = ds_params['mask_porous_aquifer'].values == 1
-mask_fissured = (ds_params['mask_black_forest'].values == 1) & np.isfinite(topography)
-grid_extent = (xcoords[0], xcoords[-1], ycoords[0], ycoords[-1])
 
 # load groundwater extraction data
 df_groundwater_extraction = pd.read_csv(base_path / "input" / "groundwater_extraction.csv", sep=";")
