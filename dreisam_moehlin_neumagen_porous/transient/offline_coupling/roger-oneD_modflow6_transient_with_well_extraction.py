@@ -1018,10 +1018,10 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     groundwater_depth[(groundwater_depth <= soildepth)] = soildepth[(groundwater_depth <= soildepth)] + 0.05
 
     # update recharge and pass it to MODFLOW
-    recharge_ = recharge_year[1, :, :]
+    recharge_ = recharge_year[1, :, :] / 1000  # mm/day to m/day
     recharge = recharge_.flatten()
     recharge[(groundwater_depth <= soildepth)] = 0 # constrain recharge to zero where groundwater depth is equal to soil depth
-    recharge = recharge.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64) / 1000  # mm/day to m/day
+    recharge = recharge.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64)
     recharge_vertical = aggregate_to_coarser_resolution(recharge, 25, config_modflow['dx'], method="average")
     recharge_vertical[recharge_vertical > 0.1] = 0.1  # constrain recharge to 0.1 m/day
     recharge_lateral = ((ds_bc["lateral_inflow_bc_mmday"].values) / 1000) * (1 + lateral_recharge_anomaly_year_doy)  # mm/day to m/day
@@ -1135,7 +1135,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             recharge_ = recharge_year[doy - 1, :, :]
         except IndexError:
             click.echo(f"IndexError: doy {doy} of year {year} is out of bounds for recharge. Setting recharge to zero for this timestep.")
-            recharge_ = np.zeros((config_modflow['ny'], config_modflow['nx'])) 
+            recharge_ = np.zeros((config_modflow['ny'] * 2, config_modflow['nx'] * 2)) 
         recharge = recharge_.flatten()
         recharge[(groundwater_depth <= soildepth)] = 0 # constrain recharge to zero where groundwater depth is equal to soil depth
         recharge = recharge.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64) / 1000  # mm/day to m/day
@@ -1148,23 +1148,19 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
 
         # update capillary rise and pass it to MODFLOW
         try:
-            capillary_rise_ = capillary_rise_year[doy - 1, :, :]
+            capillary_rise_ = capillary_rise_year[doy - 1, :, :] / 1000  # mm/day to m/day
         except IndexError:
             click.echo(f"IndexError: doy {doy} of year {year} is out of bounds for capillary rise. Setting capillary rise to zero for this timestep.")
-            capillary_rise_ = np.zeros((config_modflow['ny'], config_modflow['nx']))
-        capillary_rise = capillary_rise_.flatten()
-        capillary_rise = capillary_rise.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64) / 1000  # mm/day to m/day
-        capillary_rise = aggregate_to_coarser_resolution(capillary_rise, 25, config_modflow['dx'], method="average")
+            capillary_rise_ = np.zeros((config_modflow['ny'] * 2, config_modflow['nx'] * 2))
+        capillary_rise = aggregate_to_coarser_resolution(capillary_rise_, 25, config_modflow['dx'], method="average")
         capillary_rise[capillary_rise > 0.003] = 0.003  # constrain capillary rise to 0.003 m/day i.e. 3 mm/day
         # set ET surface to the current groundwater head for the entire model domain
         modflow_interface.set_cpr_irr_surface(groundwater_head.flatten())
 
         if irrigation == "irrigation":
             # update irrigation and pass it to MODFLOW as capillary rise (i.e. evapotranspiration) since the water is extracted from the groundwater by plants
-            irrigation_ = irrigation_year[doy - 1, :, :]
-            irrigation = irrigation_.flatten()
-            irrigation = irrigation.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64) / 1000  # mm/day to m/day
-            irrigation = aggregate_to_coarser_resolution(irrigation, 25, config_modflow['dx'], method="average")
+            irrigation_ = irrigation_year[doy - 1, :, :] / 1000  # mm/day to m/day
+            irrigation = aggregate_to_coarser_resolution(irrigation_, 25, config_modflow['dx'], method="average")
             irrigation[irrigation > 0.03] = 0.03  # constrain irrigation to 0.03 m/day
             capillary_rise_irrigation = capillary_rise.flatten() + irrigation.flatten()
         else:
