@@ -120,13 +120,13 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
 
         fhead = base_path / "output" / stress_test_name / f"dmn_run_{model_run}.hds"
         click.echo(f"Reading head file {fhead}...")
-        hds = flopy.utils.HeadFile(fhead)
+        # hds = flopy.utils.HeadFile(fhead)
         ntimesteps = hds.get_alldata().shape[0]
         timesteps = np.arange(ntimesteps)
 
-        fbudget = base_path / "output" / stress_test_name / f"dmn_run_{model_run}.cbc"
-        click.echo(f"Reading cell budget file {fbudget}...")
-        cbb = flopy.utils.CellBudgetFile(fbudget)
+        # fbudget = base_path / "output" / stress_test_name / f"dmn_run_{model_run}.cbc"
+        # click.echo(f"Reading cell budget file {fbudget}...")
+        # cbb = flopy.utils.CellBudgetFile(fbudget)
 
         # cbb_headers = cbb.headers
         # file = base_path / "output" / "cbb_headers.csv"
@@ -163,9 +163,8 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
                     "Time": ("Time", timesteps_year, {"units": f"days since {year}-01-01", "calendar": "gregorian"}),
                 }
             click.echo("Extracting data for heads,...")
-            heads_year = np.where(hds.get_alldata()[cond_year, :, :, :] > 10000, np.nan, hds.get_alldata()[cond_year, :, :, :])
-            # click.echo("..., depths,...")
-            # depths_year = np.where(heads_year > 10000, np.nan, np.where(topography[np.newaxis, np.newaxis, :, :] - heads_year > 0, topography[np.newaxis, np.newaxis, :, :] - heads_year, 0))
+            # heads_year = np.where(hds.get_alldata()[cond_year, :, :, :] > 10000, np.nan, hds.get_alldata()[cond_year, :, :, :])
+            heads_year = np.zeros((len(timesteps_year), len(nlayers), len(ycoords), len(xcoords)))
 
             data_vars=dict(
                     head=(["Time", "layer", "lat", "lon"], heads_year),
