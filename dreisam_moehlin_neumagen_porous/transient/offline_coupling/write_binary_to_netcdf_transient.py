@@ -158,7 +158,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             click.echo("..., depths,...")
             depths_year = np.where(heads_year > 10000, np.nan, np.where(topography[np.newaxis, np.newaxis, :, :] - heads_year > 0, topography[np.newaxis, np.newaxis, :, :] - heads_year, 0))
             click.echo("... and groundwater-surface water flux...")
-            gw_sw_year = np.zeros_like(len(timesteps_year), len(ycoords), len(xcoords))
+            gw_sw_year = np.zeros((len(timesteps_year), len(ycoords), len(xcoords)))
             for _i in ii_year:
                 i = int(_i)
                 click.echo(f"Processing time step {i} for year {year}... (GW-SW flux)")
