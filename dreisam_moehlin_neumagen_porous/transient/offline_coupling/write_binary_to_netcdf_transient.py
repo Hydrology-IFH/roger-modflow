@@ -162,7 +162,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
                 timestep_year = int(_timestep_year)  # get time step index from timesteps_year
                 timestep_year = cbb.get_kstpkper()[i+1][0]  # get time step index from cell budget file (add 1 to skip steady-state time step)
                 click.echo(f"Processing time step {timestep_year} for year {year}... (GW-SW flux)")
-                gw_sw_year[i, :, :] = np.nansum(cbb.get_data(text="SFR", kstpkper=(timestep_year, 1), full3D=True)[0].filled(fill_value=np.nan), axis=0)
+                gw_sw_year[i, :, :] = np.nansum(cbb.get_data(text="SFR", kstpkper=(timestep_year, 1), full3D=True)[0].filled(fill_value=np.nan), axis=0) * (-1)
 
             data_vars=dict(
                     head=(["Time", "layer", "lat", "lon"], heads_year),
@@ -178,6 +178,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             comp = dict(zlib=True, complevel=1)  # compress data to save storage
             encoding = {var: comp for var in ds.data_vars}
             ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)
+            ds.close()
             files_to_compress.append(file)
 
             data_vars=dict(
@@ -195,23 +196,25 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             comp = dict(zlib=True, complevel=1)  # compress data to save storage
             encoding = {var: comp for var in ds.data_vars}
             ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)
+            ds.close()
             files_to_compress.append(file)
 
             data_vars=dict(
-                    gw_sw=(["Time", "lat", "lon"], gw_sw_year/86400.0),
+                    indirect_recharge=(["Time", "lat", "lon"], gw_sw_year/86400.0),
                 )
 
             ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
-            ds["gw_sw"].attrs["units"] = "m3/s"
-            ds["gw_sw"].attrs["long_name"] = "Groundwater-Surface water flux"
+            ds["indirect_recharge"].attrs["units"] = "m3/s"
+            ds["indirect_recharge"].attrs["long_name"] = "Recharge from surface water. Negative values indicate surface water leakage into the groundwater."
             # create spatial reference
             ds = ds.geo.write_crs("EPSG:25832")
             ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
-            file = base_path / "output" / stress_test_name / f"gw_sw_flux_{model_run}_year{year}.nc"
+            file = base_path / "output" / stress_test_name / f"indirect_recharge_{model_run}_year{year}.nc"
             click.echo(f"Writing {file}...")
             comp = dict(zlib=True, complevel=1)  # compress data to save storage
             encoding = {var: comp for var in ds.data_vars}
             ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)
+            ds.close()
             files_to_compress.append(file)
 
 
