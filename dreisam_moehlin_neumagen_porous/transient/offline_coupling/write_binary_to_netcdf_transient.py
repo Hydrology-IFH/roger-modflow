@@ -140,6 +140,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
 
         files_to_compress = []
         for year in years:
+            click.echo(f"Processing year {year}...")
             cond_year = (date_time.year == year)
             date_time_year = date_time[date_time.year == year]
             timesteps_year = np.arange(len(date_time_year)) * 7  # convert to days since start of the year
@@ -158,6 +159,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
                     "layer": ("layer", nlayers),
                     "Time": ("Time", timesteps_year, {"units": f"days since {year}-01-01", "calendar": "gregorian"}),
                 }
+            click.echo("Extracting data for heads, depths, and groundwater-surface water flux...")
             heads_year = np.where(hds.get_alldata()[cond_year, :, :, :] > 10000, np.nan, hds.get_alldata()[cond_year, :, :, :])
             depths_year = np.where(heads_year > 10000, np.nan, np.where(topography[np.newaxis, np.newaxis, :, :] - heads_year > 0, topography[np.newaxis, np.newaxis, :, :] - heads_year, 0))
             gw_sw_year = np.zeros_like(len(timesteps_year), len(ycoords), len(xcoords))
@@ -191,6 +193,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         # compress files into a single archive
         if files_to_compress:
             output_file = f"{stress_test_name}_dmn_run_{model_run}.zlb"
+            click.echo(f"Compressing files into {output_file}...")
             compress_files(files_to_compress, output_file, compression_level=9)
     except:
         pass
