@@ -1,0 +1,20 @@
+#!/bin/bash
+#SBATCH --time=02:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=128000
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-user=robin.schwemmle@hydrology.uni-freiburg.de
+#SBATCH --job-name=write_modflow_data_spring-drought_magnitude0_duration3_irrigation_yellow-mustard
+#SBATCH --output=write_modflow_data_spring-drought_magnitude0_duration3_irrigation_yellow-mustard.out
+#SBATCH --error=write_modflow_data_spring-drought_magnitude0_duration3_irrigation_yellow-mustard_err.out
+#SBATCH --export=ALL
+
+module load devel/miniforge
+eval "$(conda shell.bash hook)"
+conda activate roger-modflow
+cd /pfs/10/work/fr_rs1092-workspace/roger/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed
+
+python write_binary_to_netcdf_transient.py --stress-test-meteo spring-drought --stress-test-meteo-magnitude 0 --stress-test-meteo-duration 3 --soil-compaction no-soil-compaction--irrigation irrigation --yellow-mustard yellow-mustard
+
