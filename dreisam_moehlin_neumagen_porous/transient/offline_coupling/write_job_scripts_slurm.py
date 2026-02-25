@@ -146,7 +146,7 @@ def main():
         lines.append('echo "... finalised simulation"\n')
         lines.append("# Move output from local SSD to global workspace\n")
         lines.append(f'echo "Move output to {output_path_ws.as_posix()}"\n')
-        lines.append('if [ -d "%s"]; then\n' % (output_path_ws.as_posix()))
+        lines.append('if [ -d "%s" ]; then\n' % (output_path_ws.as_posix()))
         lines.append('  rm -rf %s\n' % (output_path_ws.as_posix()))
         lines.append('fi\n')
         lines.append('mv -v "${TMPDIR}"/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/%s %s' % (script_name, output_path_ws.parent.as_posix()))

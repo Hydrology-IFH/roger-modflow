@@ -130,20 +130,20 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         # sfr = cbb.get_data(text="SFR", kstpkper=(1, 0), full3D=True)[0].filled(fill_value=np.nan)
 
         if stress_test_meteo == "base_2000-2024":
-            date_time = pd.date_range(start="2000-01-01", end="2024-12-31", freq="D")
+            date_time = pd.date_range(start="2000-01-01", end="2024-12-31", freq="7D")
             years = np.unique(date_time.year.values)
-            timesteps = np.arange(len(date_time))
+            timesteps = np.arange(len(date_time)) * 7
         else:
-            date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="D")
+            date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="7D")
             years = np.unique(date_time.year.values)
-            timesteps = np.arange(len(date_time))
+            timesteps = np.arange(len(date_time)) * 7
 
         files_to_compress = []
         for year in years:
             cond_year = (date_time.year == year)
             date_time_year = date_time[date_time.year == year]
-            timesteps_year = np.arange(len(date_time_year))
-            ii_year = timesteps[cond_year]
+            timesteps_year = np.arange(len(date_time_year)) * 7  # convert to days since start of the year
+            ii_year = timesteps[cond_year] / 7  # indices of the time steps for the current year (assuming 7-day time steps)
             # create xarray dataset
             attrs = dict(
                     date_created=datetime.datetime.today().isoformat(),
@@ -161,7 +161,8 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             heads_year = np.where(hds.get_alldata()[cond_year, :, :, :] > 10000, np.nan, hds.get_alldata()[cond_year, :, :, :])
             depths_year = np.where(heads_year > 10000, np.nan, np.where(topography[np.newaxis, np.newaxis, :, :] - heads_year > 0, topography[np.newaxis, np.newaxis, :, :] - heads_year, 0))
             gw_sw_year = np.zeros_like(len(timesteps_year), len(ycoords), len(xcoords))
-            for i in ii_year:
+            for _i in ii_year:
+                i = int(_i)
                 gw_sw_year[i, :, :] = np.nansum(cbb.get_data(text="SFR", kstpkper=(i, 1), full3D=True)[0].filled(fill_value=np.nan), axis=0)
 
             data_vars=dict(

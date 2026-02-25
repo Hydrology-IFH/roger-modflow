@@ -629,7 +629,7 @@ class ModFlowSimulation:
 
         recharge = flopy.mf6.ModflowGwfrch(gwf, fixed_cell=True,
                             print_input=False, print_flows=False,
-                            save_flows=True, boundnames=None,
+                            save_flows=False, boundnames=None,
                             maxbound=self.modflow_basin.sum(), stress_period_data=recharge_spd)
         
         # Evapotranspiration package (Neumann boundary condition i.e. second type) to represent capillary fringe and ectraction of irrigation water by plants
@@ -641,7 +641,7 @@ class ModFlowSimulation:
         cpr_irr_spd = cpr_irr_spd.tolist()
         cpr_irr = flopy.mf6.ModflowGwfevt(gwf, fixed_cell=True,
                                           print_input=False, print_flows=False,
-                                          save_flows=True, boundnames=None,
+                                          save_flows=False, boundnames=None,
                                           maxbound=self.modflow_basin.sum(), stress_period_data=cpr_irr_spd)
 
         # streamflow routing package (SFR)
@@ -677,6 +677,7 @@ class ModFlowSimulation:
             maxbound=len(drn_spd),
             boundnames=False,
             mover=False,
+            save_flows=False,
             stress_period_data=drn_spd,
         )
 
@@ -700,7 +701,7 @@ class ModFlowSimulation:
         head_filerecord = [headfile]
         budgetfile = "{}.cbc".format(name)
         budget_filerecord = [budgetfile]
-        saverecord = [("HEAD", "FIRST"), ("HEAD", "FREQUENCY", 7), ("HEAD", "LAST"), ("BUDGET", "FIRST"), ("BUDGET", "FREQUENCY", 7), ("BUDGET", "LAST")]
+        saverecord = [("HEAD", "FIRST"), ("HEAD", "FREQUENCY", 1), ("HEAD", "LAST"), ("BUDGET", "FIRST"), ("BUDGET", "FREQUENCY", 1), ("BUDGET", "LAST")]
         oc = flopy.mf6.modflow.mfgwfoc.ModflowGwfoc(
             gwf,
             pname="oc",
@@ -908,6 +909,11 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         df_discharge_moehlin = pd.read_csv(base_path.parent / "input" / "stress_tests_discharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "Moehlin" / "Q.csv", sep=";", index_col=0, skiprows=1)
         df_discharge_neumagen = pd.read_csv(base_path.parent / "input" / "stress_tests_discharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "Neumagen" / "Q.csv", sep=";", index_col=0, skiprows=1)
         df_discharge_rotbach = pd.read_csv(base_path.parent / "input" / "stress_tests_discharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "Rotbach" / "Q.csv", sep=";", index_col=0, skiprows=1)
+    elif stress_test_meteo in ["spring-summer-wet"]:
+        df_discharge_dreisam = pd.read_csv(base_path.parent / "input" / "stress_tests_discharge" / f"{stress_test_meteo}" / "Dreisam" / "Q.csv", sep=";", index_col=0, skiprows=1)
+        df_discharge_moehlin = pd.read_csv(base_path.parent / "input" / "stress_tests_discharge" / f"{stress_test_meteo}" / "Moehlin" / "Q.csv", sep=";", index_col=0, skiprows=1)
+        df_discharge_neumagen = pd.read_csv(base_path.parent / "input" / "stress_tests_discharge" / f"{stress_test_meteo}" / "Neumagen" / "Q.csv", sep=";", index_col=0, skiprows=1)
+        df_discharge_rotbach = pd.read_csv(base_path.parent / "input" / "stress_tests_discharge" / f"{stress_test_meteo}" / "Rotbach" / "Q.csv", sep=";", index_col=0, skiprows=1)
     # add DOY and year columns
     df_discharge_dreisam["DOY"] = pd.to_datetime(df_discharge_dreisam.index).dayofyear
     df_discharge_dreisam["year"] = pd.to_datetime(df_discharge_dreisam.index).year
@@ -927,6 +933,8 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         df_lateral_recharge_anomaly = pd.read_csv(base_path.parent / "input" / "2013-2023" / "lateral_recharge_anomaly.csv", sep=";", index_col=0, skiprows=1)
     elif stress_test_meteo in ["spring-drought", "summer-drought", "spring-summer-drought"]:
         df_lateral_recharge_anomaly = pd.read_csv(base_path.parent / "input" / "stress_tests_lateral_recharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "lateral_recharge_anomaly.csv", sep=";", index_col=0, skiprows=1)
+    elif stress_test_meteo in ["spring-summer-wet"]:
+        df_lateral_recharge_anomaly = pd.read_csv(base_path.parent / "input" / "stress_tests_lateral_recharge" / f"{stress_test_meteo}" / "lateral_recharge_anomaly.csv", sep=";", index_col=0, skiprows=1)
     df_lateral_recharge_anomaly["DOY"] = pd.to_datetime(df_lateral_recharge_anomaly.index).dayofyear
     df_lateral_recharge_anomaly["year"] = pd.to_datetime(df_lateral_recharge_anomaly.index).year
 
@@ -1027,7 +1035,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     recharge_lateral = ((ds_bc["lateral_inflow_bc_mmday"].values) / 1000) * (1 + lateral_recharge_anomaly_year_doy)  # mm/day to m/day
     recharge_lateral[recharge_lateral > 0.1] = 0.1  # constrain lateral recharge to 0.1 m/day
     recharge = (recharge_vertical.flatten() + recharge_lateral.flatten())
-    recharge[recharge > 0.1] = 0.1  # constrain recharge to 0.1 m/day
+    recharge[recharge > 0.2] = 0.2  # constrain recharge to 0.2 m/day
     modflow_interface.set_recharge(recharge)
 
     # set ET extinction depth to 3 m for the entire model domain

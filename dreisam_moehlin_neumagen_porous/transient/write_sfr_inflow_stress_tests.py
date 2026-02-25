@@ -225,10 +225,10 @@ for station in discharge_stations:
                 discharge.loc["2019-03-01":"2019-05-31"] = discharge_spring_2020.values
                 # insert spring period of 2020 in spring period of 2018
                 discharge.loc["2018-03-01":"2018-05-31"] = discharge_spring_2020.values
-                # insert summer period of 2018 in summer period of 2017
-                discharge.loc["2017-06-01":"2017-08-31"] = discharge_summer_2018.values
-                # insert summer period of 2018 in summer period of 2016
-                discharge.loc["2016-06-01":"2016-08-31"] = discharge_summer_2018.values
+                # insert summer period of 2018 in summer period of 2019
+                discharge.loc["2019-06-01":"2019-08-31"] = discharge_summer_2018.values
+                # insert summer period of 2018 in summer period of 2020
+                discharge.loc["2020-06-01":"2020-08-31"] = discharge_summer_2018.values
 
                 Q_path = path_to_dir / "Q.csv"
                 discharge.columns = [['[m3/s]'], ['Q']]
@@ -305,9 +305,8 @@ for station in discharge_stations:
                 discharge.loc["2020-03-01":"2020-05-31", "Q"] = discharge_spring_2020.loc[:, "Q"].values * (1 + (q_magnitude / 100))
                 # insert spring period of 2020 in spring period of 2019
                 discharge.loc["2019-03-01":"2019-05-31", "Q"] = discharge_spring_2020.loc[:, "Q"].values * (1 + (q_magnitude / 100))
-                discharge.loc["2018-06-01":"2018-08-31", "Q"] = discharge_summer_2018.loc[:, "Q"].values * (1 + (q_magnitude / 100))
-                # insert summer period of 2018 in summer period of 2017
-                discharge.loc["2017-06-01":"2017-08-31", "Q"] = discharge_summer_2018.loc[:, "Q"].values * (1 + (q_magnitude / 100))
+                # insert summer period of 2018 in summer period of 2019
+                discharge.loc["2019-06-01":"2019-08-31", "Q"] = discharge_summer_2018.loc[:, "Q"].values * (1 + (q_magnitude / 100))
 
                 Q_path = path_to_dir / "Q.csv"
                 discharge.columns = [['[m3/s]'], ['Q']]
@@ -392,10 +391,10 @@ for station in discharge_stations:
                 discharge.loc["2018-03-01":"2018-05-31", "Q"] = discharge_spring_2020.loc[:, "Q"].values * (1 + (q_magnitude / 100))
                 
                 discharge.loc["2018-06-01":"2018-08-31", "Q"] = discharge_summer_2018.loc[:, "Q"].values * (1 + (q_magnitude / 100))
-                # insert summer period of 2018 in summer period of 2017
-                discharge.loc["2017-06-01":"2017-08-31", "Q"] = discharge_summer_2018.loc[:, "Q"].values * (1 + (q_magnitude / 100))
-                # insert summer period of 2018 in summer period of 2016
-                discharge.loc["2016-06-01":"2016-08-31", "Q"] = discharge_summer_2018.loc[:, "Q"].values * (1 + (q_magnitude / 100))
+                # insert summer period of 2018 in summer period of 2019
+                discharge.loc["2019-06-01":"2019-08-31", "Q"] = discharge_summer_2018.loc[:, "Q"].values * (1 + (q_magnitude / 100))
+                # insert summer period of 2018 in summer period of 2020
+                discharge.loc["2020-06-01":"2020-08-31", "Q"] = discharge_summer_2018.loc[:, "Q"].values * (1 + (q_magnitude / 100))
 
                 Q_path = path_to_dir / "Q.csv"
                 discharge.columns = [['[m3/s]'], ['Q']]

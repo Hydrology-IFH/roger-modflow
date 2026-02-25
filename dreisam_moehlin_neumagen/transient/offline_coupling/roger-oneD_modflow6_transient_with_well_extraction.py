@@ -530,7 +530,7 @@ class ModFlowSimulation:
 
         hydraulic_conductivities_layers = [hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4]
         npf = flopy.mf6.modflow.mfgwfnpf.ModflowGwfnpf(
-            gwf, pname="npf", icelltype=1, k=hydraulic_conductivities_layers, wetdry=0.5, save_flows=True, save_specific_discharge="budget save file"
+            gwf, pname="npf", icelltype=1, k=hydraulic_conductivities_layers, wetdry=0.5, save_flows=False, save_specific_discharge="budget save file"
         )
 
         # create the storage package
@@ -611,7 +611,7 @@ class ModFlowSimulation:
             pname="chd",
             maxbound=len(chd_rec),
             stress_period_data=chd_rec,
-            save_flows=True,
+            save_flows=False,
         )
             
         # Recharge package (Neumann boundary condition i.e. second type)
@@ -672,6 +672,7 @@ class ModFlowSimulation:
             maxbound=len(drn_spd),
             boundnames=False,
             mover=False,
+            save_flows=False,
             stress_period_data=drn_spd,
         )
 
@@ -686,7 +687,7 @@ class ModFlowSimulation:
         wells[:, 2] = groundwater_extraction["cell_x"].values.astype(np.int32) - 1
         wells = wells.tolist()
 
-        wells = flopy.mf6.ModflowGwfwel(gwf, print_input=False, print_flows=False, save_flows=False,
+        wells = flopy.mf6.ModflowGwfwel(gwf, print_input=False, print_flows=False, save_flows=True,
                                     maxbound=n_wells, stress_period_data=wells,
                                     boundnames=False, auto_flow_reduce=0.1)
 
