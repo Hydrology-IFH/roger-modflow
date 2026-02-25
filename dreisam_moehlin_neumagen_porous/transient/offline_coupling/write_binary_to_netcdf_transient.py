@@ -132,7 +132,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
 
     files_to_compress = []
     for year in years:
-        file = base_path / "output" / stress_test_name / f"gw_head_{model_run}_year{year}.nc"
+        file = base_path / "output" / stress_test_name / f"gw_head_run{model_run}_year{year}.nc"
         if not os.path.exists(file):
             click.echo(f"Processing year {year}...")
             cond_year = (date_time.year == year)
@@ -191,7 +191,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             # create spatial reference
             ds = ds.geo.write_crs("EPSG:25832")
             ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
-            file = base_path / "output" / stress_test_name / f"gw_depth_{model_run}_year{year}.nc"
+            file = base_path / "output" / stress_test_name / f"gw_depth_run{model_run}_year{year}.nc"
             click.echo(f"Writing {file}...")
             comp = dict(zlib=True, complevel=1)  # compress data to save storage
             encoding = {var: comp for var in ds.data_vars}
@@ -209,7 +209,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             # create spatial reference
             ds = ds.geo.write_crs("EPSG:25832")
             ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
-            file = base_path / "output" / stress_test_name / f"indirect_recharge_{model_run}_year{year}.nc"
+            file = base_path / "output" / stress_test_name / f"indirect_recharge_run{model_run}_year{year}.nc"
             click.echo(f"Writing {file}...")
             comp = dict(zlib=True, complevel=1)  # compress data to save storage
             encoding = {var: comp for var in ds.data_vars}
