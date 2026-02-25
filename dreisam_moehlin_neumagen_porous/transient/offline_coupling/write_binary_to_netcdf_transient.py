@@ -129,7 +129,6 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     fbudget = base_path / "output" / stress_test_name / f"dmn_run_{model_run}.cbc"
     click.echo(f"Reading cell budget file {fbudget}...")
     cbb = flopy.utils.CellBudgetFile(fbudget)
-    click.echo(cbb.get_kstpkper())
 
     files_to_compress = []
     for year in years:
@@ -139,7 +138,6 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             cond_year = (date_time.year == year)
             date_time_year = date_time[date_time.year == year]
             timesteps_year = np.arange(len(date_time_year)) * 7  # convert to days since start of the year
-            ii_year = timesteps[cond_year]
             # create xarray dataset
             attrs = dict(
                     date_created=datetime.datetime.today().isoformat(),
@@ -160,10 +158,10 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             depths_year = np.where(heads_year > 10000, np.nan, np.where(topography[np.newaxis, np.newaxis, :, :] - heads_year > 0, topography[np.newaxis, np.newaxis, :, :] - heads_year, 0))
             click.echo("... and groundwater-surface water flux...")
             gw_sw_year = np.zeros((len(timesteps_year), len(ycoords), len(xcoords)))
-            for _i in ii_year:
-                i = int(_i)
+            for i, _timestep_year in enumerate(timesteps_year):
+                timestep_year = int(_timestep_year)
                 click.echo(f"Processing time step {i} for year {year}... (GW-SW flux)")
-                gw_sw_year[i, :, :] = np.nansum(cbb.get_data(text="SFR", kstpkper=(i, 1), full3D=True)[0], axis=0)
+                gw_sw_year[i, :, :] = np.nansum(cbb.get_data(text="SFR", kstpkper=(timestep_year, 1), full3D=True)[0].filled(fill_value=np.nan), axis=0)
 
             data_vars=dict(
                     head=(["Time", "layer", "lat", "lon"], heads_year),
