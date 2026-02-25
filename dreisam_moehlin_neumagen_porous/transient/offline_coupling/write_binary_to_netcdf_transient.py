@@ -87,6 +87,15 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             _stress_test_well_extraction = ""
         else:
             _stress_test_well_extraction = "_well-extraction-stress"
+
+        if stress_test_meteo == "base_2000-2024":
+            date_time = pd.date_range(start="2000-01-01", end="2024-12-31", freq="7D")
+            years = np.unique(date_time.year.values)
+            timesteps = np.arange(len(date_time)) * 7
+        else:
+            date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="7D")
+            years = np.unique(date_time.year.values)
+            timesteps = np.arange(len(date_time)) * 7
     
         stress_test_name = f"modflow_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{irrigation}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}{_stress_test_well_extraction}"
 
@@ -100,8 +109,6 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
 
         ml = sim.get_model(f"dmn_run_{model_run}")
         nlayers = np.arange(ml.modelgrid.nlay)
-
-        stress_test_name = f"modflow_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{irrigation}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}{_stress_test_well_extraction}"
 
         # load spatial reference and coordinates
         click.echo("Loading spatial reference and coordinates from parameters_modflow.nc...")
@@ -134,15 +141,6 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
 
         # sfr = cbb.get_data(text="SFR", kstpkper=(1, 0), full3D=True)[0].filled(fill_value=np.nan)
 
-        if stress_test_meteo == "base_2000-2024":
-            date_time = pd.date_range(start="2000-01-01", end="2024-12-31", freq="7D")
-            years = np.unique(date_time.year.values)
-            timesteps = np.arange(len(date_time)) * 7
-        else:
-            date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="7D")
-            years = np.unique(date_time.year.values)
-            timesteps = np.arange(len(date_time)) * 7
-
         files_to_compress = []
         for year in years:
             click.echo(f"Processing year {year}...")
@@ -164,18 +162,21 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
                     "layer": ("layer", nlayers),
                     "Time": ("Time", timesteps_year, {"units": f"days since {year}-01-01", "calendar": "gregorian"}),
                 }
-            click.echo("Extracting data for heads, depths, and groundwater-surface water flux...")
+            click.echo("Extracting data for heads,...")
             heads_year = np.where(hds.get_alldata()[cond_year, :, :, :] > 10000, np.nan, hds.get_alldata()[cond_year, :, :, :])
+            click.echo("..., depths,...")
             depths_year = np.where(heads_year > 10000, np.nan, np.where(topography[np.newaxis, np.newaxis, :, :] - heads_year > 0, topography[np.newaxis, np.newaxis, :, :] - heads_year, 0))
-            gw_sw_year = np.zeros_like(len(timesteps_year), len(ycoords), len(xcoords))
-            for _i in ii_year:
-                i = int(_i)
-                gw_sw_year[i, :, :] = np.nansum(cbb.get_data(text="SFR", kstpkper=(i, 1), full3D=True)[0].filled(fill_value=np.nan), axis=0)
+            # click.echo("... and groundwater-surface water flux...")
+            # gw_sw_year = np.zeros_like(len(timesteps_year), len(ycoords), len(xcoords))
+            # for _i in ii_year:
+            #     i = int(_i)
+            #     click.echo(f"Processing time step {i} for year {year}... (GW-SW flux)")
+            #     gw_sw_year[i, :, :] = np.nansum(cbb.get_data(text="SFR", kstpkper=(i, 1), full3D=True)[0].filled(fill_value=np.nan), axis=0)
 
             data_vars=dict(
                     head=(["Time", "layer", "lat", "lon"], heads_year),
                     depth=(["Time", "layer", "lat", "lon"], depths_year),
-                    gw_sw=(["Time", "lat", "lon"], gw_sw_year/86400.0),
+                    # gw_sw=(["Time", "lat", "lon"], gw_sw_year/86400.0),
                 )
 
             ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
@@ -183,8 +184,8 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             ds["head"].attrs["long_name"] = "Groundwater head"
             ds["depth"].attrs["units"] = "m"
             ds["depth"].attrs["long_name"] = "Groundwater depth"
-            ds["gw_sw"].attrs["units"] = "m3/s"
-            ds["gw_sw"].attrs["long_name"] = "Groundwater-Surface water flux"
+            # ds["gw_sw"].attrs["units"] = "m3/s"
+            # ds["gw_sw"].attrs["long_name"] = "Groundwater-Surface water flux"
             # create spatial reference
             ds = ds.geo.write_crs("EPSG:25832")
             ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
