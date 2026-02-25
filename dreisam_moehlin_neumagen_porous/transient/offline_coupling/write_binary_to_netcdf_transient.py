@@ -160,7 +160,8 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             gw_sw_year = np.zeros((len(timesteps_year), len(ycoords), len(xcoords)))
             for i, _timestep_year in enumerate(timesteps_year):
                 timestep_year = int(_timestep_year)
-                click.echo(f"Processing time step {i} for year {year}... (GW-SW flux)")
+                click.echo(f"Processing time step {timestep_year} for year {year}... (GW-SW flux)")
+                click.echo(cbb.get_kstpkper()[i])
                 gw_sw_year[i, :, :] = np.nansum(cbb.get_data(text="SFR", kstpkper=(timestep_year, 1), full3D=True)[0].filled(fill_value=np.nan), axis=0)
 
             data_vars=dict(
