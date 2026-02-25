@@ -164,26 +164,20 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
                 }
             click.echo("Extracting data for heads,...")
             heads_year = np.where(hds.get_alldata()[cond_year, :, :, :] > 10000, np.nan, hds.get_alldata()[cond_year, :, :, :])
-            click.echo("..., depths,...")
-            depths_year = np.where(heads_year > 10000, np.nan, np.where(topography[np.newaxis, np.newaxis, :, :] - heads_year > 0, topography[np.newaxis, np.newaxis, :, :] - heads_year, 0))
-            # click.echo("... and groundwater-surface water flux...")
-            # gw_sw_year = np.zeros_like(len(timesteps_year), len(ycoords), len(xcoords))
-            # for _i in ii_year:
-            #     i = int(_i)
-            #     click.echo(f"Processing time step {i} for year {year}... (GW-SW flux)")
-            #     gw_sw_year[i, :, :] = np.nansum(cbb.get_data(text="SFR", kstpkper=(i, 1), full3D=True)[0].filled(fill_value=np.nan), axis=0)
+            # click.echo("..., depths,...")
+            # depths_year = np.where(heads_year > 10000, np.nan, np.where(topography[np.newaxis, np.newaxis, :, :] - heads_year > 0, topography[np.newaxis, np.newaxis, :, :] - heads_year, 0))
 
             data_vars=dict(
                     head=(["Time", "layer", "lat", "lon"], heads_year),
-                    depth=(["Time", "layer", "lat", "lon"], depths_year),
+                    # depth=(["Time", "layer", "lat", "lon"], depths_year),
                     # gw_sw=(["Time", "lat", "lon"], gw_sw_year/86400.0),
                 )
 
             ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
             ds["head"].attrs["units"] = "m a.s.l."
             ds["head"].attrs["long_name"] = "Groundwater head"
-            ds["depth"].attrs["units"] = "m"
-            ds["depth"].attrs["long_name"] = "Groundwater depth"
+            # ds["depth"].attrs["units"] = "m"
+            # ds["depth"].attrs["long_name"] = "Groundwater depth"
             # ds["gw_sw"].attrs["units"] = "m3/s"
             # ds["gw_sw"].attrs["long_name"] = "Groundwater-Surface water flux"
             # create spatial reference
