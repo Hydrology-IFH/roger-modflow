@@ -120,7 +120,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
 
         fhead = base_path / "output" / stress_test_name / f"dmn_run_{model_run}.hds"
         click.echo(f"Reading head file {fhead}...")
-        # hds = flopy.utils.HeadFile(fhead)
+        hds = flopy.utils.HeadFile(fhead)
         ntimesteps = hds.get_alldata().shape[0]
         timesteps = np.arange(ntimesteps)
 
