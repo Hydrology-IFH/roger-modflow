@@ -132,7 +132,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
 
     files_to_compress = []
     for year in years:
-        file = base_path / "output" / stress_test_name / f"dmn_run_{model_run}_year{year}.nc"
+        file = base_path / "output" / stress_test_name / f"gw_head_{model_run}_year{year}.nc"
         if not os.path.exists(file):
             click.echo(f"Processing year {year}...")
             cond_year = (date_time.year == year)
@@ -150,7 +150,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
                     "lon": ("lon", xcoords),  # x
                     "lat": ("lat", ycoords),  # y
                     "layer": ("layer", nlayers),
-                    "Time": ("Time", timesteps_year, {"units": f"days since {year}-01-01", "calendar": "gregorian"}),
+                    "Time": ("Time", date_time_year.dayofyear.values, {"units": f"days since {year}-01-01", "calendar": "gregorian"}),
                 }
             click.echo("Extracting data for heads,...")
             heads_year = np.where(heads[cond_year, :, :, :] > 10000, np.nan, heads[cond_year, :, :, :])
@@ -166,17 +166,11 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
 
             data_vars=dict(
                     head=(["Time", "layer", "lat", "lon"], heads_year),
-                    depth=(["Time", "layer", "lat", "lon"], depths_year),
-                    gw_sw=(["Time", "lat", "lon"], gw_sw_year/86400.0),
                 )
 
             ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
             ds["head"].attrs["units"] = "m a.s.l."
             ds["head"].attrs["long_name"] = "Groundwater head"
-            ds["depth"].attrs["units"] = "m"
-            ds["depth"].attrs["long_name"] = "Groundwater depth"
-            ds["gw_sw"].attrs["units"] = "m3/s"
-            ds["gw_sw"].attrs["long_name"] = "Groundwater-Surface water flux"
             # create spatial reference
             ds = ds.geo.write_crs("EPSG:25832")
             ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
@@ -185,6 +179,42 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             encoding = {var: comp for var in ds.data_vars}
             ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)
             files_to_compress.append(file)
+
+            data_vars=dict(
+                    depth=(["Time", "layer", "lat", "lon"], depths_year),
+                )
+
+            ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
+            ds["depth"].attrs["units"] = "m"
+            ds["depth"].attrs["long_name"] = "Groundwater depth"
+            # create spatial reference
+            ds = ds.geo.write_crs("EPSG:25832")
+            ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
+            file = base_path / "output" / stress_test_name / f"gw_depth_{model_run}_year{year}.nc"
+            click.echo(f"Writing {file}...")
+            comp = dict(zlib=True, complevel=1)  # compress data to save storage
+            encoding = {var: comp for var in ds.data_vars}
+            ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)
+            files_to_compress.append(file)
+
+            data_vars=dict(
+                    gw_sw=(["Time", "lat", "lon"], gw_sw_year/86400.0),
+                )
+
+            ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
+            ds["gw_sw"].attrs["units"] = "m3/s"
+            ds["gw_sw"].attrs["long_name"] = "Groundwater-Surface water flux"
+            # create spatial reference
+            ds = ds.geo.write_crs("EPSG:25832")
+            ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
+            file = base_path / "output" / stress_test_name / f"gw_sw_flux_{model_run}_year{year}.nc"
+            click.echo(f"Writing {file}...")
+            comp = dict(zlib=True, complevel=1)  # compress data to save storage
+            encoding = {var: comp for var in ds.data_vars}
+            ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)
+            files_to_compress.append(file)
+
+
 
     # compress files into a single archive
     if files_to_compress:
