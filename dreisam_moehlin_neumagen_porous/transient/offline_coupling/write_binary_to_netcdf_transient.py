@@ -118,14 +118,14 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             xcoords = ds.x.values
             ycoords = ds.y.values
 
-        click.echo(f"Loading MODFLOW6 output for model run {model_run}... (heads)")
         fhead = base_path / "output" / stress_test_name / f"dmn_run_{model_run}.hds"
+        click.echo(f"Reading head file {fhead}...")
         hds = flopy.utils.HeadFile(fhead)
         ntimesteps = hds.get_alldata().shape[0]
         timesteps = np.arange(ntimesteps)
 
-        click.echo(f"Loading MODFLOW6 output for model run {model_run}... (cell budget)")
         fbudget = base_path / "output" / stress_test_name / f"dmn_run_{model_run}.cbc"
+        click.echo(f"Reading cell budget file {fbudget}...")
         cbb = flopy.utils.CellBudgetFile(fbudget)
 
         # cbb_headers = cbb.headers
