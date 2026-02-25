@@ -120,7 +120,9 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     fhead = base_path / "output" / stress_test_name / f"dmn_run_{model_run}.hds"
     click.echo(f"Reading head file {fhead}...")
     hds = flopy.utils.HeadFile(fhead)
-    ntimesteps = hds.get_alldata().shape[0]
+    # remove first and last time step (steady-state and final time step)
+    heads = hds.get_alldata()[1:-1, :, :, :]
+    ntimesteps = heads.shape[0]
     timesteps = np.arange(ntimesteps)
 
     files_to_compress = []
@@ -145,7 +147,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
                 "Time": ("Time", timesteps_year, {"units": f"days since {year}-01-01", "calendar": "gregorian"}),
             }
         click.echo("Extracting data for heads,...")
-        heads_year = np.where(hds.get_alldata()[cond_year, :, :, :] > 10000, np.nan, hds.get_alldata()[cond_year, :, :, :])
+        heads_year = np.where(heads[cond_year, :, :, :] > 10000, np.nan, heads[cond_year, :, :, :])
 
         data_vars=dict(
                 head=(["Time", "layer", "lat", "lon"], heads_year),
