@@ -150,7 +150,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
                     "lon": ("lon", xcoords),  # x
                     "lat": ("lat", ycoords),  # y
                     "layer": ("layer", nlayers),
-                    "Time": ("Time", date_time_year.dayofyear.values, {"units": f"days since {year}-01-01", "calendar": "gregorian"}),
+                    "Time": ("Time", date_time_year.dayofyear.values - 1, {"units": f"days since {year}-01-01", "calendar": "gregorian"}),
                 }
             click.echo("Extracting data for heads,...")
             heads_year = np.where(heads[cond_year, :, :, :] > 10000, np.nan, heads[cond_year, :, :, :])
