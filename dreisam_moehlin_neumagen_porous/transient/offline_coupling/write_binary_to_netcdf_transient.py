@@ -129,6 +129,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     fbudget = base_path / "output" / stress_test_name / f"dmn_run_{model_run}.cbc"
     click.echo(f"Reading cell budget file {fbudget}...")
     cbb = flopy.utils.CellBudgetFile(fbudget)
+    click.echo(cbb.get_kstpkper())
 
     files_to_compress = []
     for year in years:
