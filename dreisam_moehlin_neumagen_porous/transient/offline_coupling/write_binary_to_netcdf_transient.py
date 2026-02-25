@@ -162,12 +162,13 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             for _i in ii_year:
                 i = int(_i)
                 click.echo(f"Processing time step {i} for year {year}... (GW-SW flux)")
-                gw_sw_year[i, :, :] = np.nansum(cbb.get_data(text="SFR", kstpkper=(i, 1), full3D=True)[0].filled(fill_value=np.nan), axis=0)
+                click.echo(cbb.get_data(text="SFR", kstpkper=(i, 1), full3D=True).filled(fill_value=np.nan).shape)
+                gw_sw_year[i, :, :] = np.nansum(cbb.get_data(text="SFR", kstpkper=(i, 1), full3D=True).filled(fill_value=np.nan), axis=0)
 
             data_vars=dict(
                     head=(["Time", "layer", "lat", "lon"], heads_year),
                     depth=(["Time", "layer", "lat", "lon"], depths_year),
-                    # gw_sw=(["Time", "lat", "lon"], gw_sw_year/86400.0),
+                    gw_sw=(["Time", "lat", "lon"], gw_sw_year/86400.0),
                 )
 
             ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
@@ -175,8 +176,8 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             ds["head"].attrs["long_name"] = "Groundwater head"
             ds["depth"].attrs["units"] = "m"
             ds["depth"].attrs["long_name"] = "Groundwater depth"
-            # ds["gw_sw"].attrs["units"] = "m3/s"
-            # ds["gw_sw"].attrs["long_name"] = "Groundwater-Surface water flux"
+            ds["gw_sw"].attrs["units"] = "m3/s"
+            ds["gw_sw"].attrs["long_name"] = "Groundwater-Surface water flux"
             # create spatial reference
             ds = ds.geo.write_crs("EPSG:25832")
             ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
