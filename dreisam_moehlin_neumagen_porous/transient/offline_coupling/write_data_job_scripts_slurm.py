@@ -9,7 +9,7 @@ import click
 def main():
     base_path = Path(__file__).parent
     dir_name = os.path.basename(str(Path(__file__).parent))
-    base_path_bwhpc = "/pfs/10/work/fr_rs1092-workspace/roger/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed"
+    base_path_bwhpc = "/pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling"
 
     # identifiers of the simulations
     stress_tests_meteo = ["base", "spring-drought", "summer-drought", "spring-summer-drought", "spring-summer-wet"]

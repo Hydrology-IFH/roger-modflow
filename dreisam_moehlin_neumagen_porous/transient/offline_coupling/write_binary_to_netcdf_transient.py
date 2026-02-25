@@ -53,7 +53,7 @@ def compress_files(file_list, output_file, compression_level=6):
             out.write(struct.pack('Q', compressed_size))        # Compressed size
             out.write(compressed_data)                          # Compressed data
             
-            # Print compression stats
+            # click.echo compression stats
             ratio = (1 - compressed_size / original_size) * 100 if original_size > 0 else 0
             click.echo(f"Compressed: {file_name}")
             click.echo(f"  Original: {original_size:,} bytes")
@@ -73,8 +73,8 @@ def compress_files(file_list, output_file, compression_level=6):
 @click.command("main")
 def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_duration, irrigation, yellow_mustard, soil_compaction, grain_corn_only, stress_test_well_extraction, model_run):
     try:
-        print(sys.version)
-        print(f"flopy version: {flopy.__version__}")
+        click.echo(sys.version)
+        click.echo(f"flopy version: {flopy.__version__}")
 
         base_path = Path(__file__).parent
 
@@ -182,6 +182,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             ds = ds.geo.write_crs("EPSG:25832")
             ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
             file = base_path / "output" / stress_test_name / f"dmn_run_{model_run}_year{year}.nc"
+            click.echo(f"Writing {file}...")
             comp = dict(zlib=True, complevel=1)  # compress data to save storage
             encoding = {var: comp for var in ds.data_vars}
             ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)

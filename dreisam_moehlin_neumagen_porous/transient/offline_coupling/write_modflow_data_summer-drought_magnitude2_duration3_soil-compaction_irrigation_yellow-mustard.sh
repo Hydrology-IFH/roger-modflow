@@ -14,7 +14,7 @@
 module load devel/miniforge
 eval "$(conda shell.bash hook)"
 conda activate roger-modflow
-cd /pfs/10/work/fr_rs1092-workspace/roger/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed
+cd /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling
 
 python write_binary_to_netcdf_transient.py --stress-test-meteo summer-drought --stress-test-meteo-magnitude 2 --stress-test-meteo-duration 3 --soil-compaction soil-compaction --irrigation irrigation --yellow-mustard yellow-mustard
 
