@@ -126,7 +126,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     files_to_compress = []
     for year in years:
         click.echo(f"Processing year {year}...")
-        # cond_year = (date_time.year == year)
+        cond_year = (date_time.year == year)
         date_time_year = date_time[date_time.year == year]
         timesteps_year = np.arange(len(date_time_year)) * 7  # convert to days since start of the year
         # ii_year = timesteps[cond_year] / 7  # indices of the time steps for the current year (assuming 7-day time steps)
@@ -145,8 +145,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
                 "Time": ("Time", timesteps_year, {"units": f"days since {year}-01-01", "calendar": "gregorian"}),
             }
         click.echo("Extracting data for heads,...")
-        # heads_year = np.where(hds.get_alldata()[cond_year, :, :, :] > 10000, np.nan, hds.get_alldata()[cond_year, :, :, :])
-        heads_year = np.zeros((len(timesteps_year), len(nlayers), len(ycoords), len(xcoords)))
+        heads_year = np.where(hds.get_alldata()[cond_year, :, :, :] > 10000, np.nan, hds.get_alldata()[cond_year, :, :, :])
 
         data_vars=dict(
                 head=(["Time", "layer", "lat", "lon"], heads_year),
