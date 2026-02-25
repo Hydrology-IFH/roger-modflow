@@ -221,7 +221,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
 
     # compress files into a single archive
     if files_to_compress:
-        output_file = f"{stress_test_name}_dmn_run_{model_run}.zlb"
+        output_file = f"{stress_test_name}_dmn_run_{model_run}.zlib"
         click.echo(f"Compressing files into {output_file}...")
         compress_files(files_to_compress, output_file, compression_level=9)
     return
