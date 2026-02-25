@@ -12,7 +12,6 @@
 #SBATCH --export=ALL
 
 module load devel/miniforge
-eval "$(conda shell.bash hook)"
 conda activate roger-modflow
 cd /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling
 
