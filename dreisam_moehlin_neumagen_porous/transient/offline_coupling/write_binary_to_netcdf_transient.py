@@ -162,7 +162,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             for _i in ii_year:
                 i = int(_i)
                 click.echo(f"Processing time step {i} for year {year}... (GW-SW flux)")
-                click.echo(len(cbb.get_data(text="SFR", kstpkper=(i, 1), full3D=True)))
+                click.echo((cbb.get_data(text="SFR", kstpkper=(i, 1), full3D=True)[0].shape))
                 gw_sw_year[i, :, :] = np.nansum(cbb.get_data(text="SFR", kstpkper=(i, 1), full3D=True).filled(fill_value=np.nan), axis=0)
 
             data_vars=dict(
