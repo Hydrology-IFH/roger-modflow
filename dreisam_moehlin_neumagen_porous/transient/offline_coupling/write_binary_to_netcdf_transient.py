@@ -72,130 +72,110 @@ def compress_files(file_list, output_file, compression_level=6):
 @click.option("-mr", "--model-run", type=int, default=1806)
 @click.command("main")
 def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_duration, irrigation, yellow_mustard, soil_compaction, grain_corn_only, stress_test_well_extraction, model_run):
-    try:
-        click.echo(sys.version)
-        click.echo(f"flopy version: {flopy.__version__}")
+    click.echo(sys.version)
+    click.echo(f"flopy version: {flopy.__version__}")
 
-        base_path = Path(__file__).parent
+    base_path = Path(__file__).parent
 
-        if grain_corn_only == "no-grain-corn-only":
-            _grain_corn_only = ""
-        else:
-            _grain_corn_only = "_grain-corn-only"
+    if grain_corn_only == "no-grain-corn-only":
+        _grain_corn_only = ""
+    else:
+        _grain_corn_only = "_grain-corn-only"
 
-        if stress_test_well_extraction == "no-stress":
-            _stress_test_well_extraction = ""
-        else:
-            _stress_test_well_extraction = "_well-extraction-stress"
+    if stress_test_well_extraction == "no-stress":
+        _stress_test_well_extraction = ""
+    else:
+        _stress_test_well_extraction = "_well-extraction-stress"
 
-        if stress_test_meteo == "base_2000-2024":
-            date_time = pd.date_range(start="2000-01-01", end="2024-12-31", freq="7D")
-            years = np.unique(date_time.year.values)
-            timesteps = np.arange(len(date_time)) * 7
-        else:
-            date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="7D")
-            years = np.unique(date_time.year.values)
-            timesteps = np.arange(len(date_time)) * 7
-    
-        stress_test_name = f"modflow_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{irrigation}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}{_stress_test_well_extraction}"
+    if stress_test_meteo == "base_2000-2024":
+        date_time = pd.date_range(start="2000-01-01", end="2024-12-31", freq="7D")
+        years = np.unique(date_time.year.values)
+        timesteps = np.arange(len(date_time)) * 7
+    else:
+        date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="7D")
+        years = np.unique(date_time.year.values)
+        timesteps = np.arange(len(date_time)) * 7
 
-        click.echo(f"Loading MODFLOW6 simulation for model run {model_run}...")
-        sim = flopy.mf6.MFSimulation.load(
-            sim_ws=base_path / "output" / stress_test_name,
-            exe_name="mf6",
-            version="mf6",
-            verbosity_level=0,
-        )
+    stress_test_name = f"modflow_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{irrigation}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}{_stress_test_well_extraction}"
 
-        ml = sim.get_model(f"dmn_run_{model_run}")
-        nlayers = np.arange(ml.modelgrid.nlay)
+    click.echo(f"Loading MODFLOW6 simulation for model run {model_run}...")
+    sim = flopy.mf6.MFSimulation.load(
+        sim_ws=base_path / "output" / stress_test_name,
+        exe_name="mf6",
+        version="mf6",
+        verbosity_level=0,
+    )
 
-        # load spatial reference and coordinates
-        click.echo("Loading spatial reference and coordinates from parameters_modflow.nc...")
-        with xr.open_dataset(base_path.parent / "input" / "parameters_modflow.nc") as ds:
-            topography = ds['elevations'].isel(z=0).values
-            spatial_ref = ds.spatial_ref
-            xcoords = ds.x.values
-            ycoords = ds.y.values
+    ml = sim.get_model(f"dmn_run_{model_run}")
+    nlayers = np.arange(ml.modelgrid.nlay)
 
-        fhead = base_path / "output" / stress_test_name / f"dmn_run_{model_run}.hds"
-        click.echo(f"Reading head file {fhead}...")
-        hds = flopy.utils.HeadFile(fhead)
-        ntimesteps = hds.get_alldata().shape[0]
-        timesteps = np.arange(ntimesteps)
+    # load spatial reference and coordinates
+    click.echo("Loading spatial reference and coordinates from parameters_modflow.nc...")
+    with xr.open_dataset(base_path.parent / "input" / "parameters_modflow.nc") as ds:
+        topography = ds['elevations'].isel(z=0).values
+        spatial_ref = ds.spatial_ref
+        xcoords = ds.x.values
+        ycoords = ds.y.values
 
-        # fbudget = base_path / "output" / stress_test_name / f"dmn_run_{model_run}.cbc"
-        # click.echo(f"Reading cell budget file {fbudget}...")
-        # cbb = flopy.utils.CellBudgetFile(fbudget)
+    fhead = base_path / "output" / stress_test_name / f"dmn_run_{model_run}.hds"
+    click.echo(f"Reading head file {fhead}...")
+    hds = flopy.utils.HeadFile(fhead)
+    ntimesteps = hds.get_alldata().shape[0]
+    timesteps = np.arange(ntimesteps)
 
-        # cbb_headers = cbb.headers
-        # file = base_path / "output" / "cbb_headers.csv"
-        # cbb_headers_df = pd.DataFrame(cbb_headers)
-        # cbb_headers_df.to_csv(file, index=False, sep=";")
+    files_to_compress = []
+    for year in years:
+        click.echo(f"Processing year {year}...")
+        # cond_year = (date_time.year == year)
+        date_time_year = date_time[date_time.year == year]
+        timesteps_year = np.arange(len(date_time_year)) * 7  # convert to days since start of the year
+        # ii_year = timesteps[cond_year] / 7  # indices of the time steps for the current year (assuming 7-day time steps)
+        # create xarray dataset
+        attrs = dict(
+                date_created=datetime.datetime.today().isoformat(),
+                title="MODFLOW6 transient simulations of the Dreisam-Moehlin-Neumagen catchment (offline coupling with RoGeR)",
+                institution="University of Freiburg, Chair of Hydrology",
+                flopy_version=f"{flopy.__version__}",
+                modflow_version=f"{ml.version}",
+            )
+        coords = {
+                "lon": ("lon", xcoords),  # x
+                "lat": ("lat", ycoords),  # y
+                "layer": ("layer", nlayers),
+                "Time": ("Time", timesteps_year, {"units": f"days since {year}-01-01", "calendar": "gregorian"}),
+            }
+        click.echo("Extracting data for heads,...")
+        # heads_year = np.where(hds.get_alldata()[cond_year, :, :, :] > 10000, np.nan, hds.get_alldata()[cond_year, :, :, :])
+        heads_year = np.zeros((len(timesteps_year), len(nlayers), len(ycoords), len(xcoords)))
 
-        # recharge = cbb.get_data(text="RCH", kstpkper=(2, 0), full3D=True)[0].filled(fill_value=np.nan)
-        # np.nanmax(recharge)
+        data_vars=dict(
+                head=(["Time", "layer", "lat", "lon"], heads_year),
+                # depth=(["Time", "layer", "lat", "lon"], depths_year),
+                # gw_sw=(["Time", "lat", "lon"], gw_sw_year/86400.0),
+            )
 
-        # wel = cbb.get_data(text="WEL", kstpkper=(3, 0), full3D=True)[0].filled(fill_value=np.nan)
-        # np.nanmax(wel)
+        ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
+        ds["head"].attrs["units"] = "m a.s.l."
+        ds["head"].attrs["long_name"] = "Groundwater head"
+        # ds["depth"].attrs["units"] = "m"
+        # ds["depth"].attrs["long_name"] = "Groundwater depth"
+        # ds["gw_sw"].attrs["units"] = "m3/s"
+        # ds["gw_sw"].attrs["long_name"] = "Groundwater-Surface water flux"
+        # create spatial reference
+        ds = ds.geo.write_crs("EPSG:25832")
+        ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
+        file = base_path / "output" / stress_test_name / f"dmn_run_{model_run}_year{year}.nc"
+        click.echo(f"Writing {file}...")
+        comp = dict(zlib=True, complevel=1)  # compress data to save storage
+        encoding = {var: comp for var in ds.data_vars}
+        ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)
+        files_to_compress.append(file)
 
-        # sfr = cbb.get_data(text="SFR", kstpkper=(1, 0), full3D=True)[0].filled(fill_value=np.nan)
-
-        files_to_compress = []
-        for year in years:
-            click.echo(f"Processing year {year}...")
-            cond_year = (date_time.year == year)
-            date_time_year = date_time[date_time.year == year]
-            timesteps_year = np.arange(len(date_time_year)) * 7  # convert to days since start of the year
-            ii_year = timesteps[cond_year] / 7  # indices of the time steps for the current year (assuming 7-day time steps)
-            # create xarray dataset
-            attrs = dict(
-                    date_created=datetime.datetime.today().isoformat(),
-                    title="MODFLOW6 transient simulations of the Dreisam-Moehlin-Neumagen catchment (offline coupling with RoGeR)",
-                    institution="University of Freiburg, Chair of Hydrology",
-                    flopy_version=f"{flopy.__version__}",
-                    modflow_version=f"{ml.version}",
-                )
-            coords = {
-                    "lon": ("lon", xcoords),  # x
-                    "lat": ("lat", ycoords),  # y
-                    "layer": ("layer", nlayers),
-                    "Time": ("Time", timesteps_year, {"units": f"days since {year}-01-01", "calendar": "gregorian"}),
-                }
-            click.echo("Extracting data for heads,...")
-            # heads_year = np.where(hds.get_alldata()[cond_year, :, :, :] > 10000, np.nan, hds.get_alldata()[cond_year, :, :, :])
-            heads_year = np.zeros((len(timesteps_year), len(nlayers), len(ycoords), len(xcoords)))
-
-            data_vars=dict(
-                    head=(["Time", "layer", "lat", "lon"], heads_year),
-                    # depth=(["Time", "layer", "lat", "lon"], depths_year),
-                    # gw_sw=(["Time", "lat", "lon"], gw_sw_year/86400.0),
-                )
-
-            ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
-            ds["head"].attrs["units"] = "m a.s.l."
-            ds["head"].attrs["long_name"] = "Groundwater head"
-            # ds["depth"].attrs["units"] = "m"
-            # ds["depth"].attrs["long_name"] = "Groundwater depth"
-            # ds["gw_sw"].attrs["units"] = "m3/s"
-            # ds["gw_sw"].attrs["long_name"] = "Groundwater-Surface water flux"
-            # create spatial reference
-            ds = ds.geo.write_crs("EPSG:25832")
-            ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
-            file = base_path / "output" / stress_test_name / f"dmn_run_{model_run}_year{year}.nc"
-            click.echo(f"Writing {file}...")
-            comp = dict(zlib=True, complevel=1)  # compress data to save storage
-            encoding = {var: comp for var in ds.data_vars}
-            ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)
-            files_to_compress.append(file)
-
-        # compress files into a single archive
-        if files_to_compress:
-            output_file = f"{stress_test_name}_dmn_run_{model_run}.zlb"
-            click.echo(f"Compressing files into {output_file}...")
-            compress_files(files_to_compress, output_file, compression_level=9)
-    except:
-        pass
+    # compress files into a single archive
+    if files_to_compress:
+        output_file = f"{stress_test_name}_dmn_run_{model_run}.zlb"
+        click.echo(f"Compressing files into {output_file}...")
+        compress_files(files_to_compress, output_file, compression_level=9)
     return
 
 
