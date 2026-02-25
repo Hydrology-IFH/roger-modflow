@@ -87,9 +87,12 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             _stress_test_well_extraction = ""
         else:
             _stress_test_well_extraction = "_well-extraction-stress"
+    
+        stress_test_name = f"modflow_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{irrigation}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}{_stress_test_well_extraction}"
 
+        click.echo(f"Loading MODFLOW6 simulation for model run {model_run}...")
         sim = flopy.mf6.MFSimulation.load(
-            sim_ws=base_path / "output",
+            sim_ws=base_path / "output" / stress_test_name,
             exe_name="mf6",
             version="mf6",
             verbosity_level=0,
@@ -101,6 +104,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         stress_test_name = f"modflow_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{irrigation}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}{_stress_test_well_extraction}"
 
         # load spatial reference and coordinates
+        click.echo("Loading spatial reference and coordinates from parameters_modflow.nc...")
         with xr.open_dataset(base_path.parent / "input" / "parameters_modflow.nc") as ds:
             topography = ds['elevations'].isel(z=0).values
             spatial_ref = ds.spatial_ref
