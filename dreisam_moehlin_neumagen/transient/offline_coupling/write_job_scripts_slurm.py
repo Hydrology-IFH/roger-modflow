@@ -140,7 +140,7 @@ def main():
             if "_irrigation_" in script_name:
                 input_file = script_name.replace("modflow_", "irrigation_").replace("_well-extraction-stress", "") + f"_year{year}.nc"
                 lines.append("cp -r %s/output/%s ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/input/\n" % (base_path_bwhpc_roger, input_file))
-        lines.append('sleep 120\n')
+        lines.append('sleep 160\n')
         lines.append("cd ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling\n")
         lines.append('echo "Start simulation ..."\n')
         lines.append('python roger-oneD_modflow6_transient_with_well_extraction.py %s\n' % (scenario_flag))
@@ -150,7 +150,7 @@ def main():
         lines.append('  rm -rf %s\n' % (output_path_ws.as_posix()))
         lines.append('fi\n')
         lines.append(f'echo "Move output to {output_path_ws.as_posix()}"\n')
-        lines.append('mv -v "${TMPDIR}"/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/%s %s' % (script_name, output_path_ws.parent.as_posix()))
+        lines.append('mv -v "${TMPDIR}"/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling/output/%s %s' % (script_name, output_path_ws.parent.as_posix()))
         file_path = base_path / f"{script_name}.sh"
         file = open(file_path, "w")
         file.writelines(lines)

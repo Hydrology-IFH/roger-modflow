@@ -530,7 +530,7 @@ class ModFlowSimulation:
 
         hydraulic_conductivities_layers = [hydraulic_conductivities_layer1, hydraulic_conductivities_layer2, hydraulic_conductivities_layer3, hydraulic_conductivities_layer4]
         npf = flopy.mf6.modflow.mfgwfnpf.ModflowGwfnpf(
-            gwf, pname="npf", icelltype=1, k=hydraulic_conductivities_layers, wetdry=0.5, save_flows=False, save_specific_discharge="budget save file"
+            gwf, pname="npf", icelltype=1, k=hydraulic_conductivities_layers, wetdry=0.5, save_flows=False,
         )
 
         # create the storage package
@@ -696,7 +696,7 @@ class ModFlowSimulation:
         head_filerecord = [headfile]
         budgetfile = "{}.cbc".format(name)
         budget_filerecord = [budgetfile]
-        saverecord = [("HEAD", "FIRST"), ("HEAD", "FREQUENCY", 1), ("HEAD", "LAST"), ("BUDGET", "FIRST"), ("BUDGET", "FREQUENCY", 1), ("BUDGET", "LAST")]
+        saverecord = [("HEAD", "FIRST"), ("HEAD", "FREQUENCY", 7), ("HEAD", "LAST"), ("BUDGET", "FIRST"), ("BUDGET", "FREQUENCY", 7), ("BUDGET", "LAST")]
         oc = flopy.mf6.modflow.mfgwfoc.ModflowGwfoc(
             gwf,
             pname="oc",
