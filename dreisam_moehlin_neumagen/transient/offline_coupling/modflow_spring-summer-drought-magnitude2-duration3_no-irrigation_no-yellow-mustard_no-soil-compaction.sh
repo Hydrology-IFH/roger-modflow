@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH --time=72:00:00
+#SBATCH --time=48:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=32000
+#SBATCH --mem=64000
 #SBATCH --mail-type=FAIL
 #SBATCH --mail-user=robin.schwemmle@hydrology.uni-freiburg.de
 #SBATCH --job-name=modflow_spring-summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_no-soil-compaction
