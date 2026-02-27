@@ -48,7 +48,7 @@ cp -r /pfs/10/work/fr_rs1092-workspace/roger/examples/catchment_scale/dreisam_mo
 sleep 120
 cd ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling
 echo "Start simulation ..."
-python roger-oneD_modflow6_transient_with_well_extraction.py --stress-test-meteo base
+python roger-oneD_modflow6_transient_with_well_extraction.py --stress-test-meteo base --soil-compaction no-soil-compaction
 echo "... finalised simulation"
 # Move output from local SSD to global workspace
 if [ -d "/pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_no-soil-compaction" ]; then
