@@ -997,27 +997,11 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     discharge_rotbach_year_doy = df_discharge_rotbach.loc[(df_discharge_rotbach["year"] == year) & (df_discharge_rotbach["DOY"] == doy), "Q"].values[0]
     lateral_recharge_anomaly_year_doy = df_lateral_recharge_anomaly.loc[(df_lateral_recharge_anomaly["year"] == year) & (df_lateral_recharge_anomaly["DOY"] == doy), "anomaly"].values[0]
 
-    # load recharge data of the current year
-    file = f"recharge_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{irrigation}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}_year{year}.nc"
-    path = Path(__file__).parent.parent / "input" / file
+    # load average recharge data
+    path = Path(__file__).parent.parent / "input" / "boundary_conditions.nc"
     with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_recharge:
         recharge_year = ds_recharge["recharge"].values
         recharge_year[recharge_year < 0] = 0  # set negative recharge to zero
-
-    # load capillary rise data of the current year
-    file = f"capillary_rise_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{irrigation}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}_year{year}.nc"
-    path = Path(__file__).parent.parent / "input" / file
-    with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_capillary_rise:
-        capillary_rise_year = ds_capillary_rise["capillary_rise"].values
-        capillary_rise_year[capillary_rise_year < 0] = 0  # set negative capillary rise to zero
-    
-    if irrigation == "irrigation":
-        # load irrigation data of the current year
-        file = f"irrigation_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}_year{year}.nc"
-        path = Path(__file__).parent.parent / "input" / file
-        with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_irrigation:
-            irrigation_year = ds_irrigation["irrigation"].values
-            irrigation_year[irrigation_year < 0] = 0  # set negative irrigation to zero
                 
     # update groundwater head
     groundwater_head = np.zeros(config_modflow['ny'] * config_modflow['nx'])
@@ -1033,7 +1017,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     groundwater_depth[(groundwater_depth <= soildepth)] = soildepth[(groundwater_depth <= soildepth)] + 0.05
 
     # update recharge and pass it to MODFLOW
-    recharge_ = recharge_year[1, :, :] / 1000  # mm/day to m/day
+    recharge_ = recharge_year / 1000  # mm/day to m/day
     recharge = recharge_.flatten()
     recharge[(groundwater_depth <= soildepth)] = 0 # constrain recharge to zero where groundwater depth is equal to soil depth
     recharge = recharge.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64)
@@ -1059,22 +1043,22 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     # update SFR inflow and pass it to MODFLOW
     sfr_inflow = np.zeros((n_reaches,), dtype=np.float64)
     # set Eschbach inflow to the observed discharge of the current year and day
-    sfr_inflow[449] = discharge_rotbach_year_doy * 86400 * (0.1/0.548) * 0.1  # decrease discharge by factor 0.1 for initial steady state
+    sfr_inflow[449] = 86400 * 0.1 * 0.548
     # set Ibenbach inflow to the observed discharge of the current year and day
-    sfr_inflow[137] = discharge_rotbach_year_doy * 86400 * (0.1/0.548) * 0.1
+    sfr_inflow[137] = 86400 * 0.1 * 0.548
     # set Wagensteigbach inflow to the observed discharge of the current year and day
-    sfr_inflow[168] = discharge_rotbach_year_doy * 86400 * (0.354/0.548) * 0.1
+    sfr_inflow[168] = 86400 * 0.354 * 0.548
     # set Rotbach inflow to the observed discharge of the current year and day
-    sfr_inflow[103] = discharge_rotbach_year_doy * 86400 * 0.1
+    sfr_inflow[103] = 86400
     # set Brugga inflow to the observed discharge
-    sfr_inflow[6] = discharge_dreisam_year_doy * 86400 * (0.7/2.8) * 0.1
+    sfr_inflow[6] = 86400 * 0.7 * 2.8
     # set Moehlin inflow to the observed discharge of the current year and day
-    sfr_inflow[3633] = discharge_moehlin_year_doy * 86400 * 0.5 * 0.1
-    sfr_inflow[3539] = discharge_moehlin_year_doy * 86400 * 0.5 * 0.1
+    sfr_inflow[3633] = 86400 * 0.5
+    sfr_inflow[3539] = 86400 * 0.5
     # set Muehlbach inflow to the observed discharge of the current year and day
-    sfr_inflow[1155] = discharge_moehlin_year_doy * 86400 * (0.1/0.33) * 0.1
+    sfr_inflow[1155] = 86400 * 0.1 * 0.33
     # set Neumagen inflow to the observed discharge of the current year and day
-    sfr_inflow[1272] = discharge_neumagen_year_doy * 86400 * 0.1
+    sfr_inflow[1272] = 86400
     modflow_interface.set_sfr_inflow(sfr_inflow)
 
     # run MODFLOW for one timestep
