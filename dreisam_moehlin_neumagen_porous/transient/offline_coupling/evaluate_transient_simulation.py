@@ -71,9 +71,9 @@ def main(model_run):
     df_metrics = pd.DataFrame(index=observed_groundwater_depths.columns, columns=["NSE", "MAE", "r"])
 
     for station_id in observed_groundwater_depths.columns:
-        click.echo(f"Evaluating station {station_id}...")
         # get row and column index based on ccordinate of the station
         _station_id = station_id.replace("_", "/")
+        click.echo(f"Evaluating station {station_id}({_station_id})...")
         xcoord = groundwater_observation_wells.loc[_station_id, "xcoord"]
         ycoord = groundwater_observation_wells.loc[_station_id, "ycoord"]
         # check if the station is within the bounds of the model grid
@@ -101,8 +101,8 @@ def main(model_run):
                 fig, axes = plt.subplots(figsize=(4, 4))
                 axes.scatter(df_sim_obs["observed"], df_sim_obs["simulated"], alpha=0.8)
                 axes.plot([0, np.max(df_sim_obs["observed"])], [0, np.max(df_sim_obs["observed"])], "k--")
-                axes.set_xlabel("Gemessener GWFA (m)")
-                axes.set_ylabel("Simulierter GWFA (m)")
+                axes.set_xlabel("Gemessener GWFA [m]")
+                axes.set_ylabel("Simulierter GWFA [m]")
                 axes.set_xlim(0, np.max(df_sim_obs["observed"]))
                 axes.set_ylim(0, np.max(df_sim_obs["observed"]))
                 axes.set_title(f"{station_id}\nNSE: {nse_depth:.2f}, MAE: {mae_depth:.2f} m, r: {r_rank:.2f}")
