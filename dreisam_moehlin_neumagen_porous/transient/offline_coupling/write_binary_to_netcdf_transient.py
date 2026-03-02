@@ -6,61 +6,9 @@ import geoxarray
 import numpy as np
 import pandas as pd
 import datetime
-import zlib
-import struct
+import tarfile
 import click
 import os
-
-def compress_files(file_list, output_file, compression_level=6):
-    """
-    Compress multiple files into a single archive using zlib.
-    
-    Args:
-        file_list: List of file paths to compress
-        output_file: Output archive file path
-        compression_level: Compression level (0-9, where 9 is maximum compression)
-    """
-    output_dir = Path(file_list[0]).parent
-    zip_file = str(output_dir / output_file)
-    with open(zip_file, 'wb') as out:
-        # Write number of files
-        out.write(struct.pack('I', len(file_list)))
-        
-        for file_path in file_list:
-            file_path = Path(file_path)
-            
-            if not file_path.exists():
-                click.echo(f"Warning: {file_path} not found, skipping...")
-                continue
-            
-            # Read file content
-            with open(file_path, 'rb') as f:
-                data = f.read()
-            
-            # Compress the data
-            compressed_data = zlib.compress(data, compression_level)
-            
-            # Get file metadata
-            file_name = str(file_path.name)
-            file_name_bytes = file_name.encode('utf-8')
-            original_size = len(data)
-            compressed_size = len(compressed_data)
-            
-            # Write metadata and compressed data
-            # Format: [name_length][name][original_size][compressed_size][compressed_data]
-            out.write(struct.pack('I', len(file_name_bytes)))  # Name length
-            out.write(file_name_bytes)                          # File name
-            out.write(struct.pack('Q', original_size))          # Original size
-            out.write(struct.pack('Q', compressed_size))        # Compressed size
-            out.write(compressed_data)                          # Compressed data
-            
-            # click.echo compression stats
-            ratio = (1 - compressed_size / original_size) * 100 if original_size > 0 else 0
-            click.echo(f"Compressed: {file_name}")
-            click.echo(f"  Original: {original_size:,} bytes")
-            click.echo(f"  Compressed: {compressed_size:,} bytes")
-            click.echo(f"  Ratio: {ratio:.2f}%\n")
-
 
 @click.option("-stm", "--stress-test-meteo", type=click.Choice(["base", "base_2000-2024", "spring-drought", "summer-drought", "spring-summer-drought", "spring-summer-wet"]), default="base", help="Type of meteorological stress test")
 @click.option("-stmm", "--stress-test-meteo-magnitude", type=click.Choice([0, 1, 2]), default=0, help="Magnitude of meteorological stress test")
@@ -217,13 +165,12 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             ds.close()
             files_to_compress.append(file)
 
-
-
     # compress files into a single archive
     if files_to_compress:
-        output_file = f"{stress_test_name}_dmn_run_{model_run}.zlib"
-        click.echo(f"Compressing files into {output_file}...")
-        compress_files(files_to_compress, output_file, compression_level=9)
+        output_file = base_path / "output" / stress_test_name / f"{stress_test_name}_dmn_run_{model_run}.tar.gz"
+        with tarfile.open(output_file, "w:gz") as tar:
+            for f in files_to_compress:
+                tar.add(f, arcname=f.name)
     return
 
 
