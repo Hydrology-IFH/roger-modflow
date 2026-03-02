@@ -44,12 +44,14 @@ def main(model_run):
     groundwater_depths = np.concatenate(ll_groundwater_depths, axis=0)
 
     # load topography
+    click.echo("Loading topography...")
     path = base_path.parent / "input" / "parameters_modflow.nc"
     ds_params = xr.open_dataset(path, engine="h5netcdf")
     xcoords = ds_params["x"].values
     ycoords = ds_params["y"].values
 
     # load observed groundwater heads (average values of the observation wells)
+    click.echo("Loading observed groundwater depths...")
     path = base_path.parent / "observations" / "groundwater_observation_wells.gpkg"
     groundwater_observation_wells = gpd.read_file(path) 
 
@@ -80,40 +82,44 @@ def main(model_run):
             df_sim_obs = pd.DataFrame({"simulated": simulated_depth, "observed": observed_depth})
             df_sim_obs.index = observed_groundwater_depths.index
             df_sim_obs = df_sim_obs.dropna()
-            ll_observed_depths.append(df_sim_obs["observed"].values)
-            ll_simulated_depths.append(df_sim_obs["simulated"].values)
-            # calculate metrics
-            sim_vals = df_sim_obs["simulated"].values
-            obs_vals = df_sim_obs["observed"].values
-            nse_depth = 1.0 - np.sum((obs_vals - sim_vals) ** 2) / np.sum((obs_vals - np.mean(obs_vals)) ** 2)
-            mae_depth = np.mean(np.abs(obs_vals - sim_vals))
-            r_rank = sp.stats.spearmanr(sim_vals, obs_vals)[0]
-            df_metrics.loc[station_id, "NSE"] = nse_depth
-            df_metrics.loc[station_id, "MAE"] = mae_depth
-            df_metrics.loc[station_id, "r"] = r_rank
+            if len(df_sim_obs) > 24:
+                ll_observed_depths.append(df_sim_obs["observed"].values)
+                ll_simulated_depths.append(df_sim_obs["simulated"].values)
+                # calculate metrics
+                sim_vals = df_sim_obs["simulated"].values
+                obs_vals = df_sim_obs["observed"].values
+                nse_depth = 1.0 - np.sum((obs_vals - sim_vals) ** 2) / np.sum((obs_vals - np.mean(obs_vals)) ** 2)
+                mae_depth = np.mean(np.abs(obs_vals - sim_vals))
+                r_rank = sp.stats.spearmanr(sim_vals, obs_vals)[0]
+                df_metrics.loc[station_id, "NSE"] = nse_depth
+                df_metrics.loc[station_id, "MAE"] = mae_depth
+                df_metrics.loc[station_id, "r"] = r_rank
 
-            # plot simulated vs observed groundwater depths for the station and assign metrics to the title
-            fig, axes = plt.subplots(figsize=(4, 4))
-            axes.scatter(df_sim_obs["observed"], df_sim_obs["simulated"], alpha=0.8)
-            axes.plot([0, np.max(df_sim_obs["observed"])], [0, np.max(df_sim_obs["observed"])], "k--")
-            axes.set_xlabel("Gemessener GWFA (m)")
-            axes.set_ylabel("Simulierter GWFA (m)")
-            axes.set_xlim(0, np.max(df_sim_obs["observed"]))
-            axes.set_ylim(0, np.max(df_sim_obs["observed"]))
-            axes.set_title(f"{station_id}\nNSE: {nse_depth:.2f}, MAE: {mae_depth:.2f} m, r: {r_rank:.2f}")
-            fig.tight_layout()
-            file = base_path / "output" / stress_test_name / "figures" / f"scatter_gw_depths_{station_id}_run{model_run}.png"
-            fig.savefig(file, dpi=300, bbox_inches="tight")
+                # plot simulated vs observed groundwater depths for the station and assign metrics to the title
+                fig, axes = plt.subplots(figsize=(4, 4))
+                axes.scatter(df_sim_obs["observed"], df_sim_obs["simulated"], alpha=0.8)
+                axes.plot([0, np.max(df_sim_obs["observed"])], [0, np.max(df_sim_obs["observed"])], "k--")
+                axes.set_xlabel("Gemessener GWFA (m)")
+                axes.set_ylabel("Simulierter GWFA (m)")
+                axes.set_xlim(0, np.max(df_sim_obs["observed"]))
+                axes.set_ylim(0, np.max(df_sim_obs["observed"]))
+                axes.set_title(f"{station_id}\nNSE: {nse_depth:.2f}, MAE: {mae_depth:.2f} m, r: {r_rank:.2f}")
+                fig.tight_layout()
+                file = base_path / "output" / stress_test_name / "figures" / f"scatter_gw_depths_{station_id}_run{model_run}.png"
+                fig.savefig(file, dpi=300, bbox_inches="tight")
 
-            # compare simulated and observed groundwater depths in a time series plot
-            fig, axes = plt.subplots(figsize=(6, 2))
-            axes.plot(df_sim_obs.index, df_sim_obs["observed"], label="Gemessen", linewidth=1.2, color="blue")
-            axes.plot(df_sim_obs.index, df_sim_obs["simulated"], label="Simuliert", linewidth=1, color="red")
-            axes.set_xlabel("Zeit")
-            axes.set_ylabel("GWFA [m]")
-            fig.tight_layout()
-            file = base_path / "output" / stress_test_name / "figures" / f"ts_gw_depths_{station_id}_run{model_run}.png"
-            fig.savefig(file, dpi=300, bbox_inches="tight")
+                # compare simulated and observed groundwater depths in a time series plot
+                fig, axes = plt.subplots(figsize=(6, 2))
+                axes.plot(df_sim_obs.index, df_sim_obs["observed"], label="Gemessen", linewidth=1.2, color="blue")
+                axes.plot(df_sim_obs.index, df_sim_obs["simulated"], label="Simuliert", linewidth=1, color="red")
+                axes.set_xlabel("Zeit")
+                axes.set_ylabel("GWFA [m]")
+                fig.tight_layout()
+                file = base_path / "output" / stress_test_name / "figures" / f"ts_gw_depths_{station_id}_run{model_run}.png"
+                fig.savefig(file, dpi=300, bbox_inches="tight")
+
+    # drop rows with missing metrics
+    df_metrics = df_metrics.dropna(subset=["NSE", "MAE", "r"])
 
     # calculate overall metrics
     df_metrics.loc["avg", "NSE"] = np.mean(df_metrics["NSE"].astype(float))
