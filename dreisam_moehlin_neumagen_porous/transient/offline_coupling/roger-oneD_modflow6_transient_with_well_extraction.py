@@ -644,7 +644,7 @@ class ModFlowSimulation:
                 layer = 3
                 b_ghb = elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]] - elevation_bottom_layer4[rows_bc[ii], cols_bc[ii]]
                 kf_ghb = hydraulic_conductivities_layer4[rows_bc[ii], cols_bc[ii]]
-            conductance = kf_ghb * b_ghb
+            conductance = kf_ghb * b_ghb * 0.05
             ghb_rec.append(((layer, rows_bc[ii], cols_bc[ii]), constant_head, conductance))
 
         ghb = flopy.mf6.modflow.mfgwfghb.ModflowGwfghb(
