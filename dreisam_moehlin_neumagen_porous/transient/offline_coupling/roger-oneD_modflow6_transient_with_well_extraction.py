@@ -1180,6 +1180,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         click.echo(recharge_vertical[211, 441])
         recharge_lateral = ((ds_bc["lateral_inflow_bc_mmday"].values) / 1000) * (1 + lateral_recharge_anomaly_year_doy)  # mm/day to m/day
         recharge = (recharge_vertical.flatten() + recharge_lateral.flatten())  # set recharge to zero for testing
+        recharge[:] = 0.
         modflow_interface.set_recharge(recharge)
 
         # update capillary rise and pass it to MODFLOW
