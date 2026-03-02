@@ -34,9 +34,10 @@ def main(model_run):
     timesteps = np.arange(len(date_time))
 
     # load the simulated groundwater depths
+    click.echo("Loading simulated groundwater depths...")
     ll_groundwater_depths = []
     for year in years:
-        output_file = base_path / "output" / "modflow_base-magnitude0-duration0_irrigation_no-yellow-mustard_soil-compaction" / f"gw_depth_dmn_run_{model_run}_year{year}.nc"
+        output_file = base_path / "output" / "modflow_base-magnitude0-duration0_irrigation_no-yellow-mustard_soil-compaction" / f"gw_depth_dmn_run{model_run}_year{year}.nc"
         ds_gw_depth_sim = xr.open_dataset(output_file, engine="h5netcdf")
         groundwater_depths_year = ds_gw_depth_sim["depth"].values[:, 1, :, :]
         ll_groundwater_depths.append(groundwater_depths_year)
@@ -66,6 +67,7 @@ def main(model_run):
     df_metrics = pd.DataFrame(index=observed_groundwater_heads.columns, columns=["NSE", "MAE", "r"])
 
     for station_id in observed_groundwater_heads.columns:
+        click.echo(f"Evaluating station {station_id}...")
         # get row and column index based on ccordinate of the station
         _station_id = station_id.replace("_", "/")
         xcoord = gdf_gw.loc[_station_id, "xcoord"]
@@ -131,10 +133,12 @@ def main(model_run):
     df_metrics.loc["max", "r"] = np.max(df_metrics["r"].astype(float))
 
     # write metrics to csv
+    click.echo("Writing evaluation metrics to csv...")
     file = base_path / "output" / stress_test_name / "figures" / f"evaluation_metrics_run{model_run}.csv"
     df_metrics.to_csv(file)
 
     # make scatter plot of simulated vs observed groundwater depths
+    click.echo("Making scatter plot of simulated vs observed groundwater depths...")
     fig, axes = plt.subplots(figsize=(4, 4))
     axes.scatter(np.concatenate(ll_observed_depths), np.concatenate(ll_simulated_depths), alpha=0.8)
     axes.plot([0, np.max(np.concatenate(ll_observed_depths))], [0, np.max(np.concatenate(ll_observed_depths))], "k--")
