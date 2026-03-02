@@ -655,7 +655,6 @@ class ModFlowSimulation:
             save_flows=False,
         )
 
-         
         # Recharge package (Neumann boundary condition i.e. second type)
         recharge_spd = np.zeros((self.modflow_basin.sum(), 4), dtype=np.int32)
         recharge_locations = np.where(self.modflow_basin == True)  # only set recharge where modflow_basin is True
@@ -1210,7 +1209,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         well_extraction_rate[:] = groundwater_extraction[f"{year}"].values.astype(np.float64)
         well_extraction_rate[cond_drinking_water_supply] = well_extraction_rate[cond_drinking_water_supply] * daily_weights_drinking_water_supply_year_doy
         well_extraction_rate[~cond_drinking_water_supply] = well_extraction_rate[~cond_drinking_water_supply] / 365.25
-        well_extraction_rate[:] = -well_extraction_rate[:]  # extraction is negative
+        well_extraction_rate[:] = -well_extraction_rate[:] * 100 # extraction is negative
         modflow_interface.set_well_rate(well_extraction_rate)
 
         # update SFR inflow and pass it to MODFLOW
