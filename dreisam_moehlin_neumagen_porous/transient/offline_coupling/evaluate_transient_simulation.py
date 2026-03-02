@@ -59,7 +59,7 @@ def main(model_run):
     observed_groundwater_depths = pd.read_csv(path, index_col=0, sep=";")
     observed_groundwater_depths.index = pd.to_datetime(observed_groundwater_depths.index, format="%Y-%m-%d")
 
-    figure_dir = base_path / "output" / stress_test_name / "figures"
+    figure_dir = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures"
     if not os.path.exists(figure_dir):
         os.makedirs(figure_dir)
 
@@ -105,7 +105,7 @@ def main(model_run):
                 axes.set_ylim(0, np.max(df_sim_obs["observed"]))
                 axes.set_title(f"{station_id}\nNSE: {nse_depth:.2f}, MAE: {mae_depth:.2f} m, r: {r_rank:.2f}")
                 fig.tight_layout()
-                file = base_path / "output" / stress_test_name / "figures" / f"scatter_gw_depths_{station_id}_run{model_run}.png"
+                file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"scatter_gw_depths_{station_id}_run{model_run}.png"
                 fig.savefig(file, dpi=300, bbox_inches="tight")
 
                 # compare simulated and observed groundwater depths in a time series plot
@@ -115,7 +115,7 @@ def main(model_run):
                 axes.set_xlabel("Zeit")
                 axes.set_ylabel("GWFA [m]")
                 fig.tight_layout()
-                file = base_path / "output" / stress_test_name / "figures" / f"ts_gw_depths_{station_id}_run{model_run}.png"
+                file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"ts_gw_depths_{station_id}_run{model_run}.png"
                 fig.savefig(file, dpi=300, bbox_inches="tight")
 
     # drop rows with missing metrics
@@ -140,7 +140,7 @@ def main(model_run):
 
     # write metrics to csv
     click.echo("Writing evaluation metrics to csv...")
-    file = base_path / "output" / stress_test_name / "figures" / f"evaluation_metrics_run{model_run}.csv"
+    file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"evaluation_metrics_run{model_run}.csv"
     df_metrics.to_csv(file)
 
     # make scatter plot of simulated vs observed groundwater depths
@@ -153,7 +153,7 @@ def main(model_run):
     axes.set_xlim(0, np.max(np.concatenate(ll_observed_depths)))
     axes.set_ylim(0, np.max(np.concatenate(ll_simulated_depths)))
     fig.tight_layout()
-    file = base_path / "output" / stress_test_name / f"scatter_gw_depths_run{model_run}.png"
+    file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / f"scatter_gw_depths_run{model_run}.png"
     fig.savefig(file, dpi=300, bbox_inches="tight")
     return
 
