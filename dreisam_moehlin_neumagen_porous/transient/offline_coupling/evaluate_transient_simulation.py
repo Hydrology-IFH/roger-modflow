@@ -64,9 +64,9 @@ def main(model_run):
     ll_observed_depths = []
     ll_simulated_depths = []
 
-    df_metrics = pd.DataFrame(index=observed_groundwater_heads.columns, columns=["NSE", "MAE", "r"])
+    df_metrics = pd.DataFrame(index=observed_groundwater_depths.columns, columns=["NSE", "MAE", "r"])
 
-    for station_id in observed_groundwater_heads.columns:
+    for station_id in observed_groundwater_depths.columns:
         click.echo(f"Evaluating station {station_id}...")
         # get row and column index based on ccordinate of the station
         _station_id = station_id.replace("_", "/")
