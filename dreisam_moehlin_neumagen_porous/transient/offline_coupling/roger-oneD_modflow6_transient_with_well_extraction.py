@@ -965,10 +965,6 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     df_discharge_rotbach["DOY"] = pd.to_datetime(df_discharge_rotbach.index).dayofyear
     df_discharge_rotbach["year"] = pd.to_datetime(df_discharge_rotbach.index).year
 
-    # load average lateral recharge of the years 2013-2023
-    path = Path(__file__).parent.parent / "input" / "boundary_conditions.nc"
-    ds_bc = xr.open_dataset(path, engine="h5netcdf")
-
     # load lateral recharge anomalies to scale the recharge to daily values
     if stress_test_meteo == "base":
         df_lateral_recharge_anomaly = pd.read_csv(base_path.parent / "input" / "2013-2023" / "lateral_recharge_anomaly.csv", sep=";", index_col=0, skiprows=1)
@@ -1035,9 +1031,10 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
 
     # load average recharge data
     path = Path(__file__).parent.parent / "input" / "boundary_conditions.nc"
-    with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_recharge:
-        recharge_year = ds_recharge["recharge"].values
+    with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_bc:
+        recharge_year = ds_bc["recharge"].values
         recharge_year[recharge_year < 0] = 0  # set negative recharge to zero
+        recharge_lateral = ((ds_bc["lateral_inflow_bc_mmday"].values) / 1000) * (1 + lateral_recharge_anomaly_year_doy)
                 
     # update groundwater head
     groundwater_head = np.zeros(config_modflow['ny'] * config_modflow['nx'])
@@ -1054,14 +1051,13 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
 
     # update recharge and pass it to MODFLOW
     recharge_ = recharge_year / 1000  # mm/day to m/day
-    recharge_= aggregate_to_finer_resolution(recharge_, config_modflow['dx'], 25, method="keep")
+    recharge_ = aggregate_to_finer_resolution(recharge_, config_modflow['dx'], 25, method="keep")
     recharge = recharge_.flatten()
     recharge[(groundwater_depth <= soildepth)] = 0 # constrain recharge to zero where groundwater depth is equal to soil depth
     recharge = recharge.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64)
     recharge_vertical = aggregate_to_coarser_resolution(recharge, 25, config_modflow['dx'], method="average")
     recharge_vertical[recharge_vertical > 0.1] = 0.1  # constrain vertical recharge to 0.1 m/day
     click.echo(recharge_vertical[211, 441])
-    recharge_lateral = ((ds_bc["lateral_inflow_bc_mmday"].values) / 1000) * (1 + lateral_recharge_anomaly_year_doy)  # mm/day to m/day
     recharge = (recharge_vertical.flatten() + recharge_lateral.flatten())
     modflow_interface.set_recharge(recharge)
 
@@ -1080,22 +1076,22 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     # update SFR inflow and pass it to MODFLOW
     sfr_inflow = np.zeros((n_reaches,), dtype=np.float64)
     # set Eschbach inflow to the observed discharge of the current year and day
-    sfr_inflow[449] = 86400 * 0.1 * 0.548
+    sfr_inflow[449] = 86400 * 0.1 * 0.548 * 0.5
     # set Ibenbach inflow to the observed discharge of the current year and day
-    sfr_inflow[137] = 86400 * 0.1 * 0.548
+    sfr_inflow[137] = 86400 * 0.1 * 0.548 * 0.5
     # set Wagensteigbach inflow to the observed discharge of the current year and day
-    sfr_inflow[168] = 86400 * 0.354 * 0.548
+    sfr_inflow[168] = 86400 * 0.354 * 0.548 * 0.5
     # set Rotbach inflow to the observed discharge of the current year and day
-    sfr_inflow[103] = 86400
+    sfr_inflow[103] = 86400 * 0.5
     # set Brugga inflow to the observed discharge
-    sfr_inflow[6] = 86400 * 0.7 * 2.8
+    sfr_inflow[6] = 86400 * 0.7 * 2.8 * 0.5
     # set Moehlin inflow to the observed discharge of the current year and day
-    sfr_inflow[3633] = 86400 * 0.5
-    sfr_inflow[3539] = 86400 * 0.5
+    sfr_inflow[3633] = 86400 * 0.5 * 0.5
+    sfr_inflow[3539] = 86400 * 0.5 * 0.5
     # set Muehlbach inflow to the observed discharge of the current year and day
-    sfr_inflow[1155] = 86400 * 0.1 * 0.33
+    sfr_inflow[1155] = 86400 * 0.1 * 0.33 * 0.5
     # set Neumagen inflow to the observed discharge of the current year and day
-    sfr_inflow[1272] = 86400
+    sfr_inflow[1272] = 86400 * 0.5
     modflow_interface.set_sfr_inflow(sfr_inflow)
 
     # run MODFLOW for one timestep
@@ -1180,7 +1176,6 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         click.echo(recharge_vertical[211, 441])
         recharge_lateral = ((ds_bc["lateral_inflow_bc_mmday"].values) / 1000) * (1 + lateral_recharge_anomaly_year_doy)  # mm/day to m/day
         recharge = (recharge_vertical.flatten() + recharge_lateral.flatten())  # set recharge to zero for testing
-        recharge[:] = 0.
         modflow_interface.set_recharge(recharge)
 
         # update capillary rise and pass it to MODFLOW
