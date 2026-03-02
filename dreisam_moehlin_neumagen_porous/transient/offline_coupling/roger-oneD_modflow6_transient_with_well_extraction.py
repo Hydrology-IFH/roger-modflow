@@ -1023,7 +1023,9 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     groundwater_head = np.zeros(config_modflow['ny'] * config_modflow['nx'])
     modflow_interface.get_groundwater_head(groundwater_head)
     groundwater_head = groundwater_head.reshape(config_modflow['ny'], config_modflow['nx'])
-    click.echo(groundwater_head[214, 450])
+    click.echo(groundwater_head[211, 441])
+    click.echo(topography_[211, 441] - groundwater_head[211, 441])
+    
     # aggregate groundwater head to the resolution of RoGeR
     groundwater_head = aggregate_to_finer_resolution(groundwater_head, config_modflow['dx'], 25, method="keep")
     # RoGeR requires depth of groundwater head (in meters)
@@ -1037,6 +1039,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     recharge = recharge.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64)
     recharge_vertical = aggregate_to_coarser_resolution(recharge, 25, config_modflow['dx'], method="average")
     recharge_vertical[recharge_vertical > 0.1] = 0.1  # constrain vertical recharge to 0.1 m/day
+    click.echo(recharge_vertical[211, 441])
     recharge_lateral = ((ds_bc["lateral_inflow_bc_mmday"].values) / 1000) * (1 + lateral_recharge_anomaly_year_doy)  # mm/day to m/day
     recharge = (recharge_vertical.flatten() + recharge_lateral.flatten())
     modflow_interface.set_recharge(recharge)
@@ -1100,7 +1103,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_recharge:
                 recharge_year = ds_recharge["recharge"].values
                 recharge_year[recharge_year < 0] = 0  # set negative recharge to zero
-        elif  years[i - 1] < year and i > 0:
+        elif years[i - 1] < year and i > 0:
             with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_recharge:
                 recharge_year = ds_recharge["recharge"].values
                 recharge_year[recharge_year < 0] = 0  # set negative recharge to zero
@@ -1112,7 +1115,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_capillary_rise:
                 capillary_rise_year = ds_capillary_rise["capillary_rise"].values
                 capillary_rise_year[capillary_rise_year < 0] = 0  # set negative capillary rise to zero
-        elif  years[i - 1] < year and i > 0:
+        elif years[i - 1] < year and i > 0:
             with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_capillary_rise:
                 capillary_rise_year = ds_capillary_rise["capillary_rise"].values
                 capillary_rise_year[capillary_rise_year < 0] = 0  # set negative capillary rise to zero
@@ -1125,7 +1128,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
                 with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_irrigation:
                     irrigation_year = ds_irrigation["irrigation"].values
                     irrigation_year[irrigation_year < 0] = 0  # set negative irrigation to zero
-            elif  years[i - 1] < year and i > 0:
+            elif years[i - 1] < year and i > 0:
                 with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_irrigation:
                     irrigation_year = ds_irrigation["irrigation"].values
                     irrigation_year[irrigation_year < 0] = 0  # set negative irrigation to zero
@@ -1135,6 +1138,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         modflow_interface.get_groundwater_head(groundwater_head)
         groundwater_head = groundwater_head.reshape(config_modflow['ny'], config_modflow['nx'])
         click.echo(groundwater_head[211, 441])
+        click.echo(topography_[211, 441] - groundwater_head[211, 441])
         # aggregate groundwater head to the resolution of RoGeR
         groundwater_head = aggregate_to_finer_resolution(groundwater_head, config_modflow['dx'], 25, method="keep")
         # RoGeR requires depth of groundwater head (in meters)
@@ -1151,8 +1155,8 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         recharge[(groundwater_depth <= soildepth)] = 0 # constrain recharge to zero where groundwater depth is equal to soil depth
         recharge = recharge.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64) / 1000  # mm/day to m/day
         recharge_vertical = aggregate_to_coarser_resolution(recharge, 25, config_modflow['dx'], method="average")
-        click.echo(recharge_vertical[211, 441])
         recharge_vertical[recharge_vertical > 0.1] = 0.1  # constrain recharge to 0.1 m/day i.e. 100 mm/day
+        click.echo(recharge_vertical[211, 441])
         recharge_lateral = ((ds_bc["lateral_inflow_bc_mmday"].values) / 1000) * (1 + lateral_recharge_anomaly_year_doy)  # mm/day to m/day
         recharge = (recharge_vertical.flatten() + recharge_lateral.flatten())  # set recharge to zero for testing
         modflow_interface.set_recharge(recharge)
