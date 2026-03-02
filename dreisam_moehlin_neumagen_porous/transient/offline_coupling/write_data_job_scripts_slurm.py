@@ -102,9 +102,9 @@ def main():
         lines.append("#SBATCH --ntasks=1\n")
         lines.append("#SBATCH --cpus-per-task=1\n")
         if "base_2000-2024" in scenario_flag:
-            lines.append("#SBATCH --mem=128000\n")
+            lines.append("#SBATCH --mem=512000\n")
         else:
-            lines.append("#SBATCH --mem=64000\n")
+            lines.append("#SBATCH --mem=256000\n")
         lines.append("#SBATCH --mail-type=FAIL\n")
         lines.append("#SBATCH --mail-user=robin.schwemmle@hydrology.uni-freiburg.de\n")
         lines.append(f"#SBATCH --job-name={script_name}\n")
