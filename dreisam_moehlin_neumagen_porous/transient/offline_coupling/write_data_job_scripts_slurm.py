@@ -95,9 +95,9 @@ def main():
         lines = []
         lines.append("#!/bin/bash\n")
         if "base_2000-2024" in scenario_flag:
-            lines.append("#SBATCH --time=01:00:00\n")
+            lines.append("#SBATCH --time=02:00:00\n")
         else:            
-            lines.append("#SBATCH --time=00:30:00\n")
+            lines.append("#SBATCH --time=01:00:00\n")
         lines.append("#SBATCH --nodes=1\n")
         lines.append("#SBATCH --ntasks=1\n")
         lines.append("#SBATCH --cpus-per-task=1\n")

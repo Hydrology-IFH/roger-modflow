@@ -1,0 +1,166 @@
+from pathlib import Path
+import numpy as np
+import xarray as xr
+import pandas as pd
+import geopandas as gpd
+import scipy as sp
+import rasterio
+import matplotlib.pyplot as plt
+import scipy
+import click
+import math
+import os
+import yaml
+
+def xy_to_rowcol(x, y, x0, y0):
+    """
+    Convert map coordinates (x, y) to array indices (row, col) for a north-up raster.
+
+    x0, y0: map coordinates of the upper-left corner of pixel (0, 0)
+
+    Returns: (row, col) as integers (0-based)
+    """
+    col = math.floor((x - x0) / 50)
+    row = math.floor((y0 - y) / 50)
+    return row, col
+
+@click.option("-mr", "--model-run", type=int, default=1806)
+@click.command("main", short_help="Evaluate the transient simulation")
+def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_duration, irrigation, yellow_mustard, soil_compaction, grain_corn_only, stress_test_well_extraction, model_run)):
+    base_path = Path(__file__).parent
+
+    if grain_corn_only == "no-grain-corn-only":
+        _grain_corn_only = ""
+    else:
+        _grain_corn_only = "_grain-corn-only"
+
+    if stress_test_well_extraction == "no-stress":
+        _stress_test_well_extraction = ""
+    else:
+        _stress_test_well_extraction = "_well-extraction-stress"
+
+    if stress_test_meteo == "base_2000-2024":
+        date_time = pd.date_range(start="2000-01-01", end="2024-12-31", freq="7D")
+        years = np.unique(date_time.year.values)
+        timesteps = np.arange(len(date_time)) * 7
+    else:
+        date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="7D")
+        years = np.unique(date_time.year.values)
+        timesteps = np.arange(len(date_time)) * 7
+
+    stress_test_name = f"modflow_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{irrigation}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}{_stress_test_well_extraction}"
+
+    # load the simulated groundwater depths
+    ll_groundwater_depths = []
+    for year in years:
+        output_file = base_path / "output" / stress_test_name / f"gw_depth_dmn_run_{model_run}_year{year}.nc"
+        ds_gw_depth_sim = xr.open_dataset(output_file, engine="h5netcdf")
+        groundwater_depths_year = ds_gw_depth_sim["depth"].values[:, 1, :, :]
+        ll_groundwater_depths.append(groundwater_depths_year)
+    groundwater_depths = np.concatenate(ll_groundwater_depths, axis=0)
+
+    # load topography
+    path = base_path.parent / "input" / "parameters_modflow.nc"
+    ds_params = xr.open_dataset(path, engine="h5netcdf")
+    xcoords = ds_params["x"].values
+    ycoords = ds_params["y"].values
+
+    # load observed groundwater heads (average values of the observation wells)
+    path = base_path.parent / "observations" / "groundwater_observation_wells.gpkg"
+    groundwater_observation_wells = gpd.read_file(path) 
+
+    path = base_path.parent / "observations" / "groundwater_depth_time_series_filled.csv"
+    observed_groundwater_depths = pd.read_csv(path, index_col=0, sep=";")
+    observed_groundwater_depths.index = pd.to_datetime(observed_groundwater_depths.index, format="%Y-%m-%d")
+
+    figure_dir = base_path / "output" / stress_test_name / "figures"
+    if not os.path.exists(figure_dir):
+        os.makedirs(figure_dir)
+
+    ll_observed_depths = []
+    ll_simulated_depths = []
+
+    df_metrics = pd.DataFrame(index=observed_groundwater_heads.columns, columns=["NSE", "MAE", "r"])
+
+    for station_id in observed_groundwater_heads.columns:
+        # get row and column index based on ccordinate of the station
+        _station_id = station_id.replace("_", "/")
+        xcoord = gdf_gw.loc[_station_id, "xcoord"]
+        ycoord = gdf_gw.loc[_station_id, "ycoord"]
+        # check if the station is within the bounds of the model grid
+        if xcoord >= xcoords[0] and xcoord <= xcoords[-1] and ycoord >= ycoords[-1] and ycoord <= ycoords[0]:
+            row, col = xy_to_rowcol(xcoord, ycoord, x0, y0)
+            simulated_depth = groundwater_depths[:, row, col]
+            observed_depth = observed_groundwater_depths[station_id].values
+            df_sim_obs = pd.DataFrame({"simulated": simulated_depth, "observed": observed_depth})
+            df_sim_obs.index = observed_groundwater_depths.index
+            df_sim_obs = df_sim_obs.dropna()
+            ll_observed_depths.append(df_sim_obs["observed"].values)
+            ll_simulated_depths.append(df_sim_obs["simulated"].values)
+            # calculate metrics
+            nse_depth = 1 - np.sum((df_sim_obs["observed"] - df_sim_obs["simulated"]) ** 2) / np.sum((df_sim_obs["observed"] - np.mean(df_sim_obs["observed"])) ** 2))
+            mae_depth = np.mean(np.abs(df_sim_obs["observed"] - df_sim_obs["simulated"]))
+            r_rank = sp.stats.spearmanr(df_sim_obs["simulated"], df_sim_obs["observed"])[0]
+            df_metrics.loc[station_id, "NSE"] = nse_depth
+            df_metrics.loc[station_id, "MAE"] = mae_depth
+            df_metrics.loc[station_id, "r"] = r_rank
+
+            # plot simulated vs observed groundwater depths for the station and assign metrics to the title
+            fig, axes = plt.subplots(figsize=(4, 4))
+            axes.scatter(df_sim_obs["observed"], df_sim_obs["simulated"], alpha=0.8)
+            axes.plot([0, np.max(df_sim_obs["observed"])], [0, np.max(df_sim_obs["observed"])], "k--")
+            axes.set_xlabel("Gemessener GWFA (m)")
+            axes.set_ylabel("Simulierter GWFA (m)")
+            axes.set_xlim(0, np.max(df_sim_obs["observed"]))
+            axes.set_ylim(0, np.max(df_sim_obs["observed"]))
+            axes.set_title(f"{station_id}\nNSE: {nse_depth:.2f}, MAE: {mae_depth:.2f} m, r: {r_rank:.2f}")
+            fig.tight_layout()
+            file = base_path / "output" / stress_test_name / "figures" / f"scatter_gw_depths_{station_id}_run{model_run}.png"
+            fig.savefig(file, dpi=300, bbox_inches="tight")
+
+            # compare simulated and observed groundwater depths in a time series plot
+            fig, axes = plt.subplots(figsize=(6, 2))
+            axes.plot(df_sim_obs.index, df_sim_obs["observed"], label="Gemessen", linewidth=1.2, color="blue")
+            axes.plot(df_sim_obs.index, df_sim_obs["simulated"], label="Simuliert", linewidth=1, color="red")
+            axes.set_xlabel("Zeit")
+            axes.set_ylabel("GWFA [m]")
+            fig.tight_layout()
+            file = base_path / "output" / stress_test_name / "figures" / f"ts_gw_depths_{station_id}_run{model_run}.png"
+            fig.savefig(file, dpi=300, bbox_inches="tight")
+
+    # calculate overall metrics
+    df_metrics.loc["avg", "NSE"] = np.mean(df_metrics["NSE"].astype(float))
+    df_metrics.loc["avg", "MAE"] = np.mean(df_metrics["MAE"].astype(float))
+    df_metrics.loc["avg", "r"] = np.mean(df_metrics["r"].astype(float))
+    df_metrics.loc["median", "NSE"] = np.median(df_metrics["NSE"].astype(float))
+    df_metrics.loc["median", "MAE"] = np.median(df_metrics["MAE"].astype(float))
+    df_metrics.loc["median", "r"] = np.median(df_metrics["r"].astype(float))
+    df_metrics.loc["std", "NSE"] = np.std(df_metrics["NSE"].astype(float))
+    df_metrics.loc["std", "MAE"] = np.std(df_metrics["MAE"].astype(float))
+    df_metrics.loc["std", "r"] = np.std(df_metrics["r"].astype(float))
+    df_metrics.loc["min", "NSE"] = np.min(df_metrics["NSE"].astype(float))
+    df_metrics.loc["min", "MAE"] = np.min(df_metrics["MAE"].astype(float))
+    df_metrics.loc["min", "r"] = np.min(df_metrics["r"].astype(float))
+    df_metrics.loc["max", "NSE"] = np.max(df_metrics["NSE"].astype(float))
+    df_metrics.loc["max", "MAE"] = np.max(df_metrics["MAE"].astype(float))
+    df_metrics.loc["max", "r"] = np.max(df_metrics["r"].astype(float))
+
+    # write metrics to csv
+    file = base_path / "output" / stress_test_name / "figures" / f"evaluation_metrics_run{model_run}.csv"
+    df_metrics.to_csv(file)
+
+    # make scatter plot of simulated vs observed groundwater depths
+    fig, axes = plt.subplots(figsize=(4, 4))
+    axes.scatter(np.concatenate(ll_observed_depths), np.concatenate(ll_simulated_depths), alpha=0.8)
+    axes.plot([0, np.max(np.concatenate(ll_observed_depths))], [0, np.max(np.concatenate(ll_observed_depths))], "k--")
+    axes.set_xlabel("Gemessener GWFA [m]")
+    axes.set_ylabel("Simulierter GWFA [m]")
+    axes.set_xlim(0, np.max(np.concatenate(ll_observed_depths)))
+    axes.set_ylim(0, np.max(np.concatenate(ll_simulated_depths)))
+    fig.tight_layout()
+    file = base_path / "output" / stress_test_name / f"scatter_gw_depths_run{model_run}.png"
+    fig.savefig(file, dpi=300, bbox_inches="tight")
+    return
+
+if __name__ == "__main__":
+    main()

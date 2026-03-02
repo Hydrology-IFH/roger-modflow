@@ -2,12 +2,26 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import geopandas as gpd
+import xarray as xr
 import matplotlib.pyplot as plt
 import warnings
 from scipy import stats
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
 from typing import Union, Tuple, Optional
+import math
+
+def xy_to_rowcol(x, y, x0, y0):
+    """
+    Convert map coordinates (x, y) to array indices (row, col) for a north-up raster.
+
+    x0, y0: map coordinates of the upper-left corner of pixel (0, 0)
+
+    Returns: (row, col) as integers (0-based)
+    """
+    col = math.floor((x - x0) / 50)
+    row = math.floor((y0 - y) / 50)
+    return row, col
 
 
 def remove_outliers(
@@ -500,6 +514,36 @@ for column in df_gw_heads.columns:
 df_gw_heads_filled = df_gw_heads_filled[~df_gw_heads_filled.index.duplicated(keep="first")]
 file = base_path / "observations" / "groundwater_head_time_series_filled.csv"
 df_gw_heads_filled.to_csv(file, sep=";")
+
+# calculate groundwater depths
+# load topography
+path = Path(__file__).parent / "input" / "parameters_modflow.nc"
+ds_params = xr.open_dataset(path, engine="h5netcdf")
+topography = ds_params["elevations"].isel(z=0).values
+xcoords = ds_params["x"].values
+ycoords = ds_params["y"].values
+x0 = xcoords[0] - 25  # adjust for pixel center (assuming 50m resolution)
+y0 = ycoords[0] + 25  # adjust for pixel center (assuming 50m resolution)
+
+df_gw_depths = pd.DataFrame(index=df_gw_heads_filled.index, columns=df_gw_heads_filled.columns)
+for station_id in df_gw_depths.columns:
+    # get row and column index based on ccordinate of the station
+    _station_id = station_id.replace("_", "/")
+    xcoord = gdf_gw.loc[_station_id, "xcoord"]
+    ycoord = gdf_gw.loc[_station_id, "ycoord"]
+    if xcoord >= xcoords[0] and xcoord <= xcoords[-1] and ycoord >= ycoords[-1] and ycoord <= ycoords[0]:
+        row, col = xy_to_rowcol(xcoord, ycoord, x0, y0)
+        df_gw_depths[station_id] = topography[row, col] - df_gw_heads_filled[station_id]
+        # set negative values to 0
+        df_gw_depths[station_id] = df_gw_depths[station_id].clip(lower=0)
+        # set entire column to NaN if finite values contain only 0
+        if np.isfinite(df_gw_depths[station_id]).any() and (df_gw_depths[station_id][np.isfinite(df_gw_depths[station_id])] == 0).all():
+            df_gw_depths[station_id] = np.nan
+    else:
+        print(f"Warning: Station {station_id} is out of bounds of the topography grid. Skipping depth calculation.")
+
+file = base_path / "observations" / "groundwater_depth_time_series_filled.csv"
+df_gw_depths.to_csv(file, sep=";")
 
 print("\n" + "="*70)
 print("Processing complete!")
