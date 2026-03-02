@@ -611,13 +611,13 @@ class ModFlowSimulation:
                 layer = 3
             chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), constant_head))
 
-        chd = flopy.mf6.modflow.mfgwfchd.ModflowGwfchd(
-            gwf,
-            pname="chd",
-            maxbound=len(chd_rec),
-            stress_period_data=chd_rec,
-            save_flows=False,
-        )
+        # chd = flopy.mf6.modflow.mfgwfchd.ModflowGwfchd(
+        #     gwf,
+        #     pname="chd",
+        #     maxbound=len(chd_rec),
+        #     stress_period_data=chd_rec,
+        #     save_flows=False,
+        # )
             
         # Recharge package (Neumann boundary condition i.e. second type)
         recharge_spd = np.zeros((self.modflow_basin.sum(), 4), dtype=np.int32)
