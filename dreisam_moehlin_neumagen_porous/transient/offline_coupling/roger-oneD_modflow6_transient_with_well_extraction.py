@@ -1036,11 +1036,9 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     recharge[(groundwater_depth <= soildepth)] = 0 # constrain recharge to zero where groundwater depth is equal to soil depth
     recharge = recharge.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64)
     recharge_vertical = aggregate_to_coarser_resolution(recharge, 25, config_modflow['dx'], method="average")
-    recharge_vertical[recharge_vertical > 0.1] = 0.1  # constrain recharge to 0.1 m/day
+    recharge_vertical[recharge_vertical > 0.1] = 0.1  # constrain vertical recharge to 0.1 m/day
     recharge_lateral = ((ds_bc["lateral_inflow_bc_mmday"].values) / 1000) * (1 + lateral_recharge_anomaly_year_doy)  # mm/day to m/day
-    recharge_lateral[recharge_lateral > 0.1] = 0.1  # constrain lateral recharge to 0.1 m/day
     recharge = (recharge_vertical.flatten() + recharge_lateral.flatten())
-    recharge[recharge > 0.2] = 0.2  # constrain recharge to 0.2 m/day
     modflow_interface.set_recharge(recharge)
 
     # set ET extinction depth to 3 m for the entire model domain
@@ -1136,7 +1134,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         groundwater_head = np.zeros(config_modflow['ny'] * config_modflow['nx'])
         modflow_interface.get_groundwater_head(groundwater_head)
         groundwater_head = groundwater_head.reshape(config_modflow['ny'], config_modflow['nx'])
-        click.echo(groundwater_head[214, 450])
+        click.echo(groundwater_head[211, 441])
         # aggregate groundwater head to the resolution of RoGeR
         groundwater_head = aggregate_to_finer_resolution(groundwater_head, config_modflow['dx'], 25, method="keep")
         # RoGeR requires depth of groundwater head (in meters)
@@ -1155,7 +1153,6 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         recharge_vertical = aggregate_to_coarser_resolution(recharge, 25, config_modflow['dx'], method="average")
         recharge_vertical[recharge_vertical > 0.1] = 0.1  # constrain recharge to 0.1 m/day i.e. 100 mm/day
         recharge_lateral = ((ds_bc["lateral_inflow_bc_mmday"].values) / 1000) * (1 + lateral_recharge_anomaly_year_doy)  # mm/day to m/day
-        recharge_lateral[recharge_lateral > 0.1] = 0.1  # constrain lateral recharge to 0.1 m/day i.e. 100 mm/day
         recharge = (recharge_vertical.flatten() + recharge_lateral.flatten())  # set recharge to zero for testing
         modflow_interface.set_recharge(recharge)
 

@@ -113,6 +113,7 @@ def main(model_run):
                 fig.tight_layout()
                 file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"scatter_gw_depths_{station_id}_run{model_run}.png"
                 fig.savefig(file, dpi=300, bbox_inches="tight")
+                plt.close(fig)
 
                 # compare simulated and observed groundwater depths in a time series plot
                 fig, axes = plt.subplots(figsize=(6, 2))
@@ -123,6 +124,7 @@ def main(model_run):
                 fig.tight_layout()
                 file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"ts_gw_depths_{station_id}_run{model_run}.png"
                 fig.savefig(file, dpi=300, bbox_inches="tight")
+                plt.close(fig)
 
     # drop rows with missing metrics
     df_metrics = df_metrics.dropna(subset=["NSE", "MAE", "r"])
@@ -152,7 +154,7 @@ def main(model_run):
     # make scatter plot of simulated vs observed groundwater depths
     click.echo("Making scatter plot of simulated vs observed groundwater depths...")
     fig, axes = plt.subplots(figsize=(4, 4))
-    axes.scatter(np.concatenate(ll_observed_depths), np.concatenate(ll_simulated_depths), alpha=0.8)
+    axes.scatter(np.concatenate(ll_observed_depths), np.concatenate(ll_simulated_depths), alpha=0.8, color="black", s=10)
     axes.plot([0, np.max(np.concatenate(ll_observed_depths))], [0, np.max(np.concatenate(ll_observed_depths))], "k--")
     axes.set_xlabel("Gemessener GWFA [m]")
     axes.set_ylabel("Simulierter GWFA [m]")
