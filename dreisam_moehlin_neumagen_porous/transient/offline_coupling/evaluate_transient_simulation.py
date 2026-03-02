@@ -82,10 +82,13 @@ def main(model_run):
             row, col = xy_to_rowcol(xcoord, ycoord, x0, y0)
             simulated_depth = groundwater_depths[:, row, col]
             observed_depth = observed_groundwater_depths[station_id].values
-            df_sim_obs = pd.DataFrame({"simulated": simulated_depth, "observed": observed_depth})
-            df_sim_obs.index = observed_groundwater_depths.index
+            df_sim = pd.DataFrame({"simulated": simulated_depth})
+            df_sim.index = date_time
+            df_obs = pd.DataFrame({"observed": observed_depth})
+            df_obs.index = observed_groundwater_depths.index
+            df_sim_obs = df_sim.join(df_obs, how="inner")
             df_sim_obs = df_sim_obs.dropna()
-            if len(df_sim_obs) > 24:
+            if len(df_sim_obs) > 24
                 ll_observed_depths.append(df_sim_obs["observed"].values)
                 ll_simulated_depths.append(df_sim_obs["simulated"].values)
                 # calculate metrics
