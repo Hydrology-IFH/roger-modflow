@@ -203,7 +203,7 @@ class ModFlowSimulation:
 
         # Create the Flopy temporal discretization object
         tdis = flopy.mf6.modflow.mftdis.ModflowTdis(
-            sim, pname="tdis", time_units="DAYS", start_date_time=time_origin, nper=2, perioddata=[(0.0, 1.0, 1.0), (float(ndays), int(ndays), 1.0)]
+            sim, pname="tdis", time_units="DAYS", start_date_time=time_origin, nper=2, perioddata=[(1.0, 1.0, 1.0), (float(ndays), int(ndays), 1.0)]
         )
 
         # Create the Flopy groundwater flow (gwf) model object
@@ -1147,13 +1147,13 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
 
         # update recharge and pass it to MODFLOW
         try:
-            recharge_ = recharge_year[doy - 1, :, :]
+            recharge_ = recharge_year[doy - 1, :, :] / 1000  # mm/day to m/day
         except IndexError:
             click.echo(f"IndexError: doy {doy} of year {year} is out of bounds for recharge. Setting recharge to zero for this timestep.")
             recharge_ = np.zeros((config_modflow['ny'] * 2, config_modflow['nx'] * 2)) 
         recharge = recharge_.flatten()
         recharge[(groundwater_depth <= soildepth)] = 0 # constrain recharge to zero where groundwater depth is equal to soil depth
-        recharge = recharge.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64) / 1000  # mm/day to m/day
+        recharge = recharge.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64)
         recharge_vertical = aggregate_to_coarser_resolution(recharge, 25, config_modflow['dx'], method="average")
         recharge_vertical[recharge_vertical > 0.1] = 0.1  # constrain recharge to 0.1 m/day i.e. 100 mm/day
         click.echo(recharge_vertical[211, 441])
