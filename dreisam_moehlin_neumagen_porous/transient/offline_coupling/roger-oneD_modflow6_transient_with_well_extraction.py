@@ -592,24 +592,24 @@ class ModFlowSimulation:
         sto = flopy.mf6.ModflowGwfsto(gwf, pname="sto",
             iconvert=1, ss=specific_storage, sy=specific_yield, steady_state={0: True}, transient={1: True}, save_flows=False)
 
-        # Create the constant head package (Dirichlet boundary condition i.e. first type)
-        mask_boundary_condition_porous_aquifer = ds_bc["mask_porous_aquifer_bc"].values
-        index = np.where(mask_boundary_condition_porous_aquifer == 1)
-        rows_bc = index[0]
-        cols_bc = index[1]
+        # # Create the constant head package (Dirichlet boundary condition i.e. first type)
+        # mask_boundary_condition_porous_aquifer = ds_bc["mask_porous_aquifer_bc"].values
+        # index = np.where(mask_boundary_condition_porous_aquifer == 1)
+        # rows_bc = index[0]
+        # cols_bc = index[1]
 
-        chd_rec = []
-        for ii in range(0, len(rows_bc)):
-            constant_head = ds_bc["constant_head_porous_aquifer"].values[rows_bc[ii], cols_bc[ii]] - fudge_parameters["offset"].values[model_run]
-            if (constant_head <= topography[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]):
-                layer = 0
-            elif (constant_head <= elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]]):
-                layer = 1
-            elif (constant_head <= elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]):
-                layer = 2
-            elif (constant_head <= elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer4[rows_bc[ii], cols_bc[ii]]):
-                layer = 3
-            chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), constant_head))
+        # chd_rec = []
+        # for ii in range(0, len(rows_bc)):
+        #     constant_head = ds_bc["constant_head_porous_aquifer"].values[rows_bc[ii], cols_bc[ii]] - fudge_parameters["offset"].values[model_run]
+        #     if (constant_head <= topography[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]):
+        #         layer = 0
+        #     elif (constant_head <= elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]]):
+        #         layer = 1
+        #     elif (constant_head <= elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]):
+        #         layer = 2
+        #     elif (constant_head <= elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer4[rows_bc[ii], cols_bc[ii]]):
+        #         layer = 3
+        #     chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), constant_head))
 
         # chd = flopy.mf6.modflow.mfgwfchd.ModflowGwfchd(
         #     gwf,
@@ -618,7 +618,44 @@ class ModFlowSimulation:
         #     stress_period_data=chd_rec,
         #     save_flows=False,
         # )
-            
+
+        # Create the general head package (Cauchy boundary condition i.e. third type)
+        mask_boundary_condition_porous_aquifer = ds_bc["mask_porous_aquifer_bc"].values
+        index = np.where(mask_boundary_condition_porous_aquifer == 1)
+        rows_bc = index[0]
+        cols_bc = index[1]
+
+        ghb_rec = []
+        for ii in range(0, len(rows_bc)):
+            constant_head = ds_bc["constant_head_porous_aquifer"].values[rows_bc[ii], cols_bc[ii]] - fudge_parameters["offset"].values[model_run]
+            if (constant_head <= topography[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]):
+                layer = 0
+                b_ghb = topography[rows_bc[ii], cols_bc[ii]] - topography[rows_bc[ii], cols_bc[ii]]
+                kf_ghb = hydraulic_conductivities_layer1[rows_bc[ii], cols_bc[ii]]
+            elif (constant_head <= elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]]):
+                layer = 1
+                b_ghb = elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]] - elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]]
+                kf_ghb = hydraulic_conductivities_layer2[rows_bc[ii], cols_bc[ii]]
+            elif (constant_head <= elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]):
+                layer = 2
+                b_ghb = elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]] - elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]
+                kf_ghb = hydraulic_conductivities_layer3[rows_bc[ii], cols_bc[ii]]
+            elif (constant_head <= elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer4[rows_bc[ii], cols_bc[ii]]):
+                layer = 3
+                b_ghb = elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]] - elevation_bottom_layer4[rows_bc[ii], cols_bc[ii]]
+                kf_ghb = hydraulic_conductivities_layer4[rows_bc[ii], cols_bc[ii]]
+            conductance = kf_ghb * b_ghb
+            ghb_rec.append(((layer, rows_bc[ii], cols_bc[ii]), constant_head, conductance))
+
+        ghb = flopy.mf6.modflow.mfgwfghb.ModflowGwfghb(
+            gwf,
+            pname="ghb",
+            maxbound=len(ghb_rec),
+            stress_period_data=ghb_rec,
+            save_flows=False,
+        )
+
+         
         # Recharge package (Neumann boundary condition i.e. second type)
         recharge_spd = np.zeros((self.modflow_basin.sum(), 4), dtype=np.int32)
         recharge_locations = np.where(self.modflow_basin == True)  # only set recharge where modflow_basin is True
