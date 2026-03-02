@@ -884,6 +884,11 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         _grain_corn_only = ""
     else:
         _grain_corn_only = "_grain-corn-only"
+
+    if stress_test_well_extraction == "no-stress":
+        _stress_test_well_extraction = ""
+    else:        
+        _stress_test_well_extraction = f"_well-extraction-{stress_test_well_extraction}"
     
     # load the soil depth from the RoGeR parameters file
     ds_roger_parameters = xr.open_dataset(base_path.parent / "input"/ "parameters_roger.nc")  
@@ -965,7 +970,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     # initialize the MODFLOW model using XMI
     modflow_interface = ModFlowSimulation(
         "dmn_run_1806",
-        f"modflow_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{irrigation}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}",
+        f"modflow_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{irrigation}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}{_stress_test_well_extraction}",
         base_path,
         time_origin=time_origin,
         ndays=float(NDAYS),

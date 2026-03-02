@@ -26,34 +26,17 @@ def xy_to_rowcol(x, y, x0, y0):
 
 @click.option("-mr", "--model-run", type=int, default=1806)
 @click.command("main", short_help="Evaluate the transient simulation")
-def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_duration, irrigation, yellow_mustard, soil_compaction, grain_corn_only, stress_test_well_extraction, model_run)):
+def main(model_run):
     base_path = Path(__file__).parent
 
-    if grain_corn_only == "no-grain-corn-only":
-        _grain_corn_only = ""
-    else:
-        _grain_corn_only = "_grain-corn-only"
-
-    if stress_test_well_extraction == "no-stress":
-        _stress_test_well_extraction = ""
-    else:
-        _stress_test_well_extraction = "_well-extraction-stress"
-
-    if stress_test_meteo == "base_2000-2024":
-        date_time = pd.date_range(start="2000-01-01", end="2024-12-31", freq="7D")
-        years = np.unique(date_time.year.values)
-        timesteps = np.arange(len(date_time)) * 7
-    else:
-        date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="7D")
-        years = np.unique(date_time.year.values)
-        timesteps = np.arange(len(date_time)) * 7
-
-    stress_test_name = f"modflow_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{irrigation}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}{_stress_test_well_extraction}"
+    date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="7D")
+    years = np.unique(date_time.year.values)
+    timesteps = np.arange(len(date_time))
 
     # load the simulated groundwater depths
     ll_groundwater_depths = []
     for year in years:
-        output_file = base_path / "output" / stress_test_name / f"gw_depth_dmn_run_{model_run}_year{year}.nc"
+        output_file = base_path / "output" / "modflow_base-magnitude0-duration0_irrigation_no-yellow-mustard_soil-compaction" / f"gw_depth_dmn_run_{model_run}_year{year}.nc"
         ds_gw_depth_sim = xr.open_dataset(output_file, engine="h5netcdf")
         groundwater_depths_year = ds_gw_depth_sim["depth"].values[:, 1, :, :]
         ll_groundwater_depths.append(groundwater_depths_year)
