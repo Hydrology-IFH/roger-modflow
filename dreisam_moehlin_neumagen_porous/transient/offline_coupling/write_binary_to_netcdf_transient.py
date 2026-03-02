@@ -37,11 +37,11 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         _stress_test_well_extraction = "_well-extraction-stress"
 
     if stress_test_meteo == "base_2000-2024":
-        date_time = pd.date_range(start="2000-01-01", end="2024-12-31", freq="7D")
+        date_time = pd.date_range(start="2000-01-01", end="2024-12-31", freq="D")
         years = np.unique(date_time.year.values)
         timesteps = np.arange(len(date_time)) * 7
     else:
-        date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="7D")
+        date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="D")
         years = np.unique(date_time.year.values)
         timesteps = np.arange(len(date_time)) * 7
 
@@ -70,7 +70,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     click.echo(f"Reading head file {fhead}...")
     hds = flopy.utils.HeadFile(fhead)
     # remove first and last time step (steady-state and final time step)
-    heads = hds.get_alldata()[1:-1, :, :, :]
+    heads = hds.get_alldata()[1:, :, :, :]
     ntimesteps = heads.shape[0]
     timesteps = np.arange(ntimesteps)
 
