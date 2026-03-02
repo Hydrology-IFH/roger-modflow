@@ -1018,6 +1018,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
 
     # update recharge and pass it to MODFLOW
     recharge_ = recharge_year / 1000  # mm/day to m/day
+    recharge_= aggregate_to_finer_resolution(recharge_, config_modflow['dx'], 25, method="keep")
     recharge = recharge_.flatten()
     recharge[(groundwater_depth <= soildepth)] = 0 # constrain recharge to zero where groundwater depth is equal to soil depth
     recharge = recharge.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64)
