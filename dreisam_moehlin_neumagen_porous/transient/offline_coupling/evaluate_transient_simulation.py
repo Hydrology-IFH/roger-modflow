@@ -37,7 +37,7 @@ def main(model_run):
     click.echo("Loading simulated groundwater depths...")
     ll_groundwater_depths = []
     for year in years:
-        output_file = base_path / "output" / "modflow_base-magnitude0-duration0_irrigation_no-yellow-mustard_soil-compaction" / f"gw_depth_dmn_run{model_run}_year{year}.nc"
+        output_file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / f"gw_depth_dmn_run{model_run}_year{year}.nc"
         ds_gw_depth_sim = xr.open_dataset(output_file, engine="h5netcdf")
         groundwater_depths_year = ds_gw_depth_sim["depth"].values[:, 1, :, :]
         ll_groundwater_depths.append(groundwater_depths_year)
