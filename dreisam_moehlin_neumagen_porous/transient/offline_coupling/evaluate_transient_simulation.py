@@ -72,7 +72,7 @@ def main(model_run):
 
     for station_id in observed_groundwater_depths.columns:
         # get row and column index based on ccordinate of the station
-        _station_id = station_id.replace("_", "/")
+        _station_id = str(station_id).replace("_", "/")
         click.echo(f"Evaluating station {station_id}({_station_id})...")
         xcoord = groundwater_observation_wells.loc[_station_id, "xcoord"]
         ycoord = groundwater_observation_wells.loc[_station_id, "ycoord"]
