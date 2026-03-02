@@ -51,8 +51,6 @@ echo "Start simulation ..."
 python roger-oneD_modflow6_transient_with_well_extraction.py --stress-test-meteo spring-drought --stress-test-meteo-magnitude 2 --stress-test-meteo-duration 0 --soil-compaction soil-compaction --grain-corn-only grain-corn-only
 echo "... finalised simulation."
 # Move output from local SSD to global workspace
-if [ -d "/pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling/output/modflow_spring-drought-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only" ]; then
-  rm -rf /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling/output/modflow_spring-drought-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only
-fi
 echo "Move output to /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling/output/modflow_spring-drought-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only"
-mv -v "${TMPDIR}"/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling/output/modflow_spring-drought-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling/output
+mkdir -p /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling/output/modflow_spring-drought-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only
+mv -v "${TMPDIR}"/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/modflow_spring-drought-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only/{*,.[!.]*} /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling/output/modflow_spring-drought-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only

@@ -81,9 +81,11 @@ def main(model_run):
             ll_observed_depths.append(df_sim_obs["observed"].values)
             ll_simulated_depths.append(df_sim_obs["simulated"].values)
             # calculate metrics
-            nse_depth = 1 - np.sum((df_sim_obs["observed"] - df_sim_obs["simulated"]) ** 2) / np.sum((df_sim_obs["observed"] - np.mean(df_sim_obs["observed"])) ** 2))
-            mae_depth = np.mean(np.abs(df_sim_obs["observed"] - df_sim_obs["simulated"]))
-            r_rank = sp.stats.spearmanr(df_sim_obs["simulated"], df_sim_obs["observed"])[0]
+            sim_vals = df_sim_obs["simulated"].values
+            obs_vals = df_sim_obs["observed"].values
+            nse_depth = 1.0 - np.sum((obs_vals - sim_vals) ** 2) / np.sum((obs_vals - np.mean(obs_vals)) ** 2)
+            mae_depth = np.mean(np.abs(obs_vals - sim_vals))
+            r_rank = sp.stats.spearmanr(sim_vals, obs_vals)[0]
             df_metrics.loc[station_id, "NSE"] = nse_depth
             df_metrics.loc[station_id, "MAE"] = mae_depth
             df_metrics.loc[station_id, "r"] = r_rank
