@@ -1151,6 +1151,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         recharge[(groundwater_depth <= soildepth)] = 0 # constrain recharge to zero where groundwater depth is equal to soil depth
         recharge = recharge.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64) / 1000  # mm/day to m/day
         recharge_vertical = aggregate_to_coarser_resolution(recharge, 25, config_modflow['dx'], method="average")
+        click.echo(recharge_vertical[211, 441])
         recharge_vertical[recharge_vertical > 0.1] = 0.1  # constrain recharge to 0.1 m/day i.e. 100 mm/day
         recharge_lateral = ((ds_bc["lateral_inflow_bc_mmday"].values) / 1000) * (1 + lateral_recharge_anomaly_year_doy)  # mm/day to m/day
         recharge = (recharge_vertical.flatten() + recharge_lateral.flatten())  # set recharge to zero for testing
