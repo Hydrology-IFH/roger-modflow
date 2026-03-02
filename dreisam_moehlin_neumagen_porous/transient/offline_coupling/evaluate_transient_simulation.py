@@ -55,7 +55,8 @@ def main(model_run):
     # load observed groundwater heads (average values of the observation wells)
     click.echo("Loading observed groundwater depths...")
     path = base_path.parent / "observations" / "groundwater_observation_wells.gpkg"
-    groundwater_observation_wells = gpd.read_file(path) 
+    groundwater_observation_wells = gpd.read_file(path)
+    groundwater_observation_wells.index = groundwater_observation_wells["station_id"]
 
     path = base_path.parent / "observations" / "groundwater_depth_time_series_filled.csv"
     observed_groundwater_depths = pd.read_csv(path, index_col=0, sep=";")
