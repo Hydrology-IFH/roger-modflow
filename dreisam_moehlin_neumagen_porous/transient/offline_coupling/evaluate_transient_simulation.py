@@ -49,6 +49,8 @@ def main(model_run):
     ds_params = xr.open_dataset(path, engine="h5netcdf")
     xcoords = ds_params["x"].values
     ycoords = ds_params["y"].values
+    x0 = xcoords[0] - 25
+    y0 = ycoords[0] + 25
 
     # load observed groundwater heads (average values of the observation wells)
     click.echo("Loading observed groundwater depths...")
@@ -72,8 +74,8 @@ def main(model_run):
         click.echo(f"Evaluating station {station_id}...")
         # get row and column index based on ccordinate of the station
         _station_id = station_id.replace("_", "/")
-        xcoord = gdf_gw.loc[_station_id, "xcoord"]
-        ycoord = gdf_gw.loc[_station_id, "ycoord"]
+        xcoord = groundwater_observation_wells.loc[_station_id, "xcoord"]
+        ycoord = groundwater_observation_wells.loc[_station_id, "ycoord"]
         # check if the station is within the bounds of the model grid
         if xcoord >= xcoords[0] and xcoord <= xcoords[-1] and ycoord >= ycoords[-1] and ycoord <= ycoords[0]:
             row, col = xy_to_rowcol(xcoord, ycoord, x0, y0)
