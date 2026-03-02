@@ -88,7 +88,7 @@ def main(model_run):
             df_obs.index = observed_groundwater_depths.index
             df_sim_obs = df_sim.join(df_obs, how="inner")
             df_sim_obs = df_sim_obs.dropna()
-            if len(df_sim_obs) > 24
+            if len(df_sim_obs) > 24:
                 ll_observed_depths.append(df_sim_obs["observed"].values)
                 ll_simulated_depths.append(df_sim_obs["simulated"].values)
                 # calculate metrics
