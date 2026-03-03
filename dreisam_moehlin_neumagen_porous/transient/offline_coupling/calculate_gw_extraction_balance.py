@@ -96,7 +96,7 @@ def main(model_run):
         base_path_roger = base_path.parent.parent.parent.parent / "roger"
         output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"recharge_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction_year{year}.nc"
         ds_direct_recharge = xr.open_dataset(output_file, engine="h5netcdf")
-        _direct_recharge_year = ds_direct_recharge["direct_recharge"].values
+        _direct_recharge_year = ds_direct_recharge["recharge"].values
         for i in range(_direct_recharge_year.shape[0]):
             direct_recharge_day = aggregate_to_coarser_resolution(_direct_recharge_year[i, :, :], 25, 50, method="average")
             ll_direct_recharge.append(direct_recharge_day)
@@ -105,7 +105,7 @@ def main(model_run):
     # get the area of each grid cell in m2
     area = 50 * 50  # 50 m x 50 m grid cells
     # multiply direct recharge by area to get m3/day
-    direct_recharge = direct_recharge * area / 1000  # convert mm to m
+    direct_recharge = direct_recharge * area / 1000
     # create xarray data array for direct recharge
     da_direct_recharge = xr.DataArray(
         data=direct_recharge,
