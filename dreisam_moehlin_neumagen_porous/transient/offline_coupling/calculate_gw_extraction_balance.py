@@ -100,9 +100,9 @@ def main(model_run):
     click.echo("Loading direct recharge...")
     ll_direct_recharge = []
     for year in years:
-        # base_path_roger = base_path.parent.parent.parent.parent / "roger"
-        # output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"recharge_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction_year{year}.nc"
-        output_file = base_path.parent / "input" / f"recharge_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction_year{year}.nc"
+        base_path_roger = base_path.parent.parent.parent.parent / "roger"
+        output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"recharge_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction_year{year}.nc"
+        # output_file = base_path.parent / "input" / f"recharge_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction_year{year}.nc"
         ds_direct_recharge = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
         _direct_recharge_year = ds_direct_recharge["recharge"].values
         _direct_recharge_year[_direct_recharge_year < 0] = 0  # set negative values to zero
