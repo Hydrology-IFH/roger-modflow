@@ -569,20 +569,8 @@ class ModFlowSimulation:
         specific_yield[3]["data"] = specific_yield_layer4
 
         specific_storage = flopy.mf6.ModflowGwfsto.ss.empty(
-            gwf, layered=True
-        )
-        thickness_layer1 = topography - elevation_bottom_layer1
-        thickness_layer2 = elevation_bottom_layer1 - elevation_bottom_layer2
-        thickness_layer3 = elevation_bottom_layer2 - elevation_bottom_layer3
-        thickness_layer4 = elevation_bottom_layer3 - elevation_bottom_layer4
-        specific_storage_layer1 = specific_yield_layer1 * thickness_layer1
-        specific_storage_layer2 = specific_yield_layer2 * thickness_layer2
-        specific_storage_layer3 = specific_yield_layer3 * thickness_layer3
-        specific_storage_layer4 = specific_yield_layer4 * thickness_layer4
-        specific_storage[0]["data"] = specific_storage_layer1
-        specific_storage[1]["data"] = specific_storage_layer2
-        specific_storage[2]["data"] = specific_storage_layer3
-        specific_storage[3]["data"] = specific_storage_layer4
+                gwf, layered=True, default_value=0.000001
+            )
 
         sto = flopy.mf6.ModflowGwfsto(gwf, pname="sto",
             iconvert=1, ss=specific_storage, sy=specific_yield, steady_state={0: True}, transient={1: True}, save_flows=False)
@@ -612,7 +600,7 @@ class ModFlowSimulation:
                 layer = 3
                 b_ghb = elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]] - elevation_bottom_layer4[rows_bc[ii], cols_bc[ii]]
                 kf_ghb = hydraulic_conductivities_layer4[rows_bc[ii], cols_bc[ii]]
-            conductance = kf_ghb * b_ghb * 0.05
+            conductance = kf_ghb * b_ghb * 0.5
             ghb_rec.append(((layer, rows_bc[ii], cols_bc[ii]), constant_head, conductance))
 
         ghb = flopy.mf6.modflow.mfgwfghb.ModflowGwfghb(
@@ -952,16 +940,15 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         verbose=True
     )
 
-    # initialize the model running in steady-state mode
+    # initialize the groundwater flow field running in steady-state mode
     year = years[0]
     doy = doys[0]
     daily_weights_drinking_water_supply_year_doy = daily_weights_drinking_water_supply.loc[int(year), f"{int(doy)}"]
 
-    # load recharge data of the current year
-    file = f"recharge_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{irrigation}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}_year{year}.nc"
-    path = Path(__file__).parent.parent / "input" / file
-    with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_recharge:
-        recharge_year = ds_recharge["recharge"].values
+    # load average recharge data
+    path = Path(__file__).parent.parent / "input" / "boundary_conditions.nc"
+    with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_bc:
+        recharge_year = ds_bc["recharge"].values
         recharge_year[recharge_year < 0] = 0  # set negative recharge to zero
 
     # load capillary rise data of the current year
@@ -991,13 +978,11 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     groundwater_depth[(groundwater_depth <= soildepth)] = soildepth[(groundwater_depth <= soildepth)] + 0.05
 
     # update recharge and pass it to MODFLOW
-    recharge_ = recharge_year[1, :, :] / 1000  # mm/day to m/day
-    recharge = recharge_.flatten()
-    recharge[(groundwater_depth <= soildepth)] = 0 # constrain recharge to zero where groundwater depth is equal to soil depth
-    recharge = recharge.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64)
-    recharge_vertical = aggregate_to_coarser_resolution(recharge, 25, config_modflow['dx'], method="average")
+    recharge_vertical = recharge_year / 1000  # mm/day to m/day
+    recharge_vertical[recharge_vertical > 0.1] = 0.1  # constrain vertical recharge to 0.1 m/day
+    click.echo(recharge_vertical[211, 441])
     recharge = recharge_vertical.flatten()
-    recharge[recharge > 0.1] = 0.1  # constrain recharge to 0.1 m/day
+    recharge = recharge.astype(np.float64)
     modflow_interface.set_recharge(recharge)
 
     # set ET extinction depth to 3 m for the entire model domain

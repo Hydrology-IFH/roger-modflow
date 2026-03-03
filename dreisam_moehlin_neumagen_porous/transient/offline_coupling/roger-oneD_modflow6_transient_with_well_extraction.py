@@ -574,50 +574,11 @@ class ModFlowSimulation:
         specific_yield[3]["data"] = specific_yield_layer4
 
         specific_storage = flopy.mf6.ModflowGwfsto.ss.empty(
-            gwf, layered=True
-        )
-        thickness_layer1 = topography - elevation_bottom_layer1
-        thickness_layer2 = elevation_bottom_layer1 - elevation_bottom_layer2
-        thickness_layer3 = elevation_bottom_layer2 - elevation_bottom_layer3
-        thickness_layer4 = elevation_bottom_layer3 - elevation_bottom_layer4
-        specific_storage_layer1 = specific_yield_layer1 * thickness_layer1
-        specific_storage_layer2 = specific_yield_layer2 * thickness_layer2
-        specific_storage_layer3 = specific_yield_layer3 * thickness_layer3
-        specific_storage_layer4 = specific_yield_layer4 * thickness_layer4
-        specific_storage[0]["data"] = specific_storage_layer1
-        specific_storage[1]["data"] = specific_storage_layer2
-        specific_storage[2]["data"] = specific_storage_layer3
-        specific_storage[3]["data"] = specific_storage_layer4
+                gwf, layered=True, default_value=0.000001
+            )
         
         sto = flopy.mf6.ModflowGwfsto(gwf, pname="sto",
             iconvert=1, ss=specific_storage, sy=specific_yield, steady_state={0: True}, transient={1: True}, save_flows=False)
-
-        # # Create the constant head package (Dirichlet boundary condition i.e. first type)
-        # mask_boundary_condition_porous_aquifer = ds_bc["mask_porous_aquifer_bc"].values
-        # index = np.where(mask_boundary_condition_porous_aquifer == 1)
-        # rows_bc = index[0]
-        # cols_bc = index[1]
-
-        # chd_rec = []
-        # for ii in range(0, len(rows_bc)):
-        #     constant_head = ds_bc["constant_head_porous_aquifer"].values[rows_bc[ii], cols_bc[ii]] - fudge_parameters["offset"].values[model_run]
-        #     if (constant_head <= topography[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]):
-        #         layer = 0
-        #     elif (constant_head <= elevation_bottom_layer1[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]]):
-        #         layer = 1
-        #     elif (constant_head <= elevation_bottom_layer2[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]):
-        #         layer = 2
-        #     elif (constant_head <= elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]]) and (constant_head > elevation_bottom_layer4[rows_bc[ii], cols_bc[ii]]):
-        #         layer = 3
-        #     chd_rec.append(((layer, rows_bc[ii], cols_bc[ii]), constant_head))
-
-        # chd = flopy.mf6.modflow.mfgwfchd.ModflowGwfchd(
-        #     gwf,
-        #     pname="chd",
-        #     maxbound=len(chd_rec),
-        #     stress_period_data=chd_rec,
-        #     save_flows=False,
-        # )
 
         # Create the general head package (Cauchy boundary condition i.e. third type)
         mask_boundary_condition_porous_aquifer = ds_bc["mask_porous_aquifer_bc"].values
@@ -644,7 +605,7 @@ class ModFlowSimulation:
                 layer = 3
                 b_ghb = elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]] - elevation_bottom_layer4[rows_bc[ii], cols_bc[ii]]
                 kf_ghb = hydraulic_conductivities_layer4[rows_bc[ii], cols_bc[ii]]
-            conductance = kf_ghb * b_ghb * 0.05
+            conductance = kf_ghb * b_ghb * 0.5
             ghb_rec.append(((layer, rows_bc[ii], cols_bc[ii]), constant_head, conductance))
 
         ghb = flopy.mf6.modflow.mfgwfghb.ModflowGwfghb(
@@ -1034,7 +995,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_bc:
         recharge_year = ds_bc["recharge"].values
         recharge_year[recharge_year < 0] = 0  # set negative recharge to zero
-        recharge_lateral = ((ds_bc["lateral_inflow_bc_mmday"].values) / 1000) * (1 + lateral_recharge_anomaly_year_doy)
+        recharge_lateral = ((ds_bc["lateral_inflow_bc_mmday"].values) / 1000)
                 
     # update groundwater head
     groundwater_head = np.zeros(config_modflow['ny'] * config_modflow['nx'])
@@ -1050,15 +1011,11 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     groundwater_depth[(groundwater_depth <= soildepth)] = soildepth[(groundwater_depth <= soildepth)] + 0.05
 
     # update recharge and pass it to MODFLOW
-    recharge_ = recharge_year / 1000  # mm/day to m/day
-    recharge_ = aggregate_to_finer_resolution(recharge_, config_modflow['dx'], 25, method="keep")
-    recharge = recharge_.flatten()
-    recharge[(groundwater_depth <= soildepth)] = 0 # constrain recharge to zero where groundwater depth is equal to soil depth
-    recharge = recharge.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64)
-    recharge_vertical = aggregate_to_coarser_resolution(recharge, 25, config_modflow['dx'], method="average")
+    recharge_vertical = recharge_year / 1000  # mm/day to m/day
     recharge_vertical[recharge_vertical > 0.1] = 0.1  # constrain vertical recharge to 0.1 m/day
     click.echo(recharge_vertical[211, 441])
     recharge = (recharge_vertical.flatten() + recharge_lateral.flatten())
+    recharge = recharge.astype(np.float64)
     modflow_interface.set_recharge(recharge)
 
     # set ET extinction depth to 3 m for the entire model domain
@@ -1076,22 +1033,22 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     # update SFR inflow and pass it to MODFLOW
     sfr_inflow = np.zeros((n_reaches,), dtype=np.float64)
     # set Eschbach inflow to the observed discharge of the current year and day
-    sfr_inflow[449] = 86400 * 0.1 * 0.548 * 0.5
+    sfr_inflow[449] = 86400 * 0.1 * 0.548 * 0.2
     # set Ibenbach inflow to the observed discharge of the current year and day
-    sfr_inflow[137] = 86400 * 0.1 * 0.548 * 0.5
+    sfr_inflow[137] = 86400 * 0.1 * 0.548 * 0.2
     # set Wagensteigbach inflow to the observed discharge of the current year and day
-    sfr_inflow[168] = 86400 * 0.354 * 0.548 * 0.5
+    sfr_inflow[168] = 86400 * 0.354 * 0.548 * 0.2
     # set Rotbach inflow to the observed discharge of the current year and day
-    sfr_inflow[103] = 86400 * 0.5
+    sfr_inflow[103] = 86400 * 0.2
     # set Brugga inflow to the observed discharge
-    sfr_inflow[6] = 86400 * 0.7 * 2.8 * 0.5
+    sfr_inflow[6] = 86400 * 0.7 * 2.8 * 0.2
     # set Moehlin inflow to the observed discharge of the current year and day
-    sfr_inflow[3633] = 86400 * 0.5 * 0.5
-    sfr_inflow[3539] = 86400 * 0.5 * 0.5
+    sfr_inflow[3633] = 86400 * 0.5 * 0.2
+    sfr_inflow[3539] = 86400 * 0.5 * 0.2
     # set Muehlbach inflow to the observed discharge of the current year and day
-    sfr_inflow[1155] = 86400 * 0.1 * 0.33 * 0.5
+    sfr_inflow[1155] = 86400 * 0.1 * 0.33 * 0.2
     # set Neumagen inflow to the observed discharge of the current year and day
-    sfr_inflow[1272] = 86400 * 0.5
+    sfr_inflow[1272] = 86400 * 0.2
     modflow_interface.set_sfr_inflow(sfr_inflow)
 
     # run MODFLOW for one timestep
@@ -1205,28 +1162,28 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         well_extraction_rate[:] = groundwater_extraction[f"{year}"].values.astype(np.float64)
         well_extraction_rate[cond_drinking_water_supply] = well_extraction_rate[cond_drinking_water_supply] * daily_weights_drinking_water_supply_year_doy
         well_extraction_rate[~cond_drinking_water_supply] = well_extraction_rate[~cond_drinking_water_supply] / 365.25
-        well_extraction_rate[:] = -well_extraction_rate[:] * 100 # extraction is negative
+        well_extraction_rate[:] = -well_extraction_rate[:] # extraction is negative
         modflow_interface.set_well_rate(well_extraction_rate)
 
         # update SFR inflow and pass it to MODFLOW
         sfr_inflow = np.zeros((n_reaches,), dtype=np.float64)
         # set Eschbach inflow to the observed discharge of the current year and day
-        sfr_inflow[449] = discharge_rotbach_year_doy * 86400 * (0.1/0.548)
+        sfr_inflow[449] = discharge_rotbach_year_doy * 86400 * (0.1/0.548) * 0.3
         # set Ibenbach inflow to the observed discharge of the current year and day
-        sfr_inflow[137] = discharge_rotbach_year_doy * 86400 * (0.1/0.548)
+        sfr_inflow[137] = discharge_rotbach_year_doy * 86400 * (0.1/0.548) * 0.3
         # set Wagensteigbach inflow to the observed discharge of the current year and day
-        sfr_inflow[168] = discharge_rotbach_year_doy * 86400 * (0.354/0.548)
+        sfr_inflow[168] = discharge_rotbach_year_doy * 86400 * (0.354/0.548) * 0.3
         # set Rotbach inflow to the observed discharge of the current year and day
-        sfr_inflow[103] = discharge_rotbach_year_doy * 86400
+        sfr_inflow[103] = discharge_rotbach_year_doy * 86400 * 0.3
         # set Brugga inflow to the observed discharge
-        sfr_inflow[6] = discharge_dreisam_year_doy * 86400 * (0.7/2.8)
+        sfr_inflow[6] = discharge_dreisam_year_doy * 86400 * (0.7/2.8) * 0.3
         # set Moehlin inflow to the observed discharge of the current year and day
-        sfr_inflow[3633] = discharge_moehlin_year_doy * 86400 * 0.5
-        sfr_inflow[3539] = discharge_moehlin_year_doy * 86400 * 0.5
+        sfr_inflow[3633] = discharge_moehlin_year_doy * 86400 * 0.5 * 0.3
+        sfr_inflow[3539] = discharge_moehlin_year_doy * 86400 * 0.5 * 0.3
         # set Muehlbach inflow to the observed discharge of the current year and day
-        sfr_inflow[1155] = discharge_moehlin_year_doy * 86400 * (0.1/0.33)
+        sfr_inflow[1155] = discharge_moehlin_year_doy * 86400 * (0.1/0.33) * 0.3
         # set Neumagen inflow to the observed discharge of the current year and day
-        sfr_inflow[1272] = discharge_neumagen_year_doy * 86400
+        sfr_inflow[1272] = discharge_neumagen_year_doy * 86400 * 0.3
         modflow_interface.set_sfr_inflow(sfr_inflow)
 
         # run MODFLOW for one timestep
