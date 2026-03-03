@@ -101,14 +101,17 @@ def main(model_run):
     click.echo("Loading direct recharge...")
     ll_direct_recharge = []
     for year in years:
-        base_path_roger = base_path.parent.parent.parent.parent / "roger"
-        output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"recharge_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction_year{year}.nc"
+        # base_path_roger = base_path.parent.parent.parent.parent / "roger"
+        # output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"recharge_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction_year{year}.nc"
+        output_file = base_path.parent / "input" / f"recharge_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction_year{year}.nc"
         ds_direct_recharge = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
         _direct_recharge_year = ds_direct_recharge["recharge"].values
+        _direct_recharge_year[_direct_recharge_year < 0] = 0  # set negative values to zero
+        _direct_recharge_year[_direct_recharge_year > 100] = 100  # set values above 100 mm/day to 100 mm/day
         for i in range(_direct_recharge_year.shape[0]):
             direct_recharge_day = aggregate_to_coarser_resolution(_direct_recharge_year[i, :, :], 25, 50, method="average")
             ll_direct_recharge.append(direct_recharge_day)
-    direct_recharge = np.concatenate(ll_direct_recharge, axis=0)
+    direct_recharge = np.stack(ll_direct_recharge, axis=0)
     # convert from mm/day to m3/day
     # get the area of each grid cell in m2
     area = 50 * 50  # 50 m x 50 m grid cells
@@ -148,7 +151,7 @@ def main(model_run):
     # load well extraction
     click.echo("Loading well extraction...")
     # save daily drinking water well extraction to csv
-    file = base_path / "input" / "drinking_water_well_extraction_daily.csv"
+    file = base_path.parent / "input" / "drinking_water_well_extraction_daily.csv"
     df_drinking_water_well_extraction_daily = pd.read_csv(file, sep=";", index_col=0)
     df_drinking_water_well_extraction_daily.index = pd.to_datetime(df_drinking_water_well_extraction_daily.index, format="%Y-%m-%d")
     # resample to monthly
@@ -157,57 +160,67 @@ def main(model_run):
     df_drinking_water_well_extraction_annual = df_drinking_water_well_extraction_daily.resample("YE").sum()
 
     # calculate the extraction balance as the difference between the drinking water well extraction and the indirect recharge multiplied by 0.3 (assuming that 30% of the indirect recharge is available for extraction)
-    df_extraction_balance_monthly = df_drinking_water_well_extraction_monthly - (df_direct_recharge_monthly * 0.3)
-    df_extraction_balance_annual = df_drinking_water_well_extraction_annual - (df_direct_recharge_annual * 0.3)
+    df_extraction_balance_monthly = pd.DataFrame(index=df_drinking_water_well_extraction_monthly.index, columns=["extraction_balance"])
+    df_extraction_balance_monthly["extraction_balance"] = df_drinking_water_well_extraction_monthly["well_extraction"] - (df_direct_recharge_monthly["direct_recharge"] * 0.3)
+    df_extraction_balance_annual = pd.DataFrame(index=df_drinking_water_well_extraction_annual.index, columns=["extraction_balance"])
+    df_extraction_balance_annual["extraction_balance"] = df_drinking_water_well_extraction_annual["well_extraction"] - (df_direct_recharge_annual["direct_recharge"] * 0.3)
 
     # make figures directory if it does not exist
-    figures_dir = base_path / "figures" / "gw_extraction_balance"
+    figures_dir = base_path.parent / "figures" / "gw_extraction_balance"
     figures_dir.mkdir(exist_ok=True)
 
     # # plot monthly direct and indirect recharge using stacked bar plot use blue for direct recharge and purple for indirect recharge 
     # fig, ax = plt.subplots(figsize=(6, 2))
     # df_recharge_monthly_stacked = df_direct_recharge_monthly.copy()
-    # df_recharge_monthly_stacked["indirect"] = df_indirect_recharge_monthly["indirect_recharge"]
+    # df_recharge_monthly_stacked["indirect_recharge"] = df_indirect_recharge_monthly["indirect_recharge"]
+    # df_recharge_monthly_stacked["direct_recharge"] = df_recharge_monthly_stacked["direct_recharge"]/1e6  # convert to million m3/month
+    # df_recharge_monthly_stacked["indirect_recharge"] = df_recharge_monthly_stacked["indirect_recharge"]/1e6  # convert to million m3/month
     # df_recharge_monthly_stacked.plot(kind="bar", stacked=True, ax=ax, color=["blue", "purple"])
     # ax.set_xlabel("Jahr")
-    # ax.set_ylabel("Recharge [m³/Monat]")
+    # ax.set_ylabel("Recharge [Mio. m³/Monat]")
     # fig.tight_layout()
     # fig.savefig(figures_dir / "recharge_monthly_stacked.png", dpi=300)
 
     # # plot annual direct and indirect recharge using stacked bar plot use blue for direct recharge and purple for indirect recharge
     # fig, ax = plt.subplots(figsize=(6, 2))
     # df_recharge_annual_stacked = df_direct_recharge_annual.copy()
-    # df_recharge_annual_stacked["indirect"] = df_indirect_recharge_annual["indirect_recharge"]
+    # df_recharge_annual_stacked["indirect_recharge"] = df_indirect_recharge_annual["indirect_recharge"]
+    # df_recharge_annual_stacked["direct_recharge"] = df_recharge_annual_stacked["direct_recharge"]/1e6  # convert to million m3/year
+    # df_recharge_annual_stacked["indirect_recharge"] = df_recharge_annual_stacked["indirect_recharge"]/1e6  # convert to million m3/year
     # df_recharge_annual_stacked.plot(kind="bar", stacked=True, ax=ax, color=["blue", "purple"])
     # ax.set_xlabel("Jahr")
-    # ax.set_ylabel("Recharge [m³/Jahr]")
+    # ax.set_ylabel("Recharge [Mio. m³/Jahr]")
     # fig.tight_layout()
     # fig.savefig(figures_dir / "recharge_annual_stacked.png", dpi=300)
 
     # plot the monthly extraction balance using bar plot, make bars with negative values orange and bars with positive values blue
     fig, ax = plt.subplots(figsize=(6, 2))
-    colors = ["orange" if x < 0 else "blue" for x in df_extraction_balance_monthly["drinking_water_well_extraction"]]
-    ax.bar(df_extraction_balance_monthly.index, df_extraction_balance_monthly["drinking_water_well_extraction"], color=colors)
-    ax.set_xlabel("Jahr")
-    ax.set_ylabel("GW-Entnahmebilanz [m³/day]")
+    colors = ["orange" if x < 0 else "blue" for x in df_extraction_balance_monthly["extraction_balance"]]
+    ax.bar(df_extraction_balance_monthly.index, df_extraction_balance_monthly["extraction_balance"]/1e6, color=colors, width=20)
+    # rotate xticklabels by 45 degrees
+    plt.xticks(rotation=25)
+    ax.set_xlabel("Zeit")
+    ax.set_ylabel("GW-Entnahmebilanz\n[Mio. m³/Monat]")
     fig.tight_layout()
     fig.savefig(figures_dir / "extraction_balance_monthly.png", dpi=300)
 
     # plot the annual extraction balance using bar plot, make bars with negative values orange and bars with positive values blue
     fig, ax = plt.subplots(figsize=(6, 2))
-    colors = ["orange" if x < 0 else "blue" for x in df_extraction_balance_annual["drinking_water_well_extraction"]]
-    ax.bar(df_extraction_balance_annual.index, df_extraction_balance_annual["drinking_water_well_extraction"], color=colors)
+    colors = ["orange" if x < 0 else "blue" for x in df_extraction_balance_annual["extraction_balance"]]
+    ax.bar(df_extraction_balance_annual.index.year, df_extraction_balance_annual["extraction_balance"]/1e6, color=colors, width=20)
+    # reformat xticklabels to show only the year
+    ax.set_xticklabels(df_extraction_balance_annual.index.year, rotation=25)
     ax.set_xlabel("Jahr")
-    ax.set_ylabel("GW-Entnahmebilanz [m³/day]")
+    ax.set_ylabel("GW-Entnahmebilanz\n[m³/Jahr]")
     fig.tight_layout()
     fig.savefig(figures_dir / "extraction_balance_annual.png", dpi=300)
 
     # plot the long-term balance of the extraction balance using a bar plot, make bars with negative values orange and bars with positive values blue
-    long_term_balance = df_extraction_balance_annual["drinking_water_well_extraction"].sum()
+    long_term_balance = df_extraction_balance_annual["extraction_balance"].sum()
     fig, ax = plt.subplots(figsize=(2, 2))
     color = "orange" if long_term_balance < 0 else "blue"
-    ax.bar(["Long-term balance"], [long_term_balance], color=color)
-    ax.set_ylabel("GW-Entnahmebilanz [m³/day]")
+    ax.bar([""], [long_term_balance/1e6], color=color)
+    ax.set_ylabel("GW-Entnahmebilanz\n[Mio. m³]")
     fig.tight_layout()
     fig.savefig(figures_dir / "extraction_balance_long_term.png", dpi=300)
 
