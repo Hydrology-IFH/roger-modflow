@@ -111,7 +111,6 @@ def main(model_run):
             direct_recharge_day = aggregate_to_coarser_resolution(_direct_recharge_year[i, :, :], 25, 50, method="average")
             ll_direct_recharge.append(direct_recharge_day)
     direct_recharge = np.stack(ll_direct_recharge, axis=0)
-    click.echo(direct_recharge.shape)
     # convert from mm/day to m3/day
     # get the area of each grid cell in m2
     area = 50 * 50  # 50 m x 50 m grid cells
@@ -196,7 +195,7 @@ def main(model_run):
     # plot the monthly extraction balance using bar plot, make bars with negative values orange and bars with positive values blue
     fig, ax = plt.subplots(figsize=(6, 2))
     colors = ["orange" if x < 0 else "blue" for x in df_extraction_balance_monthly["extraction_balance"]]
-    ax.bar(df_extraction_balance_monthly.index, df_extraction_balance_monthly["extraction_balance"]/1e6, color=colors, width=20)
+    ax.bar(df_extraction_balance_monthly.index, df_extraction_balance_monthly["extraction_balance"]/1e6, color=colors, width=25)
     # rotate xticklabels by 45 degrees
     plt.xticks(rotation=25)
     ax.set_xlabel("Zeit")
@@ -207,7 +206,7 @@ def main(model_run):
     # plot the annual extraction balance using bar plot, make bars with negative values orange and bars with positive values blue
     fig, ax = plt.subplots(figsize=(6, 2))
     colors = ["orange" if x < 0 else "blue" for x in df_extraction_balance_annual["extraction_balance"]]
-    ax.bar(df_extraction_balance_annual.index.year, df_extraction_balance_annual["extraction_balance"]/1e6, color=colors, width=20)
+    ax.bar(df_extraction_balance_annual.index.year, df_extraction_balance_annual["extraction_balance"]/1e6, color=colors, width=1)
     # reformat xticklabels to show only the year
     ax.set_xticklabels(df_extraction_balance_annual.index.year, rotation=25)
     ax.set_xlabel("Jahr")
