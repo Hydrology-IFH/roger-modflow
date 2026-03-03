@@ -111,6 +111,7 @@ def main(model_run):
             direct_recharge_day = aggregate_to_coarser_resolution(_direct_recharge_year[i, :, :], 25, 50, method="average")
             ll_direct_recharge.append(direct_recharge_day)
     direct_recharge = np.stack(ll_direct_recharge, axis=0)
+    click.echo(direct_recharge.shape)
     # convert from mm/day to m3/day
     # get the area of each grid cell in m2
     area = 50 * 50  # 50 m x 50 m grid cells
