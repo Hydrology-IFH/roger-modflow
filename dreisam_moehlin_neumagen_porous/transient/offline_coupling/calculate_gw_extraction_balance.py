@@ -94,7 +94,7 @@ def main(model_run):
     ll_direct_recharge = []
     for year in years:
         base_path_roger = base_path.parent.parent.parent.parent / "roger"
-        output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / f"recharge_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction_year{year}.nc"
+        output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"recharge_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction_year{year}.nc"
         ds_direct_recharge = xr.open_dataset(output_file, engine="h5netcdf")
         _direct_recharge_year = ds_direct_recharge["direct_recharge"].values
         for i in range(_direct_recharge_year.shape[0]):
