@@ -61,6 +61,14 @@ def main(model_run):
     years = np.unique(date_time.year.values)
     timesteps = np.arange(len(date_time))
 
+    # load modflow parameters to get the coordinates of the grid
+    click.echo("Loading topography...")
+    path = base_path.parent / "input" / "parameters_modflow.nc"
+    ds_params = xr.open_dataset(path, engine="h5netcdf")
+    xcoords = ds_params["x"].values
+    ycoords = ds_params["y"].values
+
+
     # load the indirect recharge
     # click.echo("Loading indirect recharge...")
     # ll_indirect_recharge = []
@@ -95,7 +103,7 @@ def main(model_run):
     for year in years:
         base_path_roger = base_path.parent.parent.parent.parent / "roger"
         output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"recharge_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction_year{year}.nc"
-        ds_direct_recharge = xr.open_dataset(output_file, engine="h5netcdf")
+        ds_direct_recharge = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
         _direct_recharge_year = ds_direct_recharge["recharge"].values
         for i in range(_direct_recharge_year.shape[0]):
             direct_recharge_day = aggregate_to_coarser_resolution(_direct_recharge_year[i, :, :], 25, 50, method="average")
@@ -112,8 +120,8 @@ def main(model_run):
         dims=["time", "y", "x"],
         coords={
             "time": date_time,
-            "y": ds_direct_recharge["y"].values,
-            "x": ds_direct_recharge["x"].values,
+            "y": ycoords,
+            "x": xcoords,
         },
     )
     # resample to monthly
