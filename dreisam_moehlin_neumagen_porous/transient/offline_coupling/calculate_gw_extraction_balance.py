@@ -68,7 +68,6 @@ def main(model_run):
     xcoords = ds_params["x"].values
     ycoords = ds_params["y"].values
 
-
     # load the indirect recharge
     # click.echo("Loading indirect recharge...")
     # ll_indirect_recharge = []
