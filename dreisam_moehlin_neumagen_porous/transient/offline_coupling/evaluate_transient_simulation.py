@@ -107,12 +107,12 @@ def main(model_run):
 
                 # plot simulated vs observed groundwater depths for the station and assign metrics to the title
                 fig, axes = plt.subplots(figsize=(4, 4))
-                axes.scatter(df_sim_obs["observed"], df_sim_obs["simulated"], alpha=0.8)
+                axes.scatter(df_sim_obs["observed"], df_sim_obs["simulated"], alpha=0.8, color="black", s=5)
                 axes.plot([0, np.max(df_sim_obs["observed"])], [0, np.max(df_sim_obs["observed"])], "k--")
                 axes.set_xlabel("Gemessener GWFA [m]")
                 axes.set_ylabel("Simulierter GWFA [m]")
-                axes.set_xlim(0, np.max(df_sim_obs["observed"]))
-                axes.set_ylim(0, np.max(df_sim_obs["observed"]))
+                axes.set_xlim(0, np.max(np.max(df_sim_obs["observed"]), np.max(df_sim_obs["simulated"])))
+                axes.set_ylim(0, np.max(np.max(df_sim_obs["observed"]), np.max(df_sim_obs["simulated"])))
                 axes.set_title(f"{station_id}\nNSE: {nse_depth:.2f}, MAE: {mae_depth:.2f} m, r: {r_rank:.2f}")
                 fig.tight_layout()
                 file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"scatter_gw_depths_{station_id}_run{model_run}.png"
@@ -123,6 +123,9 @@ def main(model_run):
                 fig, axes = plt.subplots(figsize=(6, 2))
                 axes.plot(df_sim_obs.index, df_sim_obs["observed"], label="Gemessen", linewidth=1.2, color="blue")
                 axes.plot(df_sim_obs.index, df_sim_obs["simulated"], label="Simuliert", linewidth=1, color="red")
+                axes.set_xlim(df_sim_obs.index[0], df_sim_obs.index[-1])
+                axes.set_ylim(0,)
+                axes.invert_yaxis()
                 axes.set_xlabel("Zeit")
                 axes.set_ylabel("GWFA [m]")
                 fig.tight_layout()
@@ -158,14 +161,14 @@ def main(model_run):
     # make scatter plot of simulated vs observed groundwater depths
     click.echo("Making scatter plot of simulated vs observed groundwater depths...")
     fig, axes = plt.subplots(figsize=(4, 4))
-    axes.scatter(np.concatenate(ll_observed_depths), np.concatenate(ll_simulated_depths), alpha=0.8, color="black", s=10)
+    axes.scatter(np.concatenate(ll_observed_depths), np.concatenate(ll_simulated_depths), alpha=0.8, color="black", s=5)
     axes.plot([0, np.max(np.concatenate(ll_observed_depths))], [0, np.max(np.concatenate(ll_observed_depths))], "k--")
     axes.set_xlabel("Gemessener GWFA [m]")
     axes.set_ylabel("Simulierter GWFA [m]")
-    axes.set_xlim(0, np.max(np.concatenate(ll_observed_depths)))
-    axes.set_ylim(0, np.max(np.concatenate(ll_simulated_depths)))
+    axes.set_xlim(0, np.max(np.max(np.concatenate(ll_observed_depths)), np.max(np.concatenate(ll_simulated_depths))))
+    axes.set_ylim(0, np.max(np.max(np.concatenate(ll_simulated_depths)), np.max(np.concatenate(ll_observed_depths))))
     fig.tight_layout()
-    file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / f"scatter_gw_depths_run{model_run}.png"
+    file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"scatter_gw_depths_run{model_run}.png"
     fig.savefig(file, dpi=300, bbox_inches="tight")
     return
 
