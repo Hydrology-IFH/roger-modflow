@@ -29,6 +29,10 @@ def xy_to_rowcol(x, y, x0, y0):
 def main(model_run):
     base_path = Path(__file__).parent
 
+    # date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="D")
+    # years = np.unique(date_time.year.values)
+    # timesteps = np.arange(len(date_time))
+
     date_time = pd.date_range(start="2013-01-01", end="2017-12-31", freq="D")
     years = np.unique(date_time.year.values)
     timesteps = np.arange(len(date_time))
