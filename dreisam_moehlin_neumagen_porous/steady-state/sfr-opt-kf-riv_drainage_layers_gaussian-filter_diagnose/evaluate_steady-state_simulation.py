@@ -592,8 +592,8 @@ def main(model_run):
 
     fig, axes = plt.subplots(figsize=(4, 4))
     axes.scatter(obs_depths[:-2], sim_depths[:-2], marker='.', s=5, c='black')
-    axes.set_ylabel('Simulated groundwater depth [m]')
-    axes.set_xlabel('Observed groundwater depth [m]')
+    axes.set_ylabel('Simulierter GWFA [m]')
+    axes.set_xlabel('Gemessener GWFA [m]')
     axes.set_xlim(0, 30)
     axes.set_ylim(0, 30)
     axes.plot(axes.get_xlim(), axes.get_ylim(), ls="--", c=".3", zorder=1, alpha=0.5)

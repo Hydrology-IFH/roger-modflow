@@ -111,8 +111,8 @@ def main(model_run):
                 axes.plot([0, np.max(df_sim_obs["observed"])], [0, np.max(df_sim_obs["observed"])], "k--")
                 axes.set_xlabel("Gemessener GWFA [m]")
                 axes.set_ylabel("Simulierter GWFA [m]")
-                axes.set_xlim(0, np.max(np.max(df_sim_obs["observed"]), np.max(df_sim_obs["simulated"])))
-                axes.set_ylim(0, np.max(np.max(df_sim_obs["observed"]), np.max(df_sim_obs["simulated"])))
+                axes.set_xlim(0, 30)
+                axes.set_ylim(0, 30)
                 axes.set_title(f"{station_id}\nNSE: {nse_depth:.2f}, MAE: {mae_depth:.2f} m, r: {r_rank:.2f}")
                 fig.tight_layout()
                 file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"scatter_gw_depths_{station_id}_run{model_run}.png"
@@ -165,8 +165,8 @@ def main(model_run):
     axes.plot([0, np.max(np.concatenate(ll_observed_depths))], [0, np.max(np.concatenate(ll_observed_depths))], "k--")
     axes.set_xlabel("Gemessener GWFA [m]")
     axes.set_ylabel("Simulierter GWFA [m]")
-    axes.set_xlim(0, np.max(np.max(np.concatenate(ll_observed_depths)), np.max(np.concatenate(ll_simulated_depths))))
-    axes.set_ylim(0, np.max(np.max(np.concatenate(ll_simulated_depths)), np.max(np.concatenate(ll_observed_depths))))
+    axes.set_xlim(0, 30)
+    axes.set_ylim(0, 30)
     axes.set_title(f"NSE: {df_metrics.loc['avg', 'NSE']:.2f}, MAE: {df_metrics.loc['avg', 'MAE']:.2f} m, r: {df_metrics.loc['avg', 'r']:.2f}")
     fig.tight_layout()
     file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"scatter_gw_depths_run{model_run}.png"
