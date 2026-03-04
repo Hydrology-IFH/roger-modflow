@@ -162,7 +162,7 @@ def main(model_run):
     click.echo("Making scatter plot of simulated vs observed groundwater depths...")
     fig, axes = plt.subplots(figsize=(4, 4))
     axes.scatter(np.concatenate(ll_observed_depths), np.concatenate(ll_simulated_depths), alpha=0.8, color="black", s=5)
-    axes.plot([0, np.max(np.concatenate(ll_observed_depths))], [0, np.max(np.concatenate(ll_observed_depths))], "k--")
+    axes.plot([0, 30], [0, 30], "k--")
     axes.set_xlabel("Gemessener GWFA [m]")
     axes.set_ylabel("Simulierter GWFA [m]")
     axes.set_xlim(0, 30)
