@@ -167,7 +167,7 @@ def main(model_run):
     axes.set_ylabel("Simulierter GWFA [m]")
     axes.set_xlim(0, 30)
     axes.set_ylim(0, 30)
-    axes.set_title(f"NSE: {df_metrics.loc['avg', 'NSE']:.2f}, MAE: {df_metrics.loc['avg', 'MAE']:.2f} m, r: {df_metrics.loc['avg', 'r']:.2f}")
+    axes.set_title(f"MAE: {df_metrics.loc['avg', 'MAE']:.2f} m, r: {df_metrics.loc['avg', 'r']:.2f}")
     fig.tight_layout()
     file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"scatter_gw_depths_run{model_run}.png"
     fig.savefig(file, dpi=300, bbox_inches="tight")
