@@ -108,7 +108,7 @@ def main(model_run):
                 # plot simulated vs observed groundwater depths for the station and assign metrics to the title
                 fig, axes = plt.subplots(figsize=(4, 4))
                 axes.scatter(df_sim_obs["observed"], df_sim_obs["simulated"], alpha=0.8, color="black", s=5)
-                axes.plot([0, np.max(df_sim_obs["observed"])], [0, np.max(df_sim_obs["observed"])], "k--")
+                axes.plot([0, 30], [0, 30], "k--")
                 axes.set_xlabel("Gemessener GWFA [m]")
                 axes.set_ylabel("Simulierter GWFA [m]")
                 axes.set_xlim(0, 30)
