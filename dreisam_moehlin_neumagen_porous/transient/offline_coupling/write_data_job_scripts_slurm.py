@@ -86,8 +86,8 @@ def main():
                         if stress_test_meteo in ["spring-summer-drought", "summer-drought"] and magnitude == 2 and duration == 3:
                             scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --soil-compaction soil-compaction --irrigation no-irrigation --stress-test-well-extraction stress' % (stress_test_meteo, magnitude, duration))
                             scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --soil-compaction soil-compaction --irrigation irrigation --stress-test-well-extraction stress' % (stress_test_meteo, magnitude, duration))
-                            script_names.append('modflow_%s-magnitude%s-duration%s_soil-compaction_well-extraction-stress' % (stress_test_meteo, magnitude, duration))
-                            script_names.append('modflow_%s-magnitude%s-duration%s_irrigation_soil-compaction_well-extraction-stress' % (stress_test_meteo, magnitude, duration))
+                            script_names.append('write_modflow_data_%s-magnitude%s-duration%s_soil-compaction_well-extraction-stress' % (stress_test_meteo, magnitude, duration))
+                            script_names.append('write_modflow_data_%s-magnitude%s-duration%s_irrigation_soil-compaction_well-extraction-stress' % (stress_test_meteo, magnitude, duration))
 
 
     jobs = []

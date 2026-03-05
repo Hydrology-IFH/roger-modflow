@@ -42,8 +42,8 @@ sbatch -p compute write_modflow_data_summer-drought_magnitude2_duration3_soil-co
 sbatch -p compute write_modflow_data_summer-drought_magnitude2_duration3_soil-compaction_yellow-mustard.sh
 sbatch -p compute write_modflow_data_summer-drought_magnitude2_duration3_irrigation_yellow-mustard.sh
 sbatch -p compute write_modflow_data_summer-drought_magnitude2_duration3_soil-compaction_irrigation_yellow-mustard.sh
-sbatch -p compute modflow_summer-drought-magnitude2-duration3_soil-compaction_well-extraction-stress.sh
-sbatch -p compute modflow_summer-drought-magnitude2-duration3_irrigation_soil-compaction_well-extraction-stress.sh
+sbatch -p compute write_modflow_data_summer-drought-magnitude2-duration3_soil-compaction_well-extraction-stress.sh
+sbatch -p compute write_modflow_data_summer-drought-magnitude2-duration3_irrigation_soil-compaction_well-extraction-stress.sh
 sbatch -p compute write_modflow_data_spring-summer-drought_magnitude0_duration3_soil-compaction.sh
 sbatch -p compute write_modflow_data_spring-summer-drought_magnitude0_duration3.sh
 sbatch -p compute write_modflow_data_spring-summer-drought_magnitude0_duration3_soil-compaction_irrigation.sh
@@ -62,8 +62,8 @@ sbatch -p compute write_modflow_data_spring-summer-drought_magnitude2_duration3_
 sbatch -p compute write_modflow_data_spring-summer-drought_magnitude2_duration3_soil-compaction_yellow-mustard.sh
 sbatch -p compute write_modflow_data_spring-summer-drought_magnitude2_duration3_irrigation_yellow-mustard.sh
 sbatch -p compute write_modflow_data_spring-summer-drought_magnitude2_duration3_soil-compaction_irrigation_yellow-mustard.sh
-sbatch -p compute modflow_spring-summer-drought-magnitude2-duration3_soil-compaction_well-extraction-stress.sh
-sbatch -p compute modflow_spring-summer-drought-magnitude2-duration3_irrigation_soil-compaction_well-extraction-stress.sh
+sbatch -p compute write_modflow_data_spring-summer-drought-magnitude2-duration3_soil-compaction_well-extraction-stress.sh
+sbatch -p compute write_modflow_data_spring-summer-drought-magnitude2-duration3_irrigation_soil-compaction_well-extraction-stress.sh
 sbatch -p compute write_modflow_data_spring-summer-wet_soil-compaction.sh
 sbatch -p compute write_modflow_data_spring-summer-wet.sh
 sbatch -p compute write_modflow_data_spring-summer-wet_soil-compaction_irrigation.sh
