@@ -449,8 +449,10 @@ def main(model_run):
     # calculate mean error
     print(np.mean(sim[:-2] - obs[:-2]))
     # calculate mean absolute error
-    print(np.mean(np.abs(sim[:-2] - obs[:-2])))
-    print(sp.stats.spearmanr(sim_depths[:-2], obs_depths[:-2])[0])
+    mae = np.mean(np.abs(sim[:-2] - obs[:-2]))
+    print(mae)
+    r_ranked = sp.stats.spearmanr(sim[:-2], obs[:-2])[0]
+    print(r_ranked)
 
     diff_sim_obs = sim - obs
     cm = plt.get_cmap('PuOr')
@@ -567,6 +569,7 @@ def main(model_run):
     axes.scatter(obs_depths[:-2], sim_depths[:-2], marker='.', s=5, c='black')
     axes.set_ylabel('Simulated groundwater depth [m]')
     axes.set_xlabel('Observed groundwater depth [m]')
+    axes.set_title(f"MAE: {mae:.2f} m, r: {r_ranked:.2f}")
     axes.set_xlim(0, 30)
     axes.set_ylim(0, 30)
     axes.plot(axes.get_xlim(), axes.get_ylim(), ls="--", c=".3", zorder=1, alpha=0.5)

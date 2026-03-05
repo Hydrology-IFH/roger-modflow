@@ -470,7 +470,9 @@ class ModFlowSimulation:
         # specific_storage[2]["data"] = specific_yield[2]["data"] * thickness_layer3
         # specific_storage[3]["data"] = specific_yield[3]["data"] * thickness_layer4
 
-        specific_storage = 10e-5
+        specific_storage = flopy.mf6.ModflowGwfsto.ss.empty(
+                gwf, layered=True, default_value=0.000001
+            )
 
         sto = flopy.mf6.ModflowGwfsto(gwf, pname="sto",
             iconvert=1, ss=specific_storage, sy=specific_yield, steady_state=True)

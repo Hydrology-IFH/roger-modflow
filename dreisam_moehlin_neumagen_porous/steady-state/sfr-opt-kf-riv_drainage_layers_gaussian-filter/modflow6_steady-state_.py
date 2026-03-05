@@ -447,16 +447,8 @@ class ModFlowSimulation:
         specific_yield[3]["data"] = specific_yield_layer4
 
         specific_storage = flopy.mf6.ModflowGwfsto.ss.empty(
-            gwf, layered=True
-        )
-        thickness_layer1 = topography - elevation_bottom_layer1
-        thickness_layer2 = elevation_bottom_layer1 - elevation_bottom_layer2
-        thickness_layer3 = elevation_bottom_layer2 - elevation_bottom_layer3
-        thickness_layer4 = elevation_bottom_layer3 - elevation_bottom_layer4
-        specific_storage[0]["data"] = specific_yield[0]["data"] * thickness_layer1
-        specific_storage[1]["data"] = specific_yield[1]["data"] * thickness_layer2
-        specific_storage[2]["data"] = specific_yield[2]["data"] * thickness_layer3
-        specific_storage[3]["data"] = specific_yield[3]["data"] * thickness_layer4
+                gwf, layered=True, default_value=0.000001
+            )
 
         sto = flopy.mf6.ModflowGwfsto(gwf, pname="sto",
             iconvert=1, ss=specific_storage, sy=specific_yield, steady_state=True)
@@ -486,7 +478,7 @@ class ModFlowSimulation:
                 layer = 3
                 b_ghb = elevation_bottom_layer3[rows_bc[ii], cols_bc[ii]] - elevation_bottom_layer4[rows_bc[ii], cols_bc[ii]]
                 kf_ghb = hydraulic_conductivities_layer4[rows_bc[ii], cols_bc[ii]]
-            conductance = kf_ghb * b_ghb
+            conductance = kf_ghb * b_ghb * 0.5
             ghb_rec.append(((layer, rows_bc[ii], cols_bc[ii]), constant_head, conductance))
 
         ghb = flopy.mf6.modflow.mfgwfghb.ModflowGwfghb(

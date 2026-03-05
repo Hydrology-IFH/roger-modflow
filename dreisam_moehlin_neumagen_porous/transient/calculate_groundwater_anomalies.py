@@ -113,29 +113,6 @@ def main():
         groundwater_observation_wells.loc[groundwater_observation_wells['station_id'] == well_id, 'avg_gw_head'] = df_gw_heads[well_id].loc['1990-01-01':'2019-12-31'].mean()
         groundwater_observation_wells.loc[groundwater_observation_wells['station_id'] == well_id, 'avg_gw_depth'] = df_gw_depths[well_id].loc['1990-01-01':'2019-12-31'].mean()
 
-    # plot location of observation wells and use average groundwater depth as color
-    fig, ax = plt.subplots(1, 1, figsize=(6, 4))
-    groundwater_observation_wells.plot(column="avg_gw_depth", ax=ax, cmap='viridis', vmin=0, vmax=15)
-    ax.scatter(df_drinking_water_wells['x-coordinate'], df_drinking_water_wells['y-coordinate'], c='magenta', s=20, marker='^', label='Trinkwasserbrunnen')
-    # add colorbar
-    cbar = plt.cm.ScalarMappable(cmap='viridis', norm=plt.Normalize(vmin=0, vmax=15))
-    fig.colorbar(cbar, ax=ax, label="Durchscnittlicher\n GWFA [m]", shrink=0.9)
-    # add catchment boundary
-    catchment_boundary.boundary.plot(ax=ax, color='black', linewidth=1)
-    ctx.add_basemap(ax, source=ctx.providers.CartoDB.Positron, crs=groundwater_observation_wells.crs)
-    north_arrow(
-    ax, scale=0.25, location="upper right", rotation={"crs": groundwater_observation_wells.crs, "reference": "center"}
-    )
-    scale_bar(ax, location="lower right", style="boxes", bar={"projection": groundwater_observation_wells.crs, "height": 0.05}, text = {"fontfamily": "monospace", "fontsize": 10})
-    ax.set_xlabel('X-Koordinate', fontsize=12)
-    ax.set_ylabel('Y-Koordinate', fontsize=12)
-    # reduce number of xticks
-    ax.set_xticks(np.linspace(grid_extent[0], grid_extent[1], 6))
-    fig.tight_layout()
-    file = base_path / "figures" / "groundwater_time_series" / "gw_observation_wells_map.png"
-    fig.savefig(file, dpi=300)
-    plt.close(fig)
-
     # drop columns with all NaN values
     df_gw_depths = df_gw_depths.dropna(axis=1, how='all')
     # drop year 2024
