@@ -56,7 +56,7 @@ def main(model_run):
     base_path = Path(__file__).parent
     base_path_output = Path("/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline-coupling/output")
 
-    date_time = pd.date_range(start="2013-01-01", end="2017-12-31", freq="D")
+    date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="D")
     years = np.unique(date_time.year.values)
     timesteps = np.arange(len(date_time))
 

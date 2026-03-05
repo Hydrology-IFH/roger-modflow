@@ -40,10 +40,8 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         date_time = pd.date_range(start="2000-01-01", end="2024-12-31", freq="D")
         years = np.unique(date_time.year.values)
     else:
-        # date_time = pd.date_range(start="2013-01-01", end="2017-12-31", freq="D")
-        # years = np.unique(date_time.year.values)
-        date_time = pd.date_range(start="2013-01-01", periods=1946, freq="D")
-        years = np.unique(date_time.year.values)[:5]  # use only the first 5 years for the base scenario to be consistent with the meteorological forcing used for the MODFLOW6 simulations
+        date_time = pd.date_range(start="2013-01-01", end="2017-12-31", freq="D")
+        years = np.unique(date_time.year.values)
 
     stress_test_name = f"modflow_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{irrigation}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}{_stress_test_well_extraction}"
 
