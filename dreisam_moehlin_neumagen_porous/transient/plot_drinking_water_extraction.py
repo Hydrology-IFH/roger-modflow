@@ -61,15 +61,19 @@ def main():
         df_drinking_water_well_extraction_daily.iloc[i, 0] = extraction_year * daily_weights_drinking_water_supply.iloc[i, 0]
 
     # save daily drinking water well extraction to csv
+    df_drinking_water_well_extraction_daily.columns = [['[m3]'], ['well_extraction']]
     file = base_path / "input" / "drinking_water_well_extraction_daily.csv"
     df_drinking_water_well_extraction_daily.to_csv(file, sep=";")
+    df_drinking_water_well_extraction_daily.columns = ['well_extraction']
 
     # aggreate to monthly values
     df_drinking_water_well_extraction_monthly = df_drinking_water_well_extraction_daily.resample('ME').sum()
 
     # save monthly drinking water well extraction to csv
+    df_drinking_water_well_extraction_monthly.columns = [['[m3]'], ['well_extraction']]
     file = base_path / "input" / "drinking_water_well_extraction_monthly.csv"
     df_drinking_water_well_extraction_monthly.to_csv(file, sep=";")
+    df_drinking_water_well_extraction_monthly.columns = ['well_extraction']
 
     # barplot monthly drinking water well extraction    
     fig, ax = plt.subplots(figsize=(6, 3))

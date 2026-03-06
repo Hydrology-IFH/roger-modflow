@@ -61,6 +61,16 @@ for duration in durations:
             path = path_to_dir / "groundwater_extraction.csv"
             groundwater_extraction.to_csv(path, header=True, index=False, sep=";")
 
+            df_drinking_water_well_extraction_daily = pd.DataFrame(index=date_time, columns=['well_extraction'])
+            for i in range(NDAYS):
+                year = years[i]
+                extraction_year = groundwater_extraction.loc[cond_drinking_water_supply, f"{year}"].values.sum()
+                df_drinking_water_well_extraction_daily.iloc[i, 0] = extraction_year * daily_weights_drinking_water_supply.iloc[i, 0]
+
+            # save daily drinking water well extraction to csv
+            path = path_to_dir / "drinking_water_well_extraction_daily.csv"
+            df_drinking_water_well_extraction_daily.to_csv(path, sep=";")
+
             path_to_dir = base_path / "input" / "stress_tests_well_extraction" / "spring-summer-drought" / f"duration{duration}_magnitude{magnitude}"
             if not os.path.exists(path_to_dir):
                 os.makedirs(path_to_dir)  
@@ -80,6 +90,17 @@ for duration in durations:
 
             path = path_to_dir / "groundwater_extraction.csv"
             groundwater_extraction.to_csv(path, header=True, index=False, sep=";")
+
+            df_drinking_water_well_extraction_daily = pd.DataFrame(index=date_time, columns=['well_extraction'])
+            for i in range(NDAYS):
+                year = years[i]
+                extraction_year = groundwater_extraction.loc[cond_drinking_water_supply, f"{year}"].values.sum()
+                df_drinking_water_well_extraction_daily.iloc[i, 0] = extraction_year * daily_weights_drinking_water_supply.iloc[i, 0]
+
+            # save daily drinking water well extraction to csv
+            df_drinking_water_well_extraction_daily.columns = [['[m3]'], ['well_extraction']]
+            path = path_to_dir / "drinking_water_well_extraction_daily.csv"
+            df_drinking_water_well_extraction_daily.to_csv(path, sep=";")
             
         elif magnitude == 1 and duration == 2:
             path_to_dir = base_path / "input" / "stress_tests_well_extraction" / "summer-drought" / f"duration{duration}_magnitude{magnitude}"
@@ -109,6 +130,17 @@ for duration in durations:
             path = path_to_dir / "groundwater_extraction.csv"
             groundwater_extraction.to_csv(path, header=True, index=False, sep=";")
 
+            df_drinking_water_well_extraction_daily = pd.DataFrame(index=date_time, columns=['well_extraction'])
+            for i in range(NDAYS):
+                year = years[i]
+                extraction_year = groundwater_extraction.loc[cond_drinking_water_supply, f"{year}"].values.sum()
+                df_drinking_water_well_extraction_daily.iloc[i, 0] = extraction_year * daily_weights_drinking_water_supply.iloc[i, 0]
+
+            # save daily drinking water well extraction to csv
+            df_drinking_water_well_extraction_daily.columns = [['[m3]'], ['well_extraction']]
+            path = path_to_dir / "drinking_water_well_extraction_daily.csv"
+            df_drinking_water_well_extraction_daily.to_csv(path, sep=";")
+
             path_to_dir = base_path / "input" / "stress_tests_well_extraction" / "spring-summer-drought" / f"duration{duration}_magnitude{magnitude}"
             if not os.path.exists(path_to_dir):
                 os.makedirs(path_to_dir)  
@@ -135,6 +167,17 @@ for duration in durations:
 
             path = path_to_dir / "groundwater_extraction.csv"
             groundwater_extraction.to_csv(path, header=True, index=False, sep=";")
+
+            df_drinking_water_well_extraction_daily = pd.DataFrame(index=date_time, columns=['well_extraction'])
+            for i in range(NDAYS):
+                year = years[i]
+                extraction_year = groundwater_extraction.loc[cond_drinking_water_supply, f"{year}"].values.sum()
+                df_drinking_water_well_extraction_daily.iloc[i, 0] = extraction_year * daily_weights_drinking_water_supply.iloc[i, 0]
+
+            # save daily drinking water well extraction to csv
+            path = path_to_dir / "drinking_water_well_extraction_daily.csv"
+            df_drinking_water_well_extraction_daily.columns = [['[m3]'], ['well_extraction']]
+            df_drinking_water_well_extraction_daily.to_csv(path, sep=";")
 
         elif magnitude == 2 and duration == 3:
             path_to_dir = base_path / "input" / "stress_tests_well_extraction" / "summer-drought" / f"duration{duration}_magnitude{magnitude}"
@@ -164,6 +207,17 @@ for duration in durations:
             path = path_to_dir / "groundwater_extraction.csv"
             groundwater_extraction.to_csv(path, header=True, index=False, sep=";")
 
+            df_drinking_water_well_extraction_daily = pd.DataFrame(index=date_time, columns=['well_extraction'])
+            for i in range(NDAYS):
+                year = years[i]
+                extraction_year = groundwater_extraction.loc[cond_drinking_water_supply, f"{year}"].values.sum()
+                df_drinking_water_well_extraction_daily.iloc[i, 0] = extraction_year * daily_weights_drinking_water_supply.iloc[i, 0]
+
+            # save daily drinking water well extraction to csv
+            df_drinking_water_well_extraction_daily.columns = [['[m3]'], ['well_extraction']]
+            path = path_to_dir / "drinking_water_well_extraction_daily.csv"
+            df_drinking_water_well_extraction_daily.to_csv(path, sep=";")
+
             path_to_dir = base_path / "input" / "stress_tests_well_extraction" / "spring-summer-drought" / f"duration{duration}_magnitude{magnitude}"
             if not os.path.exists(path_to_dir):
                 os.makedirs(path_to_dir)  
@@ -190,6 +244,17 @@ for duration in durations:
 
             path = path_to_dir / "groundwater_extraction.csv"
             groundwater_extraction.to_csv(path, header=True, index=False, sep=";")
+        
+            df_drinking_water_well_extraction_daily = pd.DataFrame(index=date_time, columns=['well_extraction'])
+            for i in range(NDAYS):
+                year = years[i]
+                extraction_year = groundwater_extraction.loc[cond_drinking_water_supply, f"{year}"].values.sum()
+                df_drinking_water_well_extraction_daily.iloc[i, 0] = extraction_year * daily_weights_drinking_water_supply.iloc[i, 0]
+
+            # save daily drinking water well extraction to csv
+            df_drinking_water_well_extraction_daily.columns = [['[m3]'], ['well_extraction']]
+            path = path_to_dir / "drinking_water_well_extraction_daily.csv"
+            df_drinking_water_well_extraction_daily.to_csv(path, sep=";")
 
         elif magnitude == 2 and duration == 0:
             path_to_dir = base_path / "input" / "stress_tests_well_extraction" / "summer-drought" / f"duration{duration}_magnitude{magnitude}"
@@ -219,6 +284,17 @@ for duration in durations:
             path = path_to_dir / "groundwater_extraction.csv"
             groundwater_extraction.to_csv(path, header=True, index=False, sep=";")
 
+            df_drinking_water_well_extraction_daily = pd.DataFrame(index=date_time, columns=['well_extraction'])
+            for i in range(NDAYS):
+                year = years[i]
+                extraction_year = groundwater_extraction.loc[cond_drinking_water_supply, f"{year}"].values.sum()
+                df_drinking_water_well_extraction_daily.iloc[i, 0] = extraction_year * daily_weights_drinking_water_supply.iloc[i, 0]
+
+            # save daily drinking water well extraction to csv
+            df_drinking_water_well_extraction_daily.columns = [['[m3]'], ['well_extraction']]
+            path = path_to_dir / "drinking_water_well_extraction_daily.csv"
+            df_drinking_water_well_extraction_daily.to_csv(path, sep=";")
+
             path_to_dir = base_path / "input" / "stress_tests_well_extraction" / "spring-summer-drought" / f"duration{duration}_magnitude{magnitude}"
             if not os.path.exists(path_to_dir):
                 os.makedirs(path_to_dir)  
@@ -245,6 +321,17 @@ for duration in durations:
 
             path = path_to_dir / "groundwater_extraction.csv"
             groundwater_extraction.to_csv(path, header=True, index=False, sep=";")
+
+            df_drinking_water_well_extraction_daily = pd.DataFrame(index=date_time, columns=['well_extraction'])
+            for i in range(NDAYS):
+                year = years[i]
+                extraction_year = groundwater_extraction.loc[cond_drinking_water_supply, f"{year}"].values.sum()
+                df_drinking_water_well_extraction_daily.iloc[i, 0] = extraction_year * daily_weights_drinking_water_supply.iloc[i, 0]
+
+            # save daily drinking water well extraction to csv
+            df_drinking_water_well_extraction_daily.columns = [['[m3]'], ['well_extraction']]
+            path = path_to_dir / "drinking_water_well_extraction_daily.csv"
+            df_drinking_water_well_extraction_daily.to_csv(path, sep=";")
 
 
 

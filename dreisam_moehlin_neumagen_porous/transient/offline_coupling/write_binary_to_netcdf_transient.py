@@ -110,6 +110,13 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
                 click.echo(f"Processing time step {timestep_year} for year {year}... (GW-SW flux)")
                 gw_sw_year[i, :, :] = np.nansum(cbb.get_data(text="SFR", kstpkper=(timestep_year, 1), full3D=True)[0].filled(fill_value=np.nan), axis=0) * (-1)
 
+            well_extraction_year = np.zeros((len(timesteps_year), len(ycoords), len(xcoords)))
+            for i, _timestep_year in enumerate(timesteps_year):
+                timestep_year = int(_timestep_year)  # get time step index from timesteps_year
+                timestep_year = cbb.get_kstpkper()[i+1][0]  # get time step index from cell budget file (add 1 to skip steady-state time step)
+                click.echo(f"Processing time step {timestep_year} for year {year}... (well extraction)")
+                well_extraction_year[i, :, :] = np.nansum(cbb.get_data(text="WEL", kstpkper=(timestep_year, 1), full3D=True)[0].filled(fill_value=np.nan), axis=0) * (-1)
+
             data_vars=dict(
                     head=(["Time", "layer", "lat", "lon"], heads_year),
                 )
@@ -163,9 +170,26 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             ds.close()
             files_to_compress.append(file)
 
+            data_vars=dict(
+                    well_extraction=(["Time", "lat", "lon"], well_extraction_year),
+                )
+            ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
+            ds["well_extraction"].attrs["units"] = "m3/day"
+            ds["well_extraction"].attrs["long_name"] = "Groundwater extraction by wells"
+            # create spatial reference
+            ds = ds.geo.write_crs("EPSG:25832")
+            ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
+            file = base_path / "output" / stress_test_name / f"well_extraction_run{model_run}_year{year}.nc"
+            click.echo(f"Writing {file}...")
+            comp = dict(zlib=True, complevel=1)  # compress data to save storage
+            encoding = {var: comp for var in ds.data_vars}
+            ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)
+            ds.close()
+            files_to_compress.append(file)
+
     # compress files into a single archive
     if files_to_compress:
-        output_file = base_path / "output" / stress_test_name / f"{stress_test_name}_dmn_run_{model_run}.tar.gz"
+        output_file = base_path / "output" / stress_test_name / f"{stress_test_name}_run_{model_run}.tar.gz"
         with tarfile.open(output_file, "w:gz") as tar:
             for f in files_to_compress:
                 tar.add(f, arcname=f.name)

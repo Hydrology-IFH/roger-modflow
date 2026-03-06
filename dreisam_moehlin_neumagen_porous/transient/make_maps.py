@@ -41,6 +41,15 @@ def main():
     path = base_path / "input" / "mask_catchment.gpkg"
     catchment_boundary_porous = gpd.read_file(path)
 
+    # load drinkin water protection areas
+    path = base_path / "input" / "wsg_hausen.gpkg"
+    wsg_hausen = gpd.read_file(path)
+
+    path = base_path / "input" / "wsg_zartener_becken.gpkg"
+    wsg_zartener_becken = gpd.read_file(path)
+    # clip to catchment boundary
+    wsg_zartener_becken = gpd.clip(wsg_zartener_becken, catchment_boundary_porous)
+
     # clip dringking water wells to catchment boundary porous
     gdf_drinking_water_wells = gpd.GeoDataFrame(
         df_drinking_water_wells,
@@ -49,7 +58,6 @@ def main():
     )
     gdf_drinking_water_wells = gpd.clip(gdf_drinking_water_wells, catchment_boundary_porous)
     
-
     # load groundwater head time series
     file = base_path / "observations" / "groundwater_head_time_series_filled.csv"
     df_gw_heads = pd.read_csv(file, index_col=0, sep=';')
@@ -115,13 +123,16 @@ def main():
 
     # plot location of observation wells and use average groundwater depth as color
     fig, ax = plt.subplots(1, 1, figsize=(6, 4))
-    groundwater_observation_wells.plot(column="avg_gw_depth", ax=ax, cmap='viridis', vmin=0, vmax=15)
-    ax.scatter(gdf_drinking_water_wells['x-coordinate'], gdf_drinking_water_wells['y-coordinate'], c='magenta', s=20, marker='^', label='Trinkwasserbrunnen')
+    groundwater_observation_wells.plot(column="avg_gw_depth", ax=ax, cmap='viridis', vmin=0, vmax=15, zorder=3)
+    ax.scatter(gdf_drinking_water_wells['x-coordinate'], gdf_drinking_water_wells['y-coordinate'], c='magenta', s=20, marker='^', label='Trinkwasserbrunnen', zorder=2)
     # add colorbar
     cbar = plt.cm.ScalarMappable(cmap='viridis', norm=plt.Normalize(vmin=0, vmax=15))
     fig.colorbar(cbar, ax=ax, label="Mittlerer GWFA [m]", shrink=0.9)
     # add catchment boundary
-    catchment_boundary_porous.boundary.plot(ax=ax, color='black', linewidth=1)
+    catchment_boundary_porous.boundary.plot(ax=ax, color='black', linewidth=1, zorder=1)
+    # add drinking water protection areas and fill with diagonal hatching
+    wsg_hausen.plot(ax=ax, color='none', edgecolor='blue', linewidth=1, hatch='////', label='WSG Hausen', alpha=0.5, zorder=1)
+    wsg_zartener_becken.plot(ax=ax, color='none', edgecolor='blue', linewidth=1, hatch='////', label='WSG Zartener Becken', alpha=0.5, zorder=1)
     ctx.add_basemap(ax, source=ctx.providers.CartoDB.Positron, crs=groundwater_observation_wells.crs)
     north_arrow(
     ax, scale=0.25, location="upper right", rotation={"crs": groundwater_observation_wells.crs, "reference": "center"}
