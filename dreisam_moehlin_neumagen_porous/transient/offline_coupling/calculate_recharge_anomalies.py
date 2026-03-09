@@ -97,8 +97,7 @@ def main(model_run):
         click.echo("Loading indirect recharge (base)...")
         ll_indirect_recharge = []
         for year in years:
-            # output_file = base_path / "output" / f"modflow_{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
-            output_file = base_path_output / f"{base}" / f"indirect_recharge_run{model_run}_year{year}.nc"
+            output_file = base_path / "output" / f"modflow_{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
             ds_indirect_recharge_base = xr.open_dataset(output_file, engine="h5netcdf")
             indirect_recharge_year_base = ds_indirect_recharge_base["indirect_recharge"].values * 86400  # convert from m3/s to m3/day
             indirect_recharge_year_base[indirect_recharge_year_base > 0] = 0  # set positive values to zero
@@ -129,9 +128,9 @@ def main(model_run):
         click.echo("Loading direct recharge (base)...")
         ll_direct_recharge = []
         for year in years:
-            # base_path_roger = base_path.parent.parent.parent.parent / "roger"
-            # output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"recharge_{stress_test_scenario}_year{year}.nc"
-            output_file = base_path_output / f"{base}" / f"recharge_{base}_year{year}.nc"
+            base_path_roger = base_path.parent.parent.parent.parent / "roger"
+            output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"recharge_{stress_test_scenario}_year{year}.nc"
+            # output_file = base_path_output / f"{base}" / f"recharge_{base}_year{year}.nc"
             ds_direct_recharge_base = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
             _direct_recharge_year_base = ds_direct_recharge_base["recharge"].values
             _direct_recharge_year_base[_direct_recharge_year_base < 0] = 0  # set negative values to zero

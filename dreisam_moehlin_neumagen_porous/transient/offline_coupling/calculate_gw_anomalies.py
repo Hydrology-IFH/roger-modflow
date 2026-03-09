@@ -84,7 +84,7 @@ def main(model_run):
     ll_gw_depths = []
     for year in years:
         # output_file = base_path / "output" / f"modflow_{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
-        output_file = base_path_output / f"{base}" / f"gw_depth_run{model_run}_year{year}.nc"
+        output_file = base_path_output / f"modflow_{base}" / f"gw_depth_run{model_run}_year{year}.nc"
         ds_gw_depths_base = xr.open_dataset(output_file, engine="h5netcdf")
         gw_depths_year_base = ds_gw_depths_base["depth"].values
         ll_gw_depths.append(gw_depths_year_base)
