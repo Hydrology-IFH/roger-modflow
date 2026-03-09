@@ -192,6 +192,7 @@ def main(model_run):
             gw_depths_annual_anomalies_percent = (da_gw_depths_annual.values - gw_depths_avg) / gw_depths_avg * 100 * (-1)
 
             # plot map of annual anomalies of groundwater depths for the year 2018
+            click.echo(f"Plotting groundwater depth anomalies for {area} (2018)...")
             cond = (da_gw_depths_annual.time.dt.year == 2018).values
             fig, ax = plt.subplots(figsize=(6, 4))
             im = ax.imshow(gw_depths_annual_anomalies_abs[cond, x1:x2, y1:y2][0], cmap="RdBu", vmin=-10, vmax=10, extent=grid_extent)
@@ -215,12 +216,16 @@ def main(model_run):
             fig.savefig(figures_dir / f"gw_depth_anomalies_percent_annual_2018_{area}.png", dpi=300)
             plt.close(fig)
 
+    # make figures directory if it does not exist
+    figures_dir = base_path.parent / "figures" / "groundwater_anomalies"
+    figures_dir.mkdir(exist_ok=True)
 
     stress_test_scenarios = ["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction",
                              "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
                              "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"]
 
     for area in areas:
+        click.echo(f"Plotting time series of groundwater depth anomalies for {area}...")
         # plot time series of average groundwater depth anomalies for the three stress test scenarios
         fig, ax = plt.subplots(figsize=(6, 4))
         ax.plot(date_time, dict_depths_anomalies_abs_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373")

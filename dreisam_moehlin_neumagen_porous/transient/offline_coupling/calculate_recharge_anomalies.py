@@ -56,7 +56,7 @@ def aggregate_to_coarser_resolution(vals, res_fine, res_coarse, method="sum", x_
 def main(model_run):
     base_path = Path(__file__).parent
     base_path_output = base_path.parent / "output"
-    base_path_output = Path("/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline-coupling/output")
+    # base_path_output = Path("/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline-coupling/output")
 
     areas = ["dmn", "wsg_hausen", "wsg_zartener_becken"]
 
@@ -302,6 +302,7 @@ def main(model_run):
             # make figures directory if it does not exist
             figures_dir = base_path.parent / "figures" / "recharge_anomalies" / stress_test_scenario
             figures_dir.mkdir(exist_ok=True)
+    
 
             # plot monthly absolute anomalies of the recharge using a bar plot, make bars with negative values orange and bars with positive values blue
             fig, ax = plt.subplots(figsize=(6, 2.5))
