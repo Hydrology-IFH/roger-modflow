@@ -58,7 +58,7 @@ def main(model_run):
     # base_path_output = base_path / "output"
     # base_path_output = Path("/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline-coupling/output")
 
-    areas = ["wsg_hausen", "wsg_zartener_becken", "dmn"]
+    areas = ["dmn", "wsg_hausen", "wsg_zartener_becken"]
 
     stress_test_scenarios = ["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction",
                              "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
@@ -331,7 +331,7 @@ def main(model_run):
             ax.bar(df_recharge_long_term_stacked.index, df_recharge_long_term_stacked["direct_recharge"], color="blue", label="Direkte GWN")
             ax.bar(df_recharge_long_term_stacked.index, df_recharge_long_term_stacked["indirect_recharge"], bottom=df_recharge_long_term_stacked["direct_recharge"], color="lightblue", label="Indirekte GWN")
             if area == "dmn":
-                pass
+                ax.set_ylim(0, 30)
             else:
                 ax.set_ylim(0, 10)
             ax.set_xlabel("")
@@ -342,15 +342,15 @@ def main(model_run):
             fig.tight_layout()
             fig.savefig(figures_dir / f"recharge_long_term_stacked_{area}.png", dpi=300)
             plt.close(fig)
-            click.echo(f"Long-term average recharge: {df_recharge_long_term_stacked['direct_recharge'].values[0] + df_recharge_long_term_stacked['indirect_recharge'].values[0]:.2f} million m3/year")
-            click.echo(f"Long-term average direct recharge: {df_recharge_long_term_stacked['direct_recharge'].values[0]:.2f} million m3/year")
-            click.echo(f"Long-term average indirect recharge: {df_recharge_long_term_stacked['indirect_recharge'].values[0]:.2f} million m3/year")
+            click.echo(f"Long-term average recharge ({area}): {df_recharge_long_term_stacked['direct_recharge'].values[0] + df_recharge_long_term_stacked['indirect_recharge'].values[0]:.2f} million m3/year")
+            click.echo(f"Long-term average direct recharge ({area}): {df_recharge_long_term_stacked['direct_recharge'].values[0]:.2f} million m3/year")
+            click.echo(f"Long-term average indirect recharge ({area}): {df_recharge_long_term_stacked['indirect_recharge'].values[0]:.2f} million m3/year")
             # print the percentage of indirect recharge in the total recharge
             percentage_indirect_recharge = (df_recharge_long_term_stacked["indirect_recharge"].values[0] / (df_recharge_long_term_stacked["direct_recharge"].values[0] + df_recharge_long_term_stacked["indirect_recharge"].values[0])) * 100
-            click.echo(f"Percentage of indirect recharge in total recharge: {percentage_indirect_recharge:.2f}%")
+            click.echo(f"Percentage of indirect recharge in total recharge ({area}): {percentage_indirect_recharge:.2f}%")
             # print the percentage of direct recharge in the total recharge
             percentage_direct_recharge = (df_recharge_long_term_stacked["direct_recharge"].values[0] / (df_recharge_long_term_stacked["direct_recharge"].values[0] + df_recharge_long_term_stacked["indirect_recharge"].values[0])) * 100
-            click.echo(f"Percentage of direct recharge in total recharge: {percentage_direct_recharge:.2f}%")
+            click.echo(f"Percentage of direct recharge in total recharge ({area}): {percentage_direct_recharge:.2f}%")
 
             # plot the monthly extraction balance using bar plot, make bars with negative values orange and bars with positive values blue
             fig, ax = plt.subplots(figsize=(6, 2.5))
