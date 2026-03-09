@@ -240,9 +240,9 @@ def main(model_run):
             direct_recharge = np.stack(ll_direct_recharge, axis=0)
             # convert from mm/day to m3/day
             # get the area of each grid cell in m2
-            area = 50 * 50  # 50 m x 50 m grid cells
+            _area = 50 * 50  # 50 m x 50 m grid cells
             # multiply direct recharge by area to get m3/day
-            direct_recharge = direct_recharge * area / 1000
+            direct_recharge = direct_recharge * _area / 1000
             # create xarray data array for direct recharge
             da_direct_recharge = xr.DataArray(
                 data=direct_recharge,
@@ -287,10 +287,10 @@ def main(model_run):
 
             recharge_avg = np.nanmean(df_recharge_base_monthly)
             df_recharge_anomalies_monthly_abs = pd.DataFrame(index=df_recharge_monthly.index, data=df_recharge_monthly["recharge"].values - recharge_avg, columns=["anomaly"])
-            df_recharge_anomalies_monthly_percent = pd.DataFrame(index=df_recharge_monthly.index, data=(df_recharge_monthly["recharge"].values - recharge_avg) / recharge_avg * 100)
+            df_recharge_anomalies_monthly_percent = pd.DataFrame(index=df_recharge_monthly.index, data=(df_recharge_monthly["recharge"].values - recharge_avg) / recharge_avg * 100, columns=["anomaly"])
             recharge_avg = np.nanmean(df_recharge_base_annual)
             df_recharge_anomalies_annual_abs = pd.DataFrame(index=df_recharge_annual.index, data=df_recharge_annual["recharge"].values - recharge_avg, columns=["anomaly"])
-            df_recharge_anomalies_annual_percent = pd.DataFrame(index=df_recharge_annual.index, data=(df_recharge_annual["recharge"].values - recharge_avg) / recharge_avg * 100)
+            df_recharge_anomalies_annual_percent = pd.DataFrame(index=df_recharge_annual.index, data=(df_recharge_annual["recharge"].values - recharge_avg) / recharge_avg * 100, columns=["anomaly"])
 
             # make figures directory if it does not exist
             figures_dir = base_path.parent / "figures" / "recharge_anomalies" / stress_test_scenario
@@ -301,13 +301,15 @@ def main(model_run):
             # use blue for positive anomalies and orange for negative anomalies
             colors = ["orange" if x < 0 else "blue" for x in df_recharge_anomalies_monthly_abs["anomaly"]]
             ax.bar(df_recharge_anomalies_monthly_abs.index, df_recharge_anomalies_monthly_abs["anomaly"], color=colors, width=20)
+            ax.set_xticks(df_recharge_anomalies_monthly_abs.index)
             # reformat xticklabels to show only the year and month and plot labels of every 4th month
             xticklabels = df_recharge_anomalies_monthly_abs.index.strftime("%y-%m")
             xticklabels = [label if i % 4 == 0 else "" for i, label in enumerate(xticklabels)]
             ax.set_xticklabels(xticklabels, rotation=90)
             ax.set_xlabel("Zeit [Jahr-Monat]")
             ax.set_ylabel("GWN-Anomalie\n[Mio. m³/Monat]")
-            ax.set_ylim(-10, 10)
+            ax.set_xlim(df_recharge_anomalies_monthly_abs.index[0] - pd.Timedelta(days=15), df_recharge_anomalies_monthly_abs.index[-1] + pd.Timedelta(days=15))
+            # ax.set_ylim(-10, 10)
             # set legend off
             ax.legend().set_visible(False)
             fig.tight_layout()
@@ -318,6 +320,7 @@ def main(model_run):
             fig, ax = plt.subplots(figsize=(6, 2.5))
             colors = ["orange" if x < 0 else "blue" for x in df_recharge_anomalies_monthly_percent["anomaly"]]
             ax.bar(df_recharge_anomalies_monthly_percent.index, df_recharge_anomalies_monthly_percent["anomaly"], color=colors, width=20)
+            ax.set_xticks(df_recharge_anomalies_monthly_percent.index)
             # reformat xticklabels to show only the year and month and plot labels of every 4th month
             xticklabels = df_recharge_anomalies_monthly_percent.index.strftime("%y-%m")
             xticklabels = [label if i % 4 == 0 else "" for i, label in enumerate(xticklabels)]
@@ -325,6 +328,7 @@ def main(model_run):
             ax.set_xlabel("Zeit [Jahr-Monat]")
             ax.set_ylabel("GWN-Anomalie\n[%]")
             ax.set_ylim(-100, 100)
+            ax.set_xlim(df_recharge_anomalies_monthly_percent.index[0] - pd.Timedelta(days=15), df_recharge_anomalies_monthly_percent.index[-1] + pd.Timedelta(days=15))
             # set legend off
             ax.legend().set_visible(False)
             fig.tight_layout()
@@ -335,7 +339,9 @@ def main(model_run):
             fig, ax = plt.subplots(figsize=(6, 2.5))
             colors = ["orange" if x < 0 else "blue" for x in df_indirect_recharge_monthly["indirect_recharge"]]
             ax.bar(df_indirect_recharge_monthly.index, df_indirect_recharge_monthly["indirect_recharge"], color=colors, width=20)
-            ax.set_ylim(-10, 10)
+            ax.set_xticks(df_indirect_recharge_monthly.index)
+            ax.set_xlim(df_indirect_recharge_monthly.index[0] - pd.Timedelta(days=15), df_indirect_recharge_monthly.index[-1] + pd.Timedelta(days=15))
+            # ax.set_ylim(-10, 10)
             # reformat xticklabels to show only the year and month and plot labels of every 4th month
             xticklabels = df_indirect_recharge_monthly.index.strftime("%y-%m")
             xticklabels = [label if i % 4 == 0 else "" for i, label in enumerate(xticklabels)]
@@ -352,6 +358,8 @@ def main(model_run):
             fig, ax = plt.subplots(figsize=(6, 2.5))
             colors = ["orange" if x < 0 else "blue" for x in df_indirect_recharge_monthly["indirect_recharge"]]
             ax.bar(df_indirect_recharge_monthly.index, df_indirect_recharge_monthly["indirect_recharge"], color=colors, width=20)
+            ax.set_xticks(df_indirect_recharge_monthly.index)
+            ax.set_xlim(df_indirect_recharge_monthly.index[0] - pd.Timedelta(days=15), df_indirect_recharge_monthly.index[-1] + pd.Timedelta(days=15))
             ax.set_ylim(-100, 100)
             # reformat xticklabels to show only the year and month and plot labels of every 4th month
             xticklabels = df_indirect_recharge_monthly.index.strftime("%y-%m")
@@ -369,6 +377,8 @@ def main(model_run):
             fig, ax = plt.subplots(figsize=(6, 2.5))
             colors = ["orange" if x < 0 else "blue" for x in df_direct_recharge_monthly["direct_recharge"]]
             ax.bar(df_direct_recharge_monthly.index, df_direct_recharge_monthly["direct_recharge"], color=colors, width=20)
+            ax.set_xticks(df_direct_recharge_monthly.index)
+            ax.set_xlim(df_direct_recharge_monthly.index[0] - pd.Timedelta(days=15), df_direct_recharge_monthly.index[-1] + pd.Timedelta(days=15))  
             ax.set_ylim(-100, 100)
             # reformat xticklabels to show only the year and month and plot labels of every 4th month
             xticklabels = df_direct_recharge_monthly.index.strftime("%y-%m")
