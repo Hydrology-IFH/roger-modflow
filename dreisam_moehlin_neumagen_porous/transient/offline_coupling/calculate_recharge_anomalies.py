@@ -81,12 +81,12 @@ def main(model_run):
         if area == "dmn":
             mask = ds_params["mask_porous_aquifer"].values
         elif area == "wsg_hausen":
-            file = base_path.parent / "input" / "wsg_hausen.tif"
+            file = base_path.parent / "input" / "wsg_hausen_.tif"
             with rasterio.open(file) as src:
                 mask = src.read(1)
                 mask = np.where(mask == 1, True, False)
         elif area == "wsg_zartener_becken":
-            file = base_path.parent / "input" / "wsg_zartener_becken.tif"
+            file = base_path.parent / "input" / "wsg_zartener_becken_.tif"
             with rasterio.open(file) as src:
                 mask = src.read(1)
                 mask = np.where(mask == 1, True, False)

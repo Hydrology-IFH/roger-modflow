@@ -227,8 +227,8 @@ def main(model_run):
 
             # calculate the long-term sum extraction balance
             df_extraction_balance_long_term = pd.DataFrame(index=["long_term"], columns=["sustainable_extraction", "actual_extraction", "extraction_balance"])
-            df_extraction_balance_long_term["sustainable_extraction"] = df_recharge_annual["recharge"].sum() * 0.3
-            df_extraction_balance_long_term["actual_extraction"] = df_well_extraction_annual["well_extraction"]
+            df_extraction_balance_long_term["sustainable_extraction"] = df_recharge_monthly["recharge"].sum() * 0.3
+            df_extraction_balance_long_term["actual_extraction"] = df_well_extraction_monthly["well_extraction"].sum()
             df_extraction_balance_long_term["extraction_balance"] = df_extraction_balance_long_term["sustainable_extraction"] - df_extraction_balance_long_term["actual_extraction"]
 
             # make figures directory if it does not exist
@@ -308,13 +308,13 @@ def main(model_run):
             # plot long-term annual average direct and indirect recharge using stacked bar plot use blue for direct recharge and purple for indirect recharge
             fig, ax = plt.subplots(figsize=(2, 2))
             df_recharge_long_term_stacked = pd.DataFrame(index=["long_term_average"], columns=["direct_recharge", "indirect_recharge"])
-            df_recharge_long_term_stacked["direct_recharge"] = df_direct_recharge_annual["direct_recharge"].mean()/1e6  # convert to million m3/year    
-            df_recharge_long_term_stacked["indirect_recharge"] = df_indirect_recharge_annual["indirect_recharge"].mean()/1e6  # convert to million m3/year
+            df_recharge_long_term_stacked["direct_recharge"] = df_direct_recharge_monthly["direct_recharge"].mean()/1e6  # convert to million m3/year    
+            df_recharge_long_term_stacked["indirect_recharge"] = df_indirect_recharge_monthly["indirect_recharge"].mean()/1e6  # convert to million m3/year
             df_recharge_long_term_stacked.plot(kind="bar", stacked=True, ax=ax, color=["blue", "lightblue"])
             ax.set_ylim(0, 250)
             ax.set_xlabel("")
             ax.set_xticklabels([""], rotation=0)
-            ax.set_ylabel("GWN\n[Mio. m³/Jahr]")
+            ax.set_ylabel("GWN\n[Mio. m³/Monat]")
             # set legend off    
             ax.legend().set_visible(False)
             fig.tight_layout()
