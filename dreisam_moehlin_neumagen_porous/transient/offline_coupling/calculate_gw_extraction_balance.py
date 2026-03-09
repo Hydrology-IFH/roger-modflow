@@ -241,7 +241,7 @@ def main(model_run):
             fig, ax = plt.subplots(figsize=(6, 2))
             # convert to million m3/year
             df_well_extraction_annual["well_extraction"] = df_well_extraction_annual["well_extraction"] / 1e6
-            df_well_extraction_annual.plot(kind="bar", ax=ax, color="purple", width=0.8)
+            ax.bar(df_well_extraction_annual.index, df_well_extraction_annual["well_extraction"], color="purple")   
             # rotate xticklabels to vertical and show only the year
             ax.set_xticklabels(df_well_extraction_annual.index.year, rotation=0)
             ax.set_xlabel("Jahr")
@@ -256,7 +256,7 @@ def main(model_run):
             fig, ax = plt.subplots(figsize=(2, 2))
             long_term_average = df_well_extraction_annual["well_extraction"].mean()
             df_long_term_average = pd.DataFrame(index=["long_term_average"], data=[long_term_average], columns=["well_extraction"])
-            df_long_term_average.plot(kind="bar", ax=ax, color="purple", width=0.8)
+            ax.bar(df_long_term_average.index, df_long_term_average["well_extraction"], color="purple", width=0.8)
             ax.set_ylim(0, 25)
             ax.set_xlabel("")
             ax.set_xticklabels([""], rotation=0)
