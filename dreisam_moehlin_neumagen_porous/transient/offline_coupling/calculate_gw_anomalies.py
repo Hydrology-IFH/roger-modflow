@@ -180,8 +180,10 @@ def main(model_run):
             gw_depths_anomalies_abs_avg = np.zeros(gw_depths_anomalies_abs.shape[0])
             gw_depths_anomalies_percent_avg = np.zeros(gw_depths_anomalies_percent.shape[0])
             for t in range(gw_depths_anomalies_abs.shape[0]):
-                gw_depths_anomalies_abs_avg[t] = np.nanmean(gw_depths_anomalies_abs[t, mask])
-                gw_depths_anomalies_percent_avg[t] = np.nanmean(gw_depths_anomalies_percent[t, mask])
+                gw_depths_anomalies_abs_t = np.where(mask, gw_depths_anomalies_abs[t, :, :], np.nan)
+                gw_depths_anomalies_percent_t = np.where(mask, gw_depths_anomalies_percent[t, :, :], np.nan)
+                gw_depths_anomalies_abs_avg[t] = np.nanmean(gw_depths_anomalies_abs_t)
+                gw_depths_anomalies_percent_avg[t] = np.nanmean(gw_depths_anomalies_percent_t)
 
             dict_depths_anomalies_abs_avg[stress_test_scenario][area] = gw_depths_anomalies_abs_avg
             dict_depths_anomalies_percent_avg[stress_test_scenario][area] = gw_depths_anomalies_percent_avg
