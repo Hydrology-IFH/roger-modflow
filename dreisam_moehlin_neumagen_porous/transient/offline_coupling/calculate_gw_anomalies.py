@@ -82,7 +82,7 @@ def main(model_run):
     click.echo("Loading groundwater depths (base)...")
     ll_gw_depths = []
     for year in years:
-        output_file = base_path / "output" / f"modflow_{base}" / f"indirect_recharge_run{model_run}_year{year}.nc"
+        output_file = base_path / "output" / f"modflow_{base}" / f"gw_depth_run{model_run}_year{year}.nc"
         # output_file = base_path_output / f"modflow_{base}" / f"gw_depth_run{model_run}_year{year}.nc"
         ds_gw_depths_base = xr.open_dataset(output_file, engine="h5netcdf")
         gw_depths_year_base = ds_gw_depths_base["depth"].values
@@ -114,7 +114,7 @@ def main(model_run):
         click.echo("Loading groundwater depths (stress test)...")
         ll_gw_depths = []
         for year in years:
-            output_file = base_path / "output" / f"modflow_{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
+            output_file = base_path / "output" / f"modflow_{stress_test_scenario}" / f"gw_depth_run{model_run}_year{year}.nc"
             # output_file = base_path_output / f"{stress_test_scenario}" / f"gw_depth_run{model_run}_year{year}.nc"
             ds_gw_depths = xr.open_dataset(output_file, engine="h5netcdf")
             gw_depths_year = ds_gw_depths["depth"].values
