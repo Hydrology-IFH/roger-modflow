@@ -150,7 +150,7 @@ def main(model_run):
                 x2 = len(xcoords) - 1
                 y1 = np.where(mask)[0].min() - 5
                 y2 = np.where(mask)[0].max() + 5
-                grid_extent = (xcoords[x1], xcoords[x2], ycoords[y2], ycoords[y1])
+                grid_extent = (xcoords[x1], xcoords[x2], ycoords[y1], ycoords[y2])
             elif area == "wsg_hausen":
                 file = base_path.parent / "input" / "wsg_hausen_.tif"
                 with rasterio.open(file) as src:
@@ -160,7 +160,7 @@ def main(model_run):
                 x2 = np.where(mask)[1].max()
                 y1 = np.where(mask)[0].min()
                 y2 = np.where(mask)[0].max()
-                grid_extent = (xcoords[x1], xcoords[x2], ycoords[y2], ycoords[y1])
+                grid_extent = (xcoords[x1], xcoords[x2], ycoords[y1], ycoords[y2])
             elif area == "wsg_zartener_becken":
                 file = base_path.parent / "input" / "wsg_zartener_becken_.tif"
                 with rasterio.open(file) as src:
@@ -170,7 +170,7 @@ def main(model_run):
                 x2 = np.where(mask)[1].max()
                 y1 = np.where(mask)[0].min()
                 y2 = np.where(mask)[0].max()
-                grid_extent = (xcoords[x1], xcoords[x2], ycoords[y2], ycoords[y1])
+                grid_extent = (xcoords[x1], xcoords[x2], ycoords[y1], ycoords[y2])
 
             gw_depths_avg = np.nanmean(gw_depths_base, axis=0)[np.newaxis, :, :]
             # calculate daily anomalies of groundwater depths for the stress test scenario compared to the base scenario
@@ -204,7 +204,7 @@ def main(model_run):
             click.echo(f"Plotting groundwater depth anomalies for {area} (2018)...")
             cond = (da_gw_depths_annual.time.dt.year == 2018).values
             fig, ax = plt.subplots(figsize=(5, 4))
-            im = ax.imshow(gw_depths_annual_anomalies_abs[cond, x1:x2, y1:y2][0], cmap="RdBu", vmin=-3, vmax=3, extent=grid_extent)
+            im = ax.imshow(gw_depths_annual_anomalies_abs[cond, y1:y2, x1:x2][0], cmap="RdBu", vmin=-3, vmax=3, extent=grid_extent)
             ax.set_xlabel("X-Koordinate")
             ax.set_ylabel("Y-Koordinate")
             ax.axis('equal')
@@ -215,7 +215,7 @@ def main(model_run):
             plt.close(fig)
 
             fig, ax = plt.subplots(figsize=(5, 4))
-            im = ax.imshow(gw_depths_annual_anomalies_percent[cond, x1:x2, y1:y2][0], cmap="RdBu", vmin=-50, vmax=50, extent=grid_extent)
+            im = ax.imshow(gw_depths_annual_anomalies_percent[cond, y1:y2, x1:x2][0], cmap="RdBu", vmin=-50, vmax=50, extent=grid_extent)
             ax.set_xlabel("X-Koordinate")
             ax.set_ylabel("Y-Koordinate")
             ax.axis('equal')
