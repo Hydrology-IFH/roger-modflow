@@ -300,9 +300,44 @@ def main(model_run):
             fig, ax = plt.subplots(figsize=(6, 2.5))
             # use blue for positive anomalies and orange for negative anomalies
             colors = ["orange" if x < 0 else "blue" for x in df_recharge_anomalies_monthly_abs["anomaly"]]
-            df_recharge_anomalies_monthly_abs.plot(kind="bar", ax=ax, color=colors, width=0.8)
+            ax.bar(df_recharge_anomalies_monthly_abs.index, df_recharge_anomalies_monthly_abs["anomaly"], color=colors, width=20)
             # reformat xticklabels to show only the year and month and plot labels of every 4th month
             xticklabels = df_recharge_anomalies_monthly_abs.index.strftime("%y-%m")
+            xticklabels = [label if i % 4 == 0 else "" for i, label in enumerate(xticklabels)]
+            ax.set_xticklabels(xticklabels, rotation=90)
+            ax.set_xlabel("Zeit [Jahr-Monat]")
+            ax.set_ylabel("GWN-Anomalie\n[Mio. m³/Monat]")
+            ax.set_ylim(-10, 10)
+            # set legend off
+            ax.legend().set_visible(False)
+            fig.tight_layout()
+            fig.savefig(figures_dir / f"recharge_anomalies_abs_monthly_{area}.png", dpi=300)
+            plt.close(fig)
+
+            # plot monthly relative anomalies of the recharge using a bar plot, make bars with negative values orange and bars with positive values blue
+            fig, ax = plt.subplots(figsize=(6, 2.5))
+            colors = ["orange" if x < 0 else "blue" for x in df_recharge_anomalies_monthly_percent["anomaly"]]
+            ax.bar(df_recharge_anomalies_monthly_percent.index, df_recharge_anomalies_monthly_percent["anomaly"], color=colors, width=20)
+            # reformat xticklabels to show only the year and month and plot labels of every 4th month
+            xticklabels = df_recharge_anomalies_monthly_percent.index.strftime("%y-%m")
+            xticklabels = [label if i % 4 == 0 else "" for i, label in enumerate(xticklabels)]
+            ax.set_xticklabels(xticklabels, rotation=90)
+            ax.set_xlabel("Zeit [Jahr-Monat]")
+            ax.set_ylabel("GWN-Anomalie\n[%]")
+            ax.set_ylim(-100, 100)
+            # set legend off
+            ax.legend().set_visible(False)
+            fig.tight_layout()
+            fig.savefig(figures_dir / f"recharge_anomalies_percent_monthly_{area}.png", dpi=300)
+            plt.close(fig)
+
+            # plot monthly absolute anomalies of the indirect recharge using a bar plot, make bars with negative values orange and bars with positive values blue
+            fig, ax = plt.subplots(figsize=(6, 2.5))
+            colors = ["orange" if x < 0 else "blue" for x in df_indirect_recharge_monthly["indirect_recharge"]]
+            ax.bar(df_indirect_recharge_monthly.index, df_indirect_recharge_monthly["indirect_recharge"], color=colors, width=20)
+            ax.set_ylim(-10, 10)
+            # reformat xticklabels to show only the year and month and plot labels of every 4th month
+            xticklabels = df_indirect_recharge_monthly.index.strftime("%y-%m")
             xticklabels = [label if i % 4 == 0 else "" for i, label in enumerate(xticklabels)]
             ax.set_xticklabels(xticklabels, rotation=90)
             ax.set_xlabel("Zeit [Jahr-Monat]")
@@ -310,27 +345,42 @@ def main(model_run):
             # set legend off
             ax.legend().set_visible(False)
             fig.tight_layout()
-            fig.savefig(figures_dir / f"recharge_anomalies_abs_monthly_{area}.png", dpi=300)
+            fig.savefig(figures_dir / f"indirect_recharge_anomalies_monthly_{area}.png", dpi=300)
+            plt.close(fig)
 
-            # plot monthly relative anomalies of the recharge using a bar plot, make bars with negative values orange and bars with positive values blue
+            # plot mmonthly relative anomalies of the indirect recharge using a bar plot, make bars with negative values orange and bars with positive values blue
             fig, ax = plt.subplots(figsize=(6, 2.5))
-            colors = ["orange" if x < 0 else "blue" for x in df_recharge_anomalies_monthly_percent["anomaly"]]
-            df_recharge_anomalies_monthly_percent.plot(kind="bar", ax=ax, color=colors, width=0.8)
+            colors = ["orange" if x < 0 else "blue" for x in df_indirect_recharge_monthly["indirect_recharge"]]
+            ax.bar(df_indirect_recharge_monthly.index, df_indirect_recharge_monthly["indirect_recharge"], color=colors, width=20)
+            ax.set_ylim(-100, 100)
             # reformat xticklabels to show only the year and month and plot labels of every 4th month
-            xticklabels = df_recharge_anomalies_monthly_percent.index.strftime("%y-%m")
+            xticklabels = df_indirect_recharge_monthly.index.strftime("%y-%m")
             xticklabels = [label if i % 4 == 0 else "" for i, label in enumerate(xticklabels)]
             ax.set_xticklabels(xticklabels, rotation=90)
             ax.set_xlabel("Zeit [Jahr-Monat]")
             ax.set_ylabel("GWN-Anomalie\n[%]")
-            # set legend off
+            # set legend off            
             ax.legend().set_visible(False)
             fig.tight_layout()
-            fig.savefig(figures_dir / f"recharge_anomalies_percent_monthly_{area}.png", dpi=300)
+            fig.savefig(figures_dir / f"indirect_recharge_anomalies_percent_monthly_{area}.png", dpi=300)
+            plt.close(fig)
 
-            # plot monthly absolute anomalies of the indirect recharge using a bar plot, make bars with negative values orange and bars with positive values blue
+            # plot mmonthly relative anomalies of the direct recharge using a bar plot, make bars with negative values orange and bars with positive values blue
             fig, ax = plt.subplots(figsize=(6, 2.5))
-            colors = ["orange" if x < 0 else "blue" for x in df_indirect_recharge_monthly["indirect_recharge"]]
-            df_indirect_recharge_monthly.plot(kind="bar", ax=ax, color=colors, width=0.8)
+            colors = ["orange" if x < 0 else "blue" for x in df_direct_recharge_monthly["direct_recharge"]]
+            ax.bar(df_direct_recharge_monthly.index, df_direct_recharge_monthly["direct_recharge"], color=colors, width=20)
+            ax.set_ylim(-100, 100)
+            # reformat xticklabels to show only the year and month and plot labels of every 4th month
+            xticklabels = df_direct_recharge_monthly.index.strftime("%y-%m")
+            xticklabels = [label if i % 4 == 0 else "" for i, label in enumerate(xticklabels)]
+            ax.set_xticklabels(xticklabels, rotation=90)
+            ax.set_xlabel("Zeit [Jahr-Monat]")
+            ax.set_ylabel("GWN-Anomalie\n[%]")
+            # set legend off            
+            ax.legend().set_visible(False)
+            fig.tight_layout()
+            fig.savefig(figures_dir / f"direct_recharge_anomalies_percent_monthly_{area}.png", dpi=300)
+            plt.close(fig)
 
     return
 
