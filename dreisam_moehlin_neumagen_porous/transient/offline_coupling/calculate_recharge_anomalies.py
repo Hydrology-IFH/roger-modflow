@@ -97,7 +97,7 @@ def main(model_run):
         click.echo("Loading indirect recharge (base)...")
         ll_indirect_recharge = []
         for year in years:
-            output_file = base_path / "output" / f"modflow_{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
+            output_file = base_path / "output" / f"modflow_{base}" / f"indirect_recharge_run{model_run}_year{year}.nc"
             ds_indirect_recharge_base = xr.open_dataset(output_file, engine="h5netcdf")
             indirect_recharge_year_base = ds_indirect_recharge_base["indirect_recharge"].values * 86400  # convert from m3/s to m3/day
             indirect_recharge_year_base[indirect_recharge_year_base > 0] = 0  # set positive values to zero
@@ -183,7 +183,7 @@ def main(model_run):
             ll_indirect_recharge = []
             for year in years:
                 # output_file = base_path / "output" / f"modflow_{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
-                output_file = base_path_output / f"{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
+                output_file = base_path_output / f"modflow_{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
                 ds_indirect_recharge = xr.open_dataset(output_file, engine="h5netcdf")
                 indirect_recharge_year = ds_indirect_recharge["indirect_recharge"].values * 86400  # convert from m3/s to m3/day
                 indirect_recharge_year[indirect_recharge_year > 0] = 0  # set positive values to zero
