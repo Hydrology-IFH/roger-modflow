@@ -156,20 +156,20 @@ def main(model_run):
                 with rasterio.open(file) as src:
                     mask = src.read(1)
                     mask = np.where(mask == 1, True, False)
-                x1 = 50
-                x2 = 90
-                y1 = 238
-                y2 = 288
+                x1 = np.where(mask)[1].min()
+                x2 = np.where(mask)[1].max()
+                y1 = np.where(mask)[0].min()
+                y2 = np.where(mask)[0].max()
                 grid_extent = (xcoords[x1], xcoords[x2], ycoords[y1], ycoords[y2])
             elif area == "wsg_zartener_becken":
                 file = base_path.parent / "input" / "wsg_zartener_becken_.tif"
                 with rasterio.open(file) as src:
                     mask = src.read(1)
                     mask = np.where(mask == 1, True, False)
-                x1 = 435
-                x2 = 499
-                y1 = 206
-                y2 = 233 
+                x1 = np.where(mask)[1].min()
+                x2 = np.where(mask)[1].max()
+                y1 = np.where(mask)[0].min()
+                y2 = np.where(mask)[0].max()
                 grid_extent = (xcoords[x1], xcoords[x2], ycoords[y1], ycoords[y2])
 
             gw_depths_avg = np.nanmean(gw_depths_base, axis=0)[np.newaxis, :, :]
