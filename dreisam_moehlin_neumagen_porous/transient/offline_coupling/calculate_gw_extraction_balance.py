@@ -273,11 +273,14 @@ def main(model_run):
             df_recharge_monthly_stacked["indirect_recharge"] = df_indirect_recharge_monthly["indirect_recharge"]
             df_recharge_monthly_stacked["direct_recharge"] = df_recharge_monthly_stacked["direct_recharge"]/1e6  # convert to million m3/month
             df_recharge_monthly_stacked["indirect_recharge"] = df_recharge_monthly_stacked["indirect_recharge"]/1e6  # convert to million m3/month
-            df_recharge_monthly_stacked.plot(kind="bar", stacked=True, ax=ax, color=["blue", "lightblue"])
+            # make stacked bar plot
+            ax.bar(df_recharge_monthly_stacked.index, df_recharge_monthly_stacked["direct_recharge"], color="blue", label="Direkte GWN")
+            ax.bar(df_recharge_monthly_stacked.index, df_recharge_monthly_stacked["indirect_recharge"], bottom=df_recharge_monthly_stacked["direct_recharge"], color="lightblue", label="Indirekte GWN")
             # reformat xticklabels to show only the year and month and plot labels of every 4th month
             xticklabels = df_recharge_monthly_stacked.index.strftime("%y-%m")
             xticklabels = [label if i % 4 == 0 else "" for i, label in enumerate(xticklabels)]
             ax.set_xticklabels(xticklabels, rotation=90)
+            ax.set_xlim(df_recharge_monthly_stacked.index[0] - pd.DateOffset(months=1), df_recharge_monthly_stacked.index[-1] + pd.DateOffset(months=1))
             ax.set_xlabel("Zeit [Jahr-Monat]")
             ax.set_ylabel("GWN\n[Mio. m³/Monat]")
             # set legend off
@@ -292,7 +295,8 @@ def main(model_run):
             df_recharge_annual_stacked["indirect_recharge"] = df_indirect_recharge_annual["indirect_recharge"]
             df_recharge_annual_stacked["direct_recharge"] = df_recharge_annual_stacked["direct_recharge"]/1e6  # convert to million m3/year
             df_recharge_annual_stacked["indirect_recharge"] = df_recharge_annual_stacked["indirect_recharge"]/1e6  # convert to million m3/year
-            df_recharge_annual_stacked.plot(kind="bar", stacked=True, ax=ax, color=["blue", "lightblue"])
+            ax.bar(df_recharge_annual_stacked.index, df_recharge_annual_stacked["direct_recharge"], color="blue", label="Direkte GWN")
+            ax.bar(df_recharge_annual_stacked.index, df_recharge_annual_stacked["indirect_recharge"], bottom=df_recharge_annual_stacked["direct_recharge"], color="lightblue", label="Indirekte GWN")
             if area == "dmn":
                 ax.set_ylim(0, 250)
             else:
@@ -312,7 +316,8 @@ def main(model_run):
             df_recharge_long_term_stacked = pd.DataFrame(index=["long_term_average"], columns=["direct_recharge", "indirect_recharge"])
             df_recharge_long_term_stacked["direct_recharge"] = df_direct_recharge_monthly["direct_recharge"].mean()/1e6  # convert to million m3/year    
             df_recharge_long_term_stacked["indirect_recharge"] = df_indirect_recharge_monthly["indirect_recharge"].mean()/1e6  # convert to million m3/year
-            df_recharge_long_term_stacked.plot(kind="bar", stacked=True, ax=ax, color=["blue", "lightblue"])
+            ax.bar(df_recharge_long_term_stacked.index, df_recharge_long_term_stacked["direct_recharge"], color="blue", label="Direkte GWN")
+            ax.bar(df_recharge_long_term_stacked.index, df_recharge_long_term_stacked["indirect_recharge"], bottom=df_recharge_long_term_stacked["direct_recharge"], color="lightblue", label="Indirekte GWN")
             ax.set_ylim(0, 250)
             ax.set_xlabel("")
             ax.set_xticklabels([""], rotation=0)
