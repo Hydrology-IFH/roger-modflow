@@ -141,9 +141,9 @@ def main(model_run):
         direct_recharge_base = np.stack(ll_direct_recharge, axis=0)
         # convert from mm/day to m3/day
         # get the area of each grid cell in m2
-        area = 50 * 50  # 50 m x 50 m grid cells
+        _area = 50 * 50  # 50 m x 50 m grid cells
         # multiply direct recharge by area to get m3/day
-        direct_recharge_base = direct_recharge_base * area / 1000
+        direct_recharge_base = direct_recharge_base * _area / 1000
         # create xarray data array for direct recharge
         da_direct_recharge_base = xr.DataArray(
             data=direct_recharge_base,
@@ -310,8 +310,6 @@ def main(model_run):
             ax.set_ylabel("GWN-Anomalie\n[Mio. m³/Monat]")
             ax.set_xlim(df_recharge_anomalies_monthly_abs.index[0] - pd.Timedelta(days=15), df_recharge_anomalies_monthly_abs.index[-1] + pd.Timedelta(days=15))
             # ax.set_ylim(-10, 10)
-            # set legend off
-            ax.legend().set_visible(False)
             fig.tight_layout()
             fig.savefig(figures_dir / f"recharge_anomalies_abs_monthly_{area}.png", dpi=300)
             plt.close(fig)
@@ -329,8 +327,6 @@ def main(model_run):
             ax.set_ylabel("GWN-Anomalie\n[%]")
             ax.set_ylim(-100, 100)
             ax.set_xlim(df_recharge_anomalies_monthly_percent.index[0] - pd.Timedelta(days=15), df_recharge_anomalies_monthly_percent.index[-1] + pd.Timedelta(days=15))
-            # set legend off
-            ax.legend().set_visible(False)
             fig.tight_layout()
             fig.savefig(figures_dir / f"recharge_anomalies_percent_monthly_{area}.png", dpi=300)
             plt.close(fig)
@@ -367,8 +363,6 @@ def main(model_run):
             ax.set_xticklabels(xticklabels, rotation=90)
             ax.set_xlabel("Zeit [Jahr-Monat]")
             ax.set_ylabel("GWN-Anomalie\n[%]")
-            # set legend off            
-            ax.legend().set_visible(False)
             fig.tight_layout()
             fig.savefig(figures_dir / f"indirect_recharge_anomalies_percent_monthly_{area}.png", dpi=300)
             plt.close(fig)
@@ -386,8 +380,6 @@ def main(model_run):
             ax.set_xticklabels(xticklabels, rotation=90)
             ax.set_xlabel("Zeit [Jahr-Monat]")
             ax.set_ylabel("GWN-Anomalie\n[%]")
-            # set legend off            
-            ax.legend().set_visible(False)
             fig.tight_layout()
             fig.savefig(figures_dir / f"direct_recharge_anomalies_percent_monthly_{area}.png", dpi=300)
             plt.close(fig)
