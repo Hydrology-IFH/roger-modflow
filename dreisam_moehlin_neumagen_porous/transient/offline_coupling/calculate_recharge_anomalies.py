@@ -295,6 +295,7 @@ def main(model_run):
             # make figures directory if it does not exist
             figures_dir = base_path.parent / "figures" / "recharge_anomalies" / stress_test_scenario
             figures_dir.mkdir(exist_ok=True)
+            click.echo(f"Saving figures to {figures_dir}...")
     
             # plot monthly absolute anomalies of the recharge using a bar plot, make bars with negative values orange and bars with positive values blue
             fig, ax = plt.subplots(figsize=(6, 2.5))
