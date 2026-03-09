@@ -85,7 +85,7 @@ def main(model_run):
         output_file = base_path / "output" / f"modflow_{base}" / f"gw_depth_run{model_run}_year{year}.nc"
         # output_file = base_path_output / f"modflow_{base}" / f"gw_depth_run{model_run}_year{year}.nc"
         ds_gw_depths_base = xr.open_dataset(output_file, engine="h5netcdf")
-        gw_depths_year_base = ds_gw_depths_base["depth"].values
+        gw_depths_year_base = ds_gw_depths_base["depth"].values[:, 1, :, :]
         ll_gw_depths.append(gw_depths_year_base)
     gw_depths_base = np.concatenate(ll_gw_depths, axis=0)
     # # create xarray data array for groundwater depths
@@ -117,7 +117,7 @@ def main(model_run):
             output_file = base_path / "output" / f"modflow_{stress_test_scenario}" / f"gw_depth_run{model_run}_year{year}.nc"
             # output_file = base_path_output / f"{stress_test_scenario}" / f"gw_depth_run{model_run}_year{year}.nc"
             ds_gw_depths = xr.open_dataset(output_file, engine="h5netcdf")
-            gw_depths_year = ds_gw_depths["depth"].values
+            gw_depths_year = ds_gw_depths["depth"].values[:, 1, :, :]
             ll_gw_depths.append(gw_depths_year)
         gw_depths = np.concatenate(ll_gw_depths, axis=0)
         # create xarray data array for groundwater depths
