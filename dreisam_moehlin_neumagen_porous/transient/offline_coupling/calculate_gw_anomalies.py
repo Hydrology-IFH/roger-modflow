@@ -205,6 +205,12 @@ def main(model_run):
             cond = (da_gw_depths_annual.time.dt.year == 2018).values
             fig, ax = plt.subplots(figsize=(5, 4))
             im = ax.imshow(gw_depths_annual_anomalies_abs[cond, y1:y2, x1:x2][0], cmap="RdBu", vmin=-3, vmax=3, extent=grid_extent)
+            if area == "dmn":
+                # plot every second xticklabels
+                xticks = ax.get_xticks()
+                ax.set_xticks(xticks)
+                xticklabels = [f"{int(tick)}" for tick in xticks[::2]]
+                ax.set_xticklabels(xticklabels)
             ax.set_xlabel("X-Koordinate")
             ax.set_ylabel("Y-Koordinate")
             ax.axis('equal')
@@ -216,6 +222,12 @@ def main(model_run):
 
             fig, ax = plt.subplots(figsize=(5, 4))
             im = ax.imshow(gw_depths_annual_anomalies_percent[cond, y1:y2, x1:x2][0], cmap="RdBu", vmin=-50, vmax=50, extent=grid_extent)
+            if area == "dmn":
+                # plot every second xticklabels
+                xticks = ax.get_xticks()
+                ax.set_xticks(xticks)
+                xticklabels = [f"{int(tick)}" for tick in xticks[::2]]
+                ax.set_xticklabels(xticklabels)
             ax.set_xlabel("X-Koordinate")
             ax.set_ylabel("Y-Koordinate")
             ax.axis('equal')

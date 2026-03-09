@@ -237,6 +237,7 @@ def main(model_run):
             figures_dir.mkdir(exist_ok=True)
 
             # plot annual drinking water well extraction
+            click.echo("Plotting the extraction balance...")
             fig, ax = plt.subplots(figsize=(6, 2))
             # convert to million m3/year
             df_well_extraction_annual["well_extraction"] = df_well_extraction_annual["well_extraction"] / 1e6
