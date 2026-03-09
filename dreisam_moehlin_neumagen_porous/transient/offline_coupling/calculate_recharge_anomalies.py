@@ -172,8 +172,8 @@ def main(model_run):
         # resample to annual
         da_recharge_base_annual = da_recharge_base.resample(time="YE").sum()
 
-        df_recharge_base_monthly = pd.DataFrame(index=da_recharge_monthly.time.values, data=da_recharge_monthly.sum(dim=["y", "x"]).values, columns=["recharge"])
-        df_recharge_base_annual = pd.DataFrame(index=da_recharge_annual.time.values, data=da_recharge_annual.sum(dim=["y", "x"]).values, columns=["recharge"])
+        df_recharge_base_monthly = pd.DataFrame(index=da_recharge_base_monthly.time.values, data=da_recharge_base_monthly.sum(dim=["y", "x"]).values, columns=["recharge"])
+        df_recharge_base_annual = pd.DataFrame(index=da_recharge_base_annual.time.values, data=da_recharge_base_annual.sum(dim=["y", "x"]).values, columns=["recharge"])
 
         for stress_test_scenario in stress_test_scenarios:
             click.echo(f"Processing scenario {stress_test_scenario}...")
@@ -337,7 +337,6 @@ def main(model_run):
             fig, ax = plt.subplots(figsize=(6, 2.5))
             colors = ["orange" if x < 0 else "blue" for x in df_indirect_recharge_monthly["indirect_recharge"]]
             df_indirect_recharge_monthly.plot(kind="bar", ax=ax, color=colors, width=0.8)
-
 
     return
 
