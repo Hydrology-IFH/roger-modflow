@@ -146,8 +146,8 @@ def main(model_run):
         for area in areas:
             if area == "dmn":
                 mask = ds_params["mask_porous_aquifer"].values
-                x1 = 0
-                x2 = len(xcoords) - 1
+                x1 = np.where(mask)[1].min()
+                x2 = np.where(mask)[1].max()
                 y1 = np.where(mask)[0].min()
                 y2 = np.where(mask)[0].max()
                 grid_extent = (xcoords[x1], xcoords[x2], ycoords[y1], ycoords[y2])
