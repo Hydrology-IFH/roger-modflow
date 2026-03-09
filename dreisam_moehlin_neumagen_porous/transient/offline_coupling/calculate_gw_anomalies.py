@@ -147,31 +147,30 @@ def main(model_run):
             if area == "dmn":
                 mask = ds_params["mask_porous_aquifer"].values
                 x1 = 0
-                x2 = len(xcoords)
+                x2 = len(xcoords) - 1
                 y1 = 0
-                y2 = len(ycoords)
+                y2 = len(ycoords) - 1
                 grid_extent = (xcoords[x1], xcoords[x2], ycoords[y1], ycoords[y2])
             elif area == "wsg_hausen":
                 file = base_path.parent / "input" / "wsg_hausen_.tif"
                 with rasterio.open(file) as src:
                     mask = src.read(1)
                     mask = np.where(mask == 1, True, False)
-                    x1 = 50
-                    x2 = 90
-                    y1 = 238
-                    y2 = 288
-                    grid_extent = (xcoords[x1], xcoords[x2], ycoords[y1], ycoords[y2])
+                x1 = 50
+                x2 = 90
+                y1 = 238
+                y2 = 288
+                grid_extent = (xcoords[x1], xcoords[x2], ycoords[y1], ycoords[y2])
             elif area == "wsg_zartener_becken":
                 file = base_path.parent / "input" / "wsg_zartener_becken_.tif"
                 with rasterio.open(file) as src:
                     mask = src.read(1)
                     mask = np.where(mask == 1, True, False)
-                    x1 = 435
-                    x2 = 499
-                    y1 = 206
-                    y2 = 233 
-                    grid_extent = (xcoords[x1], xcoords[x2], ycoords[y1], ycoords[y2])
-
+                x1 = 435
+                x2 = 499
+                y1 = 206
+                y2 = 233 
+                grid_extent = (xcoords[x1], xcoords[x2], ycoords[y1], ycoords[y2])
 
             gw_depths_avg = np.nanmean(gw_depths_base, axis=0)[np.newaxis, :, :]
             # calculate daily anomalies of groundwater depths for the stress test scenario compared to the base scenario
