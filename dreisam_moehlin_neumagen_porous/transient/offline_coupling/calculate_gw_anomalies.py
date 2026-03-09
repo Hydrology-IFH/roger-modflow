@@ -175,7 +175,7 @@ def main(model_run):
             gw_depths_avg = np.nanmean(gw_depths_base, axis=0)[np.newaxis, :, :]
             # calculate daily anomalies of groundwater depths for the stress test scenario compared to the base scenario
             gw_depths_anomalies_abs = (gw_depths - gw_depths_avg) * (-1)
-            gw_depths_anomalies_percent = (gw_depths - gw_depths_avg) / gw_depths_avg * 100 * (-1)
+            gw_depths_anomalies_percent = (gw_depths_anomalies_abs / gw_depths_avg) * 100
             # calculate time series of average anomalies
             gw_depths_anomalies_abs_avg = np.zeros(gw_depths_anomalies_abs.shape[0])
             gw_depths_anomalies_percent_avg = np.zeros(gw_depths_anomalies_percent.shape[0])
@@ -238,10 +238,13 @@ def main(model_run):
         # plot time series of average groundwater depth anomalies for the three stress test scenarios
         fig, ax = plt.subplots(figsize=(6, 2.5))
         ax.plot(date_time, dict_depths_anomalies_abs_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373")
+        ax.set_xlim(date_time[0], date_time[-1])
         ax.set_xlabel("Zeit")
         ax.set_ylabel("Mittlere GWFA Anomalie [m]")
         # set y-axis limits to -10 to 10        
-        ax.set_ylim(-10, 10)
+        ax.set_ylim(-3, 3)
+        # make horizontal line at y=0
+        ax.axhline(0, color="grey", linestyle="-", alpha=0.8)
         # turn legend off
         ax.legend().set_visible(False)
         fig.tight_layout()
@@ -251,11 +254,13 @@ def main(model_run):
         # plot time series of average groundwater depth anomalies for the three stress test scenarios
         fig, ax = plt.subplots(figsize=(6, 2.5))
         ax.plot(date_time, dict_depths_anomalies_abs_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373")
-        ax.plot(date_time, dict_depths_anomalies_abs_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Summer Drought", color="#fd8d3c")
+        ax.plot(date_time, dict_depths_anomalies_abs_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Summer Drought", color="#fd8d3c", lw=1.2)
+        ax.set_xlim(date_time[0], date_time[-1])
         ax.set_xlabel("Zeit")
         ax.set_ylabel("Mittlere GWFA Anomalie [m]")
         # set y-axis limits to -10 to 10        
-        ax.set_ylim(-10, 10)
+        ax.set_ylim(-3, 3)
+        ax.axhline(0, color="grey", linestyle="-", alpha=0.8)
         # turn legend off
         ax.legend().set_visible(False)
         fig.tight_layout()
@@ -265,12 +270,14 @@ def main(model_run):
         # plot time series of average groundwater depth anomalies for the three stress test scenarios
         fig, ax = plt.subplots(figsize=(6, 2.5))
         ax.plot(date_time, dict_depths_anomalies_abs_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373")
-        ax.plot(date_time, dict_depths_anomalies_abs_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Summer Drought", color="#fd8d3c")
+        ax.plot(date_time, dict_depths_anomalies_abs_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Summer Drought", color="#fd8d3c", lw=1.2)
         ax.plot(date_time, dict_depths_anomalies_abs_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"][area], label="Well Extraction Stress", color="#a63603")
+        ax.set_xlim(date_time[0], date_time[-1])
         ax.set_xlabel("Zeit")
         ax.set_ylabel("Mittlere GWFA Anomalie [m]")
-        # set y-axis limits to -10 to 10        
-        ax.set_ylim(-10, 10)
+        # set y-axis limits to -3 to 3        
+        ax.set_ylim(-3, 3)
+        ax.axhline(0, color="grey", linestyle="-", alpha=0.8)
         # turn legend off
         ax.legend().set_visible(False)
         fig.tight_layout()
@@ -280,9 +287,11 @@ def main(model_run):
         # plot time series of average groundwater depth anomalies for the three stress test scenarios
         fig, ax = plt.subplots(figsize=(6, 2.5))
         ax.plot(date_time, dict_depths_anomalies_percent_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373")
+        ax.set_xlim(date_time[0], date_time[-1])
         ax.set_xlabel("Zeit")
         ax.set_ylabel("Mittlere GWFA Anomalie [%]")
         ax.set_ylim(-100, 100)
+        ax.axhline(0, color="grey", linestyle="-", alpha=0.8)
         # turn legend off
         ax.legend().set_visible(False)
         fig.tight_layout()
@@ -292,7 +301,9 @@ def main(model_run):
         # plot time series of average groundwater depth anomalies for the three stress test scenarios
         fig, ax = plt.subplots(figsize=(6, 2.5))
         ax.plot(date_time, dict_depths_anomalies_percent_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373")
-        ax.plot(date_time, dict_depths_anomalies_percent_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Summer Drought", color="#fd8d3c")
+        ax.plot(date_time, dict_depths_anomalies_percent_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Summer Drought", color="#fd8d3c", lw=1.2)
+        ax.set_xlim(date_time[0], date_time[-1])
+        ax.axhline(0, color="grey", linestyle="-", alpha=0.8)    
         ax.set_xlabel("Zeit")
         ax.set_ylabel("Mittlere GWFA Anomalie [%]")
         ax.set_ylim(-100, 100)
@@ -305,11 +316,13 @@ def main(model_run):
         # plot time series of average groundwater depth anomalies for the three stress test scenarios
         fig, ax = plt.subplots(figsize=(6, 2.5))
         ax.plot(date_time, dict_depths_anomalies_percent_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373")
-        ax.plot(date_time, dict_depths_anomalies_percent_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Summer Drought", color="#fd8d3c")
-        ax.plot(date_time, dict_depths_anomalies_percent_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"][area], label="Well Extraction Stress", color="#a63603")
+        ax.plot(date_time, dict_depths_anomalies_percent_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Summer Drought", color="#fd8d3c", lw=1.2)
+        ax.plot(date_time, dict_depths_anomalies_percent_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"][area], label="Well Extraction Stress", color="#a63603", lw=1.2)
+        ax.set_xlim(date_time[0], date_time[-1])
         ax.set_xlabel("Zeit")
         ax.set_ylabel("Mittlere GWFA Anomalie [%]")
         ax.set_ylim(-100, 100)
+        ax.axhline(0, color="grey", linestyle="-", alpha=0.8)
         # turn legend off
         ax.legend().set_visible(False)
         fig.tight_layout()
