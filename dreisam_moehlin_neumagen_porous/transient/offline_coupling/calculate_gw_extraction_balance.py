@@ -55,7 +55,7 @@ def aggregate_to_coarser_resolution(vals, res_fine, res_coarse, method="sum", x_
 @click.command("main", short_help="Evaluate the transient simulation")
 def main(model_run):
     base_path = Path(__file__).parent
-    base_path_output = base_path / "output"
+    # base_path_output = base_path / "output"
     # base_path_output = Path("/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline-coupling/output")
 
     areas = ["wsg_hausen", "wsg_zartener_becken", "dmn"]
@@ -185,7 +185,8 @@ def main(model_run):
             click.echo("Loading well extraction...")
             ll_well_extraction = []
             for year in years:
-                output_file = base_path_output / f"{stress_test_scenario}" / f"well_extraction_run{model_run}_year{year}.nc"
+                output_file = base_path / "output" / f"modflow_{stress_test_scenario}" / f"well_extraction_run{model_run}_year{year}.nc"
+                # output_file = base_path_output / f"{stress_test_scenario}" / f"well_extraction_run{model_run}_year{year}.nc"
                 ds_well_extraction = xr.open_dataset(output_file, engine="h5netcdf")
                 well_extraction_year = ds_well_extraction["well_extraction"].values
                 ds_well_extraction.close()
