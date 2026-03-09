@@ -286,22 +286,16 @@ def main(model_run):
             df_recharge_annual = pd.DataFrame(index=da_recharge_annual.time.values, data=da_recharge_annual.sum(dim=["y", "x"]).values, columns=["recharge"])
 
             recharge_avg = np.nanmean(df_recharge_base_monthly)
-            df_recharge_anomalies_monthly_abs = df_recharge_monthly - recharge_avg
-            df_recharge_anomalies_monthly_percent = (df_recharge_monthly - recharge_avg) / recharge_avg * 100
+            df_recharge_anomalies_monthly_abs = pd.DataFrame(index=df_recharge_monthly.index, data=df_recharge_monthly["recharge"].values - recharge_avg, columns=["anomaly"])
+            df_recharge_anomalies_monthly_percent = pd.DataFrame(index=df_recharge_monthly.index, data=(df_recharge_monthly["recharge"].values - recharge_avg) / recharge_avg * 100)
             recharge_avg = np.nanmean(df_recharge_base_annual)
-            df_recharge_anomalies_annual_abs = df_recharge_annual - recharge_avg
-            df_recharge_anomalies_annual_percent = (df_recharge_annual - recharge_avg) / recharge_avg * 100
-
-            df_recharge_anomalies_monthly_abs.columns = ["anomaly"]
-            df_recharge_anomalies_monthly_percent.columns = ["anomaly"]
-            df_recharge_anomalies_annual_abs.columns = ["anomaly"]
-            df_recharge_anomalies_annual_percent.columns = ["anomaly"]
+            df_recharge_anomalies_annual_abs = pd.DataFrame(index=df_recharge_annual.index, data=df_recharge_annual["recharge"].values - recharge_avg, columns=["anomaly"])
+            df_recharge_anomalies_annual_percent = pd.DataFrame(index=df_recharge_annual.index, data=(df_recharge_annual["recharge"].values - recharge_avg) / recharge_avg * 100)
 
             # make figures directory if it does not exist
             figures_dir = base_path.parent / "figures" / "recharge_anomalies" / stress_test_scenario
             figures_dir.mkdir(exist_ok=True)
     
-
             # plot monthly absolute anomalies of the recharge using a bar plot, make bars with negative values orange and bars with positive values blue
             fig, ax = plt.subplots(figsize=(6, 2.5))
             # use blue for positive anomalies and orange for negative anomalies

@@ -188,12 +188,14 @@ def main(model_run):
             # calculate annual anomalies of groundwater depths for the stress test scenario compared to the base scenario
             gw_depths_annual_anomalies_abs = (da_gw_depths_annual.values - gw_depths_avg) * (-1)
             gw_depths_annual_anomalies_percent = (da_gw_depths_annual.values - gw_depths_avg) / gw_depths_avg * 100 * (-1)
+            gw_depths_annual_anomalies_abs = np.where(mask, gw_depths_annual_anomalies_abs, np.nan)
+            gw_depths_annual_anomalies_percent = np.where(mask, gw_depths_annual_anomalies_percent, np.nan)
 
             # plot map of annual anomalies of groundwater depths for the year 2018
             click.echo(f"Plotting groundwater depth anomalies for {area} (2018)...")
             cond = (da_gw_depths_annual.time.dt.year == 2018).values
-            fig, ax = plt.subplots(figsize=(6, 4))
-            im = ax.imshow(gw_depths_annual_anomalies_abs[cond, x1:x2, y1:y2][0], cmap="RdBu", vmin=-10, vmax=10, extent=grid_extent)
+            fig, ax = plt.subplots(figsize=(4, 5))
+            im = ax.imshow(gw_depths_annual_anomalies_abs[cond, x1:x2, y1:y2][0], cmap="RdBu", vmin=-2, vmax=2, extent=grid_extent)
             ax.set_xlabel("X-Koordinate")
             ax.set_ylabel("Y-Koordinate")
             ax.axis('equal')
@@ -203,8 +205,8 @@ def main(model_run):
             fig.savefig(figures_dir / f"gw_depth_anomalies_abs_annual_2018_{area}.png", dpi=300)
             plt.close(fig)
 
-            fig, ax = plt.subplots(figsize=(6, 4))
-            im = ax.imshow(gw_depths_annual_anomalies_percent[cond, x1:x2, y1:y2][0], cmap="RdBu", vmin=-100, vmax=100, extent=grid_extent)
+            fig, ax = plt.subplots(figsize=(4, 5))
+            im = ax.imshow(gw_depths_annual_anomalies_percent[cond, x1:x2, y1:y2][0], cmap="RdBu", vmin=-50, vmax=50, extent=grid_extent)
             ax.set_xlabel("X-Koordinate")
             ax.set_ylabel("Y-Koordinate")
             ax.axis('equal')
