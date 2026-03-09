@@ -208,7 +208,7 @@ def main(model_run):
             if area == "dmn":
                 # plot every second xticklabels
                 xticks = ax.get_xticks()
-                ax.set_xticks(xticks)
+                ax.set_xticks(xticks[::2])
                 xticklabels = [f"{int(tick)}" for tick in xticks[::2]]
                 ax.set_xticklabels(xticklabels)
             ax.set_xlabel("X-Koordinate")
@@ -225,7 +225,7 @@ def main(model_run):
             if area == "dmn":
                 # plot every second xticklabels
                 xticks = ax.get_xticks()
-                ax.set_xticks(xticks)
+                ax.set_xticks(xticks[::2])
                 xticklabels = [f"{int(tick)}" for tick in xticks[::2]]
                 ax.set_xticklabels(xticklabels)
             ax.set_xlabel("X-Koordinate")
