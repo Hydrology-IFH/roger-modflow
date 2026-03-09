@@ -176,8 +176,13 @@ def main(model_run):
             # calculate daily anomalies of groundwater depths for the stress test scenario compared to the base scenario
             gw_depths_anomalies_abs = (gw_depths - gw_depths_avg) * (-1)
             gw_depths_anomalies_percent = (gw_depths - gw_depths_avg) / gw_depths_avg * 100 * (-1)
-            gw_depths_anomalies_abs_avg = np.nanmean(gw_depths_anomalies_abs, axis=0)
-            gw_depths_anomalies_percent_avg = np.nanmean(gw_depths_anomalies_percent, axis=0)
+            # calculate time series of average anomalies
+            gw_depths_anomalies_abs_avg = np.zeros(gw_depths_anomalies_abs.shape[0])
+            gw_depths_anomalies_percent_avg = np.zeros(gw_depths_anomalies_percent.shape[0])
+            for t in range(gw_depths_anomalies_abs.shape[0]):
+                gw_depths_anomalies_abs_avg[t] = np.nanmean(gw_depths_anomalies_abs[t, mask])
+                gw_depths_anomalies_percent_avg[t] = np.nanmean(gw_depths_anomalies_percent[t, mask])
+
             dict_depths_anomalies_abs_avg[stress_test_scenario][area] = gw_depths_anomalies_abs_avg
             dict_depths_anomalies_percent_avg[stress_test_scenario][area] = gw_depths_anomalies_percent_avg
 
