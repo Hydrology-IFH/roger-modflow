@@ -1,0 +1,308 @@
+from pathlib import Path
+import numpy as np
+import xarray as xr
+import pandas as pd
+import rasterio
+import matplotlib.pyplot as plt
+import click
+
+def aggregate_to_coarser_resolution(vals, res_fine, res_coarse, method="sum", x_origin=0, y_origin=0):
+    """Aggregate raster data to a coarser resolution.
+    
+    Args
+    ----
+    vals : numpy.ndarray
+        2D array with the raster data.
+
+    res_fine : int
+        spatial resolution of the fine grid in meters.
+
+    res_coarse : int
+        spatial resolution of the coarse grid in meters.
+
+    method : str
+        Method to aggregate the data. Options are "sum" and "average".
+
+    x_origin : int
+        x-coordinate of the grid origin (lower left corner).
+
+    y_origin : int
+        y-coordinate of the grid origin (lower left corner).  
+    """
+    ny_fine, nx_fine = vals.shape[0], vals.shape[1]
+    nlat_coarse, nlon_coarse = int(res_coarse / res_fine), int(res_coarse / res_fine)
+    meters_to_latlon = 111195
+    lat_fine = np.linspace(y_origin, y_origin + ny_fine*(res_fine/meters_to_latlon), ny_fine)/meters_to_latlon  # boundaries
+    lon_fine = np.linspace(x_origin, x_origin + nx_fine*(res_fine/meters_to_latlon), nx_fine)/meters_to_latlon  # boundaries
+
+    arr_fine = xr.DataArray(vals, coords={"lat": lat_fine, "lon": lon_fine}, dims=["lat", "lon"])
+
+    if method == "sum":
+        arr_coarse = xr.DataArray(
+            arr_fine.coarsen(lat=nlat_coarse, lon=nlon_coarse).sum().values,
+            dims=("lat", "lon"),
+        )
+        
+    elif method == "average":
+        arr_coarse = xr.DataArray(
+            arr_fine.coarsen(lat=nlat_coarse, lon=nlon_coarse).mean().values,
+            dims=("lat", "lon"),
+        )
+    return arr_coarse.values
+
+
+@click.option("-mr", "--model-run", type=int, default=1806)
+@click.command("main", short_help="Evaluate the transient simulation")
+def main(model_run):
+    base_path = Path(__file__).parent
+    base_path_output = base_path.parent / "output"
+    # base_path_output = Path("/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline-coupling/output")
+
+    areas = ["dmn", "wsg_hausen", "wsg_zartener_becken"]
+
+    base = "base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"
+
+    stress_test_scenarios = ["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction",
+                             "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
+                             "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"]
+    
+    
+    date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="D")
+    years = np.unique(date_time.year.values)
+
+    # load modflow parameters to get the coordinates of the grid
+    click.echo("Loading coordinates...")
+    path = base_path.parent / "input" / "parameters_modflow.nc"
+    ds_params = xr.open_dataset(path, engine="h5netcdf")
+    xcoords = ds_params["x"].values
+    ycoords = ds_params["y"].values
+
+
+    click.echo(f"Processing scenario {base}...")
+    # load the groundwater depths
+    click.echo("Loading groundwater depths (base)...")
+    ll_gw_depths = []
+    for year in years:
+        # output_file = base_path / "output" / f"modflow_{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
+        output_file = base_path_output / f"{base}" / f"gw_depth_run{model_run}_year{year}.nc"
+        ds_gw_depths_base = xr.open_dataset(output_file, engine="h5netcdf")
+        gw_depths_year_base = ds_gw_depths_base["depth"].values
+        ll_gw_depths.append(gw_depths_year_base)
+    gw_depths_base = np.concatenate(ll_gw_depths, axis=0)
+    # # create xarray data array for groundwater depths
+    # da_gw_depths_base = xr.DataArray(
+    #     data=gw_depths_base,
+    #     dims=["time", "y", "x"],
+    #     coords={
+    #         "time": date_time,
+    #         "y": ds_gw_depths_base["lat"].values,
+    #         "x": ds_gw_depths_base["lon"].values,
+    #     },
+    # )
+    # # resample to monthly
+    # da_gw_depths_base_monthly = da_gw_depths_base.resample(time="ME").mean()
+    # # resample to annual
+    # da_gw_depths_base_annual = da_gw_depths_base.resample(time="YE").mean()
+    # # calculate the average groundwater depth for the base scenario
+    # da_gw_depths_base_average = da_gw_depths_base.mean(dim="time")
+
+    dict_depths_anomalies_abs_avg = {}
+    dict_depths_anomalies_percent_avg = {}
+
+    for stress_test_scenario in stress_test_scenarios:
+        click.echo(f"Processing scenario {stress_test_scenario}...")
+        # load the indirect recharge
+        click.echo("Loading groundwater depths (stress test)...")
+        ll_gw_depths = []
+        for year in years:
+            # output_file = base_path / "output" / f"modflow_{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
+            output_file = base_path_output / f"{stress_test_scenario}" / f"gw_depth_run{model_run}_year{year}.nc"
+            ds_gw_depths = xr.open_dataset(output_file, engine="h5netcdf")
+            gw_depths_year = ds_gw_depths["depth"].values
+            ll_gw_depths.append(gw_depths_year)
+        gw_depths = np.concatenate(ll_gw_depths, axis=0)
+        # create xarray data array for groundwater depths
+        da_gw_depths = xr.DataArray(
+            data=gw_depths,
+            dims=["time", "y", "x"],
+            coords={
+                "time": date_time,
+                "y": ds_gw_depths["lat"].values,
+                "x": ds_gw_depths["lon"].values,
+            },
+        )       
+
+        # # resample to monthly
+        # da_gw_depths_monthly = da_gw_depths.resample(time="ME").mean()
+        # resample to annual
+        da_gw_depths_annual = da_gw_depths.resample(time="YE").mean()
+
+        # make figures directory if it does not exist
+        figures_dir = base_path.parent / "figures" / "groundwater_anomalies" / stress_test_scenario
+        figures_dir.mkdir(exist_ok=True)
+
+        dict_depths_anomalies_abs_avg[stress_test_scenario] = {}
+        dict_depths_anomalies_percent_avg[stress_test_scenario] = {}
+
+        for area in areas:
+            if area == "dmn":
+                mask = ds_params["mask_porous_aquifer"].values
+                x1 = 0
+                x2 = len(xcoords)
+                y1 = 0
+                y2 = len(ycoords)
+                grid_extent = (xcoords[x1], xcoords[x2], ycoords[y1], ycoords[y2])
+            elif area == "wsg_hausen":
+                file = base_path.parent / "input" / "wsg_hausen_.tif"
+                with rasterio.open(file) as src:
+                    mask = src.read(1)
+                    mask = np.where(mask == 1, True, False)
+                    x1 = 50
+                    x2 = 90
+                    y1 = 238
+                    y2 = 288
+                    grid_extent = (xcoords[x1], xcoords[x2], ycoords[y1], ycoords[y2])
+            elif area == "wsg_zartener_becken":
+                file = base_path.parent / "input" / "wsg_zartener_becken_.tif"
+                with rasterio.open(file) as src:
+                    mask = src.read(1)
+                    mask = np.where(mask == 1, True, False)
+                    x1 = 435
+                    x2 = 499
+                    y1 = 206
+                    y2 = 233 
+                    grid_extent = (xcoords[x1], xcoords[x2], ycoords[y1], ycoords[y2])
+
+
+            gw_depths_avg = np.nanmean(gw_depths_base, axis=0)[np.newaxis, :, :]
+            # calculate daily anomalies of groundwater depths for the stress test scenario compared to the base scenario
+            gw_depths_anomalies_abs = (gw_depths - gw_depths_avg) * (-1)
+            gw_depths_anomalies_percent = (gw_depths - gw_depths_avg) / gw_depths_avg * 100 * (-1)
+            gw_depths_anomalies_abs_avg = np.nanmean(gw_depths_anomalies_abs, axis=0)
+            gw_depths_anomalies_percent_avg = np.nanmean(gw_depths_anomalies_percent, axis=0)
+            dict_depths_anomalies_abs_avg[stress_test_scenario][area] = gw_depths_anomalies_abs_avg
+            dict_depths_anomalies_percent_avg[stress_test_scenario][area] = gw_depths_anomalies_percent_avg
+
+            # # calculate monthly anomalies of groundwater depths for the stress test scenario compared to the base scenario
+            # gw_depths_monthly_anomalies_abs = (da_gw_depths_monthly.values - gw_depths_avg) * (-1)
+            # gw_depths_monthly_anomalies_percent = (da_gw_depths_monthly.values - gw_depths_avg) / gw_depths_avg * 100 * (-1)
+
+            # calculate annual anomalies of groundwater depths for the stress test scenario compared to the base scenario
+            gw_depths_annual_anomalies_abs = (da_gw_depths_annual.values - gw_depths_avg) * (-1)
+            gw_depths_annual_anomalies_percent = (da_gw_depths_annual.values - gw_depths_avg) / gw_depths_avg * 100 * (-1)
+
+            # plot map of annual anomalies of groundwater depths for the year 2018
+            cond = (da_gw_depths_annual.time.dt.year == 2018).values
+            fig, ax = plt.subplots(figsize=(6, 4))
+            im = ax.imshow(gw_depths_annual_anomalies_abs[cond, x1:x2, y1:y2][0], cmap="RdBu", vmin=-10, vmax=10, extent=grid_extent)
+            ax.set_xlabel("X-Koordinate")
+            ax.set_ylabel("Y-Koordinate")
+            ax.axis('equal')
+            ax.grid(True, alpha=0.3)
+            fig.colorbar(im, ax=ax, label="GWFA Anomalie [m]")
+            fig.tight_layout()
+            fig.savefig(figures_dir / f"gw_depth_anomalies_abs_annual_2018_{area}.png", dpi=300)
+            plt.close(fig)
+
+            fig, ax = plt.subplots(figsize=(6, 4))
+            im = ax.imshow(gw_depths_annual_anomalies_percent[cond, x1:x2, y1:y2][0], cmap="RdBu", vmin=-100, vmax=100, extent=grid_extent)
+            ax.set_xlabel("X-Koordinate")
+            ax.set_ylabel("Y-Koordinate")
+            ax.axis('equal')
+            ax.grid(True, alpha=0.3)
+            fig.colorbar(im, ax=ax, label="GWFA Anomalie [%]")
+            fig.tight_layout()
+            fig.savefig(figures_dir / f"gw_depth_anomalies_percent_annual_2018_{area}.png", dpi=300)
+            plt.close(fig)
+
+
+    stress_test_scenarios = ["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction",
+                             "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
+                             "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"]
+
+    for area in areas:
+        # plot time series of average groundwater depth anomalies for the three stress test scenarios
+        fig, ax = plt.subplots(figsize=(6, 4))
+        ax.plot(date_time, dict_depths_anomalies_abs_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373")
+        ax.set_xlabel("Zeit")
+        ax.set_ylabel("Mittlere GWFA Anomalie [m]")
+        # set y-axis limits to -10 to 10        
+        ax.set_ylim(-10, 10)
+        # turn legend off
+        ax.legend().set_visible(False)
+        fig.tight_layout()
+        fig.savefig(figures_dir / f"gw_depth_anomalies_abs_time_series_{area}_1.png", dpi=300)
+        plt.close(fig)
+
+        # plot time series of average groundwater depth anomalies for the three stress test scenarios
+        fig, ax = plt.subplots(figsize=(6, 4))
+        ax.plot(date_time, dict_depths_anomalies_abs_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373")
+        ax.plot(date_time, dict_depths_anomalies_abs_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Summer Drought", color="#fd8d3c")
+        ax.set_xlabel("Zeit")
+        ax.set_ylabel("Mittlere GWFA Anomalie [m]")
+        # set y-axis limits to -10 to 10        
+        ax.set_ylim(-10, 10)
+        # turn legend off
+        ax.legend().set_visible(False)
+        fig.tight_layout()
+        fig.savefig(figures_dir / f"gw_depth_anomalies_abs_time_series_{area}_2.png", dpi=300)
+        plt.close(fig)
+
+        # plot time series of average groundwater depth anomalies for the three stress test scenarios
+        fig, ax = plt.subplots(figsize=(6, 4))
+        ax.plot(date_time, dict_depths_anomalies_abs_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373")
+        ax.plot(date_time, dict_depths_anomalies_abs_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Summer Drought", color="#fd8d3c")
+        ax.plot(date_time, dict_depths_anomalies_abs_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"][area], label="Well Extraction Stress", color="#a63603")
+        ax.set_xlabel("Zeit")
+        ax.set_ylabel("Mittlere GWFA Anomalie [m]")
+        # set y-axis limits to -10 to 10        
+        ax.set_ylim(-10, 10)
+        # turn legend off
+        ax.legend().set_visible(False)
+        fig.tight_layout()
+        fig.savefig(figures_dir / f"gw_depth_anomalies_abs_time_series_{area}_3.png", dpi=300)
+        plt.close(fig)
+
+        # plot time series of average groundwater depth anomalies for the three stress test scenarios
+        fig, ax = plt.subplots(figsize=(6, 4))
+        ax.plot(date_time, dict_depths_anomalies_percent_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373")
+        ax.set_xlabel("Zeit")
+        ax.set_ylabel("Mittlere GWFA Anomalie [%]")
+        ax.set_ylim(-100, 100)
+        # turn legend off
+        ax.legend().set_visible(False)
+        fig.tight_layout()
+        fig.savefig(figures_dir / f"gw_depth_anomalies_percent_time_series_{area}_1.png", dpi=300)
+        plt.close(fig)
+
+        # plot time series of average groundwater depth anomalies for the three stress test scenarios
+        fig, ax = plt.subplots(figsize=(6, 4))
+        ax.plot(date_time, dict_depths_anomalies_percent_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373")
+        ax.plot(date_time, dict_depths_anomalies_percent_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Summer Drought", color="#fd8d3c")
+        ax.set_xlabel("Zeit")
+        ax.set_ylabel("Mittlere GWFA Anomalie [%]")
+        ax.set_ylim(-100, 100)
+        # turn legend off        
+        ax.legend().set_visible(False)
+        fig.tight_layout()
+        fig.savefig(figures_dir / f"gw_depth_anomalies_percent_time_series_{area}_2.png", dpi=300)
+        plt.close(fig)
+
+        # plot time series of average groundwater depth anomalies for the three stress test scenarios
+        fig, ax = plt.subplots(figsize=(6, 4))
+        ax.plot(date_time, dict_depths_anomalies_percent_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373")
+        ax.plot(date_time, dict_depths_anomalies_percent_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Summer Drought", color="#fd8d3c")
+        ax.plot(date_time, dict_depths_anomalies_percent_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"][area], label="Well Extraction Stress", color="#a63603")
+        ax.set_xlabel("Zeit")
+        ax.set_ylabel("Mittlere GWFA Anomalie [%]")
+        ax.set_ylim(-100, 100)
+        # turn legend off
+        ax.legend().set_visible(False)
+        fig.tight_layout()
+        fig.savefig(figures_dir / f"gw_depth_anomalies_percent_time_series_{area}_3.png", dpi=300)
+        plt.close(fig)
+
+    return
+
+if __name__ == "__main__":
+    main()
