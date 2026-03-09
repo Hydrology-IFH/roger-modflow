@@ -250,7 +250,7 @@ def main(model_run):
         # plot time series of average groundwater depth anomalies for the three stress test scenarios
         fig, ax = plt.subplots(figsize=(6, 2.5))
         ax.axhline(0, color="grey", linestyle="-", alpha=0.8)
-        ax.plot(date_time, dict_depths_anomalies_abs_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373", lw=1.4)
+        ax.plot(date_time, dict_depths_anomalies_abs_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373", lw=2.0)
         ax.set_xlim(date_time[0], date_time[-1])
         ax.set_xlabel("Zeit")
         ax.set_ylabel("Mittlere GWFA Anomalie [m]")
@@ -265,8 +265,8 @@ def main(model_run):
         # plot time series of average groundwater depth anomalies for the three stress test scenarios
         fig, ax = plt.subplots(figsize=(6, 2.5))
         ax.axhline(0, color="black", linestyle="-", alpha=0.8)
-        ax.plot(date_time, dict_depths_anomalies_abs_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373", lw=1.4)
-        ax.plot(date_time, dict_depths_anomalies_abs_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Summer Drought", color="#fd8d3c", lw=1.2)
+        ax.plot(date_time, dict_depths_anomalies_abs_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373", lw=2.0)
+        ax.plot(date_time, dict_depths_anomalies_abs_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Summer Drought", color="#fd8d3c", lw=1.5)
         ax.set_xlim(date_time[0], date_time[-1])
         ax.set_xlabel("Zeit")
         ax.set_ylabel("Mittlere GWFA Anomalie [m]")
@@ -281,9 +281,9 @@ def main(model_run):
         # plot time series of average groundwater depth anomalies for the three stress test scenarios
         fig, ax = plt.subplots(figsize=(6, 2.5))
         ax.axhline(0, color="black", linestyle="-", alpha=0.8)
-        ax.plot(date_time, dict_depths_anomalies_abs_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373", lw=1.4)
-        ax.plot(date_time, dict_depths_anomalies_abs_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Summer Drought", color="#fd8d3c", lw=1.2)
-        ax.plot(date_time, dict_depths_anomalies_abs_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"][area], label="Well Extraction Stress", color="#a63603")
+        ax.plot(date_time, dict_depths_anomalies_abs_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373", lw=2.0)
+        ax.plot(date_time, dict_depths_anomalies_abs_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Summer Drought", color="#fd8d3c", lw=1.5)
+        ax.plot(date_time, dict_depths_anomalies_abs_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"][area], label="Well Extraction Stress", color="#a63603", lw=0.9)
         ax.set_xlim(date_time[0], date_time[-1])
         ax.set_xlabel("Zeit")
         ax.set_ylabel("Mittlere GWFA Anomalie [m]")
