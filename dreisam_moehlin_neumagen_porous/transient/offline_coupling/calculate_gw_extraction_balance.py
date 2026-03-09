@@ -60,8 +60,8 @@ def main(model_run):
 
     areas = ["wsg_hausen", "wsg_zartener_becken", "dmn"]
 
-    stress_test_scenarios = ["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
-                             "base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction",
+    stress_test_scenarios = ["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction",
+                             "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
                              "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"]
     
     
@@ -241,12 +241,15 @@ def main(model_run):
             fig, ax = plt.subplots(figsize=(6, 2))
             # convert to million m3/year
             df_well_extraction_annual["well_extraction"] = df_well_extraction_annual["well_extraction"] / 1e6
-            ax.bar(df_well_extraction_annual.index, df_well_extraction_annual["well_extraction"], color="purple")   
+            ax.bar(df_well_extraction_annual.index, df_well_extraction_annual["well_extraction"], color="purple")
+            ax.set_xticks(df_well_extraction_annual.index)   
             # rotate xticklabels to vertical and show only the year
-            ax.set_xticklabels(df_well_extraction_annual.index.year, rotation=0)
             ax.set_xlabel("Jahr")
             ax.set_ylabel("GW-Entnahme\n[Mio. m³/Jahr]")
-            ax.set_ylim(0, 25)
+            if area == "dmn":
+                ax.set_ylim(0, 25)
+            else:
+                ax.set_ylim(0, 15)
             # set legend off        
             ax.legend().set_visible(False)
             fig.tight_layout()
@@ -256,8 +259,11 @@ def main(model_run):
             fig, ax = plt.subplots(figsize=(2, 2))
             long_term_average = df_well_extraction_annual["well_extraction"].mean()
             df_long_term_average = pd.DataFrame(index=["long_term_average"], data=[long_term_average], columns=["well_extraction"])
-            ax.bar(df_long_term_average.index, df_long_term_average["well_extraction"], color="purple", width=0.8)
-            ax.set_ylim(0, 25)
+            ax.bar(df_long_term_average.index, df_long_term_average["well_extraction"], color="purple")
+            if area == "dmn":
+                ax.set_ylim(0, 25)
+            else:
+                ax.set_ylim(0, 15)
             ax.set_xlabel("")
             ax.set_xticklabels([""], rotation=0)
             ax.set_ylabel("GW-Entnahme\n[Mio. m³/Jahr]")
@@ -274,8 +280,13 @@ def main(model_run):
             df_recharge_monthly_stacked["direct_recharge"] = df_recharge_monthly_stacked["direct_recharge"]/1e6  # convert to million m3/month
             df_recharge_monthly_stacked["indirect_recharge"] = df_recharge_monthly_stacked["indirect_recharge"]/1e6  # convert to million m3/month
             # make stacked bar plot
-            ax.bar(df_recharge_monthly_stacked.index, df_recharge_monthly_stacked["direct_recharge"], color="blue", label="Direkte GWN")
-            ax.bar(df_recharge_monthly_stacked.index, df_recharge_monthly_stacked["indirect_recharge"], bottom=df_recharge_monthly_stacked["direct_recharge"], color="lightblue", label="Indirekte GWN")
+            ax.bar(df_recharge_monthly_stacked.index, df_recharge_monthly_stacked["direct_recharge"], color="blue", label="Direkte GWN", width=15)
+            ax.bar(df_recharge_monthly_stacked.index, df_recharge_monthly_stacked["indirect_recharge"], bottom=df_recharge_monthly_stacked["direct_recharge"], color="lightblue", label="Indirekte GWN", width=15)
+            if area == "dmn":
+                ax.set_ylim(0, 30)
+            else:                
+                ax.set_ylim(0, 10)
+            ax.set_xticks(df_recharge_monthly_stacked.index)
             # reformat xticklabels to show only the year and month and plot labels of every 4th month
             xticklabels = df_recharge_monthly_stacked.index.strftime("%y-%m")
             xticklabels = [label if i % 4 == 0 else "" for i, label in enumerate(xticklabels)]
@@ -295,8 +306,9 @@ def main(model_run):
             df_recharge_annual_stacked["indirect_recharge"] = df_indirect_recharge_annual["indirect_recharge"]
             df_recharge_annual_stacked["direct_recharge"] = df_recharge_annual_stacked["direct_recharge"]/1e6  # convert to million m3/year
             df_recharge_annual_stacked["indirect_recharge"] = df_recharge_annual_stacked["indirect_recharge"]/1e6  # convert to million m3/year
-            ax.bar(df_recharge_annual_stacked.index, df_recharge_annual_stacked["direct_recharge"], color="blue", label="Direkte GWN")
-            ax.bar(df_recharge_annual_stacked.index, df_recharge_annual_stacked["indirect_recharge"], bottom=df_recharge_annual_stacked["direct_recharge"], color="lightblue", label="Indirekte GWN")
+            ax.bar(df_recharge_annual_stacked.index, df_recharge_annual_stacked["direct_recharge"], color="blue", label="Direkte GWN", width=0.8)
+            ax.bar(df_recharge_annual_stacked.index, df_recharge_annual_stacked["indirect_recharge"], bottom=df_recharge_annual_stacked["direct_recharge"], color="lightblue", label="Indirekte GWN", width=0.8)
+            ax.set_xticks(df_recharge_annual_stacked.index)
             if area == "dmn":
                 ax.set_ylim(0, 250)
             else:
@@ -318,7 +330,10 @@ def main(model_run):
             df_recharge_long_term_stacked["indirect_recharge"] = df_indirect_recharge_monthly["indirect_recharge"].mean()/1e6  # convert to million m3/year
             ax.bar(df_recharge_long_term_stacked.index, df_recharge_long_term_stacked["direct_recharge"], color="blue", label="Direkte GWN")
             ax.bar(df_recharge_long_term_stacked.index, df_recharge_long_term_stacked["indirect_recharge"], bottom=df_recharge_long_term_stacked["direct_recharge"], color="lightblue", label="Indirekte GWN")
-            ax.set_ylim(0, 250)
+            if area == "dmn":
+                pass
+            else:
+                ax.set_ylim(0, 10)
             ax.set_xlabel("")
             ax.set_xticklabels([""], rotation=0)
             ax.set_ylabel("GWN\n[Mio. m³/Monat]")
