@@ -148,8 +148,8 @@ def main(model_run):
                 mask = ds_params["mask_porous_aquifer"].values
                 x1 = 0
                 x2 = len(xcoords) - 1
-                y1 = 0
-                y2 = len(ycoords) - 1
+                y1 = np.where(mask)[0].min() - 5
+                y2 = np.where(mask)[0].max() + 5
                 grid_extent = (xcoords[x1], xcoords[x2], ycoords[y1], ycoords[y2])
             elif area == "wsg_hausen":
                 file = base_path.parent / "input" / "wsg_hausen_.tif"
