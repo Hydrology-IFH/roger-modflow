@@ -199,8 +199,8 @@ def main(model_run):
             # plot map of annual anomalies of groundwater depths for the year 2018
             click.echo(f"Plotting groundwater depth anomalies for {area} (2018)...")
             cond = (da_gw_depths_annual.time.dt.year == 2018).values
-            fig, ax = plt.subplots(figsize=(4, 5))
-            im = ax.imshow(gw_depths_annual_anomalies_abs[cond, x1:x2, y1:y2][0], cmap="RdBu", vmin=-2, vmax=2, extent=grid_extent)
+            fig, ax = plt.subplots(figsize=(5, 4))
+            im = ax.imshow(gw_depths_annual_anomalies_abs[cond, x1:x2, y1:y2][0], cmap="RdBu", vmin=-3, vmax=3, extent=grid_extent)
             ax.set_xlabel("X-Koordinate")
             ax.set_ylabel("Y-Koordinate")
             ax.axis('equal')
@@ -210,7 +210,7 @@ def main(model_run):
             fig.savefig(figures_dir / f"gw_depth_anomalies_abs_annual_2018_{area}.png", dpi=300)
             plt.close(fig)
 
-            fig, ax = plt.subplots(figsize=(4, 5))
+            fig, ax = plt.subplots(figsize=(5, 4))
             im = ax.imshow(gw_depths_annual_anomalies_percent[cond, x1:x2, y1:y2][0], cmap="RdBu", vmin=-50, vmax=50, extent=grid_extent)
             ax.set_xlabel("X-Koordinate")
             ax.set_ylabel("Y-Koordinate")
@@ -232,7 +232,7 @@ def main(model_run):
     for area in areas:
         click.echo(f"Plotting time series of groundwater depth anomalies for {area}...")
         # plot time series of average groundwater depth anomalies for the three stress test scenarios
-        fig, ax = plt.subplots(figsize=(6, 4))
+        fig, ax = plt.subplots(figsize=(6, 2.5))
         ax.plot(date_time, dict_depths_anomalies_abs_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373")
         ax.set_xlabel("Zeit")
         ax.set_ylabel("Mittlere GWFA Anomalie [m]")
@@ -245,7 +245,7 @@ def main(model_run):
         plt.close(fig)
 
         # plot time series of average groundwater depth anomalies for the three stress test scenarios
-        fig, ax = plt.subplots(figsize=(6, 4))
+        fig, ax = plt.subplots(figsize=(6, 2.5))
         ax.plot(date_time, dict_depths_anomalies_abs_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373")
         ax.plot(date_time, dict_depths_anomalies_abs_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Summer Drought", color="#fd8d3c")
         ax.set_xlabel("Zeit")
@@ -259,7 +259,7 @@ def main(model_run):
         plt.close(fig)
 
         # plot time series of average groundwater depth anomalies for the three stress test scenarios
-        fig, ax = plt.subplots(figsize=(6, 4))
+        fig, ax = plt.subplots(figsize=(6, 2.5))
         ax.plot(date_time, dict_depths_anomalies_abs_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373")
         ax.plot(date_time, dict_depths_anomalies_abs_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Summer Drought", color="#fd8d3c")
         ax.plot(date_time, dict_depths_anomalies_abs_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"][area], label="Well Extraction Stress", color="#a63603")
@@ -274,7 +274,7 @@ def main(model_run):
         plt.close(fig)
 
         # plot time series of average groundwater depth anomalies for the three stress test scenarios
-        fig, ax = plt.subplots(figsize=(6, 4))
+        fig, ax = plt.subplots(figsize=(6, 2.5))
         ax.plot(date_time, dict_depths_anomalies_percent_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373")
         ax.set_xlabel("Zeit")
         ax.set_ylabel("Mittlere GWFA Anomalie [%]")
@@ -286,7 +286,7 @@ def main(model_run):
         plt.close(fig)
 
         # plot time series of average groundwater depth anomalies for the three stress test scenarios
-        fig, ax = plt.subplots(figsize=(6, 4))
+        fig, ax = plt.subplots(figsize=(6, 2.5))
         ax.plot(date_time, dict_depths_anomalies_percent_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373")
         ax.plot(date_time, dict_depths_anomalies_percent_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Summer Drought", color="#fd8d3c")
         ax.set_xlabel("Zeit")
@@ -299,7 +299,7 @@ def main(model_run):
         plt.close(fig)
 
         # plot time series of average groundwater depth anomalies for the three stress test scenarios
-        fig, ax = plt.subplots(figsize=(6, 4))
+        fig, ax = plt.subplots(figsize=(6, 2.5))
         ax.plot(date_time, dict_depths_anomalies_percent_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373")
         ax.plot(date_time, dict_depths_anomalies_percent_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Summer Drought", color="#fd8d3c")
         ax.plot(date_time, dict_depths_anomalies_percent_avg["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"][area], label="Well Extraction Stress", color="#a63603")
