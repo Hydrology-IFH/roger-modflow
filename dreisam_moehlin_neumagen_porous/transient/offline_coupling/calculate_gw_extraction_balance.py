@@ -241,8 +241,7 @@ def main(model_run):
             fig, ax = plt.subplots(figsize=(6, 2))
             # convert to million m3/year
             df_well_extraction_annual["well_extraction"] = df_well_extraction_annual["well_extraction"] / 1e6
-            ax.bar(df_well_extraction_annual.index, df_well_extraction_annual["well_extraction"], color="purple")
-            ax.set_xticks(df_well_extraction_annual.index)   
+            ax.bar(df_well_extraction_annual.index.year, df_well_extraction_annual["well_extraction"], color="purple", width=0.8)
             # rotate xticklabels to vertical and show only the year
             ax.set_xlabel("Jahr")
             ax.set_ylabel("GW-Entnahme\n[Mio. m³/Jahr]")
@@ -306,9 +305,8 @@ def main(model_run):
             df_recharge_annual_stacked["indirect_recharge"] = df_indirect_recharge_annual["indirect_recharge"]
             df_recharge_annual_stacked["direct_recharge"] = df_recharge_annual_stacked["direct_recharge"]/1e6  # convert to million m3/year
             df_recharge_annual_stacked["indirect_recharge"] = df_recharge_annual_stacked["indirect_recharge"]/1e6  # convert to million m3/year
-            ax.bar(df_recharge_annual_stacked.index, df_recharge_annual_stacked["direct_recharge"], color="blue", label="Direkte GWN", width=0.8)
-            ax.bar(df_recharge_annual_stacked.index, df_recharge_annual_stacked["indirect_recharge"], bottom=df_recharge_annual_stacked["direct_recharge"], color="lightblue", label="Indirekte GWN", width=0.8)
-            ax.set_xticks(df_recharge_annual_stacked.index)
+            ax.bar(df_recharge_annual_stacked.index.year, df_recharge_annual_stacked["direct_recharge"], color="blue", label="Direkte GWN", width=0.8)
+            ax.bar(df_recharge_annual_stacked.index.year, df_recharge_annual_stacked["indirect_recharge"], bottom=df_recharge_annual_stacked["direct_recharge"], color="lightblue", label="Indirekte GWN", width=0.8)
             if area == "dmn":
                 ax.set_ylim(0, 250)
             else:
