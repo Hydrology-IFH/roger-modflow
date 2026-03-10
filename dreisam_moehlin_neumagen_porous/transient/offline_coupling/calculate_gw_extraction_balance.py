@@ -282,7 +282,7 @@ def main(model_run):
             ax.bar(df_recharge_monthly_stacked.index, df_recharge_monthly_stacked["direct_recharge"], color="blue", label="Direkte GWN", width=15)
             ax.bar(df_recharge_monthly_stacked.index, df_recharge_monthly_stacked["indirect_recharge"], bottom=df_recharge_monthly_stacked["direct_recharge"], color="lightblue", label="Indirekte GWN", width=15)
             if area == "dmn":
-                ax.set_ylim(0, 30)
+                ax.set_ylim(0, 20)
             else:                
                 ax.set_ylim(0, 10)
             ax.set_xticks(df_recharge_monthly_stacked.index)
