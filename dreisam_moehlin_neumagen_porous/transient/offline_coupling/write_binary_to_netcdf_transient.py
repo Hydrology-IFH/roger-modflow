@@ -107,13 +107,19 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             for i, _timestep_year in enumerate(timesteps_year):
                 timestep_year = int(_timestep_year) + 1  # get time step index from timesteps_year
                 click.echo(f"Processing time step {timestep_year} for year {year}... (GW-SW flux)")
-                gw_sw_year[i, :, :] = np.nansum(cbb.get_data(text="SFR", kstpkper=(timestep_year, 1), full3D=True)[0].filled(fill_value=np.nan), axis=0) * (-1)
+                try:
+                    gw_sw_year[i, :, :] = np.nansum(cbb.get_data(text="SFR", kstpkper=(timestep_year, 1), full3D=True)[0].filled(fill_value=np.nan), axis=0) * (-1)
+                except IndexError:
+                    click.echo(f"Error occurred while processing time step {timestep_year} for year {year}... (GW-SW flux)")
 
             well_extraction_year = np.zeros((len(timesteps_year), len(ycoords), len(xcoords)))
             for i, _timestep_year in enumerate(timesteps_year):
                 timestep_year = int(_timestep_year) + 1  # get time step index from timesteps_year
                 click.echo(f"Processing time step {timestep_year} for year {year}... (well extraction)")
-                well_extraction_year[i, :, :] = np.nansum(cbb.get_data(text="WEL", kstpkper=(timestep_year, 1), full3D=True)[0].filled(fill_value=np.nan), axis=0) * (-1)
+                try:
+                    well_extraction_year[i, :, :] = np.nansum(cbb.get_data(text="WEL", kstpkper=(timestep_year, 1), full3D=True)[0].filled(fill_value=np.nan), axis=0) * (-1)
+                except IndexError:
+                    click.echo(f"Error occurred while processing time step {timestep_year} for year {year}... (well extraction)")
 
             data_vars=dict(
                     head=(["Time", "layer", "lat", "lon"], heads_year),
