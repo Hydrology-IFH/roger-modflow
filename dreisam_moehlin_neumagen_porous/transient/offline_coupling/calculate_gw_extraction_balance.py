@@ -313,8 +313,6 @@ def main(model_run):
                 ax.set_ylim(0, 50)
             ax.set_xlabel("Jahr")
             ax.set_ylabel("GWN\n[Mio. m³/Jahr]")
-            # reformat xticklabels to show only the year
-            ax.set_xticklabels(df_recharge_annual_stacked.index.year, rotation=0)
             # set legend off
             ax.legend().set_visible(False)
             fig.tight_layout()
