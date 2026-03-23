@@ -1,4 +1,5 @@
 #!/bin/bash
+#SBATCH --exclusive
 #SBATCH --time=48:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
@@ -64,4 +65,4 @@ echo "... finalised simulation."
 # Move output from local SSD to global workspace
 echo "Move output to /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling/output/modflow_spring-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction"
 mkdir -p /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling/output/modflow_spring-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction
-mv -v "${TMPDIR}"/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/modflow_spring-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction/{*,.[!.]*} /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling/output/modflow_spring-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction
+mv -v "${TMPDIR}"/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling/output/modflow_spring-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction/{*,.[!.]*} /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling/output/modflow_spring-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction
