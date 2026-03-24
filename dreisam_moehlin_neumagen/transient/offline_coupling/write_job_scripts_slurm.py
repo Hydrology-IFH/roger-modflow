@@ -127,7 +127,7 @@ def main():
         lines.append("mkdir ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling\n")
         lines.append("mkdir ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling/output\n")
         lines.append("cp -r /pfs/10/work/fr_rs1092-workspace/roger-modflow/bin ${TMPDIR}/roger-modflow\n")
-        lines.append("cp -r %s/roger-oneD_modflow6_transient_with_well_extraction.py ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling\n" % (base_path_bwhpc_modflow)) 
+        lines.append("cp -r %s/roger_modflow6.py ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling\n" % (base_path_bwhpc_modflow)) 
         lines.append("cp -r %s/config_modflow.yml ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient\n" % (str(base_path_ws_modflow.parent)))
         lines.append("cp -r %s/input ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient\n" % (str(base_path_ws_modflow.parent)))
         lines.append("cp -r %s/fudge_parameters_modflow.csv ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient\n" % (str(base_path_ws_modflow.parent)))
