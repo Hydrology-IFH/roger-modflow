@@ -14,7 +14,7 @@ def main():
     base_path_ws_modflow = Path(f"/pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/transient/{dir_name}")
 
     # identifiers of the simulations
-    stress_tests_meteo = ["base", "spring-drought", "summer-drought", "spring-summer-drought", "spring-summer-wet"]
+    stress_tests_meteo = ["base", "spring-drought", "long-term"]
     stress_test_meteo_magnitudes = [0, 2]
     stress_test_meteo_durations = [0, 3]
     scenario_flags = []
@@ -22,86 +22,86 @@ def main():
     for stress_test_meteo in stress_tests_meteo:
         if stress_test_meteo == "base":
             scenario_flags.append('--stress-test-meteo %s --soil-compaction soil-compaction' % (stress_test_meteo))
-            scenario_flags.append('--stress-test-meteo %s --soil-compaction no-soil-compaction' % (stress_test_meteo))
             scenario_flags.append('--stress-test-meteo %s --soil-compaction soil-compaction --irrigation irrigation' % (stress_test_meteo))
-            scenario_flags.append('--stress-test-meteo %s --soil-compaction soil-compaction --yellow-mustard yellow-mustard' % (stress_test_meteo))
+            scenario_flags.append('--stress-test-meteo %s --soil-compaction no-soil-compaction --irrigation irrigation --yellow-mustard yellow-mustard' % (stress_test_meteo))
             scenario_flags.append('--stress-test-meteo %s --irrigation irrigation --yellow-mustard yellow-mustard --soil-compaction no-soil-compaction' % (stress_test_meteo))
-            scenario_flags.append('--stress-test-meteo %s --soil-compaction soil-compaction --irrigation irrigation --yellow-mustard yellow-mustard' % (stress_test_meteo))
             scenario_flags.append('--stress-test-meteo %s --soil-compaction soil-compaction --grain-corn-only grain-corn-only' % (stress_test_meteo))
 
             script_names_modflow.append('modflow_%s-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction' % (stress_test_meteo))
-            script_names_modflow.append('modflow_%s-magnitude0-duration0_no-irrigation_no-yellow-mustard_no-soil-compaction' % (stress_test_meteo))
             script_names_modflow.append('modflow_%s-magnitude0-duration0_irrigation_no-yellow-mustard_soil-compaction' % (stress_test_meteo))
-            script_names_modflow.append('modflow_%s-magnitude0-duration0_no-irrigation_yellow-mustard_soil-compaction' % (stress_test_meteo))
+            script_names_modflow.append('modflow_%s-magnitude0-duration0_no-irrigation_yellow-mustard_no-soil-compaction' % (stress_test_meteo))
             script_names_modflow.append('modflow_%s-magnitude0-duration0_irrigation_yellow-mustard_no-soil-compaction' % (stress_test_meteo))
-            script_names_modflow.append('modflow_%s-magnitude0-duration0_irrigation_yellow-mustard_soil-compaction' % (stress_test_meteo))
             script_names_modflow.append('modflow_%s-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only' % (stress_test_meteo))
 
         elif stress_test_meteo == "base_2000-2024":
             scenario_flags.append('--stress-test-meteo %s --soil-compaction soil-compaction' % (stress_test_meteo))
-            scenario_flags.append('--stress-test-meteo %s --soil-compaction no-soil-compaction' % (stress_test_meteo))
             scenario_flags.append('--stress-test-meteo %s --soil-compaction soil-compaction --irrigation irrigation' % (stress_test_meteo))
-            scenario_flags.append('--stress-test-meteo %s --soil-compaction soil-compaction --yellow-mustard yellow-mustard' % (stress_test_meteo))
+            scenario_flags.append('--stress-test-meteo %s --yellow-mustard yellow-mustard --soil-compaction no-soil-compaction' % (stress_test_meteo))
             scenario_flags.append('--stress-test-meteo %s --irrigation irrigation --yellow-mustard yellow-mustard --soil-compaction no-soil-compaction' % (stress_test_meteo))
-            scenario_flags.append('--stress-test-meteo %s --soil-compaction soil-compaction --irrigation irrigation --yellow-mustard yellow-mustard' % (stress_test_meteo))
             scenario_flags.append('--stress-test-meteo %s --soil-compaction soil-compaction --grain-corn-only grain-corn-only' % (stress_test_meteo))
 
             script_names_modflow.append('modflow_%s-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction' % (stress_test_meteo))
-            script_names_modflow.append('modflow_%s-magnitude0-duration0_no-irrigation_no-yellow-mustard_no-soil-compaction' % (stress_test_meteo))
             script_names_modflow.append('modflow_%s-magnitude0-duration0_irrigation_no-yellow-mustard_soil-compaction' % (stress_test_meteo))
-            script_names_modflow.append('modflow_%s-magnitude0-duration0_no-irrigation_yellow-mustard_soil-compaction' % (stress_test_meteo))
+            script_names_modflow.append('modflow_%s-magnitude0-duration0_no-irrigation_yellow-mustard_no-soil-compaction' % (stress_test_meteo))
             script_names_modflow.append('modflow_%s-magnitude0-duration0_irrigation_yellow-mustard_no-soil-compaction' % (stress_test_meteo))
-            script_names_modflow.append('modflow_%s-magnitude0-duration0_irrigation_yellow-mustard_soil-compaction' % (stress_test_meteo))
             script_names_modflow.append('modflow_%s-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only' % (stress_test_meteo))
 
         elif stress_test_meteo == "spring-summer-wet":
             scenario_flags.append('--stress-test-meteo %s --soil-compaction soil-compaction' % (stress_test_meteo))
-            scenario_flags.append('--stress-test-meteo %s --soil-compaction no-soil-compaction' % (stress_test_meteo))
-            scenario_flags.append('--stress-test-meteo %s --soil-compaction soil-compaction --yellow-mustard yellow-mustard' % (stress_test_meteo))
             scenario_flags.append('--stress-test-meteo %s --yellow-mustard yellow-mustard --soil-compaction no-soil-compaction' % (stress_test_meteo))
             scenario_flags.append('--stress-test-meteo %s --soil-compaction soil-compaction --grain-corn-only grain-corn-only' % (stress_test_meteo))
 
             script_names_modflow.append('modflow_%s-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction' % (stress_test_meteo))
-            script_names_modflow.append('modflow_%s-magnitude0-duration0_no-irrigation_no-yellow-mustard_no-soil-compaction' % (stress_test_meteo))
-            script_names_modflow.append('modflow_%s-magnitude0-duration0_irrigation_no-yellow-mustard_soil-compaction' % (stress_test_meteo))
             script_names_modflow.append('modflow_%s-magnitude0-duration0_no-irrigation_yellow-mustard_no-soil-compaction' % (stress_test_meteo)) 
             script_names_modflow.append('modflow_%s-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only' % (stress_test_meteo))
 
-        elif stress_test_meteo in ["spring-drought", "summer-drought", "spring-summer-drought"]:
+        elif stress_test_meteo in ["spring-drought", "summer-drought"]:
             for magnitude in stress_test_meteo_magnitudes:
                 for duration in stress_test_meteo_durations:
                     if magnitude == 0 and duration == 0:
                         pass
                     else:
                         scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --soil-compaction soil-compaction' % (stress_test_meteo, magnitude, duration))
-                        scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --soil-compaction no-soil-compaction' % (stress_test_meteo, magnitude, duration))
                         scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --soil-compaction soil-compaction --irrigation irrigation' % (stress_test_meteo, magnitude, duration))
-                        scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --soil-compaction soil-compaction --yellow-mustard yellow-mustard' % (stress_test_meteo, magnitude, duration))
-                        scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --irrigation irrigation --yellow-mustard yellow-mustard' % (stress_test_meteo, magnitude, duration))
-                        scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --soil-compaction soil-compaction --irrigation irrigation --yellow-mustard yellow-mustard' % (stress_test_meteo, magnitude, duration))
+                        scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --yellow-mustard yellow-mustard --soil-compaction no-soil-compaction' % (stress_test_meteo, magnitude, duration))
+                        scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --irrigation irrigation --yellow-mustard yellow-mustard --soil-compaction no-soil-compaction' % (stress_test_meteo, magnitude, duration))
                         scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --soil-compaction soil-compaction --grain-corn-only grain-corn-only' % (stress_test_meteo, magnitude, duration))
 
                         script_names_modflow.append('modflow_%s-magnitude%s-duration%s_no-irrigation_no-yellow-mustard_soil-compaction' % (stress_test_meteo, magnitude, duration))
-                        script_names_modflow.append('modflow_%s-magnitude%s-duration%s_no-irrigation_no-yellow-mustard_no-soil-compaction' % (stress_test_meteo, magnitude, duration))
                         script_names_modflow.append('modflow_%s-magnitude%s-duration%s_irrigation_no-yellow-mustard_soil-compaction' % (stress_test_meteo, magnitude, duration))
-                        script_names_modflow.append('modflow_%s-magnitude%s-duration%s_no-irrigation_yellow-mustard_soil-compaction' % (stress_test_meteo, magnitude, duration))
+                        script_names_modflow.append('modflow_%s-magnitude%s-duration%s_no-irrigation_yellow-mustard_no-soil-compaction' % (stress_test_meteo, magnitude, duration))                        
                         script_names_modflow.append('modflow_%s-magnitude%s-duration%s_irrigation_yellow-mustard_no-soil-compaction' % (stress_test_meteo, magnitude, duration))
-                        script_names_modflow.append('modflow_%s-magnitude%s-duration%s_no-irrigation_yellow-mustard_no-soil-compaction' % (stress_test_meteo, magnitude, duration))
                         script_names_modflow.append('modflow_%s-magnitude%s-duration%s_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only' % (stress_test_meteo, magnitude, duration))
-                        
+
                         if stress_test_meteo in ["spring-summer-drought", "summer-drought"] and magnitude == 2 and duration == 3:
                             scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --soil-compaction soil-compaction --irrigation no-irrigation --stress-test-well-extraction stress' % (stress_test_meteo, magnitude, duration))
                             scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --soil-compaction soil-compaction --irrigation irrigation --stress-test-well-extraction stress' % (stress_test_meteo, magnitude, duration))
                             script_names_modflow.append('modflow_%s-magnitude%s-duration%s_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress' % (stress_test_meteo, magnitude, duration))
                             script_names_modflow.append('modflow_%s-magnitude%s-duration%s_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress' % (stress_test_meteo, magnitude, duration))
-    
+
+        elif stress_test_meteo in ["long-term"]:
+            for magnitude in stress_test_meteo_magnitudes:
+                for duration in stress_test_meteo_durations:
+                    if magnitude == 2 and duration == 0:
+                        scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --soil-compaction soil-compaction' % (stress_test_meteo, magnitude, duration))
+                        scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --soil-compaction soil-compaction --irrigation irrigation' % (stress_test_meteo, magnitude, duration))
+                        scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --yellow-mustard yellow-mustard --soil-compaction no-soil-compaction' % (stress_test_meteo, magnitude, duration))
+                        scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --irrigation irrigation --yellow-mustard yellow-mustard --soil-compaction no-soil-compaction' % (stress_test_meteo, magnitude, duration))
+                        scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --soil-compaction soil-compaction --grain-corn-only grain-corn-only' % (stress_test_meteo, magnitude, duration))
+
+                        script_names_modflow.append('modflow_%s-magnitude%s-duration%s_no-irrigation_no-yellow-mustard_soil-compaction' % (stress_test_meteo, magnitude, duration))
+                        script_names_modflow.append('modflow_%s-magnitude%s-duration%s_irrigation_no-yellow-mustard_soil-compaction' % (stress_test_meteo, magnitude, duration))
+                        script_names_modflow.append('modflow_%s-magnitude%s-duration%s_no-irrigation_yellow-mustard_no-soil-compaction' % (stress_test_meteo, magnitude, duration))                        
+                        script_names_modflow.append('modflow_%s-magnitude%s-duration%s_irrigation_yellow-mustard_no-soil-compaction' % (stress_test_meteo, magnitude, duration))
+                        script_names_modflow.append('modflow_%s-magnitude%s-duration%s_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only' % (stress_test_meteo, magnitude, duration))
+
+                        scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --soil-compaction soil-compaction --irrigation no-irrigation --stress-test-well-extraction stress' % (stress_test_meteo, magnitude, duration))
+                        scenario_flags.append('--stress-test-meteo %s --stress-test-meteo-magnitude %s --stress-test-meteo-duration %s --soil-compaction soil-compaction --irrigation irrigation --stress-test-well-extraction stress' % (stress_test_meteo, magnitude, duration))
+                        script_names_modflow.append('modflow_%s-magnitude%s-duration%s_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress' % (stress_test_meteo, magnitude, duration))
+                        script_names_modflow.append('modflow_%s-magnitude%s-duration%s_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress' % (stress_test_meteo, magnitude, duration))    
     
     jobs = []
     years = np.arange(2013, 2024).tolist()
-    # xx = [0, 1, 2, 3, 4, 5, 6, 70, 71, 72, 73, 74, 75, 76, 21, 22, 23, 24, 25, 26, 27, 42, 43, 44, 45, 46, 47, 48, 77, 78, 79, 80, 81]
-    # scenario_flags_ = [scenario_flags[i] for i in xx]
-    # script_names_modflow_ = [script_names_modflow[i] for i in xx]
-    # for scenario_flag, script_name in zip(scenario_flags_, script_names_modflow_):
     for scenario_flag, script_name in zip(scenario_flags, script_names_modflow):
         output_path_ws = base_path_ws_modflow / "output" / script_name
         lines = []
@@ -144,7 +144,7 @@ def main():
         lines.append('sleep 160\n')
         lines.append("cd ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling\n")
         lines.append('echo "Start simulation ..."\n')
-        lines.append('python roger-oneD_modflow6_transient_with_well_extraction.py %s\n' % (scenario_flag))
+        lines.append('python roger_modflow6.py %s\n' % (scenario_flag))
         lines.append('echo "... finalised simulation."\n')
         lines.append("# Move output from local SSD to global workspace\n")
         # lines.append('if [ -d "%s" ]; then\n' % (output_path_ws.as_posix()))

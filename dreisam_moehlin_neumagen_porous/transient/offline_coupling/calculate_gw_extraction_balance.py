@@ -216,13 +216,13 @@ def main(model_run):
 
             # calculate the monthly extraction balance
             df_extraction_balance_monthly = pd.DataFrame(index=df_well_extraction_monthly.index, columns=["sustainable_extraction", "actual_extraction", "extraction_balance"])
-            df_extraction_balance_monthly["sustainable_extraction"] = df_recharge_monthly["recharge"] * 0.3
+            df_extraction_balance_monthly["sustainable_extraction"] = df_recharge_monthly["recharge"].mean() * 0.3
             df_extraction_balance_monthly["actual_extraction"] = df_well_extraction_monthly["well_extraction"]
             df_extraction_balance_monthly["extraction_balance"] = df_extraction_balance_monthly["sustainable_extraction"] - df_extraction_balance_monthly["actual_extraction"]
 
             # calculate the annual extraction balance
             df_extraction_balance_annual = pd.DataFrame(index=df_well_extraction_annual.index, columns=["sustainable_extraction", "actual_extraction", "extraction_balance"])
-            df_extraction_balance_annual["sustainable_extraction"] = df_recharge_annual["recharge"] * 0.3
+            df_extraction_balance_annual["sustainable_extraction"] = df_recharge_annual["recharge"].mean() * 0.3
             df_extraction_balance_annual["actual_extraction"] = df_well_extraction_annual["well_extraction"]
             df_extraction_balance_annual["extraction_balance"] = df_extraction_balance_annual["sustainable_extraction"] - df_extraction_balance_annual["actual_extraction"]
 

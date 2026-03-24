@@ -6,7 +6,7 @@ import click
 @click.command("main")
 def main():
     base_path = Path(__file__).parent
-    base_path_bwhpc = "/pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling"
+    base_path_bwhpc = "/pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling"
 
     # identifiers of the simulations
     stress_tests_meteo = ["base", "spring-drought", "long-term"]

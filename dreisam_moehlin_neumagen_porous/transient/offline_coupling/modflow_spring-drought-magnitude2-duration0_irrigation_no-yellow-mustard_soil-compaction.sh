@@ -60,7 +60,7 @@ cp -r /pfs/10/work/fr_rs1092-workspace/roger/examples/catchment_scale/dreisam_mo
 sleep 120
 cd ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling
 echo "Start simulation ..."
-python roger-oneD_modflow6_transient_with_well_extraction.py --stress-test-meteo spring-drought --stress-test-meteo-magnitude 2 --stress-test-meteo-duration 0 --soil-compaction soil-compaction --irrigation irrigation
+python roger_modflow6.py --stress-test-meteo spring-drought --stress-test-meteo-magnitude 2 --stress-test-meteo-duration 0 --soil-compaction soil-compaction --irrigation irrigation
 echo "... finalised simulation"
 # Move output from local SSD to global workspace
 echo "Move output to /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/modflow_spring-drought-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction"
