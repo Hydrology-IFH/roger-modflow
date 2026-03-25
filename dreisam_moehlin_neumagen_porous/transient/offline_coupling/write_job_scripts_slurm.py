@@ -131,16 +131,9 @@ def main():
         lines.append("cp -r %s/config_modflow.yml ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient\n" % (str(base_path_ws_modflow.parent)))
         lines.append("cp -r %s/input ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient\n" % (str(base_path_ws_modflow.parent)))
         lines.append("cp -r %s/fudge_parameters_modflow.csv ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient\n" % (str(base_path_ws_modflow.parent)))
-        for year in years:
-            input_file = script_name.replace("modflow_", "recharge_").replace("_well-extraction-stress", "") + f"_year{year}.nc"
-            lines.append("cp -r %s/output/%s ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/\n" % (base_path_bwhpc_roger, input_file))
-        for year in years:
-            input_file = script_name.replace("modflow_", "capillary_rise_").replace("_well-extraction-stress", "") + f"_year{year}.nc"
-            lines.append("cp -r %s/output/%s ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/\n" % (base_path_bwhpc_roger, input_file))
-        for year in years:
-            if "_irrigation_" in script_name:
-                input_file = script_name.replace("modflow_", "irrigation_").replace("_well-extraction-stress", "") + f"_year{year}.nc"
-                lines.append("cp -r %s/output/%s ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/\n" % (base_path_bwhpc_roger, input_file))
+        input_file = script_name.replace("modflow_", "ONEDCROP_rci_").replace("_well-extraction-stress", "") + ".tar.gz"
+        lines.append("cp -r %s/output/%s ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/input/\n" % (base_path_bwhpc_roger, input_file))
+        lines.append("tar -xf ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/input/%s\n" % (input_file))
         lines.append('sleep 120\n')
         lines.append("cd ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling\n")
         lines.append('echo "Start simulation ..."\n')

@@ -768,7 +768,7 @@ with h5netcdf.File(file, "a", decode_vlen_strings=False) as f:
     
     v = f.create_variable("Time", ("Time",), float, compression="gzip", compression_opts=1)
     v.attrs["long_name"] = "Time"
-    v.attrs["units"] = "months since 2013-01-01"
+    v.attrs["units"] = f"months since {df_gw_heads.index.year[0]}-01-01"
     v[:] = np.arange(len(df_gw_heads.index))
 
     # Create variables
