@@ -208,7 +208,7 @@ class ModFlowSimulation:
 
         # Create the Flopy groundwater flow (gwf) model object
         model_nam_file = "{}.nam".format(name)
-        gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file, save_flows=True, newtonoptions="NEWTON")
+        gwf = flopy.mf6.ModflowGwf(sim, modelname=name, model_nam_file=model_nam_file, save_flows=False, newtonoptions="NEWTON")
 
         # Create the Flopy iterative model solver (ims) Package object
         ims = flopy.mf6.modflow.mfims.ModflowIms(sim, pname="ims", print_option="summary", complexity="COMPLEX", no_ptcrecord="NO_PTC_ALL")
@@ -633,7 +633,7 @@ class ModFlowSimulation:
         cpr_irr_spd = cpr_irr_spd.tolist()
         cpr_irr = flopy.mf6.ModflowGwfevt(gwf, fixed_cell=True,
                                           print_input=False, print_flows=False,
-                                          save_flows=True, boundnames=None,
+                                          save_flows=False, boundnames=None,
                                           maxbound=self.modflow_basin.sum(), stress_period_data=cpr_irr_spd)
 
         # streamflow routing package (SFR)
