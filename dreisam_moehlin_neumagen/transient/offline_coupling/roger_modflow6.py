@@ -693,7 +693,7 @@ class ModFlowSimulation:
         head_filerecord = [headfile]
         budgetfile = "{}.cbc".format(name)
         budget_filerecord = [budgetfile]
-        saverecord = [("HEAD", "FIRST"), ("HEAD", "FREQUENCY", 7), ("HEAD", "LAST"), ("BUDGET", "FIRST"), ("BUDGET", "FREQUENCY", 7), ("BUDGET", "LAST")]
+        saverecord = [("HEAD", "FIRST"), ("HEAD", "FREQUENCY", 1), ("HEAD", "LAST"), ("BUDGET", "FIRST"), ("BUDGET", "FREQUENCY", 1), ("BUDGET", "LAST")]
         oc = flopy.mf6.modflow.mfgwfoc.ModflowGwfoc(
             gwf,
             pname="oc",

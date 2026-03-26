@@ -21,7 +21,7 @@ def xy_to_rowcol(x, y, x0, y0):
     row = math.floor((y0 - y) / 50)
     return row, col
 
-@click.option("-mr", "--model-run", type=int, default=1806)
+@click.option("-mr", "--model-run", type=int, default=944)
 @click.command("main", short_help="Evaluate the transient simulation")
 def main(model_run):
     base_path = Path(__file__).parent
@@ -43,8 +43,11 @@ def main(model_run):
     click.echo("Loading topography...")
     path = base_path.parent / "input" / "parameters_modflow.nc"
     ds_params = xr.open_dataset(path, engine="h5netcdf")
-    mask = (ds_params["mask_porous_aquifer"].values == 1)
-    topography = np.where(mask, ds_params['elevations'].isel(z=0).values, np.nan)
+    topography = ds_params['elevations'].isel(z=0).values
+    mask_schoenberg = (ds_params["mask_schoenberg"].values == 1)
+    mask = np.isfinite(topography)
+    mask = np.where(mask_schoenberg, False, mask)
+    topography = np.where(mask, topography, np.nan)
     xcoords = ds_params["x"].values
     ycoords = ds_params["y"].values
     x0 = xcoords[0] - 25
