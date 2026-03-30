@@ -12,6 +12,7 @@ def main():
     base_path_bwhpc_roger = f"/pfs/10/work/fr_rs1092-workspace/roger/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed"
     base_path_bwhpc_modflow = f"/pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/{dir_name}"
     base_path_ws_modflow = Path(f"/pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/{dir_name}")
+    base_path_bwhpc_roger_project = f"/pfs/10/project/bw22g004/fr_rs1092/workspace-1773831854/roger/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed"
 
     # identifiers of the simulations
     stress_tests_meteo = ["base", "spring-drought", "long-term"]
@@ -132,9 +133,12 @@ def main():
         lines.append("cp -r %s/input ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient\n" % (str(base_path_ws_modflow.parent)))
         lines.append("cp -r %s/fudge_parameters_modflow.csv ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient\n" % (str(base_path_ws_modflow.parent)))
         input_file = script_name.replace("modflow_", "ONEDCROP_rci_").replace("_well-extraction-stress", "") + ".tar.gz"
+        lines.append("cp -r %s/output/%s %s/output/\n" % (base_path_bwhpc_roger_project, input_file, (base_path_bwhpc_roger)))
+        lines.append('sleep 120\n')
         lines.append("cp -r %s/output/%s ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/\n" % (base_path_bwhpc_roger, input_file))
         lines.append("tar -xf ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/%s -C ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/\n" % (input_file))
         lines.append('sleep 120\n')
+        lines.append("rm %s/output/%s\n" % (base_path_bwhpc_roger, input_file))
         lines.append("cd ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling\n")
         lines.append('echo "Start simulation ..."\n')
         lines.append('python roger_modflow6.py %s\n' % (scenario_flag))

@@ -24,10 +24,12 @@ cp -r /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/tr
 cp -r /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/transient/config_modflow.yml ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient
 cp -r /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/transient/input ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient
 cp -r /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/transient/fudge_parameters_modflow.csv ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient
-cp -r /pfs/10/work/fr_rs1092-workspace/roger/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed/output/ONEDCROP_rci_spring-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only.tar.gz ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/input/
+cp -r /pfs/10/project/bw22g004/fr_rs1092/workspace-1773831854/roger/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed/output/ONEDCROP_rci_spring-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only.tar.gz /pfs/10/work/fr_rs1092-workspace/roger/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed/output/
 sleep 160
+cp -r /pfs/10/work/fr_rs1092-workspace/roger/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed/output/ONEDCROP_rci_spring-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only.tar.gz ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/input/
 tar -xf ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/input/ONEDCROP_rci_spring-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only.tar.gz -C ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/input/
 sleep 160
+rm /pfs/10/work/fr_rs1092-workspace/roger/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed/output/ONEDCROP_rci_spring-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only.tar.gz
 cd ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling
 echo "Start simulation ..."
 python roger_modflow6.py --stress-test-meteo spring-drought --stress-test-meteo-magnitude 0 --stress-test-meteo-duration 3 --soil-compaction soil-compaction --grain-corn-only grain-corn-only
