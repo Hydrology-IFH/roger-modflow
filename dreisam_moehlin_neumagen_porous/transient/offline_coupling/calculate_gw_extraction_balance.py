@@ -75,7 +75,6 @@ def main(model_run):
     ds_params = xr.open_dataset(path, engine="h5netcdf")
     xcoords = ds_params["x"].values
     ycoords = ds_params["y"].values
-    mask_catch = ds_params["mask_porous_aquifer"].values == 1
 
     for area in areas:
         if area == "dmn":

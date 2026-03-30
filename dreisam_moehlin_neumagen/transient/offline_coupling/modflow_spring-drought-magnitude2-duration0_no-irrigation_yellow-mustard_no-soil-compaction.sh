@@ -25,7 +25,8 @@ cp -r /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/tr
 cp -r /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/transient/input ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient
 cp -r /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/transient/fudge_parameters_modflow.csv ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient
 cp -r /pfs/10/work/fr_rs1092-workspace/roger/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed/output/ONEDCROP_rci_spring-drought-magnitude2-duration0_no-irrigation_yellow-mustard_no-soil-compaction.tar.gz ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/input/
-tar -xf ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/input/ONEDCROP_rci_spring-drought-magnitude2-duration0_no-irrigation_yellow-mustard_no-soil-compaction.tar.gz
+sleep 160
+tar -xf ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/input/ONEDCROP_rci_spring-drought-magnitude2-duration0_no-irrigation_yellow-mustard_no-soil-compaction.tar.gz -C ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/input/
 sleep 160
 cd ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling
 echo "Start simulation ..."

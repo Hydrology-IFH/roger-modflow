@@ -98,25 +98,48 @@ _df_rotbach.columns = [['[m3/s]'], ['Q']]
 file = base_path / "input" / "2013-2023" / "discharge_rotbach.csv"
 _df_rotbach.to_csv(file, index=True, sep=';')
 
+
+file = base_path / "observations" / "discharge_brugga.csv"
+# Read with custom column names
+df_brugga = pd.read_csv(file,
+                 skiprows=8,
+                 encoding='latin-1')
+
+# Data preprocessing
+df_brugga.index = pd.date_range(start='2013-01-01', end='2023-12-31', freq='D')
+df_brugga['Discharge'] = df_brugga['Wert'].str.replace(',', '.').astype(float)
+
+df_brugga = df_brugga.loc[:, 'Discharge'].to_frame()
+df_brugga.columns = ['Q']
+_df_brugga = df_brugga.copy()
+_df_brugga.columns = [['[m3/s]'], ['Q']]
+file = base_path / "input" / "2013-2023" / "discharge_brugga.csv"
+_df_brugga.to_csv(file, index=True, sep=';')
+
+
 # plot discharge time series for visual inspection
-fig, ax = plt.subplots(4, 1, figsize=(8, 8), sharex=True)
+fig, ax = plt.subplots(5, 1, figsize=(8, 8), sharex=True)
 ax[0].plot(df_rotbach.index, df_rotbach['Q'], label='Rotbach', color='purple')
 ax[0].set_ylabel("Discharge [m³/s]")
 ax[0].set_xlim(df_rotbach.index.min(), df_rotbach.index.max())
 ax[0].set_ylim(0, )
-ax[1].plot(df_dreisam.index, df_dreisam['Q'], label='Dreisam', color='blue')
+ax[1].plot(df_brugga.index, df_brugga['Q'], label='Brugga', color='pink')
 ax[1].set_ylabel("Discharge [m³/s]")
-ax[1].set_xlim(df_dreisam.index.min(), df_dreisam.index.max())
+ax[1].set_xlim(df_brugga.index.min(), df_brugga.index.max())
 ax[1].set_ylim(0, )
-ax[2].plot(df_moehlin.index, df_moehlin['Q'], label='Moehlin', color='green')
+ax[2].plot(df_dreisam.index, df_dreisam['Q'], label='Dreisam', color='blue')
 ax[2].set_ylabel("Discharge [m³/s]")
-ax[2].set_xlim(df_moehlin.index.min(), df_moehlin.index.max())
+ax[2].set_xlim(df_dreisam.index.min(), df_dreisam.index.max())
 ax[2].set_ylim(0, )
-ax[3].plot(df_neumagen.index, df_neumagen['Q'], label='Neumagen', color='red')
-ax[3].set_xlabel("Date")
+ax[3].plot(df_moehlin.index, df_moehlin['Q'], label='Moehlin', color='orange')
 ax[3].set_ylabel("Discharge [m³/s]")
-ax[3].set_xlim(df_neumagen.index.min(), df_neumagen.index.max())
+ax[3].set_xlim(df_moehlin.index.min(), df_moehlin.index.max())
 ax[3].set_ylim(0, )
+ax[4].plot(df_neumagen.index, df_neumagen['Q'], label='Neumagen', color='red')
+ax[4].set_xlabel("Date")
+ax[4].set_ylabel("Discharge [m³/s]")
+ax[4].set_xlim(df_neumagen.index.min(), df_neumagen.index.max())
+ax[4].set_ylim(0, )
 file = base_path / "figures" / "discharge.png"
 fig.savefig(file, dpi=300, bbox_inches='tight')
 plt.close(fig)
@@ -139,7 +162,7 @@ rotbach_average_summer_2018 = df_rotbach.loc["2018-06-01":"2018-08-31", "Q"].mea
 base_path = Path(__file__).parent  # current directory; change if files are elsewhere
 discharge_path = base_path / "input" / "2013-2023"
 
-discharge_stations = ["Dreisam", "Moehlin", "Neumagen", "Rotbach"]
+discharge_stations = ["Dreisam", "Moehlin", "Neumagen", "Rotbach", "Brugga"]
 durations = [0, 2, 3]
 magnitudes = [0, 1, 2]
 
@@ -152,7 +175,8 @@ for station in discharge_stations:
         discharge = df_neumagen.copy()
     elif station == "Rotbach":
         discharge = df_rotbach.copy()
-
+    elif station == "Brugga":
+        discharge = df_brugga.copy()
     # select summer period of 2018
     discharge_summer_2018 = discharge.loc["2018-06-01":"2018-08-31"]
     # select summer period of 2017

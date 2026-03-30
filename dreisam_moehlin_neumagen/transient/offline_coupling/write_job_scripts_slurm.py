@@ -133,7 +133,8 @@ def main():
         lines.append("cp -r %s/fudge_parameters_modflow.csv ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient\n" % (str(base_path_ws_modflow.parent)))
         input_file = script_name.replace("modflow_", "ONEDCROP_rci_").replace("_well-extraction-stress", "") + ".tar.gz"
         lines.append("cp -r %s/output/%s ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/input/\n" % (base_path_bwhpc_roger, input_file))
-        lines.append("tar -xf ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/input/%s\n" % (input_file))
+        lines.append('sleep 160\n')
+        lines.append("tar -xf ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/input/%s -C ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/input/\n" % (input_file))
         lines.append('sleep 160\n')
         lines.append("cd ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling\n")
         lines.append('echo "Start simulation ..."\n')
