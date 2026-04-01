@@ -1062,6 +1062,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         recharge_vertical = aggregate_to_coarser_resolution(recharge, 25, config_modflow['dx'], method="average")
         recharge = recharge_vertical.flatten()
         recharge[recharge > 0.1] = 0.1  # constrain recharge to 0.1 m/day
+        recharge = np.where(np.isnan(recharge), 0, recharge)  # set negative recharge to zero
         modflow_interface.set_recharge(recharge)
 
         # update capillary rise and pass it to MODFLOW
@@ -1084,6 +1085,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         else:
             capillary_rise_irrigation = capillary_rise.flatten()
 
+        capillary_rise_irrigation = np.where(np.isnan(capillary_rise_irrigation), 0, capillary_rise_irrigation)
         modflow_interface.set_cpr_irr_rate(capillary_rise_irrigation)
 
         # update well rate and pass it to MODFLOW
@@ -1092,6 +1094,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         well_extraction_rate[cond_drinking_water_supply] = well_extraction_rate[cond_drinking_water_supply] * daily_weights_drinking_water_supply_year_doy
         well_extraction_rate[~cond_drinking_water_supply] = well_extraction_rate[~cond_drinking_water_supply] / 365.25
         well_extraction_rate[:] = -well_extraction_rate[:]  # extraction is negative
+        well_extraction_rate = np.where(np.isnan(well_extraction_rate), 0, well_extraction_rate)  # set nan values to zero
         modflow_interface.set_well_rate(well_extraction_rate)
 
         # update SFR inflow and pass it to MODFLOW
