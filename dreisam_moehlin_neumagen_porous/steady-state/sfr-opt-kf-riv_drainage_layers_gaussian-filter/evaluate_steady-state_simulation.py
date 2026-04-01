@@ -24,7 +24,7 @@ def recalc_specific_yield(hydraulic_conductivity, specific_yield_min=0.05, speci
     specific_yield[specific_yield > specific_yield_max] = specific_yield_max
     return specific_yield
 
-@click.option("-mr", "--model-run", type=int, default=5)
+@click.option("-mr", "--model-run", type=int, default=1806)
 @click.command("main", short_help="Evaluate the steady-state simulation")
 def main(model_run):
     base_path = Path(__file__).parent
@@ -304,14 +304,14 @@ def main(model_run):
     src = rasterio.open(str(base_path.parent / "input" / "groundwater_heads_interpolated_50m.tif"))
     gw_heads_interpolated = src.read(1)
 
-    grid_extent = (ds_mf.lon.values[0] / 1000, ds_mf.lon.values[-1] / 1000, ds_mf.lat.values[-1] / 1000, ds_mf.lat.values[0] / 1000)
+    grid_extent = (ds_mf.lon.values[0], ds_mf.lon.values[-1], ds_mf.lat.values[-1], ds_mf.lat.values[0])
     fig, axes = plt.subplots(figsize=(4, 4))
     gw_heads_interpolated[~mask] = np.nan
     plt.imshow(gw_heads_interpolated, cmap='terrain', aspect='equal', extent=grid_extent)
     plt.colorbar(label='[m]', shrink=0.5)
     plt.grid(zorder=0)
-    plt.xlabel('x-coordinate [km]')
-    plt.ylabel('y-coordinate [km]')
+    plt.xlabel('X-Koordinate')
+    plt.ylabel('Y-Koordinate')
     plt.tight_layout()
     file = Path(__file__).parent / "figures" / "groundwater_heads_interpolated.png"
     fig.savefig(file, dpi=300)
@@ -322,8 +322,8 @@ def main(model_run):
     plt.imshow(gw_depth_interpolated, cmap='viridis', aspect='equal', vmin=0, vmax=20, extent=grid_extent)
     plt.colorbar(label='[m]', shrink=0.5)
     plt.grid(zorder=0)
-    plt.xlabel('x-coordinate [km]')
-    plt.ylabel('y-coordinate [km]')
+    plt.xlabel('X-Koordinate')
+    plt.ylabel('Y-Koordinate')
     plt.tight_layout()
     file = Path(__file__).parent / "figures" / "groundwater_depths_interpolated.png"
     fig.savefig(file, dpi=300)
@@ -417,14 +417,14 @@ def main(model_run):
 
     fig, axes = plt.subplots(figsize=(4, 4))
     topography[~mask] = np.nan
-    gauge_obs_y = observed_streamflow["y-coordinate"].values / 1000  # row IDs of the observation wells
-    gauge_obs_x = observed_streamflow["x-coordinate"].values / 1000  # column IDs of the observation wells
+    gauge_obs_y = observed_streamflow["y-coordinate"].values  # row IDs of the observation wells
+    gauge_obs_x = observed_streamflow["x-coordinate"].values  # column IDs of the observation wells
     plt.scatter(gauge_obs_x, gauge_obs_y, c=diff_sim_obs_water_depth, s=5, cmap='RdBu', vmin=-1, vmax=1)
     plt.colorbar(label='[m]', shrink=0.45)
     plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5, extent=grid_extent)
     plt.grid(zorder=0)
-    plt.xlabel('x-coordinate [km]')
-    plt.ylabel('y-coordinate [km]')
+    plt.xlabel('X-Koordinate')
+    plt.ylabel('Y-Koordinate')
     fig.tight_layout()
     file = Path(__file__).parent / "figures" / f"difference_sim_obs_water_depth_{model_run}.png"
     fig.savefig(file, dpi=300)
@@ -432,14 +432,14 @@ def main(model_run):
 
     fig, axes = plt.subplots(figsize=(4, 4))
     topography[~mask] = np.nan
-    gauge_obs_y = observed_streamflow["y-coordinate"].values / 1000  # row IDs of the observation wells
-    gauge_obs_x = observed_streamflow["x-coordinate"].values / 1000  # column IDs of the observation wells
+    gauge_obs_y = observed_streamflow["y-coordinate"].values  # row IDs of the observation wells
+    gauge_obs_x = observed_streamflow["x-coordinate"].values  # column IDs of the observation wells
     plt.scatter(gauge_obs_x, gauge_obs_y, c=diff_sim_obs_streamflow, s=5, cmap='RdBu', vmin=-1, vmax=1)
     plt.colorbar(label='[$m^3$/s]', shrink=0.45)
     plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5, extent=grid_extent)
     plt.grid(zorder=0)
-    plt.xlabel('x-coordinate [km]')
-    plt.ylabel('y-coordinate [km]')
+    plt.xlabel('X-Koordinate')
+    plt.ylabel('Y-Koordinate')
     fig.tight_layout()
     file = Path(__file__).parent / "figures" / f"difference_sim_obs_streamflow_{model_run}.png"
     fig.savefig(file, dpi=300)
@@ -456,38 +456,38 @@ def main(model_run):
     diff_sim_obs = sim - obs
     cm = plt.get_cmap('PuOr')
     cm.set_bad(color='grey')
-    grid_extent = (ds_mf.lon.values[0] / 1000, ds_mf.lon.values[-1] / 1000, ds_mf.lat.values[-1] / 1000, ds_mf.lat.values[0] / 1000)
+    grid_extent = (ds_mf.lon.values[0], ds_mf.lon.values[-1], ds_mf.lat.values[-1], ds_mf.lat.values[0])
     fig, axes = plt.subplots(figsize=(4, 4))
     topography[~mask] = np.nan
     # wells_y = np.array([266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]) * 50
     # wells_x = np.array([66, 64, 63, 59, 56, 88, 464, 464, 465, 465, 477, 459, 496]) * 50
     # plt.scatter(wells_x, wells_y, marker='x', s=5, c='black')
-    wells_obs_y = observed_groundwater_heads["y-coordinate"].values / 1000   # row IDs of the observation wells
-    wells_obs_x = observed_groundwater_heads["x-coordinate"].values / 1000   # column IDs of the observation wells
+    wells_obs_y = observed_groundwater_heads["y-coordinate"].values   # row IDs of the observation wells
+    wells_obs_x = observed_groundwater_heads["x-coordinate"].values   # column IDs of the observation wells
     plt.scatter(wells_obs_x, wells_obs_y, c=diff_sim_obs, s=5, cmap=cm, vmin=-5, vmax=5)
     plt.colorbar(label='[m]', shrink=0.45)
     plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5, extent=grid_extent)
     plt.grid(zorder=0)
-    plt.xlabel('x-coordinate [km]')
-    plt.ylabel('y-coordinate [km]')
+    plt.xlabel('X-Koordinate')
+    plt.ylabel('Y-Koordinate')
     fig.tight_layout()
     file = Path(__file__).parent / "figures" / f"difference_sim_obs_{model_run}.png"
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
-    grid_extent = (ds_mf.lon.values[0] / 1000, ds_mf.lon.values[-1] / 1000, ds_mf.lat.values[-1] / 1000, ds_mf.lat.values[0] / 1000)
+    grid_extent = (ds_mf.lon.values[0], ds_mf.lon.values[-1], ds_mf.lat.values[-1], ds_mf.lat.values[0])
     fig, axes = plt.subplots(figsize=(4, 4))
     plt.imshow(groundwater_heads[:, :] - gw_heads_interpolated, cmap='PuOr', aspect='equal', vmin=-10, vmax=10, extent=grid_extent)
     plt.colorbar(label='[m]', shrink=0.45)
     plt.grid(zorder=0)
-    plt.xlabel('x-coordinate [km]')
-    plt.ylabel('y-coordinate [km]')
+    plt.xlabel('X-Koordinate')
+    plt.ylabel('Y-Koordinate')
     plt.tight_layout()
     file = Path(__file__).parent / "figures" / f"difference_sim_{model_run}_int.png"
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
-    grid_extent = (ds_mf.lon.values[0] / 1000, ds_mf.lon.values[-1] / 1000, ds_mf.lat.values[-1] / 1000, ds_mf.lat.values[0] / 1000)
+    grid_extent = (ds_mf.lon.values[0], ds_mf.lon.values[-1], ds_mf.lat.values[-1], ds_mf.lat.values[0])
     fig, axes = plt.subplots(figsize=(4, 4))
     topography[~mask] = np.nan
     wells_y = np.array([266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]) * 50
@@ -499,14 +499,14 @@ def main(model_run):
     plt.colorbar(label='[m]', shrink=0.45)
     plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5, extent=grid_extent)
     plt.grid(zorder=0)
-    plt.xlabel('x-coordinate [km]')
-    plt.ylabel('y-coordinate [km]')
+    plt.xlabel('X-Koordinate')
+    plt.ylabel('Y-Koordinate')
     plt.tight_layout()
     file = Path(__file__).parent / "figures" / f"groundwater_heads_sim{model_run}.png"
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
-    grid_extent = (ds_mf.lon.values[0] / 1000, ds_mf.lon.values[-1] / 1000, ds_mf.lat.values[-1] / 1000, ds_mf.lat.values[0] / 1000)
+    grid_extent = (ds_mf.lon.values[0], ds_mf.lon.values[-1], ds_mf.lat.values[-1], ds_mf.lat.values[0])
     fig, axes = plt.subplots(figsize=(4, 4))
     topography[~mask] = np.nan
     wells_y = np.array([266, 268, 271, 272, 280, 259, 210, 212, 217, 225, 232, 228, 264]) * 50
@@ -518,8 +518,8 @@ def main(model_run):
     plt.colorbar(label='[m]', shrink=0.45)
     plt.imshow(topography, cmap='terrain', aspect='equal', alpha=0.5, extent=grid_extent)
     plt.grid(zorder=0)
-    plt.xlabel('x-coordinate [km]')
-    plt.ylabel('y-coordinate [km]')
+    plt.xlabel('X-Koordinate')
+    plt.ylabel('Y-Koordinate')
     plt.tight_layout()
     file = Path(__file__).parent / "figures" / "observed_groundwater_heads.png"
     fig.savefig(file, dpi=300)
@@ -595,8 +595,8 @@ def main(model_run):
         plt.imshow(ds_mf['head'].isel(Time=0, layer=layer).values, extent=grid_extent, cmap='viridis', aspect='equal')
         plt.colorbar(label='groundwater head \n[m a.s.l.]', shrink=0.5)
         plt.grid(zorder=0)
-        plt.xlabel('x-coordinate [km]')
-        plt.ylabel('y-coordinate [km]')
+        plt.xlabel('X-Koordinate')
+        plt.ylabel('Y-Koordinate')
         plt.tight_layout()
         i = layer + 1
         file = Path(__file__).parent / "figures" / f"gw_head_steady_state_layer{i}_grid_{model_run}.png"
@@ -610,8 +610,8 @@ def main(model_run):
         plt.imshow(gw_thickness, extent=grid_extent, cmap='viridis', aspect='equal')
         plt.colorbar(label='groundwater thickness [m]', shrink=0.5)
         plt.grid(zorder=0)
-        plt.xlabel('x-coordinate [km]')
-        plt.ylabel('y-coordinate [km]')
+        plt.xlabel('X-Koordinate')
+        plt.ylabel('Y-Koordinate')
         plt.tight_layout()
         i = layer + 1
         file = Path(__file__).parent / "figures" / f"gw_thickness_steady_state_layer{i}_grid_{model_run}.png"
@@ -623,8 +623,8 @@ def main(model_run):
         plt.imshow(gw_depth, extent=grid_extent, cmap='viridis', aspect='equal', vmin=0, vmax=20)
         plt.colorbar(label='groundwater depth [m]', shrink=0.5)
         plt.grid(zorder=0)
-        plt.xlabel('x-coordinate [km]')
-        plt.ylabel('y-coordinate [km]')
+        plt.xlabel('X-Koordinate')
+        plt.ylabel('Y-Koordinate')
         plt.tight_layout()
         i = layer + 1
         file = Path(__file__).parent / "figures" / f"gw_depth_steady_state_layer{i}_grid_{model_run}.png"
@@ -639,8 +639,8 @@ def main(model_run):
         plt.imshow(flow_residuals, extent=grid_extent, cmap='PuOr', aspect='equal', vmin=-minmax, vmax=minmax)
         plt.colorbar(label='groundwater flow residuals [m/day]', shrink=0.5)
         plt.grid(zorder=0)
-        plt.xlabel('x-coordinate [km]')
-        plt.ylabel('y-coordinate [km]')
+        plt.xlabel('X-Koordinate')
+        plt.ylabel('Y-Koordinate')
         plt.tight_layout()
         i = layer + 1
         file = Path(__file__).parent / "figures" / f"gw_flow_residuals_steady_state_layer{i}_grid_{model_run}.png"
@@ -657,8 +657,8 @@ def main(model_run):
         plt.imshow(hydraulic_conductivities_layer/(24*60*60), extent=grid_extent, cmap='Oranges', aspect='equal', vmin=10e-7, vmax=10e-2, norm='log')
         cbar = plt.colorbar(label='$k_f$ [m/s]', shrink=0.48)
         plt.grid(zorder=0)
-        plt.xlabel('x-coordinate [km]')
-        plt.ylabel('y-coordinate [km]')
+        plt.xlabel('X-Koordinate')
+        plt.ylabel('Y-Koordinate')
         plt.tight_layout()
         file = Path(__file__).parent / "figures" / f"hydraulic_conductivity_layer_{i}_{model_run}.png"
         fig.savefig(file, dpi=300)
@@ -670,8 +670,8 @@ def main(model_run):
         plt.imshow(specific_yield_layer, extent=grid_extent, cmap='Blues', aspect='equal', vmin=0.01, vmax=0.35)
         cbar = plt.colorbar(label='$sy$ [-]', shrink=0.48)
         plt.grid(zorder=0)
-        plt.xlabel('x-coordinate [km]')
-        plt.ylabel('y-coordinate [km]')
+        plt.xlabel('X-Koordinate')
+        plt.ylabel('Y-Koordinate')
         plt.tight_layout()
         file = Path(__file__).parent / "figures" / f"specific_yield_layer_{i}_{model_run}.png"
         fig.savefig(file, dpi=300)

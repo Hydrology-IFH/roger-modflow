@@ -26,7 +26,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     click.echo(f"flopy version: {flopy.__version__}")
 
     base_path = Path(__file__).parent
-    base_path_project = Path("/pfs/10/project/bw22g004/fr_rs1092/workspace-1773831854/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output")
+    base_path_project = Path("/pfs/10/project/bw22g004/fr_rs1092/workspace-1773831854/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling/output")
 
     if grain_corn_only == "no-grain-corn-only":
         _grain_corn_only = ""
