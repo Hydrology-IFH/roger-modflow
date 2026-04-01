@@ -214,12 +214,15 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     for f in files_to_compress:
         os.remove(f)
 
+
+    # list all modflow output files
+    modflow_files = list((base_path / "output" / stress_test_name).glob(f"dmn_run_{model_run}.*"))
     # copy all modflow files that to save storage
-    for file in base_path / "output" / stress_test_name / f"dmn_run_{model_run}.*":
+    for file in modflow_files:
         shutil.copy(file, output_project_dir)
 
     # remove all files from work directory after copying
-    for file in base_path / "output" / stress_test_name / f"dmn_run_{model_run}.*":
+    for file in modflow_files:
         os.remove(file)
 
     return
