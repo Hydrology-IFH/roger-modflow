@@ -19,7 +19,7 @@ import os
 @click.option("-sc", "--soil-compaction", type=click.Choice(["no-soil-compaction", "soil-compaction"]), default="no-soil-compaction", help="Enable soil compaction")
 @click.option("-gco", "--grain-corn-only", type=click.Choice(["no-grain-corn-only", "grain-corn-only"]), default="no-grain-corn-only", help="Enable grain corn monoculture (no crop rotation)")
 @click.option("-stwe", "--stress-test-well-extraction", type=click.Choice(["no-stress", "stress", "ta-dependent-20", "ta-dependent-40"]), default="no-stress", help="Enable stress test for well extraction")
-@click.option("-mr", "--model-run", type=int, default=1806)
+@click.option("-mr", "--model-run", type=int, default=944)
 @click.command("main")
 def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_duration, irrigation, yellow_mustard, soil_compaction, grain_corn_only, stress_test_well_extraction, model_run):
     click.echo(sys.version)

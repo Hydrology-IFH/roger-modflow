@@ -245,6 +245,7 @@ def main(model_run):
         axes.set_title(f"MAE: {df_metrics_sfr.loc[gauge, 'MAE']:.2f} m³/s, r: {df_metrics_sfr.loc[gauge, 'r']:.2f}")
         axes.set_xlabel("Zeit")
         axes.set_ylabel("Durchfluss [m³/s]")
+        axes.set_yscale("log")
         fig.tight_layout()
         file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"ts_streamflow_{_gauge}_run{model_run}.png"
         fig.savefig(file, dpi=300, bbox_inches="tight")
