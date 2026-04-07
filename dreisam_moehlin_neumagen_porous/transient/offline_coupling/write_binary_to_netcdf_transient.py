@@ -200,27 +200,27 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             for f in files_to_compress:
                 tar.add(f, arcname=f.name)
 
-    # copy archive to project directory
-    output_project_dir = base_path_project / f"{stress_test_name}"
-    if not output_project_dir.exists():
-        output_project_dir.mkdir(parents=True, exist_ok=True)
-    output_file_project = output_project_dir / f"{stress_test_name}_run_{model_run}.tar.gz"
-    click.echo(f"Copying {output_file} to {output_file_project}...")
-    shutil.copy(output_file, output_file_project)
-    # remove archive from work directory after copying
-    os.remove(output_file)
+    # # copy archive to project directory
+    # output_project_dir = base_path_project / f"{stress_test_name}"
+    # if not output_project_dir.exists():
+    #     output_project_dir.mkdir(parents=True, exist_ok=True)
+    # output_file_project = output_project_dir / f"{stress_test_name}_run_{model_run}.tar.gz"
+    # click.echo(f"Copying {output_file} to {output_file_project}...")
+    # shutil.copy(output_file, output_file_project)
+    # # remove archive from work directory after copying
+    # os.remove(output_file)
 
-    # remove individual files after compressing
-    for f in files_to_compress:
-        os.remove(f)
+    # # remove individual files after compressing
+    # for f in files_to_compress:
+    #     os.remove(f)
 
-    # copy all modflow files that to save storage
-    for file in base_path / "output" / stress_test_name / f"dmn_run_{model_run}.*":
-        shutil.copy(file, output_project_dir)
+    # # copy all modflow files that to save storage
+    # for file in base_path / "output" / stress_test_name / f"dmn_run_{model_run}.*":
+    #     shutil.copy(file, output_project_dir)
 
-    # remove all files from work directory after copying
-    for file in base_path / "output" / stress_test_name / f"dmn_run_{model_run}.*":
-        os.remove(file)
+    # # remove all files from work directory after copying
+    # for file in base_path / "output" / stress_test_name / f"dmn_run_{model_run}.*":
+    #     os.remove(file)
 
     return
 

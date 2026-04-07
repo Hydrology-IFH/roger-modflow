@@ -102,7 +102,7 @@ _df_rotbach.to_csv(file, index=True, sep=';')
 file = base_path / "observations" / "discharge_brugga.csv"
 # Read with custom column names
 df_brugga = pd.read_csv(file,
-                 skiprows=8,
+                 skiprows=7,
                  encoding='latin-1')
 
 # Data preprocessing
@@ -164,23 +164,23 @@ discharge_path = base_path / "input" / "2013-2023"
 
 # load stress magnitude data
 file = base_path / "input" / "prec_spring_stress_magnitude.csv"
-df_prec_spring_stress_magnitude = pd.read_csv(file, sep=";", skiprows=1)
+df_prec_spring_stress_magnitude = pd.read_csv(file, sep=";", skiprows=1, index_col=0)
 file = base_path / "input" / "prec_summer_stress_magnitude.csv"
-df_prec_summer_stress_magnitude = pd.read_csv(file, sep=";", skiprows=1)
+df_prec_summer_stress_magnitude = pd.read_csv(file, sep=";", skiprows=1, index_col=0)
 file = base_path / "input" / "prec_autumn_stress_magnitude.csv"
-df_prec_autumn_stress_magnitude = pd.read_csv(file, sep=";", skiprows=1)
+df_prec_autumn_stress_magnitude = pd.read_csv(file, sep=";", skiprows=1, index_col=0)
 file = base_path / "input" / "prec_winter_stress_magnitude.csv"
-df_prec_winter_stress_magnitude = pd.read_csv(file, sep=";", skiprows=1)
+df_prec_winter_stress_magnitude = pd.read_csv(file, sep=";", skiprows=1, index_col=0)
 file = base_path / "input" / "pet_spring_stress_magnitude.csv"
-df_pet_spring_stress_magnitude = pd.read_csv(file, sep=";", skiprows=1)
+df_pet_spring_stress_magnitude = pd.read_csv(file, sep=";", skiprows=1, index_col=0)
 file = base_path / "input" / "pet_summer_stress_magnitude.csv"
-df_pet_summer_stress_magnitude = pd.read_csv(file, sep=";", skiprows=1)
+df_pet_summer_stress_magnitude = pd.read_csv(file, sep=";", skiprows=1, index_col=0)
 file = base_path / "input" / "pet_autumn_stress_magnitude.csv"
-df_pet_autumn_stress_magnitude = pd.read_csv(file, sep=";", skiprows=1)
+df_pet_autumn_stress_magnitude = pd.read_csv(file, sep=";", skiprows=1, index_col=0)
 file = base_path / "input" / "pet_winter_stress_magnitude.csv"
-df_pet_winter_stress_magnitude = pd.read_csv(file, sep=";", skiprows=1)
+df_pet_winter_stress_magnitude = pd.read_csv(file, sep=";", skiprows=1, index_col=0)
 
-discharge_stations = ["Dreisam", "Moehlin", "Neumagen", "Rotbach", "Brugga"]
+discharge_stations = ["Dreisam", "Moehlin", "Neumagen", "Rotbach"]
 durations = [0, 2, 3]
 magnitudes = [0, 1, 2]
 
@@ -220,6 +220,8 @@ for station in discharge_stations:
                     discharge = df_neumagen.copy()
                 elif station == "Rotbach":
                     discharge = df_rotbach.copy()
+                elif station == "Brugga":
+                    discharge = df_brugga.copy()
 
                 # insert spring period of 2020 in spring period of 2019
                 discharge.loc["2019-03-01":"2019-05-31"] = discharge_spring_2020.values
@@ -242,6 +244,9 @@ for station in discharge_stations:
                     discharge = df_neumagen.copy()
                 elif station == "Rotbach":
                     discharge = df_rotbach.copy()
+                elif station == "Brugga":
+                    discharge = df_brugga.copy()
+                
                 # insert summer period of 2018 in summer period of 2017
                 discharge.loc["2017-06-01":"2017-08-31"] = discharge_summer_2018.values
                 # insert summer period of 2018 in summer period of 2016
@@ -263,6 +268,9 @@ for station in discharge_stations:
                     discharge = df_neumagen.copy()
                 elif station == "Rotbach":
                     discharge = df_rotbach.copy()
+                elif station == "Brugga":
+                    discharge = df_brugga.copy()
+
                 # insert spring period of 2020 in spring period of 2019
                 discharge.loc["2019-03-01":"2019-05-31"] = discharge_spring_2020.values
                 # insert spring period of 2020 in spring period of 2018
@@ -283,28 +291,28 @@ for station in discharge_stations:
 
                 if station == "Dreisam":
                     discharge = df_dreisam.copy()
-                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0] - df_pet_spring_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0]) * 100
-                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0] - df_pet_summer_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0]) * 100
-                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0] - df_pet_autumn_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0]) * 100
-                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0] - df_pet_winter_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0]) * 100
+                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Buchenbach", "magnitude2"] - df_pet_spring_stress_magnitude.loc["Buchenbach", "magnitude2"]) * 100
+                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Buchenbach", "magnitude2"] - df_pet_summer_stress_magnitude.loc["Buchenbach", "magnitude2"]) * 100
+                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Buchenbach", "magnitude2"] - df_pet_autumn_stress_magnitude.loc["Buchenbach", "magnitude2"]) * 100
+                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Buchenbach", "magnitude2"] - df_pet_winter_stress_magnitude.loc["Buchenbach", "magnitude2"]) * 100
                 elif station == "Moehlin":
                     discharge = df_moehlin.copy()
-                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_spring_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
-                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_summer_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
-                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_autumn_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
-                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_winter_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
+                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_spring_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
+                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_summer_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
+                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_autumn_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
+                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_winter_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
                 elif station == "Neumagen":
                     discharge = df_neumagen.copy()
-                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_spring_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
-                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_summer_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
-                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_autumn_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
-                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_winter_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
+                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_spring_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
+                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_summer_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
+                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_autumn_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
+                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_winter_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
                 elif station == "Rotbach":
                     discharge = df_rotbach.copy()
-                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Breitnau", "magnitude2"].values[0] - df_pet_spring_stress_magnitude.loc["Breitnau", "magnitude2"].values[0]) * 100
-                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Breitnau", "magnitude2"].values[0] - df_pet_summer_stress_magnitude.loc["Breitnau", "magnitude2"].values[0]) * 100
-                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Breitnau", "magnitude2"].values[0] - df_pet_autumn_stress_magnitude.loc["Breitnau", "magnitude2"].values[0]) * 100
-                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Breitnau", "magnitude2"].values[0] - df_pet_winter_stress_magnitude.loc["Breitnau", "magnitude2"].values[0]) * 100
+                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_spring_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
+                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_summer_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
+                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_autumn_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
+                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_winter_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
 
                 # insert spring period of 2020 in spring period of 2019
                 discharge.loc["2019-03-01":"2019-05-31", "Q"] = discharge_spring_2020.loc[:, "Q"].values
@@ -334,28 +342,28 @@ for station in discharge_stations:
 
                 if station == "Dreisam":
                     discharge = df_dreisam.copy()
-                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0] - df_pet_spring_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0]) * 100
-                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0] - df_pet_summer_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0]) * 100
-                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0] - df_pet_autumn_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0]) * 100
-                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0] - df_pet_winter_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0]) * 100
+                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Buchenbach", "magnitude2"] - df_pet_spring_stress_magnitude.loc["Buchenbach", "magnitude2"]) * 100
+                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Buchenbach", "magnitude2"] - df_pet_summer_stress_magnitude.loc["Buchenbach", "magnitude2"]) * 100
+                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Buchenbach", "magnitude2"] - df_pet_autumn_stress_magnitude.loc["Buchenbach", "magnitude2"]) * 100
+                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Buchenbach", "magnitude2"] - df_pet_winter_stress_magnitude.loc["Buchenbach", "magnitude2"]) * 100
                 elif station == "Moehlin":
                     discharge = df_moehlin.copy()
-                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_spring_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
-                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_summer_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
-                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_autumn_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
-                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_winter_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
+                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_spring_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
+                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_summer_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
+                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_autumn_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
+                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_winter_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
                 elif station == "Neumagen":
                     discharge = df_neumagen.copy()
-                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_spring_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
-                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_summer_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
-                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_autumn_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
-                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_winter_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
+                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_spring_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
+                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_summer_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
+                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_autumn_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
+                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_winter_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
                 elif station == "Rotbach":
                     discharge = df_rotbach.copy()
-                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Breitnau", "magnitude2"].values[0] - df_pet_spring_stress_magnitude.loc["Breitnau", "magnitude2"].values[0]) * 100
-                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Breitnau", "magnitude2"].values[0] - df_pet_summer_stress_magnitude.loc["Breitnau", "magnitude2"].values[0]) * 100
-                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Breitnau", "magnitude2"].values[0] - df_pet_autumn_stress_magnitude.loc["Breitnau", "magnitude2"].values[0]) * 100
-                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Breitnau", "magnitude2"].values[0] - df_pet_winter_stress_magnitude.loc["Breitnau", "magnitude2"].values[0]) * 100
+                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_spring_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
+                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_summer_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
+                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_autumn_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
+                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_winter_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
 
                 # insert summer period of 2018 in summer period of 2017
                 discharge.loc["2017-06-01":"2017-08-31", "Q"] = discharge_summer_2018.loc[:, "Q"].values
@@ -387,28 +395,28 @@ for station in discharge_stations:
 
                 if station == "Dreisam":
                     discharge = df_dreisam.copy()
-                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0] - df_pet_spring_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0]) * 100
-                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0] - df_pet_summer_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0]) * 100
-                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0] - df_pet_autumn_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0]) * 100
-                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0] - df_pet_winter_stress_magnitude.loc["Buchenbach", "magnitude2"].values[0]) * 100
+                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Buchenbach", "magnitude2"] - df_pet_spring_stress_magnitude.loc["Buchenbach", "magnitude2"]) * 100
+                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Buchenbach", "magnitude2"] - df_pet_summer_stress_magnitude.loc["Buchenbach", "magnitude2"]) * 100
+                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Buchenbach", "magnitude2"] - df_pet_autumn_stress_magnitude.loc["Buchenbach", "magnitude2"]) * 100
+                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Buchenbach", "magnitude2"] - df_pet_winter_stress_magnitude.loc["Buchenbach", "magnitude2"]) * 100
                 elif station == "Moehlin":
                     discharge = df_moehlin.copy()
-                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_spring_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
-                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_summer_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
-                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_autumn_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
-                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_winter_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
+                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_spring_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
+                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_summer_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
+                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_autumn_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
+                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_winter_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
                 elif station == "Neumagen":
                     discharge = df_neumagen.copy()
-                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_spring_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
-                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_summer_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
-                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_autumn_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
-                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Freiburg", "magnitude2"].values[0] - df_pet_winter_stress_magnitude.loc["Freiburg", "magnitude2"].values[0]) * 100
+                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_spring_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
+                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_summer_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
+                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_autumn_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
+                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Freiburg", "magnitude2"] - df_pet_winter_stress_magnitude.loc["Freiburg", "magnitude2"]) * 100
                 elif station == "Rotbach":
                     discharge = df_rotbach.copy()
-                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Breitnau", "magnitude2"].values[0] - df_pet_spring_stress_magnitude.loc["Breitnau", "magnitude2"].values[0]) * 100
-                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Breitnau", "magnitude2"].values[0] - df_pet_summer_stress_magnitude.loc["Breitnau", "magnitude2"].values[0]) * 100
-                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Breitnau", "magnitude2"].values[0] - df_pet_autumn_stress_magnitude.loc["Breitnau", "magnitude2"].values[0]) * 100
-                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Breitnau", "magnitude2"].values[0] - df_pet_winter_stress_magnitude.loc["Breitnau", "magnitude2"].values[0]) * 100
+                    q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_spring_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
+                    q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_summer_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
+                    q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_autumn_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
+                    q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_winter_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
 
                 # select only spring periods and modify them according to the stress magnitude
                 cond = (discharge.index.month.isin([3, 4, 5]))
@@ -440,6 +448,8 @@ for station in discharge_stations:
                     discharge = df_neumagen.copy()
                 elif station == "Rotbach":
                     discharge = df_rotbach.copy()
+                elif station == "Brugga":
+                    discharge = df_brugga.copy()
                 # insert spring period of 2015 in spring period of 2020
                 discharge.loc["2020-03-01":"2020-05-31"] = discharge_spring_2015.values
                 # insert summer period of 2017 in summer period of 2018

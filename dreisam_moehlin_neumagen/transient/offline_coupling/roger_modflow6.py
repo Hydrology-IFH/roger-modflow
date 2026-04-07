@@ -905,7 +905,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     if stress_test_well_extraction == "no-stress":
         daily_weights_drinking_water_supply = pd.read_csv(base_path.parent / "input" / "daily_weights_drinking_water_supply.csv", sep=";", index_col=0)
         groundwater_extraction = pd.read_csv(base_path.parent / "input" / "groundwater_extraction.csv", sep=";")
-    elif stress_test_well_extraction == "stress" and stress_test_meteo in ["summer-drought", "spring-summer-drought"]:
+    elif stress_test_well_extraction == "stress" and stress_test_meteo in ["summer-drought", "long-term"]:
         daily_weights_drinking_water_supply = pd.read_csv(base_path.parent / "input" / "stress_tests_well_extraction" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "daily_weights_drinking_water_supply.csv", sep=";", index_col=0)
         groundwater_extraction = pd.read_csv(base_path.parent / "input" / "stress_tests_well_extraction" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "groundwater_extraction.csv", sep=";")
 

@@ -906,7 +906,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         df_discharge_moehlin = pd.read_csv(base_path.parent / "input" / "2013-2023" / "discharge_moehlin.csv", sep=";", index_col=0, skiprows=1)
         df_discharge_neumagen = pd.read_csv(base_path.parent / "input" / "2013-2023" / "discharge_neumagen.csv", sep=";", index_col=0, skiprows=1)
         df_discharge_rotbach = pd.read_csv(base_path.parent / "input" / "2013-2023" / "discharge_rotbach.csv", sep=";", index_col=0, skiprows=1)
-    elif stress_test_meteo in ["spring-drought", "summer-drought", "spring-summer-drought"]:
+    elif stress_test_meteo in ["spring-drought", "summer-drought", "long-term"]:
         df_discharge_dreisam = pd.read_csv(base_path.parent / "input" / "stress_tests_discharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "Dreisam" / "Q.csv", sep=";", index_col=0, skiprows=1)
         df_discharge_moehlin = pd.read_csv(base_path.parent / "input" / "stress_tests_discharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "Moehlin" / "Q.csv", sep=";", index_col=0, skiprows=1)
         df_discharge_neumagen = pd.read_csv(base_path.parent / "input" / "stress_tests_discharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "Neumagen" / "Q.csv", sep=";", index_col=0, skiprows=1)
@@ -929,7 +929,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     # load lateral recharge anomalies to scale the recharge to daily values
     if stress_test_meteo == "base":
         df_lateral_recharge_anomaly = pd.read_csv(base_path.parent / "input" / "2013-2023" / "lateral_recharge_anomaly.csv", sep=";", index_col=0, skiprows=1)
-    elif stress_test_meteo in ["spring-drought", "summer-drought", "spring-summer-drought"]:
+    elif stress_test_meteo in ["spring-drought", "summer-drought", "long-term"]:
         df_lateral_recharge_anomaly = pd.read_csv(base_path.parent / "input" / "stress_tests_lateral_recharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "lateral_recharge_anomaly.csv", sep=";", index_col=0, skiprows=1)
     elif stress_test_meteo in ["spring-summer-wet"]:
         df_lateral_recharge_anomaly = pd.read_csv(base_path.parent / "input" / "stress_tests_lateral_recharge" / f"{stress_test_meteo}" / "lateral_recharge_anomaly.csv", sep=";", index_col=0, skiprows=1)
@@ -941,7 +941,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     if stress_test_well_extraction == "no-stress":
         daily_weights_drinking_water_supply = pd.read_csv(base_path.parent / "input" / "daily_weights_drinking_water_supply.csv", sep=";", index_col=0)
         groundwater_extraction = pd.read_csv(base_path.parent / "input" / "groundwater_extraction.csv", sep=";")
-    elif stress_test_well_extraction == "stress" and stress_test_meteo in ["summer-drought", "spring-summer-drought"]:
+    elif stress_test_well_extraction == "stress" and stress_test_meteo in ["summer-drought", "long-term"]:
         daily_weights_drinking_water_supply = pd.read_csv(base_path.parent / "input" / "stress_tests_well_extraction" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "daily_weights_drinking_water_supply.csv", sep=";", index_col=0, skiprows=1)
         groundwater_extraction = pd.read_csv(base_path.parent / "input" / "stress_tests_well_extraction" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "groundwater_extraction.csv", sep=";")
 
