@@ -997,26 +997,26 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     well_extraction_rate[:] = -well_extraction_rate[:]  # extraction is negative
     modflow_interface.set_well_rate(well_extraction_rate)
 
-    # update intital SFR stage of source reaches and pass it to MODFLOW
-    sfr_stage = np.zeros((n_reaches,), dtype=np.float64)
-    for i, rno in enumerate(source_rnos):
-        sfr_stage[rno - 1] = sfr_packagedata.loc[sfr_packagedata["rno"] == rno, "rtp"].values[0] + 0.1
+    # # update intital SFR stage of source reaches and pass it to MODFLOW
+    # sfr_stage = np.zeros((n_reaches,), dtype=np.float64)
+    # for i, rno in enumerate(source_rnos):
+    #     sfr_stage[rno - 1] = sfr_packagedata.loc[sfr_packagedata["rno"] == rno, "rtp"].values[0] + 0.1
 
-    # Ebnet
-    sfr_stage[18598] = 307.8
-    # Wiesneck
-    sfr_stage[12409] = 432.6
-    # Falkensteig
-    sfr_stage[9094] = 487.8
-    # St. Wilhelm
-    sfr_stage[8165] = 542.6
-    # Oberried
-    sfr_stage[8803] = 432.6
-    # Untermuenstertal
-    sfr_stage[13128] = 331.85
-    # Oberambringen
-    sfr_stage[21173] = 242.05
-    modflow_interface.set_sfr_stage(sfr_stage)
+    # # Ebnet
+    # sfr_stage[18598] = 307.8
+    # # Wiesneck
+    # sfr_stage[12409] = 432.6
+    # # Falkensteig
+    # sfr_stage[9094] = 487.8
+    # # St. Wilhelm
+    # sfr_stage[8165] = 542.6
+    # # Oberried
+    # sfr_stage[8803] = 432.6
+    # # Untermuenstertal
+    # sfr_stage[13128] = 331.85
+    # # Oberambringen
+    # sfr_stage[21173] = 242.05
+    # modflow_interface.set_sfr_stage(sfr_stage)
 
     # run MODFLOW for one timestep
     modflow_interface.step()
