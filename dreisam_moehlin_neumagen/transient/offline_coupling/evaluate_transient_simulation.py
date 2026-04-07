@@ -241,7 +241,6 @@ def main(model_run):
         axes.plot(df_streamflow_sim_obs.index, df_streamflow_sim_obs["obs"], label="Gemessen", linewidth=1.2, color="blue")
         axes.plot(df_streamflow_sim_obs.index, df_streamflow_sim_obs["sim"], label="Simuliert", linewidth=1, color="red")
         axes.set_xlim(df_streamflow_sim_obs.index[0], df_streamflow_sim_obs.index[-1])
-        axes.set_ylim(0,)
         axes.set_title(f"MAE: {df_metrics_sfr.loc[gauge, 'MAE']:.2f} m³/s, r: {df_metrics_sfr.loc[gauge, 'r']:.2f}")
         axes.set_xlabel("Zeit")
         axes.set_ylabel("Durchfluss [m³/s]")
