@@ -9,6 +9,21 @@ import click
 import math
 import os
 
+dict_obs_wells_fissured = {"Au": (347, 280),
+                           "Conventwalde": (531, 135),
+                           "Wagensteig": (649, 217),
+                           "Falkensteig": (579, 303),
+                           "Spielweg": (336, 453),
+                           "Leimbach": (275, 373),
+                           "Aubach": (312, 379),
+                           "Eschbach": (553, 179),
+                           "Hintereschbach": (554, 158),
+                           "Molzhof": (451, 584),
+                           "Zastler": (557, 352),
+                           "Sankt_Wilhelm": (502, 416),
+                           "Breitnau": (687, 313),
+                           }
+
 def xy_to_rowcol(x, y, x0, y0):
     """
     Convert map coordinates (x, y) to array indices (row, col) for a north-up raster.
@@ -66,6 +81,35 @@ def main(model_run):
     figure_dir = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures"
     if not os.path.exists(figure_dir):
         os.makedirs(figure_dir)
+
+
+    for station_id in dict_obs_wells_fissured.keys():
+        # get row and column index based on ccordinate of the station
+        click.echo(f"Evaluating station {station_id}...")
+        xcoord = dict_obs_wells_fissured[station_id][0]
+        ycoord = dict_obs_wells_fissured[station_id][1]
+        # check if the station is within the bounds of the model grid
+        if xcoord >= xcoords[0] and xcoord <= xcoords[-1] and ycoord >= ycoords[-1] and ycoord <= ycoords[0]:
+            row, col = xy_to_rowcol(xcoord, ycoord, x0, y0)
+            simulated_depth = groundwater_depths[:, row, col]
+            observed_depth = observed_groundwater_depths[station_id].values
+            df_sim = pd.DataFrame({"simulated": simulated_depth})
+            df_sim.index = date_time
+            sim_vals = df_sim_obs["simulated"].values
+
+            # plot simulated time series of groundwater depths for the station
+            fig, axes = plt.subplots(figsize=(6, 2))
+            axes.plot(df_sim.index, df_sim["simulated"], label="Simuliert", linewidth=1, color="red")
+            axes.set_xlim(df_sim.index[0], df_sim.index[-1])
+            axes.set_ylim(0,)
+            axes.invert_yaxis()
+            axes.set_xlabel("Zeit")
+            axes.set_ylabel("GWFA [m]")
+            fig.tight_layout()
+            file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"ts_gw_depths_{station_id}_run{model_run}.png"
+            fig.savefig(file, dpi=300, bbox_inches="tight")
+            plt.close(fig)
+
 
     ll_observed_depths = []
     ll_simulated_depths = []
@@ -206,6 +250,7 @@ def main(model_run):
     file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"map_r_run{model_run}.png"
     fig.savefig(file, dpi=300, bbox_inches="tight")
     plt.close(fig)
+    
 
     # load the SFR output file
     output_file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / f"dmn_run_{model_run}_sfr.obs.csv"
@@ -213,7 +258,7 @@ def main(model_run):
     date_time = pd.date_range(start="2013-01-01", end="2024-01-01", freq="D")
     df_sfr_.index = date_time
 
-    streamflow_gauges = ["EBNET", "OBERAMBRINGEN"]
+    streamflow_gauges = ["EBNET", "OBERAMBRINGEN", "FALKENSTEIG", "UNTERMUENSTERTAL"]
     df_metrics_sfr = pd.DataFrame(index=streamflow_gauges, columns=["NSE", "MAE", "r"])
     for gauge in streamflow_gauges:
         # make lowercase
@@ -249,6 +294,35 @@ def main(model_run):
         file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"ts_streamflow_{_gauge}_run{model_run}.png"
         fig.savefig(file, dpi=300, bbox_inches="tight")
         plt.close(fig)
+
+    streamflow_gauges = ["E2"]
+    for gauge in streamflow_gauges:
+        # make lowercase
+        file = base_path.parent / "observations" / f"{gauge}_streamflow.csv"
+        df_streamflow_obs = pd.read_csv(file, index_col=0, sep=";", skiprows=1)
+        df_streamflow_obs.columns = ["obs"]
+        df_streamflow_obs.index = pd.to_datetime(df_streamflow_obs.index, format="%Y-%m-%d")
+        _df_streamflow_sim = pd.DataFrame(index=date_time, columns=["sim"])
+        _df_streamflow_sim.loc[:, "sim"] = df_sfr_[f"{gauge}_FLOW"].values * (-1/86400) # convert from m3/d to m3/s
+        date_time_2020_2021 = pd.date_range(start="2020-01-01", end="2021-12-31", freq="D")
+        df_streamflow_sim = pd.DataFrame(index=date_time_2020_2021)
+        df_streamflow_sim = df_streamflow_sim.join(_df_streamflow_sim)
+        # join observed and simulated streamflow
+        df_streamflow_sim_obs = df_streamflow_sim.join(df_streamflow_obs)
+
+        # plot simulated vs observed streamflow for the gauge and assign metrics to the title
+        fig, axes = plt.subplots(figsize=(6, 2))
+        axes.plot(df_streamflow_sim_obs.index, df_streamflow_sim_obs["obs"], label="Gemessen", linewidth=1.2, color="blue")
+        axes.plot(df_streamflow_sim_obs.index, df_streamflow_sim_obs["sim"], label="Simuliert", linewidth=1, color="red")
+        axes.set_xlim(df_streamflow_sim_obs.index[0], df_streamflow_sim_obs.index[-1])
+        axes.set_xlabel("Zeit")
+        axes.set_ylabel("Durchfluss [m³/s]")
+        axes.set_yscale("log")
+        fig.tight_layout()
+        file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"ts_streamflow_{_gauge}_run{model_run}.png"
+        fig.savefig(file, dpi=300, bbox_inches="tight")
+        plt.close(fig)
+
 
     # write metrics to csv
     click.echo("Writing evaluation metrics to csv...")
