@@ -92,7 +92,6 @@ def main(model_run):
         if xcoord >= xcoords[0] and xcoord <= xcoords[-1] and ycoord >= ycoords[-1] and ycoord <= ycoords[0]:
             row, col = xy_to_rowcol(xcoord, ycoord, x0, y0)
             simulated_depth = groundwater_depths[:, row, col]
-            observed_depth = observed_groundwater_depths[station_id].values
             df_sim = pd.DataFrame({"simulated": simulated_depth})
             df_sim.index = date_time
             sim_vals = df_sim_obs["simulated"].values
@@ -109,7 +108,6 @@ def main(model_run):
             file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"ts_gw_depths_{station_id}_run{model_run}.png"
             fig.savefig(file, dpi=300, bbox_inches="tight")
             plt.close(fig)
-
 
     ll_observed_depths = []
     ll_simulated_depths = []
@@ -258,7 +256,7 @@ def main(model_run):
     date_time = pd.date_range(start="2013-01-01", end="2024-01-01", freq="D")
     df_sfr_.index = date_time
 
-    streamflow_gauges = ["EBNET", "OBERAMBRINGEN", "FALKENSTEIG", "UNTERMUENSTERTAL"]
+    streamflow_gauges = ["EBNET", "OBERAMBRINGEN", "FALKENSTEIG", "UNTERMUENSTERTAL", "OBERRIED"]
     df_metrics_sfr = pd.DataFrame(index=streamflow_gauges, columns=["NSE", "MAE", "r"])
     for gauge in streamflow_gauges:
         # make lowercase
