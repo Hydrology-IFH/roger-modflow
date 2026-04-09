@@ -1073,7 +1073,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             click.echo(f"IndexError: doy {doy} of year {year} is out of bounds for capillary rise. Setting capillary rise to zero for this timestep.")
             capillary_rise_ = np.zeros((config_modflow['ny'] * 2, config_modflow['nx'] * 2))
         capillary_rise = aggregate_to_coarser_resolution(capillary_rise_, 25, config_modflow['dx'], method="average")
-        capillary_rise[capillary_rise > 0.003] = 0.003  # constrain capillary rise to 0.0031 m/day
+        capillary_rise[capillary_rise > 0.003] = 0.003  # constrain capillary rise to 0.003 m/day
         # set ET surface to the current groundwater head for the entire model domain
         modflow_interface.set_cpr_irr_surface(groundwater_head.flatten())
 
@@ -1097,10 +1097,6 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         well_extraction_rate[:] = -well_extraction_rate[:]  # extraction is negative
         well_extraction_rate = np.where(np.isnan(well_extraction_rate), 0, well_extraction_rate)  # set nan values to zero
         modflow_interface.set_well_rate(well_extraction_rate)
-
-        # update SFR inflow and pass it to MODFLOW
-        sfr_stage = np.zeros((n_reaches,), dtype=np.float64)
-        modflow_interface.set_sfr_stage(sfr_stage)
 
         # run MODFLOW for one timestep
         modflow_interface.step()
