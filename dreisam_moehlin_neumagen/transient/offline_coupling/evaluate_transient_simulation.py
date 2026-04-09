@@ -91,7 +91,7 @@ def main(model_run):
         simulated_depth = groundwater_depths[:, row, col]
         df_sim = pd.DataFrame({"simulated": simulated_depth})
         df_sim.index = date_time
-        sim_vals = df_sim_obs["simulated"].values
+        sim_vals = df_sim["simulated"].values
 
         # plot simulated time series of groundwater depths for the station
         fig, axes = plt.subplots(figsize=(6, 2))
