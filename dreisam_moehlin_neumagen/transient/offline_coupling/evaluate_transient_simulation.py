@@ -296,7 +296,7 @@ def main(model_run):
         file = base_path.parent / "observations" / f"{gauge}_streamflow.csv"
         df_streamflow_obs = pd.read_csv(file, index_col=0, sep=";", skiprows=1)
         df_streamflow_obs.columns = ["obs"]
-        df_streamflow_obs.index = pd.to_datetime(df_streamflow_obs.index, format="%Y-%m-%d")
+        df_streamflow_obs.index = pd.to_datetime(df_streamflow_obs.index, format="%d.%m.%y")
         _df_streamflow_sim = pd.DataFrame(index=date_time, columns=["sim"])
         _df_streamflow_sim.loc[:, "sim"] = df_sfr_[f"{gauge}_FLOW"].values * (-1/86400) # convert from m3/d to m3/s
         date_time_2020_2021 = pd.date_range(start="2020-01-01", end="2021-12-31", freq="D")
