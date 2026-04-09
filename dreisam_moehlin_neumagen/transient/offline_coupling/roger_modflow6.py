@@ -334,10 +334,10 @@ class ModFlowSimulation:
         # fudge parameters
         hydraulic_conductivities_layer1[mask81] = hydraulic_conductivities_layer1[mask81] * fudge_parameters["-8_1"].values[model_run]
 
-        hydraulic_conductivities_layer1[mask71] = hydraulic_conductivities_layer1[mask71] * fudge_parameters["-7_1"].values[model_run]
-        hydraulic_conductivities_layer2[mask72] = hydraulic_conductivities_layer2[mask72] * fudge_parameters["-7_2"].values[model_run]
-        hydraulic_conductivities_layer3[mask73] = hydraulic_conductivities_layer3[mask73] * fudge_parameters["-7_3"].values[model_run]
-        hydraulic_conductivities_layer4[mask74] = hydraulic_conductivities_layer4[mask74] * fudge_parameters["-7_4"].values[model_run]
+        hydraulic_conductivities_layer1[mask71] = hydraulic_conductivities_layer1[mask71] * fudge_parameters["-7_1"].values[model_run] * 0.5
+        hydraulic_conductivities_layer2[mask72] = hydraulic_conductivities_layer2[mask72] * fudge_parameters["-7_2"].values[model_run] * 0.5
+        hydraulic_conductivities_layer3[mask73] = hydraulic_conductivities_layer3[mask73] * fudge_parameters["-7_3"].values[model_run] * 0.5
+        hydraulic_conductivities_layer4[mask74] = hydraulic_conductivities_layer4[mask74] * fudge_parameters["-7_4"].values[model_run] * 0.5
 
         hydraulic_conductivities_layer1[mask61] = hydraulic_conductivities_layer1[mask61] * fudge_parameters["-6_1"].values[model_run]
 
@@ -541,9 +541,9 @@ class ModFlowSimulation:
         # modify specific yield
         cond1 = (hydraulic_conductivities_layer1_ < 10.0e-07)
         cond2 = (hydraulic_conductivities_layer2_ < 10.0e-07)
-        specific_yield_layer2[cond2] = 0.05
+        specific_yield_layer2[cond2] = 0.02
         cond3 = (hydraulic_conductivities_layer3_ < 10.0e-07)
-        specific_yield_layer3[cond3] = 0.02
+        specific_yield_layer3[cond3] = 0.015
         cond4 = (hydraulic_conductivities_layer4_ < 10.0e-07)
         specific_yield_layer4[cond4] = 0.01
         specific_yield_layer1[np.isnan(specific_yield_layer1)] = 0
