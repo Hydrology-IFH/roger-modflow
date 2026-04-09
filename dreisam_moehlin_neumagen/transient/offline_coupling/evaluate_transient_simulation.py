@@ -86,28 +86,25 @@ def main(model_run):
     for station_id in dict_obs_wells_fissured.keys():
         # get row and column index based on ccordinate of the station
         click.echo(f"Evaluating station {station_id}...")
-        xcoord = dict_obs_wells_fissured[station_id][0]
-        ycoord = dict_obs_wells_fissured[station_id][1]
-        # check if the station is within the bounds of the model grid
-        if xcoord >= xcoords[0] and xcoord <= xcoords[-1] and ycoord >= ycoords[-1] and ycoord <= ycoords[0]:
-            row, col = xy_to_rowcol(xcoord, ycoord, x0, y0)
-            simulated_depth = groundwater_depths[:, row, col]
-            df_sim = pd.DataFrame({"simulated": simulated_depth})
-            df_sim.index = date_time
-            sim_vals = df_sim_obs["simulated"].values
+        col = dict_obs_wells_fissured[station_id][0]
+        row = dict_obs_wells_fissured[station_id][1]
+        simulated_depth = groundwater_depths[:, row, col]
+        df_sim = pd.DataFrame({"simulated": simulated_depth})
+        df_sim.index = date_time
+        sim_vals = df_sim_obs["simulated"].values
 
-            # plot simulated time series of groundwater depths for the station
-            fig, axes = plt.subplots(figsize=(6, 2))
-            axes.plot(df_sim.index, df_sim["simulated"], label="Simuliert", linewidth=1, color="red")
-            axes.set_xlim(df_sim.index[0], df_sim.index[-1])
-            axes.set_ylim(0,)
-            axes.invert_yaxis()
-            axes.set_xlabel("Zeit")
-            axes.set_ylabel("GWFA [m]")
-            fig.tight_layout()
-            file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"ts_gw_depths_{station_id}_run{model_run}.png"
-            fig.savefig(file, dpi=300, bbox_inches="tight")
-            plt.close(fig)
+        # plot simulated time series of groundwater depths for the station
+        fig, axes = plt.subplots(figsize=(6, 2))
+        axes.plot(df_sim.index, df_sim["simulated"], label="Simuliert", linewidth=1, color="red")
+        axes.set_xlim(df_sim.index[0], df_sim.index[-1])
+        axes.set_ylim(0,)
+        axes.invert_yaxis()
+        axes.set_xlabel("Zeit")
+        axes.set_ylabel("GWFA [m]")
+        fig.tight_layout()
+        file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"ts_gw_depths_{station_id}_run{model_run}.png"
+        fig.savefig(file, dpi=300, bbox_inches="tight")
+        plt.close(fig)
 
     ll_observed_depths = []
     ll_simulated_depths = []
