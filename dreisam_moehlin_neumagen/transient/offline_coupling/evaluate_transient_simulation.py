@@ -290,7 +290,7 @@ def main(model_run):
         fig.savefig(file, dpi=300, bbox_inches="tight")
         plt.close(fig)
 
-    streamflow_gauges = ["E2"]
+    streamflow_gauges = ["E2", "E4", "E6", "E8", "IB1", "K1", "RO2_B", "RE1"]
     for gauge in streamflow_gauges:
         # make lowercase
         file = base_path.parent / "observations" / f"{gauge}_streamflow.csv"
@@ -314,7 +314,7 @@ def main(model_run):
         axes.set_ylabel("Durchfluss [m³/s]")
         axes.set_yscale("log")
         fig.tight_layout()
-        file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"ts_streamflow_{_gauge}_run{model_run}.png"
+        file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"ts_streamflow_{gauge}_run{model_run}.png"
         fig.savefig(file, dpi=300, bbox_inches="tight")
         plt.close(fig)
 
