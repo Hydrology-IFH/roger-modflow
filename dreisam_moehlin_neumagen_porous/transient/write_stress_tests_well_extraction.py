@@ -19,7 +19,7 @@ cond_drinking_water_supply = df_groundwater_extraction["purpose"].isin(['Badenov
 # load daily weights for drinking water supply wells to scale the pumping rates of the drinking water supply wells in the well package
 _daily_weights_drinking_water_supply = pd.read_csv(base_path / "input" / "daily_weights_drinking_water_supply.csv", sep=";", index_col=0)
 
-date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="D")
+date_time = pd.date_range(start="2013-07-01", end="2023-08-31", freq="D")
 NDAYS = len(date_time)
 doys = date_time.dayofyear.values
 years = date_time.year.values
@@ -33,7 +33,7 @@ for i in range(NDAYS):
 
 df_daily_weights_drinking_water_supply = daily_weights_drinking_water_supply.copy()
 # select 2018
-daily_weights_drinking_water_supply_2018 = daily_weights_drinking_water_supply.loc["2018-01-01":"2018-12-31"]
+daily_weights_drinking_water_supply_2018 = daily_weights_drinking_water_supply.loc["2018-07-01":"2018-08-31"]
 
 durations = [0, 3]
 magnitudes = [2, 2]
@@ -47,11 +47,9 @@ for duration, magnitude in zip(durations, magnitudes):
         groundwater_extraction = df_groundwater_extraction.copy()
         daily_weights_drinking_water_supply = df_daily_weights_drinking_water_supply.copy()
         # insert 2018 in 2017
-        daily_weights_drinking_water_supply.loc["2017-01-01":"2017-12-31"] = daily_weights_drinking_water_supply_2018.values
-        groundwater_extraction.loc[:, "2017"] = groundwater_extraction.loc[:, "2018"].values
+        daily_weights_drinking_water_supply.loc["2017-07-01":"2017-08-31"] = daily_weights_drinking_water_supply_2018.values
         # insert 2018 in 2016
-        daily_weights_drinking_water_supply.loc["2016-01-01":"2016-12-30"] = daily_weights_drinking_water_supply_2018.values
-        groundwater_extraction.loc[:, "2016"] = groundwater_extraction.loc[:, "2018"].values
+        daily_weights_drinking_water_supply.loc["2016-07-01":"2016-08-31"] = daily_weights_drinking_water_supply_2018.values
 
         path = path_to_dir / "daily_weights_drinking_water_supply.csv"
         daily_weights_drinking_water_supply.columns = [['[-]'], ['weights']]
@@ -77,11 +75,9 @@ for duration, magnitude in zip(durations, magnitudes):
         groundwater_extraction = df_groundwater_extraction.copy()
         daily_weights_drinking_water_supply = df_daily_weights_drinking_water_supply.copy()
         # insert 2018 in 2017
-        daily_weights_drinking_water_supply.loc["2017-01-01":"2017-12-31"] = daily_weights_drinking_water_supply_2018.values
-        groundwater_extraction.loc[:, "2017"] = groundwater_extraction.loc[:, "2018"].values
+        daily_weights_drinking_water_supply.loc["2017-07-01":"2017-08-31"] = daily_weights_drinking_water_supply_2018.values
         # insert 2018 in 2016
-        daily_weights_drinking_water_supply.loc["2016-01-01":"2016-12-30"] = daily_weights_drinking_water_supply_2018.values
-        groundwater_extraction.loc[:, "2016"] = groundwater_extraction.loc[:, "2018"].values
+        daily_weights_drinking_water_supply.loc["2016-07-01":"2016-08-31"] = daily_weights_drinking_water_supply_2018.values
 
         path = path_to_dir / "daily_weights_drinking_water_supply.csv"
         daily_weights_drinking_water_supply.columns = [['[-]'], ['weights']]
@@ -114,13 +110,10 @@ for duration, magnitude in zip(durations, magnitudes):
         groundwater_extraction = df_groundwater_extraction.copy()
         daily_weights_drinking_water_supply = df_daily_weights_drinking_water_supply.copy()
         # insert 2018 in 2017
-        daily_weights_drinking_water_supply.loc["2017-01-01":"2017-12-31"] = daily_weights_drinking_water_supply_2018.values
-        daily_weights_drinking_water_supply.loc["2017-06-01":"2017-08-31"] *= (1 + q_magnitude)
-        groundwater_extraction.loc[:, "2017"] = groundwater_extraction.loc[:, "2018"].values
+        daily_weights_drinking_water_supply.loc["2017-07-01":"2017-08-31"] = daily_weights_drinking_water_supply_2018.values
         # insert 2018 in 2016
-        daily_weights_drinking_water_supply.loc["2016-01-01":"2016-12-30"] = daily_weights_drinking_water_supply_2018.values
-        daily_weights_drinking_water_supply.loc["2016-06-01":"2016-08-31"] *= (1 + q_magnitude)
-        groundwater_extraction.loc[:, "2016"] = groundwater_extraction.loc[:, "2018"].values
+        daily_weights_drinking_water_supply.loc["2016-07-01":"2016-08-31"] = daily_weights_drinking_water_supply_2018.values
+        daily_weights_drinking_water_supply.loc[:] *= (1 + q_magnitude)
 
         path = path_to_dir / "daily_weights_drinking_water_supply.csv"
         daily_weights_drinking_water_supply.columns = [['[-]'], ['weights']]
@@ -152,13 +145,10 @@ for duration, magnitude in zip(durations, magnitudes):
         groundwater_extraction = df_groundwater_extraction.copy()
         daily_weights_drinking_water_supply = df_daily_weights_drinking_water_supply.copy()
         # insert 2018 in 2017
-        daily_weights_drinking_water_supply.loc["2017-01-01":"2017-12-31"] = daily_weights_drinking_water_supply_2018.values
-        daily_weights_drinking_water_supply.loc["2017-06-01":"2017-08-31"] *= (1 + q_magnitude)
-        groundwater_extraction.loc[:, "2017"] = groundwater_extraction.loc[:, "2018"].values
+        daily_weights_drinking_water_supply.loc["2017-07-01":"2017-08-31"] = daily_weights_drinking_water_supply_2018.values
         # insert 2018 in 2016
-        daily_weights_drinking_water_supply.loc["2016-01-01":"2016-12-30"] = daily_weights_drinking_water_supply_2018.values
-        daily_weights_drinking_water_supply.loc["2016-06-01":"2016-08-31"] *= (1 + q_magnitude)
-        groundwater_extraction.loc[:, "2016"] = groundwater_extraction.loc[:, "2018"].values
+        daily_weights_drinking_water_supply.loc["2016-07-01":"2016-08-31"] = daily_weights_drinking_water_supply_2018.values
+        daily_weights_drinking_water_supply.loc[:] *= (1 + q_magnitude)
 
         path = path_to_dir / "daily_weights_drinking_water_supply.csv"
         daily_weights_drinking_water_supply.columns = [['[-]'], ['weights']]
@@ -222,13 +212,10 @@ for duration, magnitude in zip(durations, magnitudes):
         groundwater_extraction = df_groundwater_extraction.copy()
         daily_weights_drinking_water_supply = df_daily_weights_drinking_water_supply.copy()
         # insert 2018 in 2017
-        daily_weights_drinking_water_supply.loc["2017-01-01":"2017-12-31"] = daily_weights_drinking_water_supply_2018.values
-        daily_weights_drinking_water_supply.loc["2017-06-01":"2017-08-31"] *= (1 + q_magnitude)
-        groundwater_extraction.loc[:, "2017"] = groundwater_extraction.loc[:, "2018"].values
+        daily_weights_drinking_water_supply.loc["2017-07-01":"2017-08-31"] = daily_weights_drinking_water_supply_2018.values
         # insert 2018 in 2016
-        daily_weights_drinking_water_supply.loc["2016-01-01":"2016-12-30"] = daily_weights_drinking_water_supply_2018.values
-        daily_weights_drinking_water_supply.loc["2016-06-01":"2016-08-31"] *= (1 + q_magnitude)
-        groundwater_extraction.loc[:, "2016"] = groundwater_extraction.loc[:, "2018"].values
+        daily_weights_drinking_water_supply.loc["2016-07-01":"2016-08-31"] = daily_weights_drinking_water_supply_2018.values
+        daily_weights_drinking_water_supply.loc[:] *= (1 + q_magnitude)
 
         path = path_to_dir / "daily_weights_drinking_water_supply.csv"
         daily_weights_drinking_water_supply.columns = [['[-]'], ['weights']]
@@ -260,13 +247,10 @@ for duration, magnitude in zip(durations, magnitudes):
         groundwater_extraction = df_groundwater_extraction.copy()
         daily_weights_drinking_water_supply = df_daily_weights_drinking_water_supply.copy()
         # insert 2018 in 2017
-        daily_weights_drinking_water_supply.loc["2017-01-01":"2017-12-31"] = daily_weights_drinking_water_supply_2018.values
-        daily_weights_drinking_water_supply.loc["2017-06-01":"2017-08-31"] *= (1 + q_magnitude)
-        groundwater_extraction.loc[:, "2017"] = groundwater_extraction.loc[:, "2018"].values
+        daily_weights_drinking_water_supply.loc["2017-07-01":"2017-08-31"] = daily_weights_drinking_water_supply_2018.values
         # insert 2018 in 2016
-        daily_weights_drinking_water_supply.loc["2016-01-01":"2016-12-30"] = daily_weights_drinking_water_supply_2018.values
-        daily_weights_drinking_water_supply.loc["2016-06-01":"2016-08-31"] *= (1 + q_magnitude)
-        groundwater_extraction.loc[:, "2016"] = groundwater_extraction.loc[:, "2018"].values
+        daily_weights_drinking_water_supply.loc["2016-07-01":"2016-08-31"] = daily_weights_drinking_water_supply_2018.values
+        daily_weights_drinking_water_supply.loc[:] *= (1 + q_magnitude)
 
         path = path_to_dir / "daily_weights_drinking_water_supply.csv"
         daily_weights_drinking_water_supply.columns = [['[-]'], ['weights']]
