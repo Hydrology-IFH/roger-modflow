@@ -336,7 +336,7 @@ class ModFlowSimulation:
 
         hydraulic_conductivities_layer1[mask71] = hydraulic_conductivities_layer1[mask71] * fudge_parameters["-7_1"].values[model_run]
         hydraulic_conductivities_layer2[mask72] = hydraulic_conductivities_layer2[mask72] * fudge_parameters["-7_2"].values[model_run]
-        hydraulic_conductivities_layer3[mask73] = 10e-8 * 86400
+        hydraulic_conductivities_layer3[mask73] = 50e-8 * 86400
         hydraulic_conductivities_layer4[mask74] = 10e-8 * 86400
 
         hydraulic_conductivities_layer1[mask61] = hydraulic_conductivities_layer1[mask61] * fudge_parameters["-6_1"].values[model_run]
@@ -920,8 +920,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     cond_drinking_water_supply = groundwater_extraction["purpose"].isin(['Badenova WW Ebnet', 'Badenova WW Hausen', 'Eigenwasserversorgung', 'oeffentliche Wasserversorgung']).values
 
     # get number of days in the simulation which also used as number of time steps in MODFLOW
-    # NDAYS = len(date_time)
-    NDAYS = 365
+    NDAYS = len(date_time)
     doys = date_time.dayofyear.values
     years = date_time.year.values
 
