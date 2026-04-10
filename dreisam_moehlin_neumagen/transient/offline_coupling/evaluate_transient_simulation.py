@@ -290,33 +290,33 @@ def main(model_run):
         fig.savefig(file, dpi=300, bbox_inches="tight")
         plt.close(fig)
 
-    streamflow_gauges = ["E2", "E4", "E6", "E8", "IB1", "K1", "RO2_B", "RE1"]
-    for gauge in streamflow_gauges:
-        # make lowercase
-        file = base_path.parent / "observations" / f"{gauge}_streamflow.csv"
-        df_streamflow_obs = pd.read_csv(file, index_col=0, sep=";", skiprows=1)
-        df_streamflow_obs.columns = ["obs"]
-        df_streamflow_obs.index = pd.to_datetime(df_streamflow_obs.index, format="%d.%m.%y")
-        _df_streamflow_sim = pd.DataFrame(index=date_time, columns=["sim"])
-        _df_streamflow_sim.loc[:, "sim"] = df_sfr_[f"{gauge}_FLOW"].values * (-1/86400) # convert from m3/d to m3/s
-        date_time_2020_2021 = pd.date_range(start="2020-01-01", end="2021-12-31", freq="D")
-        df_streamflow_sim = pd.DataFrame(index=date_time_2020_2021)
-        df_streamflow_sim = df_streamflow_sim.join(_df_streamflow_sim)
-        # join observed and simulated streamflow
-        df_streamflow_sim_obs = df_streamflow_sim.join(df_streamflow_obs)
+    # streamflow_gauges = ["E2", "E4", "E6", "E8", "IB1", "K1", "RO2_B", "RE1"]
+    # for gauge in streamflow_gauges:
+    #     # make lowercase
+    #     file = base_path.parent / "observations" / f"{gauge}_streamflow.csv"
+    #     df_streamflow_obs = pd.read_csv(file, index_col=0, sep=";", skiprows=1)
+    #     df_streamflow_obs.columns = ["obs"]
+    #     df_streamflow_obs.index = pd.to_datetime(df_streamflow_obs.index, format="%d.%m.%y")
+    #     _df_streamflow_sim = pd.DataFrame(index=date_time, columns=["sim"])
+    #     _df_streamflow_sim.loc[:, "sim"] = df_sfr_[f"{gauge}_FLOW"].values * (-1/86400) # convert from m3/d to m3/s
+    #     date_time_2020_2021 = pd.date_range(start="2020-01-01", end="2021-12-31", freq="D")
+    #     df_streamflow_sim = pd.DataFrame(index=date_time_2020_2021)
+    #     df_streamflow_sim = df_streamflow_sim.join(_df_streamflow_sim)
+    #     # join observed and simulated streamflow
+    #     df_streamflow_sim_obs = df_streamflow_sim.join(df_streamflow_obs)
 
-        # plot simulated vs observed streamflow for the gauge and assign metrics to the title
-        fig, axes = plt.subplots(figsize=(6, 2))
-        axes.plot(df_streamflow_sim_obs.index, df_streamflow_sim_obs["obs"], label="Gemessen", linewidth=1.2, color="blue")
-        axes.plot(df_streamflow_sim_obs.index, df_streamflow_sim_obs["sim"], label="Simuliert", linewidth=1, color="red")
-        axes.set_xlim(df_streamflow_sim_obs.index[0], df_streamflow_sim_obs.index[-1])
-        axes.set_xlabel("Zeit")
-        axes.set_ylabel("Durchfluss [m³/s]")
-        axes.set_yscale("log")
-        fig.tight_layout()
-        file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"ts_streamflow_{gauge}_run{model_run}.png"
-        fig.savefig(file, dpi=300, bbox_inches="tight")
-        plt.close(fig)
+    #     # plot simulated vs observed streamflow for the gauge and assign metrics to the title
+    #     fig, axes = plt.subplots(figsize=(6, 2))
+    #     axes.plot(df_streamflow_sim_obs.index, df_streamflow_sim_obs["obs"], label="Gemessen", linewidth=1.2, color="blue")
+    #     axes.plot(df_streamflow_sim_obs.index, df_streamflow_sim_obs["sim"], label="Simuliert", linewidth=1, color="red")
+    #     axes.set_xlim(df_streamflow_sim_obs.index[0], df_streamflow_sim_obs.index[-1])
+    #     axes.set_xlabel("Zeit")
+    #     axes.set_ylabel("Durchfluss [m³/s]")
+    #     axes.set_yscale("log")
+    #     fig.tight_layout()
+    #     file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"ts_streamflow_{gauge}_run{model_run}.png"
+    #     fig.savefig(file, dpi=300, bbox_inches="tight")
+    #     plt.close(fig)
 
 
     # write metrics to csv
