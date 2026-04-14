@@ -26,7 +26,7 @@ def main():
     base_path = Path(__file__).parent
 
     # load the netcdf file
-    params_file = base_path / "input" / "parameters_roger_25m.nc"
+    params_file = base_path / "input" / "parameters_roger.nc"
     ds_params = xr.open_dataset(params_file)
     nrows = ds_params.sizes["y"]
     ncols = ds_params.sizes["x"]
