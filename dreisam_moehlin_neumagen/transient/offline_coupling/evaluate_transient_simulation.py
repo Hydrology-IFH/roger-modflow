@@ -327,9 +327,10 @@ def main(model_run):
         df_sim.loc[:, "sim"] = sfr_perimeter  # wetted perimeter
 
         # plot simulated vs observed streamflow for the gauge and assign metrics to the title
-        fig, axes = plt.subplots(figsize=(6, 2))
+        fig, axes = plt.subplots(figsize=(6, 2.5))
         axes.plot(df_sim.index, df_sim["sim"], label="Simuliert", linewidth=1, color="red")
         axes.set_xlim(df_sim.index[0], df_sim.index[-1])
+        axes.set_ylim(0,)
         axes.set_xlabel("Zeit")
         axes.set_ylabel("Benetzter Umfang [m]")
         axes.set_yscale("log")
@@ -371,7 +372,7 @@ def main(model_run):
             axes.invert_yaxis()
             axes.set_title(f"kf Gerinne : {rhk:.2e} m/s, kf Geo: {kf:.2e} m/s")
             axes.set_xlabel("Zeit")
-            axes.set_ylabel("$\Delta GW-SFR [m]")
+            axes.set_ylabel("$\Delta$ GW-SFR [m]")
             fig.tight_layout()
             file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"ts_delta_gw-sfr_{station_id}_run{model_run}.png"
             fig.savefig(file, dpi=300, bbox_inches="tight")
