@@ -369,6 +369,7 @@ def main(model_run):
                 rhk = _rhk * fudge_parameters["rhkp"].values[model_run]
             else:
                 rhk = _rhk * fudge_parameters["rhkf"].values[model_run]
+            axes.set_title(f"kf Gerinne: {rhk:.1e} m/s, kf Geo: {kf:.1e} m/s")
         axes.set_xlabel("Zeit")
         axes.set_ylabel("$\Delta$ GW-SFR [m]")
         fig.tight_layout()
