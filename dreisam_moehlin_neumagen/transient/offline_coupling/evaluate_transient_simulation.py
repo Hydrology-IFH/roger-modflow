@@ -9,8 +9,8 @@ import click
 import math
 import os
 
-dict_obs_wells_fissured = {"Au": (347, 280),
-                           "Conventwalde": (531, 135),
+dict_pseudowells_fissured = {"Au": (347, 280), # (x, y)
+                           "Conventwald": (531, 135),
                            "Wagensteig": (649, 217),
                            "Falkensteig": (579, 303),
                            "Spielweg": (336, 453),
@@ -23,6 +23,21 @@ dict_obs_wells_fissured = {"Au": (347, 280),
                            "Sankt_Wilhelm": (502, 416),
                            "Breitnau": (687, 313),
                            }
+
+# dict_pseudowells_sfr = {"Falkensteig": (347, 280),
+#                         "Ebnet": (430, 207),
+#                         "Oberambringen": (191, 360),
+#                         "Untermuenstertal": (218, 487),
+#                         "Wiesneck": (578, 259),
+#                         "SanktWilhelm": (479, 400),
+#                         "Oberried": (507, 319),
+#                         "Zastler": (557, 351)}
+
+dict_pseudowells_sfr = {"Falkensteig": (347, 280),
+                        "Ebnet": (430, 207),
+                        "Oberambringen": (191, 360),
+                        "Untermuenstertal": (218, 487),
+                        "Oberried": (507, 319)}
 
 def xy_to_rowcol(x, y, x0, y0):
     """
@@ -47,12 +62,19 @@ def main(model_run):
     # load the simulated groundwater depths
     click.echo("Loading simulated groundwater depths...")
     ll_groundwater_depths = []
+    ll_groundwater_heads = []
     for year in years:
         output_file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / f"gw_depth_run{model_run}_year{year}.nc"
         ds_gw_depth_sim = xr.open_dataset(output_file, engine="h5netcdf")
         groundwater_depths_year = ds_gw_depth_sim["depth"].values[:, 1, :, :]
         ll_groundwater_depths.append(groundwater_depths_year)
+        output_file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / f"gw_head_run{model_run}_year{year}.nc"
+        ds_gw_head_sim = xr.open_dataset(output_file, engine="h5netcdf")
+        groundwater_heads_year = ds_gw_head_sim["head"].values[:, 1, :, :]
+        ll_groundwater_heads.append(groundwater_heads_year)
     groundwater_depths = np.concatenate(ll_groundwater_depths, axis=0)
+    groundwater_heads = np.concatenate(ll_groundwater_heads, axis=0)
+
 
     # load topography
     click.echo("Loading topography...")
@@ -68,6 +90,13 @@ def main(model_run):
     x0 = xcoords[0] - 25
     y0 = ycoords[0] + 25
 
+    # load SFR parameters
+    reaches = pd.read_csv(base_path.parent / "input" / "sfr_packagedata_modified.csv", sep=";")
+
+    # load fudge parameters
+    path = base_path.parent / "fudge_parameters_modflow.csv"
+    fudge_parameters = pd.read_csv(path, sep=";", skiprows=1)
+
     # load observed groundwater heads (average values of the observation wells)
     click.echo("Loading observed groundwater depths...")
     path = base_path.parent / "observations" / "groundwater_observation_wells.gpkg"
@@ -82,12 +111,11 @@ def main(model_run):
     if not os.path.exists(figure_dir):
         os.makedirs(figure_dir)
 
-
-    for station_id in dict_obs_wells_fissured.keys():
+    for station_id in dict_pseudowells_fissured.keys():
         # get row and column index based on ccordinate of the station
         click.echo(f"Evaluating station {station_id}...")
-        col = dict_obs_wells_fissured[station_id][0]
-        row = dict_obs_wells_fissured[station_id][1]
+        col = dict_pseudowells_fissured[station_id][0]
+        row = dict_pseudowells_fissured[station_id][1]
         simulated_depth = groundwater_depths[:, row, col]
         df_sim = pd.DataFrame({"simulated": simulated_depth})
         df_sim.index = date_time
@@ -288,6 +316,59 @@ def main(model_run):
         axes.set_yscale("log")
         fig.tight_layout()
         file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"ts_streamflow_{_gauge}_run{model_run}.png"
+        fig.savefig(file, dpi=300, bbox_inches="tight")
+        plt.close(fig)
+
+        df_sim = pd.DataFrame(index=date_time, columns=["sim"])
+        sfr_area = df_sfr_[f"{gauge}_AREA"].values
+        sfr_depth = df_sfr_[f"{gauge}_DEPTH"].values
+        sfr_width = sfr_area / sfr_depth
+        sfr_perimeter = sfr_width + (2 * sfr_depth)
+        df_sim.loc[:, "sim"] = sfr_perimeter  # wetted perimeter
+
+        # plot simulated vs observed streamflow for the gauge and assign metrics to the title
+        fig, axes = plt.subplots(figsize=(6, 2))
+        axes.plot(df_sim.index, df_sim["sim"], label="Simuliert", linewidth=1, color="red")
+        axes.set_xlim(df_sim.index[0], df_sim.index[-1])
+        axes.set_xlabel("Zeit")
+        axes.set_ylabel("Benetzter Umfang [m]")
+        axes.set_yscale("log")
+        fig.tight_layout()
+        file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"ts_perimeter_{_gauge}_run{model_run}.png"
+        fig.savefig(file, dpi=300, bbox_inches="tight")
+        plt.close(fig)
+
+    for station_id in dict_pseudowells_sfr.keys():
+        col = dict_pseudowells_sfr[station_id][0]
+        row = dict_pseudowells_sfr[station_id][1]
+        cond = (reaches["i"] == row) & (reaches["j"] == col)
+        rhk = reaches.loc[cond, "rhk"].values[0]
+        kf = reaches.loc[cond, "kf"].values[0]
+        if kf >= 10e-6:
+            rhk = reaches.loc[cond, "rhk"].values[0] * fudge_parameters["rhkp"].values[model_run]
+        else:
+            rhk = reaches.loc[cond, "rhk"].values[0] * fudge_parameters["rhkf"].values[model_run]
+        # get row and column index based on ccordinate of the station
+        _station_id = str(station_id).upper()
+        click.echo(f"Evaluating station {station_id}...")
+        col = dict_pseudowells_fissured[station_id][0]
+        row = dict_pseudowells_fissured[station_id][1]
+        simulated_gw_head = groundwater_heads[:, row, col]
+        simulated_sfr_head = df_sfr_[f"{_station_id}_STAGE"].values
+        diff_heads = simulated_gw_head - simulated_sfr_head
+        df_sim = pd.DataFrame({"simulated": diff_heads})
+        df_sim.index = date_time
+
+        # plot simulated time series of groundwater depths for the station
+        fig, axes = plt.subplots(figsize=(6, 2))
+        axes.plot(df_sim.index, df_sim["simulated"], label="Simuliert", linewidth=1, color="red")
+        axes.set_xlim(df_sim.index[0], df_sim.index[-1])
+        axes.invert_yaxis()
+        axes.set_title(f"$k_f$ Gerinne : {rhk:.2e} m/s, $k_f$ Geo: {kf:.2e} m/s")
+        axes.set_xlabel("Zeit")
+        axes.set_ylabel("$\Delta GW-SFR [m]")
+        fig.tight_layout()
+        file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"ts_delta_gw-sfr_{station_id}_run{model_run}.png"
         fig.savefig(file, dpi=300, bbox_inches="tight")
         plt.close(fig)
 
