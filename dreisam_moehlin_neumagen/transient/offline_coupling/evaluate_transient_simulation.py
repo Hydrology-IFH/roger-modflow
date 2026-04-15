@@ -352,8 +352,8 @@ def main(model_run):
             # get row and column index based on ccordinate of the station
             _station_id = str(station_id).upper()
             click.echo(f"Evaluating station {station_id}...")
-            col = dict_pseudowells_fissured[station_id][0]
-            row = dict_pseudowells_fissured[station_id][1]
+            col = dict_pseudowells_sfr[station_id][0]
+            row = dict_pseudowells_sfr[station_id][1]
             simulated_gw_head = groundwater_heads[:, row, col]
             simulated_sfr_head = df_sfr_[f"{_station_id}_STAGE"].values
             diff_heads = simulated_gw_head - simulated_sfr_head
