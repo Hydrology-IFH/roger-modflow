@@ -333,7 +333,6 @@ def main(model_run):
         axes.set_ylim(0,)
         axes.set_xlabel("Zeit")
         axes.set_ylabel("Benetzter Umfang [m]")
-        axes.set_yscale("log")
         fig.tight_layout()
         file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"ts_perimeter_{_gauge}_run{model_run}.png"
         fig.savefig(file, dpi=300, bbox_inches="tight")
