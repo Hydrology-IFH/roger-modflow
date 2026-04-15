@@ -342,13 +342,13 @@ def main(model_run):
         col = dict_pseudowells_sfr[station_id][0]
         row = dict_pseudowells_sfr[station_id][1]
         cond = (reaches["i"] == row) & (reaches["j"] == col)
-        if cond:
+        if cond.any():
             rhk = reaches.loc[cond, "rhk"].values
             kf = reaches.loc[cond, "kf"].values
             if kf >= 10e-6:
-                rhk = reaches.loc[cond, "rhk"].values[0] * fudge_parameters["rhkp"].values[model_run]
+                rhk = reaches.loc[cond, "rhk"].values * fudge_parameters["rhkp"].values[model_run]
             else:
-                rhk = reaches.loc[cond, "rhk"].values[0] * fudge_parameters["rhkf"].values[model_run]
+                rhk = reaches.loc[cond, "rhk"].values * fudge_parameters["rhkf"].values[model_run]
             # get row and column index based on ccordinate of the station
             _station_id = str(station_id).upper()
             click.echo(f"Evaluating station {station_id}...")
