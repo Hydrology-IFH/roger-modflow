@@ -343,12 +343,16 @@ def main(model_run):
         row = dict_pseudowells_sfr[station_id][1]
         cond = (reaches["i"] == row) & (reaches["j"] == col)
         if cond.any():
-            rhk = reaches.loc[cond, "rhk"].values
-            kf = reaches.loc[cond, "kf"].values
+            try:
+                _rhk = reaches.loc[cond, "rhk"].values[0]
+                kf = reaches.loc[cond, "kf"].values[0]
+            except:
+                _rhk = reaches.loc[cond, "rhk"].values
+                kf = reaches.loc[cond, "kf"].values
             if kf >= 10e-6:
-                rhk = reaches.loc[cond, "rhk"].values * fudge_parameters["rhkp"].values[model_run]
+                rhk = _rhk * fudge_parameters["rhkp"].values[model_run]
             else:
-                rhk = reaches.loc[cond, "rhk"].values * fudge_parameters["rhkf"].values[model_run]
+                rhk = _rhk * fudge_parameters["rhkf"].values[model_run]
             # get row and column index based on ccordinate of the station
             _station_id = str(station_id).upper()
             click.echo(f"Evaluating station {station_id}...")
@@ -365,7 +369,7 @@ def main(model_run):
             axes.plot(df_sim.index, df_sim["simulated"], label="Simuliert", linewidth=1, color="red")
             axes.set_xlim(df_sim.index[0], df_sim.index[-1])
             axes.invert_yaxis()
-            axes.set_title(f"$k_f$ Gerinne : {rhk:.2e} m/s, $k_f$ Geo: {kf:.2e} m/s")
+            axes.set_title(f"kf Gerinne : {rhk:.2e} m/s, kf Geo: {kf:.2e} m/s")
             axes.set_xlabel("Zeit")
             axes.set_ylabel("$\Delta GW-SFR [m]")
             fig.tight_layout()
