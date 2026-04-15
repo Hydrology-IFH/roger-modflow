@@ -342,35 +342,36 @@ def main(model_run):
         col = dict_pseudowells_sfr[station_id][0]
         row = dict_pseudowells_sfr[station_id][1]
         cond = (reaches["i"] == row) & (reaches["j"] == col)
-        rhk = reaches.loc[cond, "rhk"].values[0]
-        kf = reaches.loc[cond, "kf"].values[0]
-        if kf >= 10e-6:
-            rhk = reaches.loc[cond, "rhk"].values[0] * fudge_parameters["rhkp"].values[model_run]
-        else:
-            rhk = reaches.loc[cond, "rhk"].values[0] * fudge_parameters["rhkf"].values[model_run]
-        # get row and column index based on ccordinate of the station
-        _station_id = str(station_id).upper()
-        click.echo(f"Evaluating station {station_id}...")
-        col = dict_pseudowells_fissured[station_id][0]
-        row = dict_pseudowells_fissured[station_id][1]
-        simulated_gw_head = groundwater_heads[:, row, col]
-        simulated_sfr_head = df_sfr_[f"{_station_id}_STAGE"].values
-        diff_heads = simulated_gw_head - simulated_sfr_head
-        df_sim = pd.DataFrame({"simulated": diff_heads})
-        df_sim.index = date_time
+        if cond:
+            rhk = reaches.loc[cond, "rhk"].values
+            kf = reaches.loc[cond, "kf"].values
+            if kf >= 10e-6:
+                rhk = reaches.loc[cond, "rhk"].values[0] * fudge_parameters["rhkp"].values[model_run]
+            else:
+                rhk = reaches.loc[cond, "rhk"].values[0] * fudge_parameters["rhkf"].values[model_run]
+            # get row and column index based on ccordinate of the station
+            _station_id = str(station_id).upper()
+            click.echo(f"Evaluating station {station_id}...")
+            col = dict_pseudowells_fissured[station_id][0]
+            row = dict_pseudowells_fissured[station_id][1]
+            simulated_gw_head = groundwater_heads[:, row, col]
+            simulated_sfr_head = df_sfr_[f"{_station_id}_STAGE"].values
+            diff_heads = simulated_gw_head - simulated_sfr_head
+            df_sim = pd.DataFrame({"simulated": diff_heads})
+            df_sim.index = date_time
 
-        # plot simulated time series of groundwater depths for the station
-        fig, axes = plt.subplots(figsize=(6, 2))
-        axes.plot(df_sim.index, df_sim["simulated"], label="Simuliert", linewidth=1, color="red")
-        axes.set_xlim(df_sim.index[0], df_sim.index[-1])
-        axes.invert_yaxis()
-        axes.set_title(f"$k_f$ Gerinne : {rhk:.2e} m/s, $k_f$ Geo: {kf:.2e} m/s")
-        axes.set_xlabel("Zeit")
-        axes.set_ylabel("$\Delta GW-SFR [m]")
-        fig.tight_layout()
-        file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"ts_delta_gw-sfr_{station_id}_run{model_run}.png"
-        fig.savefig(file, dpi=300, bbox_inches="tight")
-        plt.close(fig)
+            # plot simulated time series of groundwater depths for the station
+            fig, axes = plt.subplots(figsize=(6, 2))
+            axes.plot(df_sim.index, df_sim["simulated"], label="Simuliert", linewidth=1, color="red")
+            axes.set_xlim(df_sim.index[0], df_sim.index[-1])
+            axes.invert_yaxis()
+            axes.set_title(f"$k_f$ Gerinne : {rhk:.2e} m/s, $k_f$ Geo: {kf:.2e} m/s")
+            axes.set_xlabel("Zeit")
+            axes.set_ylabel("$\Delta GW-SFR [m]")
+            fig.tight_layout()
+            file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"ts_delta_gw-sfr_{station_id}_run{model_run}.png"
+            fig.savefig(file, dpi=300, bbox_inches="tight")
+            plt.close(fig)
 
     # streamflow_gauges = ["E2", "E4", "E6", "E8", "IB1", "K1", "RO2_B", "RE1"]
     # for gauge in streamflow_gauges:
