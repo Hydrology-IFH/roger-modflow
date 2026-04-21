@@ -69,7 +69,7 @@ def main(model_run):
         output_file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / f"indirect_recharge_run{model_run}_year{year}.nc"
         # output_file = base_path_output / f"{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
         ds_indirect_recharge = xr.open_dataset(output_file, engine="h5netcdf")
-        indirect_recharge_year = ds_indirect_recharge["indirect_recharge"].values * 86400  # convert from m3/s to m3/day
+        indirect_recharge_year = ds_indirect_recharge["indirect_recharge"].values
         ds_indirect_recharge.close()
         indirect_recharge_year = np.where(mask[np.newaxis, :, :], indirect_recharge_year, 0)
         ll_indirect_recharge.append(indirect_recharge_year)
