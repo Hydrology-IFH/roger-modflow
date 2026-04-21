@@ -70,8 +70,6 @@ def main(model_run):
         ds_indirect_recharge = xr.open_dataset(output_file, engine="h5netcdf")
         indirect_recharge_year = ds_indirect_recharge["indirect_recharge"].values * 86400  # convert from m3/s to m3/day
         ds_indirect_recharge.close()
-        indirect_recharge_year[indirect_recharge_year > 0] = 0  # set positive values to zero
-        indirect_recharge_year = np.abs(indirect_recharge_year)
         indirect_recharge_year = np.where(mask[np.newaxis, :, :], indirect_recharge_year, 0)
         ll_indirect_recharge.append(indirect_recharge_year)
     indirect_recharge = np.concatenate(ll_indirect_recharge, axis=0)
@@ -109,8 +107,8 @@ def main(model_run):
         # make lowercase
         _gauge = gauge.lower()
         rno = dict_sfr_rno[gauge]
-        row = reaches.loc[reaches["rno"] == rno, "i"].values[0]
-        col = reaches.loc[reaches["rno"] == rno, "j"].values[0]
+        row = reaches.loc[reaches["rno"] == rno, "i"].values[0] - 1
+        col = reaches.loc[reaches["rno"] == rno, "j"].values[0] - 1
         df_streamflow_sim = pd.DataFrame(index=date_time, columns=["sim"])
         df_streamflow_sim.loc[:, "sim"] = df_sfr_[f"{gauge}_FLOW"].values * (-1/86400) # convert from m3/d to m3/s
         df_indirect_recharge_sim = pd.DataFrame(index=date_time, columns=["sim"])
@@ -134,7 +132,7 @@ def main(model_run):
         fig, axes = plt.subplots(figsize=(6, 4), nrows=2, ncols=1)
         axes[0].plot(df_indirect_recharge_sim.index, df_indirect_recharge_sim["sim"], label="Simuliert", linewidth=1, color="red")
         axes[0].set_xlim(df_indirect_recharge_sim.index[0], df_indirect_recharge_sim.index[-1])
-        axes[0].set_ylabel("Indirekte Grundwasserneubildung [m³/s]")
+        axes[0].set_ylabel("Indirekte GWN [m³/s]")
         axes[1].plot(df_streamflow_sim.index, df_streamflow_sim["sim"], label="Simuliert", linewidth=1, color="red")
         axes[1].set_xlim(df_streamflow_sim.index[0], df_streamflow_sim.index[-1])
         axes[1].set_xlabel("Zeit")
@@ -148,7 +146,7 @@ def main(model_run):
         # plot simulated vs observed streamflow for the gauge and assign metrics to the title
         fig, axes = plt.subplots(figsize=(4, 4))
         axes.scatter(df_indirect_recharge_sim["sim"], df_streamflow_sim["sim"], color="black", s=10)
-        axes.set_xlabel("Indirekte Grundwasserneubildung [m³/s]")
+        axes.set_xlabel("Indirekte GWN [m³/s]")
         axes.set_ylabel("Durchfluss [m³/s]")
         fig.tight_layout()
         file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"scatter_recharge_streamflow_{_gauge}_run{model_run}.png"
