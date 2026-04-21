@@ -30,7 +30,7 @@ def xy_to_rowcol(x, y, x0, y0):
 def main(model_run):
     base_path = Path(__file__).parent
 
-    date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="D")
+    date_time = pd.date_range(start="2014-01-01", end="2023-12-31", freq="D")
     years = np.unique(date_time.year.values)
 
     # load the simulated groundwater depths
@@ -99,8 +99,8 @@ def main(model_run):
     # load the SFR output file
     output_file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / f"dmn_run_{model_run}_sfr.obs.csv"
     df_sfr_ = pd.read_csv(output_file, sep=",")
-    df_sfr_ = df_sfr_.iloc[1:, :]
-    date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="D")
+    df_sfr_ = df_sfr_.iloc[366:, :]
+    date_time = pd.date_range(start="2014-01-01", end="2023-12-31", freq="D")
     df_sfr_.index = date_time
 
     streamflow_gauges = ["EBNET", "OBERAMBRINGEN", "FALKENSTEIG", "UNTERMUENSTERTAL", "OBERRIED"]
