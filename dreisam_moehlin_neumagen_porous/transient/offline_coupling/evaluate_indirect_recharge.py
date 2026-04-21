@@ -49,20 +49,6 @@ def main(model_run):
     groundwater_depths = np.concatenate(ll_groundwater_depths, axis=0)
     groundwater_heads = np.concatenate(ll_groundwater_heads, axis=0)
 
-    click.echo("Loading indirect recharge...")
-    ll_indirect_recharge = []
-    for year in years:
-        output_file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / f"indirect_recharge_run{model_run}_year{year}.nc"
-        # output_file = base_path_output / f"{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
-        ds_indirect_recharge = xr.open_dataset(output_file, engine="h5netcdf")
-        indirect_recharge_year = ds_indirect_recharge["indirect_recharge"].values * 86400  # convert from m3/s to m3/day
-        ds_indirect_recharge.close()
-        indirect_recharge_year[indirect_recharge_year > 0] = 0  # set positive values to zero
-        indirect_recharge_year = np.abs(indirect_recharge_year)
-        indirect_recharge_year = np.where(mask[np.newaxis, :, :], indirect_recharge_year, 0)
-        ll_indirect_recharge.append(indirect_recharge_year)
-    indirect_recharge = np.concatenate(ll_indirect_recharge, axis=0)
-
     # load topography
     click.echo("Loading topography...")
     path = base_path.parent / "input" / "parameters_modflow.nc"
@@ -76,6 +62,20 @@ def main(model_run):
     ycoords = ds_params["y"].values
     x0 = xcoords[0] - 25
     y0 = ycoords[0] + 25
+
+    click.echo("Loading indirect recharge...")
+    ll_indirect_recharge = []
+    for year in years:
+        output_file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / f"indirect_recharge_run{model_run}_year{year}.nc"
+        # output_file = base_path_output / f"{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
+        ds_indirect_recharge = xr.open_dataset(output_file, engine="h5netcdf")
+        indirect_recharge_year = ds_indirect_recharge["indirect_recharge"].values * 86400  # convert from m3/s to m3/day
+        ds_indirect_recharge.close()
+        indirect_recharge_year[indirect_recharge_year > 0] = 0  # set positive values to zero
+        indirect_recharge_year = np.abs(indirect_recharge_year)
+        indirect_recharge_year = np.where(mask[np.newaxis, :, :], indirect_recharge_year, 0)
+        ll_indirect_recharge.append(indirect_recharge_year)
+    indirect_recharge = np.concatenate(ll_indirect_recharge, axis=0)
 
     # load SFR parameters
     reaches = pd.read_csv(base_path.parent / "input" / "sfr_packagedata_modified.csv", sep=";")

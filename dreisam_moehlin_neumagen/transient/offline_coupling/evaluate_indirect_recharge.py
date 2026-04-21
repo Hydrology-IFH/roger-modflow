@@ -52,6 +52,16 @@ def main(model_run):
     groundwater_depths = np.concatenate(ll_groundwater_depths, axis=0)
     groundwater_heads = np.concatenate(ll_groundwater_heads, axis=0)
 
+    # load topography
+    click.echo("Loading topography...")
+    path = base_path.parent / "input" / "parameters_modflow.nc"
+    ds_params = xr.open_dataset(path, engine="h5netcdf")
+    topography = ds_params['elevations'].isel(z=0).values
+    mask_schoenberg = (ds_params["mask_schoenberg"].values == 1)
+    mask = np.isfinite(topography)
+    mask = np.where(mask_schoenberg, False, mask)
+    topography = np.where(mask, topography, np.nan)
+
     click.echo("Loading indirect recharge...")
     ll_indirect_recharge = []
     for year in years:
@@ -65,16 +75,6 @@ def main(model_run):
         indirect_recharge_year = np.where(mask[np.newaxis, :, :], indirect_recharge_year, 0)
         ll_indirect_recharge.append(indirect_recharge_year)
     indirect_recharge = np.concatenate(ll_indirect_recharge, axis=0)
-
-    # load topography
-    click.echo("Loading topography...")
-    path = base_path.parent / "input" / "parameters_modflow.nc"
-    ds_params = xr.open_dataset(path, engine="h5netcdf")
-    topography = ds_params['elevations'].isel(z=0).values
-    mask_schoenberg = (ds_params["mask_schoenberg"].values == 1)
-    mask = np.isfinite(topography)
-    mask = np.where(mask_schoenberg, False, mask)
-    topography = np.where(mask, topography, np.nan)
 
     # load SFR parameters
     reaches = pd.read_csv(base_path.parent / "input" / "sfr_packagedata_modified.csv", sep=";")
