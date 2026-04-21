@@ -319,6 +319,8 @@ dreisam_moehlin_neumagen/transient/input/crops_2018_2022.csv
 dreisam_moehlin_neumagen/transient/input/crops_2018_2022_summary.csv
 dreisam_moehlin_neumagen/transient/input/available_crop_rotations.csv
 dreisam_moehlin_neumagen/transient/input/stress_tests_meteo/
+dreisam_moehlin_neumagen/steady-state/observations/observed_groundwater_heads_avg_.gpkg
+dreisam_moehlin_neumagen/steady-state/observations/observed_streamflow.gpkg
 
 
 dreisam_moehlin_neumagen_porous/steady-state/input/dem_dreisam_moehlin_neumagen_50m.tif

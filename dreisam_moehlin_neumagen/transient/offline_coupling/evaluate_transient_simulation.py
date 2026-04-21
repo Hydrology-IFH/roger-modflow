@@ -9,35 +9,6 @@ import click
 import math
 import os
 
-dict_pseudowells_fissured = {"Au": (347, 280), # (x, y)
-                           "Conventwald": (531, 135),
-                           "Wagensteig": (649, 217),
-                           "Falkensteig": (579, 303),
-                           "Spielweg": (336, 453),
-                           "Leimbach": (275, 373),
-                           "Aubach": (312, 379),
-                           "Eschbach": (553, 179),
-                           "Hintereschbach": (554, 158),
-                           "Molzhof": (451, 584),
-                           "Zastler": (557, 352),
-                           "Sankt_Wilhelm": (502, 416),
-                           "Breitnau": (687, 313),
-                           }
-
-# dict_pseudowells_sfr = {"Falkensteig": (347, 280),
-#                         "Ebnet": (430, 207),
-#                         "Oberambringen": (191, 360),
-#                         "Untermuenstertal": (218, 487),
-#                         "Wiesneck": (578, 259),
-#                         "SanktWilhelm": (479, 400),
-#                         "Oberried": (507, 319),
-#                         "Zastler": (557, 351)}
-
-dict_pseudowells_sfr = {"Falkensteig": (347, 280),
-                        "Ebnet": (430, 207),
-                        "Oberambringen": (191, 360),
-                        "Untermuenstertal": (218, 487),
-                        "Oberried": (507, 319)}
 
 def xy_to_rowcol(x, y, x0, y0):
     """
@@ -56,7 +27,7 @@ def xy_to_rowcol(x, y, x0, y0):
 def main(model_run):
     base_path = Path(__file__).parent
 
-    date_time = pd.date_range(start="2014-01-01", end="2023-12-31", freq="D")
+    date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="D")
     years = np.unique(date_time.year.values)
 
     # load the simulated groundwater depths
@@ -110,29 +81,6 @@ def main(model_run):
     figure_dir = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures"
     if not os.path.exists(figure_dir):
         os.makedirs(figure_dir)
-
-    for station_id in dict_pseudowells_fissured.keys():
-        # get row and column index based on ccordinate of the station
-        click.echo(f"Evaluating station {station_id}...")
-        col = dict_pseudowells_fissured[station_id][0]
-        row = dict_pseudowells_fissured[station_id][1]
-        simulated_depth = groundwater_depths[:, row, col]
-        df_sim = pd.DataFrame({"simulated": simulated_depth})
-        df_sim.index = date_time
-        sim_vals = df_sim["simulated"].values
-
-        # plot simulated time series of groundwater depths for the station
-        fig, axes = plt.subplots(figsize=(6, 2))
-        axes.plot(df_sim.index, df_sim["simulated"], label="Simuliert", linewidth=1, color="red")
-        axes.set_xlim(df_sim.index[0], df_sim.index[-1])
-        axes.set_ylim(0,)
-        axes.invert_yaxis()
-        axes.set_xlabel("Zeit")
-        axes.set_ylabel("GWFA [m]")
-        fig.tight_layout()
-        file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"ts_gw_depths_{station_id}_run{model_run}.png"
-        fig.savefig(file, dpi=300, bbox_inches="tight")
-        plt.close(fig)
 
     ll_observed_depths = []
     ll_simulated_depths = []
@@ -274,12 +222,11 @@ def main(model_run):
     fig.savefig(file, dpi=300, bbox_inches="tight")
     plt.close(fig)
     
-
     # load the SFR output file
     output_file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / f"dmn_run_{model_run}_sfr.obs.csv"
     df_sfr_ = pd.read_csv(output_file, sep=",")
-    df_sfr_ = df_sfr_.iloc[366:, :]
-    date_time = pd.date_range(start="2014-01-01", end="2023-12-31", freq="D")
+    df_sfr_ = df_sfr_.iloc[1:, :]
+    date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="D")
     df_sfr_.index = date_time
 
     streamflow_gauges = ["EBNET", "OBERAMBRINGEN", "FALKENSTEIG", "UNTERMUENSTERTAL", "OBERRIED"]
@@ -335,45 +282,6 @@ def main(model_run):
         axes.set_ylabel("Benetzter Umfang [m]")
         fig.tight_layout()
         file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"ts_perimeter_{_gauge}_run{model_run}.png"
-        fig.savefig(file, dpi=300, bbox_inches="tight")
-        plt.close(fig)
-
-    for station_id in dict_pseudowells_sfr.keys():
-        col = dict_pseudowells_sfr[station_id][0]
-        row = dict_pseudowells_sfr[station_id][1]
-
-        # get row and column index based on ccordinate of the station
-        _station_id = str(station_id).upper()
-        click.echo(f"Evaluating station {station_id}...")
-        col = dict_pseudowells_sfr[station_id][0]
-        row = dict_pseudowells_sfr[station_id][1]
-        simulated_gw_head = groundwater_heads[:, row, col]
-        simulated_sfr_head = df_sfr_[f"{_station_id}_STAGE"].values
-        diff_heads = simulated_gw_head - simulated_sfr_head
-        df_sim = pd.DataFrame({"simulated": diff_heads})
-        df_sim.index = date_time
-
-        # plot simulated time series of groundwater depths for the station
-        fig, axes = plt.subplots(figsize=(6, 2))
-        axes.plot(df_sim.index, df_sim["simulated"], label="Simuliert", linewidth=1, color="red")
-        axes.set_xlim(df_sim.index[0], df_sim.index[-1])
-        cond = (reaches["i"] == row) & (reaches["j"] == col)
-        if cond.any():
-            try:
-                _rhk = reaches.loc[cond, "rhk"].values[0]
-                kf = reaches.loc[cond, "kf"].values[0]
-            except:
-                _rhk = reaches.loc[cond, "rhk"].values
-                kf = reaches.loc[cond, "kf"].values
-            if kf >= 10e-6:
-                rhk = _rhk * fudge_parameters["rhkp"].values[model_run]
-            else:
-                rhk = _rhk * fudge_parameters["rhkf"].values[model_run]
-            axes.set_title(f"kf Gerinne: {rhk:.1e} m/s, kf Geo: {kf:.1e} m/s")
-        axes.set_xlabel("Zeit")
-        axes.set_ylabel("$\Delta$ GW-SFR [m]")
-        fig.tight_layout()
-        file = base_path / "output" / "modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction" / "figures" / f"ts_delta_gw-sfr_{station_id}_run{model_run}.png"
         fig.savefig(file, dpi=300, bbox_inches="tight")
         plt.close(fig)
 
