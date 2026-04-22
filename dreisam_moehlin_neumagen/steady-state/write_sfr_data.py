@@ -152,7 +152,7 @@ sfrdata.set_streambed_top_elevations_from_dem(dem_file,
                                               elevation_units="meters",
                                               method="buffers",
                                               smooth=True,
-                                              buffer_distance=200)
+                                              buffer_distance=100)
 sfrdata.update_slopes(default_slope=0.01, minimum_slope=0.001, maximum_slope=0.45)  # update slopes based on the new streambed top elevations
 
 cond = np.isnan(sfrdata.reach_data["width"])
@@ -182,7 +182,7 @@ for rno, i, j in zip(sfrdata.reach_data["rno"], sfrdata.reach_data["i"], sfrdata
     elif streambed_bottom <= elevation_bottom_layer3[i, j] and streambed_bottom > elevation_bottom_layer4[i, j]:
         k = 3
     sfrdata.reach_data.loc[cond, "k"] = k  # set the layer index for each reach
-    df_sfr_elevations.loc[cond, "topo50"] = topography[i-1, j-1]
+    df_sfr_elevations.loc[cond, "topo50"] = topography[i, j]
 
 df_sfr_elevations["diff"] = df_sfr_elevations["topo50"] - df_sfr_elevations["strtop"]
 file = base_path / "input" / "sfr_elevations.csv"
@@ -192,6 +192,11 @@ df_sfr_elevations.to_csv(file, index=False, sep=";")
 sfrdata.write_package(version="mf6", idomain=domain_layers)
 sfrdata.write_tables(str(base_path / "input" / " "))
 sfrdata.write_shapefiles(str(base_path / "input" / " "))
+
+gdf_sfr_elevations = gpd.read_file(base_path / "input" / "sfr_lines.shp")
+gdf_sfr_elevations = gdf_sfr_elevations.merge(df_sfr_elevations.loc[:, ["rno", "topo50", "diff"]], on="rno", how="left")
+file = base_path / "input" / "sfr_elevations.gpkg"
+gdf_sfr_elevations.to_file(file, driver="GPKG")
 
 # collect files in input folder
 input_files = list((base_path / "input").glob("*"))

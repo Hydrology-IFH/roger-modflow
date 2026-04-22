@@ -335,9 +335,9 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer1[mask81] = hydraulic_conductivities_layer1[mask81] * fudge_parameters["-8_1"].values[model_run]
 
         hydraulic_conductivities_layer1[mask71] = hydraulic_conductivities_layer1[mask71] * fudge_parameters["-7_1"].values[model_run]
-        hydraulic_conductivities_layer2[mask72] = hydraulic_conductivities_layer2[mask72] * fudge_parameters["-7_2"].values[model_run]
-        hydraulic_conductivities_layer3[mask73] = 50e-8 * 86400
-        hydraulic_conductivities_layer4[mask74] = 10e-8 * 86400
+        hydraulic_conductivities_layer2[mask72] = 10e-6 * 86400
+        hydraulic_conductivities_layer3[mask73] = 50e-7 * 86400
+        hydraulic_conductivities_layer4[mask74] = 10e-7 * 86400
 
         hydraulic_conductivities_layer1[mask61] = hydraulic_conductivities_layer1[mask61] * fudge_parameters["-6_1"].values[model_run]
 
@@ -368,10 +368,10 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer2[hydraulic_conductivities_layer2 > 1000] = 1000
         hydraulic_conductivities_layer3[hydraulic_conductivities_layer3 > 1000] = 1000
         hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 > 1000] = 1000
-        hydraulic_conductivities_layer1[hydraulic_conductivities_layer1 < 10e-7] = 10e-7
-        hydraulic_conductivities_layer2[hydraulic_conductivities_layer2 < 10e-7] = 10e-7
-        hydraulic_conductivities_layer3[hydraulic_conductivities_layer3 < 10e-8] = 10e-7
-        hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 < 10e-8] = 10e-7
+        hydraulic_conductivities_layer1[hydraulic_conductivities_layer1 < 10e-6 * 86400] = 10e-6 * 86400
+        hydraulic_conductivities_layer2[hydraulic_conductivities_layer2 < 10e-6 * 86400] = 10e-6 * 86400
+        hydraulic_conductivities_layer3[hydraulic_conductivities_layer3 < 50e-7 * 86400] = 50e-7 * 86400
+        hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 < 10e-7 * 86400] = 10e-7 * 86400
 
         # prepare SFR data
         reaches = pd.read_csv(base_path.parent / "input" / "sfr_packagedata_modified.csv", sep=";")
@@ -401,9 +401,9 @@ class ModFlowSimulation:
         _hydraulic_conductivities_layer2 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.5, 1.5],  mode="constant")
         _hydraulic_conductivities_layer3 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.5, 1.5],  mode="constant")
         _hydraulic_conductivities_layer4 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.5, 1.5],  mode="constant")
-        cond1 = (hydraulic_conductivities_layer1_ < 10.0e-07)
-        cond2 = (hydraulic_conductivities_layer2_ < 10.0e-07)
-        cond3 = (hydraulic_conductivities_layer3_ < 10.0e-07)
+        cond1 = (hydraulic_conductivities_layer1_ < 10.0e-06)
+        cond2 = (hydraulic_conductivities_layer2_ < 10.0e-06)
+        cond3 = (hydraulic_conductivities_layer3_ < 50.0e-07)
         cond4 = (hydraulic_conductivities_layer4_ < 10.0e-07)
         hydraulic_conductivities_layer1[cond1] = _hydraulic_conductivities_layer1[cond1]
         hydraulic_conductivities_layer2[cond2] = _hydraulic_conductivities_layer2[cond2]
@@ -540,9 +540,9 @@ class ModFlowSimulation:
         specific_yield_layer4 = recalc_specific_yield(hydraulic_conductivities_layer4)
         # modify specific yield
         cond1 = (hydraulic_conductivities_layer1_ < 10.0e-07)
-        cond2 = (hydraulic_conductivities_layer2_ < 10.0e-07)
+        cond2 = (hydraulic_conductivities_layer2_ < 10.0e-06)
         specific_yield_layer2[cond2] = 0.05
-        cond3 = (hydraulic_conductivities_layer3_ < 10.0e-07)
+        cond3 = (hydraulic_conductivities_layer3_ < 50.0e-07)
         specific_yield_layer3[cond3] = 0.02
         cond4 = (hydraulic_conductivities_layer4_ < 10.0e-07)
         specific_yield_layer4[cond4] = 0.01
