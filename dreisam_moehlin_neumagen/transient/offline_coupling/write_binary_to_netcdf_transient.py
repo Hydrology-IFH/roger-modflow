@@ -62,6 +62,10 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     click.echo("Loading spatial reference and coordinates from parameters_modflow.nc...")
     with xr.open_dataset(base_path.parent / "input" / "parameters_modflow.nc") as ds:
         topography = ds['elevations'].isel(z=0).values
+        elevation_bottom_layer1 = ds['elevations'].isel(z=1).values
+        elevation_bottom_layer2 = ds['elevations'].isel(z=2).values
+        elevation_bottom_layer3 = ds['elevations'].isel(z=3).values
+        elevation_bottom_layer4 = ds['elevations'].isel(z=4).values
         spatial_ref = ds.spatial_ref
         xcoords = ds.x.values
         ycoords = ds.y.values
@@ -102,6 +106,28 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
                 }
             click.echo("Extracting data for heads,...")
             heads_year = np.where(heads[cond_year, :, :, :] > 10000, np.nan, heads[cond_year, :, :, :])
+            thickness_layer1 = np.where(elevation_bottom_layer1 >= topography, 0, topography - elevation_bottom_layer1)
+            thickness_layer2 = np.where(elevation_bottom_layer2 >= elevation_bottom_layer1, 0, elevation_bottom_layer1 - elevation_bottom_layer2)
+            thickness_layer3 = np.where(elevation_bottom_layer3 >= elevation_bottom_layer2, 0, elevation_bottom_layer2 - elevation_bottom_layer3)
+            thickness_layer4 = np.where(elevation_bottom_layer4 >= elevation_bottom_layer3, 0, elevation_bottom_layer3 - elevation_bottom_layer4)
+            gw_thickness_layer1 = np.where(heads_year[:, 0, :, :] <= elevation_bottom_layer1, 0, heads_year[:, 0, :, :] - elevation_bottom_layer1)
+            gw_thickness_layer2 = np.where(heads_year[:, 1, :, :] <= elevation_bottom_layer2, 0, heads_year[:, 1, :, :] - elevation_bottom_layer2)
+            gw_thickness_layer3 = np.where(heads_year[:, 2, :, :] <= elevation_bottom_layer3, 0, heads_year[:, 2, :, :] - elevation_bottom_layer3)
+            gw_thickness_layer4 = np.where(heads_year[:, 3, :, :] <= elevation_bottom_layer4, 0, heads_year[:, 3, :, :] - elevation_bottom_layer4)
+            gw_thickness_year = np.empty_like(heads_year)
+            gw_thickness_year[:, 0, :, :] = gw_thickness_layer1
+            gw_thickness_year[:, 1, :, :] = gw_thickness_layer2
+            gw_thickness_year[:, 2, :, :] = gw_thickness_layer3
+            gw_thickness_year[:, 3, :, :] = gw_thickness_layer4
+            gw_thickness_rel_layer1 = gw_thickness_layer1 / thickness_layer1
+            gw_thickness_rel_layer2 = gw_thickness_layer2 / thickness_layer2
+            gw_thickness_rel_layer3 = gw_thickness_layer3 / thickness_layer3
+            gw_thickness_rel_layer4 = gw_thickness_layer4 / thickness_layer4
+            gw_thickness_rel_year = np.empty_like(heads_year)
+            gw_thickness_rel_year[:, 0, :, :] = gw_thickness_rel_layer1
+            gw_thickness_rel_year[:, 1, :, :] = gw_thickness_rel_layer2
+            gw_thickness_rel_year[:, 2, :, :] = gw_thickness_rel_layer3
+            gw_thickness_rel_year[:, 3, :, :] = gw_thickness_rel_layer4
             click.echo("..., depths,...")
             depths_year = np.where(heads_year > 10000, np.nan, np.where(topography[np.newaxis, np.newaxis, :, :] - heads_year > 0, topography[np.newaxis, np.newaxis, :, :] - heads_year, 0))
             click.echo("... and groundwater-surface water flux...")
@@ -133,12 +159,51 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             # create spatial reference
             ds = ds.geo.write_crs("EPSG:25832")
             ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
+            file = base_path / "output" / stress_test_name / f"gw_head_run{model_run}_year{year}.nc"
             click.echo(f"Writing {file}...")
             comp = dict(zlib=True, complevel=1)  # compress data to save storage
             encoding = {var: comp for var in ds.data_vars}
             ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)
             ds.close()
             files_to_compress.append(file)
+
+            data_vars=dict(
+                    thickness=(["Time", "layer", "lat", "lon"], gw_thickness_year),
+                )
+
+            ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
+            ds["thickness"].attrs["units"] = "m"
+            ds["thickness"].attrs["long_name"] = "Groundwater thickness"
+            # create spatial reference
+            ds = ds.geo.write_crs("EPSG:25832")
+            ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
+            file = base_path / "output" / stress_test_name / f"gw_thickness_run{model_run}_year{year}.nc"
+            click.echo(f"Writing {file}...")
+            comp = dict(zlib=True, complevel=1)  # compress data to save storage
+            encoding = {var: comp for var in ds.data_vars}
+            ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)
+            ds.close()
+            files_to_compress.append(file)
+
+            data_vars=dict(
+                    thickness_rel=(["Time", "layer", "lat", "lon"], gw_thickness_year),
+                )
+
+            ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
+            ds["thickness_rel"].attrs["units"] = "-"
+            ds["thickness_rel"].attrs["long_name"] = "Relative groundwater thickness"
+            # create spatial reference
+            ds = ds.geo.write_crs("EPSG:25832")
+            ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
+            file = base_path / "output" / stress_test_name / f"gw_thickness_rel_run{model_run}_year{year}.nc"
+            click.echo(f"Writing {file}...")
+            comp = dict(zlib=True, complevel=1)  # compress data to save storage
+            encoding = {var: comp for var in ds.data_vars}
+            ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)
+            ds.close()
+            files_to_compress.append(file)
+
+
 
             data_vars=dict(
                     depth=(["Time", "layer", "lat", "lon"], depths_year),

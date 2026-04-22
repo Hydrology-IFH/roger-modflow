@@ -336,8 +336,8 @@ class ModFlowSimulation:
 
         hydraulic_conductivities_layer1[mask71] = hydraulic_conductivities_layer1[mask71] * fudge_parameters["-7_1"].values[model_run]
         hydraulic_conductivities_layer2[mask72] = 10e-6 * 86400
-        hydraulic_conductivities_layer3[mask73] = 50e-7 * 86400
-        hydraulic_conductivities_layer4[mask74] = 10e-7 * 86400
+        hydraulic_conductivities_layer3[mask73] = 10e-6 * 86400
+        hydraulic_conductivities_layer4[mask74] = 10e-6 * 86400
 
         hydraulic_conductivities_layer1[mask61] = hydraulic_conductivities_layer1[mask61] * fudge_parameters["-6_1"].values[model_run]
 
@@ -370,8 +370,8 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 > 1000] = 1000
         hydraulic_conductivities_layer1[hydraulic_conductivities_layer1 < 10e-6 * 86400] = 10e-6 * 86400
         hydraulic_conductivities_layer2[hydraulic_conductivities_layer2 < 10e-6 * 86400] = 10e-6 * 86400
-        hydraulic_conductivities_layer3[hydraulic_conductivities_layer3 < 50e-7 * 86400] = 50e-7 * 86400
-        hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 < 10e-7 * 86400] = 10e-7 * 86400
+        hydraulic_conductivities_layer3[hydraulic_conductivities_layer3 < 10e-6 * 86400] = 10e-6 * 86400
+        hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 < 10e-6 * 86400] = 10e-6 * 86400
 
         # prepare SFR data
         reaches = pd.read_csv(base_path.parent / "input" / "sfr_packagedata_modified.csv", sep=";")
@@ -403,8 +403,8 @@ class ModFlowSimulation:
         _hydraulic_conductivities_layer4 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.5, 1.5],  mode="constant")
         cond1 = (hydraulic_conductivities_layer1_ < 10.0e-06)
         cond2 = (hydraulic_conductivities_layer2_ < 10.0e-06)
-        cond3 = (hydraulic_conductivities_layer3_ < 50.0e-07)
-        cond4 = (hydraulic_conductivities_layer4_ < 10.0e-07)
+        cond3 = (hydraulic_conductivities_layer3_ < 10.0e-06)
+        cond4 = (hydraulic_conductivities_layer4_ < 10.0e-06)
         hydraulic_conductivities_layer1[cond1] = _hydraulic_conductivities_layer1[cond1]
         hydraulic_conductivities_layer2[cond2] = _hydraulic_conductivities_layer2[cond2]
         hydraulic_conductivities_layer3[cond3] = _hydraulic_conductivities_layer3[cond3]
@@ -470,6 +470,8 @@ class ModFlowSimulation:
         cond = (reaches["kf"] < 10e-6)
         reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkf"].values[model_run]
         reaches["man"] = reaches["man"] * fudge_parameters["man"].values[model_run]
+        cond = (reaches["kf"] < 10e-7)
+        reaches.loc[cond, "rhk"] = 10e-7 * 86400
 
         # modify the manning"s n and hydraulic conductivity of the streambed based on the degree of alteration (5=partly, 6=strongly, 7=very strongly)
         cond = (reaches["ss"] == 5)
@@ -542,10 +544,10 @@ class ModFlowSimulation:
         cond1 = (hydraulic_conductivities_layer1_ < 10.0e-07)
         cond2 = (hydraulic_conductivities_layer2_ < 10.0e-06)
         specific_yield_layer2[cond2] = 0.05
-        cond3 = (hydraulic_conductivities_layer3_ < 50.0e-07)
-        specific_yield_layer3[cond3] = 0.02
-        cond4 = (hydraulic_conductivities_layer4_ < 10.0e-07)
-        specific_yield_layer4[cond4] = 0.01
+        cond3 = (hydraulic_conductivities_layer3_ < 10.0e-06)
+        specific_yield_layer3[cond3] = 0.03
+        cond4 = (hydraulic_conductivities_layer4_ < 10.0e-06)
+        specific_yield_layer4[cond4] = 0.02
         specific_yield_layer1[np.isnan(specific_yield_layer1)] = 0
         specific_yield_layer2[np.isnan(specific_yield_layer2)] = 0
         specific_yield_layer3[np.isnan(specific_yield_layer3)] = 0
