@@ -152,7 +152,7 @@ sfrdata.set_streambed_top_elevations_from_dem(dem_file,
                                               elevation_units="meters",
                                               method="buffers",
                                               smooth=True,
-                                              buffer_distance=100)
+                                              buffer_distance=200)
 sfrdata.update_slopes(default_slope=0.01, minimum_slope=0.001, maximum_slope=0.45)  # update slopes based on the new streambed top elevations
 
 cond = np.isnan(sfrdata.reach_data["width"])
@@ -161,6 +161,10 @@ cond_widht0 = (sfrdata.reach_data.loc[:, "width"] <= 1.0)
 sfrdata.reach_data.loc[cond_widht0, "width"] = 1.0  # set width to 1 m if it is smaller than 1 m
 cond_widht17 = (sfrdata.reach_data.loc[:, "width"] >= 17.0)
 sfrdata.reach_data.loc[cond_widht17, "width"] = 17.0  # set width to 17 m if it is larger than 17 m
+
+df_sfr_elevations = sfrdata.reach_data.loc[:, ["rno", "strtop"]]
+df_sfr_elevations["topo50"] = np.nan
+df_sfr_elevations["diff"] = np.nan
 
 # assign the layer
 for rno, i, j in zip(sfrdata.reach_data["rno"], sfrdata.reach_data["i"], sfrdata.reach_data["j"]):
@@ -178,6 +182,11 @@ for rno, i, j in zip(sfrdata.reach_data["rno"], sfrdata.reach_data["i"], sfrdata
     elif streambed_bottom <= elevation_bottom_layer3[i, j] and streambed_bottom > elevation_bottom_layer4[i, j]:
         k = 3
     sfrdata.reach_data.loc[cond, "k"] = k  # set the layer index for each reach
+    df_sfr_elevations.loc[cond, "topo50"] = topography[i-1, j-1]
+
+df_sfr_elevations["diff"] = df_sfr_elevations["topo50"] - df_sfr_elevations["strtop"]
+file = base_path / "input" / "sfr_elevations.csv"
+df_sfr_elevations.to_csv(file, index=False, sep=";")
 
 # write the SFR package  
 sfrdata.write_package(version="mf6", idomain=domain_layers)

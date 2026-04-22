@@ -370,8 +370,8 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 > 1000] = 1000
         hydraulic_conductivities_layer1[hydraulic_conductivities_layer1 < 10e-7] = 10e-7
         hydraulic_conductivities_layer2[hydraulic_conductivities_layer2 < 10e-7] = 10e-7
-        hydraulic_conductivities_layer3[hydraulic_conductivities_layer3 < 10e-8] = 10e-8
-        hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 < 10e-8] = 10e-8
+        hydraulic_conductivities_layer3[hydraulic_conductivities_layer3 < 10e-8] = 10e-7
+        hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 < 10e-8] = 10e-7
 
         # prepare SFR data
         reaches = pd.read_csv(base_path.parent / "input" / "sfr_packagedata_modified.csv", sep=";")
@@ -541,9 +541,9 @@ class ModFlowSimulation:
         # modify specific yield
         cond1 = (hydraulic_conductivities_layer1_ < 10.0e-07)
         cond2 = (hydraulic_conductivities_layer2_ < 10.0e-07)
-        specific_yield_layer2[cond2] = 0.02
+        specific_yield_layer2[cond2] = 0.05
         cond3 = (hydraulic_conductivities_layer3_ < 10.0e-07)
-        specific_yield_layer3[cond3] = 0.015
+        specific_yield_layer3[cond3] = 0.02
         cond4 = (hydraulic_conductivities_layer4_ < 10.0e-07)
         specific_yield_layer4[cond4] = 0.01
         specific_yield_layer1[np.isnan(specific_yield_layer1)] = 0
@@ -569,7 +569,7 @@ class ModFlowSimulation:
         specific_yield[3]["data"] = specific_yield_layer4
 
         specific_storage = flopy.mf6.ModflowGwfsto.ss.empty(
-                gwf, layered=True, default_value=0.000001
+                gwf, layered=True, default_value=0.00001
             )
 
         sto = flopy.mf6.ModflowGwfsto(gwf, pname="sto",
@@ -641,10 +641,10 @@ class ModFlowSimulation:
         obs_dict = {
             (f"{name}_sfr.obs.csv", "binary"): ls_obs
         }
-        sfr = flopy.mf6.modflow.mfgwfsfr.ModflowGwfsfr(gwf, pname="sfr",
-            time_conversion=86400, length_conversion=1.0, nreaches=nstrm, packagedata=packagedata, 
-            connectiondata=connectiondata, diversions=diversiondata, save_flows=True,
-            maximum_depth_change=0.001, maximum_iterations=500, observations=obs_dict)
+        # sfr = flopy.mf6.modflow.mfgwfsfr.ModflowGwfsfr(gwf, pname="sfr",
+        #     time_conversion=86400, length_conversion=1.0, nreaches=nstrm, packagedata=packagedata, 
+        #     connectiondata=connectiondata, diversions=diversiondata, save_flows=True,
+        #     maximum_depth_change=0.001, maximum_iterations=500, observations=obs_dict)
         # Create the drainage package (Neumann boundary condition i.e. second type)
         for x, y in zip(reaches.iloc[:, 2], reaches.iloc[:, 3]):
             if mask_drainage_area[x, y]:
@@ -920,7 +920,8 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     cond_drinking_water_supply = groundwater_extraction["purpose"].isin(['Badenova WW Ebnet', 'Badenova WW Hausen', 'Eigenwasserversorgung', 'oeffentliche Wasserversorgung']).values
 
     # get number of days in the simulation which also used as number of time steps in MODFLOW
-    NDAYS = len(date_time)
+    # NDAYS = len(date_time)
+    NDAYS = 366  # for testing purposes only
     doys = date_time.dayofyear.values
     years = date_time.year.values
 
