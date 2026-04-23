@@ -481,6 +481,10 @@ class ModFlowSimulation:
         cond = (reaches["ss"] == 7)
         reaches.loc[cond, "rhk"] = 50e-10 * 86400
 
+        # reduce the hydraulic conductivity of the streambed for reaches with large distance to the surface
+        cond = (reaches["topo50-rtp"] >= 10)
+        reaches.loc[cond, "rhk"] = 10e-9 * 86400
+
         diversions = pd.read_csv(base_path.parent / "input" / "sfr_diversions.csv", sep=";")
         diversions.iloc[:, 0] = diversions.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
         diversions.iloc[:, 1] = diversions.iloc[:, 1].astype(int) - 1

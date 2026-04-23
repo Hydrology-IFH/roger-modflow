@@ -475,6 +475,7 @@ class ModFlowSimulation:
         cond = (reaches["ss"] == 7)
         reaches.loc[cond, "rhk"] = 50e-10 * 86400
 
+        # reduce the hydraulic conductivity of the streambed for reaches with large distance to the surface
         cond = (reaches["topo50-rtp"] >= 10)
         reaches.loc[cond, "rhk"] = 10e-9 * 86400
 
