@@ -215,19 +215,19 @@ class ModFlowSimulation:
 
         # Create the discretization package
         # load elevation data of the layers
+        mask = (ds_params["mask_porous_aquifer"].values == 1)
         topography = ds_params["elevations"].isel(z=0).values
         elevation_bottom_layer1 = ds_params["elevations"].isel(z=1).values
         elevation_bottom_layer2 = ds_params["elevations"].isel(z=2).values
         elevation_bottom_layer3 = ds_params["elevations"].isel(z=3).values
         elevation_bottom_layer4 = ds_params["elevations"].isel(z=4).values
+        topography[~mask] = np.nan
+        elevation_bottom_layer1[~mask] = np.nan
+        elevation_bottom_layer2[~mask] = np.nan
+        elevation_bottom_layer3[~mask] = np.nan
+        elevation_bottom_layer4[~mask] = np.nan
         elevation_bottom_layers = [elevation_bottom_layer1, elevation_bottom_layer2, elevation_bottom_layer3, elevation_bottom_layer4]
 
-        mask = np.isfinite(topography)
-        # set Schoenberg to inactive
-        mask_schoenberg = (ds_params["mask_schoenberg"].values == 1)
-        mask = np.where(mask_schoenberg, False, mask)
-        mask_boundary_condition_schoenberg = ds_bc["mask_schoenberg_bc"].values
-        mask = np.where(mask_boundary_condition_schoenberg, True, mask)
         mask_drainage_area = (ds_params["mask_drainage"].values == 1)
         domain = np.empty_like(topography)
         domain[mask] = 1
@@ -251,22 +251,16 @@ class ModFlowSimulation:
 
         # Create the initial conditions package
         # use interpolated groundwater head values at start date as initial conditions
-        gw_heads_interpolated = ds_params["gw_heads_interpolated"].values - 2.0
-        gw_heads_interpolated[~mask] = np.nan
-        gw_heads_interpolated[gw_heads_interpolated > topography] = topography[gw_heads_interpolated > topography]
-        initial_conditions_layers = [gw_heads_interpolated, gw_heads_interpolated, gw_heads_interpolated, gw_heads_interpolated]
+        initial_conditions_layer1 = ds_ic['initial_head_porous'].values
+        initial_conditions_layer2 = ds_ic['initial_head_porous'].values
+        initial_conditions_layer3 = ds_ic['initial_head_porous'].values
+        initial_conditions_layer4 = ds_ic['initial_head_porous'].values
+        initial_conditions_layer1[~mask] = np.nan
+        initial_conditions_layer2[~mask] = np.nan
+        initial_conditions_layer3[~mask] = np.nan
+        initial_conditions_layer4[~mask] = np.nan
+        initial_conditions_layers = [initial_conditions_layer1, initial_conditions_layer2, initial_conditions_layer3, initial_conditions_layer4]
         ic = flopy.mf6.modflow.mfgwfic.ModflowGwfic(gwf, pname="ic", strt=initial_conditions_layers)
-
-        # initial_conditions_layer1 = ds_ic['initial_head'].values
-        # initial_conditions_layer2 = ds_ic['initial_head'].values
-        # initial_conditions_layer3 = ds_ic['initial_head'].values
-        # initial_conditions_layer4 = ds_ic['initial_head'].values
-        # initial_conditions_layer1[~mask] = np.nan
-        # initial_conditions_layer2[~mask] = np.nan
-        # initial_conditions_layer3[~mask] = np.nan
-        # initial_conditions_layer4[~mask] = np.nan
-        # initial_conditions_layers = [initial_conditions_layer1, initial_conditions_layer2, initial_conditions_layer3, initial_conditions_layer4]
-        # ic = flopy.mf6.modflow.mfgwfic.ModflowGwfic(gwf, pname="ic", strt=initial_conditions_layers)
 
         # Create the node property flow package with hydraulic conducitivities
         hydraulic_conductivities_layer1 = ds_params["kf"].isel(layer=0).values
@@ -364,7 +358,7 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer2[hydraulic_conductivities_layer2 > 1000] = 1000
         hydraulic_conductivities_layer3[hydraulic_conductivities_layer3 > 1000] = 1000
         hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 > 1000] = 1000
-        hydraulic_conductivities_layer1[hydraulic_conductivities_layer1 < 10e-7 * 86400] = 10e-7 * 86400
+        hydraulic_conductivities_layer1[hydraulic_conductivities_layer1 < 10e-6 * 86400] = 10e-6 * 86400
         hydraulic_conductivities_layer2[hydraulic_conductivities_layer2 < 10e-6 * 86400] = 10e-6 * 86400
         hydraulic_conductivities_layer3[hydraulic_conductivities_layer3 < 50e-7 * 86400] = 50e-7 * 86400
         hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 < 10e-7 * 86400] = 10e-7 * 86400
@@ -397,10 +391,10 @@ class ModFlowSimulation:
         _hydraulic_conductivities_layer2 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer2, [1.5, 1.5],  mode="constant")
         _hydraulic_conductivities_layer3 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer3, [1.5, 1.5],  mode="constant")
         _hydraulic_conductivities_layer4 = scipy.ndimage.gaussian_filter(hydraulic_conductivities_layer4, [1.5, 1.5],  mode="constant")
-        cond1 = (hydraulic_conductivities_layer1_ < 10.0e-07)
-        cond2 = (hydraulic_conductivities_layer2_ < 10.0e-07)
-        cond3 = (hydraulic_conductivities_layer3_ < 10.0e-07)
-        cond4 = (hydraulic_conductivities_layer4_ < 10.0e-07)
+        cond1 = (hydraulic_conductivities_layer1_ < 10.0e-06)
+        cond2 = (hydraulic_conductivities_layer2_ < 10.0e-06)
+        cond3 = (hydraulic_conductivities_layer3_ < 10.0e-06)
+        cond4 = (hydraulic_conductivities_layer4_ < 10.0e-06)
         hydraulic_conductivities_layer1[cond1] = _hydraulic_conductivities_layer1[cond1]
         hydraulic_conductivities_layer2[cond2] = _hydraulic_conductivities_layer2[cond2]
         hydraulic_conductivities_layer3[cond3] = _hydraulic_conductivities_layer3[cond3]
@@ -474,9 +468,6 @@ class ModFlowSimulation:
         reaches.loc[cond, "rhk"] = 10e-9 * 86400
         cond = (reaches["ss"] == 7)
         reaches.loc[cond, "rhk"] = 50e-10 * 86400
-
-        cond = (reaches["topo50-rtp"] >= 10)
-        reaches.loc[cond, "rhk"] = 10e-9 * 86400
 
         diversions = pd.read_csv(base_path.parent / "input" / "sfr_diversions.csv", sep=";")
         diversions.iloc[:, 0] = diversions.iloc[:, 0].astype(int) - 1  # convert to zero-based indexing
@@ -942,7 +933,43 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         topography = aggregate_to_finer_resolution(topography_, 50, 25, method="keep")
 
     # get number of reaches from the modified sfr_packagedata.csv
-    sfr_packagedata = pd.read_csv(base_path.parent / "input" / "sfr_packagedata_modified.csv", sep=";")
+    n_reaches = pd.read_csv(base_path.parent / "input" / "sfr_packagedata_modified.csv", sep=";").shape[0]
+
+    # load discharge data
+    if stress_test_meteo == "base":
+        df_discharge_dreisam = pd.read_csv(base_path.parent / "input" / "2013-2023" / "discharge_dreisam.csv", sep=";", index_col=0, skiprows=1)
+        df_discharge_moehlin = pd.read_csv(base_path.parent / "input" / "2013-2023" / "discharge_moehlin.csv", sep=";", index_col=0, skiprows=1)
+        df_discharge_neumagen = pd.read_csv(base_path.parent / "input" / "2013-2023" / "discharge_neumagen.csv", sep=";", index_col=0, skiprows=1)
+        df_discharge_rotbach = pd.read_csv(base_path.parent / "input" / "2013-2023" / "discharge_rotbach.csv", sep=";", index_col=0, skiprows=1)
+    elif stress_test_meteo in ["spring-drought", "summer-drought", "long-term"]:
+        df_discharge_dreisam = pd.read_csv(base_path.parent / "input" / "stress_tests_discharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "Dreisam" / "Q.csv", sep=";", index_col=0, skiprows=1)
+        df_discharge_moehlin = pd.read_csv(base_path.parent / "input" / "stress_tests_discharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "Moehlin" / "Q.csv", sep=";", index_col=0, skiprows=1)
+        df_discharge_neumagen = pd.read_csv(base_path.parent / "input" / "stress_tests_discharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "Neumagen" / "Q.csv", sep=";", index_col=0, skiprows=1)
+        df_discharge_rotbach = pd.read_csv(base_path.parent / "input" / "stress_tests_discharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "Rotbach" / "Q.csv", sep=";", index_col=0, skiprows=1)
+    elif stress_test_meteo in ["spring-summer-wet"]:
+        df_discharge_dreisam = pd.read_csv(base_path.parent / "input" / "stress_tests_discharge" / f"{stress_test_meteo}" / "Dreisam" / "Q.csv", sep=";", index_col=0, skiprows=1)
+        df_discharge_moehlin = pd.read_csv(base_path.parent / "input" / "stress_tests_discharge" / f"{stress_test_meteo}" / "Moehlin" / "Q.csv", sep=";", index_col=0, skiprows=1)
+        df_discharge_neumagen = pd.read_csv(base_path.parent / "input" / "stress_tests_discharge" / f"{stress_test_meteo}" / "Neumagen" / "Q.csv", sep=";", index_col=0, skiprows=1)
+        df_discharge_rotbach = pd.read_csv(base_path.parent / "input" / "stress_tests_discharge" / f"{stress_test_meteo}" / "Rotbach" / "Q.csv", sep=";", index_col=0, skiprows=1)
+    # add DOY and year columns
+    df_discharge_dreisam["DOY"] = pd.to_datetime(df_discharge_dreisam.index).dayofyear
+    df_discharge_dreisam["year"] = pd.to_datetime(df_discharge_dreisam.index).year
+    df_discharge_moehlin["DOY"] = pd.to_datetime(df_discharge_moehlin.index).dayofyear
+    df_discharge_moehlin["year"] = pd.to_datetime(df_discharge_moehlin.index).year
+    df_discharge_neumagen["DOY"] = pd.to_datetime(df_discharge_neumagen.index).dayofyear
+    df_discharge_neumagen["year"] = pd.to_datetime(df_discharge_neumagen.index).year
+    df_discharge_rotbach["DOY"] = pd.to_datetime(df_discharge_rotbach.index).dayofyear
+    df_discharge_rotbach["year"] = pd.to_datetime(df_discharge_rotbach.index).year
+
+    # load lateral recharge anomalies to scale the recharge to daily values
+    if stress_test_meteo == "base":
+        df_lateral_recharge_anomaly = pd.read_csv(base_path.parent / "input" / "2013-2023" / "lateral_recharge_anomaly.csv", sep=";", index_col=0, skiprows=1)
+    elif stress_test_meteo in ["spring-drought", "summer-drought", "long-term"]:
+        df_lateral_recharge_anomaly = pd.read_csv(base_path.parent / "input" / "stress_tests_lateral_recharge" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "lateral_recharge_anomaly.csv", sep=";", index_col=0, skiprows=1)
+    elif stress_test_meteo in ["spring-summer-wet"]:
+        df_lateral_recharge_anomaly = pd.read_csv(base_path.parent / "input" / "stress_tests_lateral_recharge" / f"{stress_test_meteo}" / "lateral_recharge_anomaly.csv", sep=";", index_col=0, skiprows=1)
+    df_lateral_recharge_anomaly["DOY"] = pd.to_datetime(df_lateral_recharge_anomaly.index).dayofyear
+    df_lateral_recharge_anomaly["year"] = pd.to_datetime(df_lateral_recharge_anomaly.index).year
 
     # load groundwater extraction data
     # load daily weights for drinking water supply wells to scale the pumping rates of the drinking water supply wells in the well package
@@ -963,6 +990,8 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     n_wells = len(groundwater_extraction)
     cond_drinking_water_supply = groundwater_extraction["purpose"].isin(['Badenova WW Ebnet', 'Badenova WW Hausen', 'Eigenwasserversorgung', 'oeffentliche Wasserversorgung']).values
 
+    # get number of days in the simulation which also used as number of time steps in MODFLOW
+    NDAYS = len(date_time)
     doys = date_time.dayofyear.values
     years = date_time.year.values
 
@@ -987,17 +1016,28 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     year = years[0]
     doy = doys[0]
     daily_weights_drinking_water_supply_year_doy = daily_weights_drinking_water_supply.loc[int(year), f"{int(doy)}"]
+    if stress_test_well_extraction == "stress":
+        cond_doy_year = (date_time.dayofyear == doy) & (date_time.year == year)
+        daily_weights_drinking_water_supply_year_doy = daily_weights_drinking_water_supply.loc[cond_doy_year, "weights"].values[0]
+    else:
+        daily_weights_drinking_water_supply_year_doy = daily_weights_drinking_water_supply.loc[int(year), f"{int(doy)}"]
+    discharge_dreisam_year_doy = df_discharge_dreisam.loc[(df_discharge_dreisam["year"] == year) & (df_discharge_dreisam["DOY"] == doy), "Q"].values[0]
+    discharge_moehlin_year_doy = df_discharge_moehlin.loc[(df_discharge_moehlin["year"] == year) & (df_discharge_moehlin["DOY"] == doy), "Q"].values[0]
+    discharge_neumagen_year_doy = df_discharge_neumagen.loc[(df_discharge_neumagen["year"] == year) & (df_discharge_neumagen["DOY"] == doy), "Q"].values[0]
+    discharge_rotbach_year_doy = df_discharge_rotbach.loc[(df_discharge_rotbach["year"] == year) & (df_discharge_rotbach["DOY"] == doy), "Q"].values[0]
+    lateral_recharge_anomaly_year_doy = df_lateral_recharge_anomaly.loc[(df_lateral_recharge_anomaly["year"] == year) & (df_lateral_recharge_anomaly["DOY"] == doy), "anomaly"].values[0]
 
     # load average recharge data
     path = Path(__file__).parent.parent / "input" / "boundary_conditions.nc"
     with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_bc:
         recharge_year = ds_bc["recharge"].values
         recharge_year[recharge_year < 0] = 0  # set negative recharge to zero
+        recharge_lateral = ((ds_bc["lateral_inflow_bc_mmday"].values) / 1000)
 
     # update recharge and pass it to MODFLOW
     recharge_vertical = recharge_year / 1000  # mm/day to m/day
     recharge_vertical[recharge_vertical > 0.1] = 0.1  # constrain vertical recharge to 0.1 m/day
-    recharge = recharge_vertical.flatten()
+    recharge = (recharge_vertical.flatten() + recharge_lateral.flatten())
     recharge = recharge.astype(np.float64)
     modflow_interface.set_recharge(recharge)
 
@@ -1013,6 +1053,27 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     well_extraction_rate[:] = -well_extraction_rate[:]  # extraction is negative
     modflow_interface.set_well_rate(well_extraction_rate)
 
+    # update SFR inflow and pass it to MODFLOW
+    sfr_inflow = np.zeros((n_reaches,), dtype=np.float64)
+    # set Eschbach inflow to the observed discharge of the current year and day
+    sfr_inflow[449] = 86400 * 0.1 * 0.548
+    # set Ibenbach inflow to the observed discharge of the current year and day
+    sfr_inflow[137] = 86400 * 0.1 * 0.548
+    # set Wagensteigbach inflow to the observed discharge of the current year and day
+    sfr_inflow[168] = 86400 * 0.354 * 0.548
+    # set Rotbach inflow to the observed discharge of the current year and day
+    sfr_inflow[103] = 86400
+    # set Brugga inflow to the observed discharge
+    sfr_inflow[6] = 86400 * 0.7 * 2.8
+    # set Moehlin inflow to the observed discharge of the current year and day
+    sfr_inflow[3633] = 86400 * 0.5
+    sfr_inflow[3539] = 86400 * 0.5
+    # set Muehlbach inflow to the observed discharge of the current year and day
+    sfr_inflow[1155] = 86400 * 0.1 * 0.33
+    # set Neumagen inflow to the observed discharge of the current year and day
+    sfr_inflow[1272] = 86400
+    modflow_interface.set_sfr_inflow(sfr_inflow)
+
     # run MODFLOW for one timestep
     modflow_interface.step()
     click.echo("MODFLOW (initial steady-state) finalized")
@@ -1020,6 +1081,16 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     for i in range(NDAYS):
         year = years[i]
         doy = doys[i]
+        if stress_test_well_extraction == "stress":
+            cond_doy_year = (date_time.dayofyear == doy) & (date_time.year == year)
+            daily_weights_drinking_water_supply_year_doy = daily_weights_drinking_water_supply.loc[cond_doy_year, "weights"].values[0]
+        else:
+            daily_weights_drinking_water_supply_year_doy = daily_weights_drinking_water_supply.loc[int(year), f"{int(doy)}"]
+        discharge_dreisam_year_doy = df_discharge_dreisam.loc[(df_discharge_dreisam["year"] == year) & (df_discharge_dreisam["DOY"] == doy), "Q"].values[0]
+        discharge_moehlin_year_doy = df_discharge_moehlin.loc[(df_discharge_moehlin["year"] == year) & (df_discharge_moehlin["DOY"] == doy), "Q"].values[0]
+        discharge_neumagen_year_doy = df_discharge_neumagen.loc[(df_discharge_neumagen["year"] == year) & (df_discharge_neumagen["DOY"] == doy), "Q"].values[0]
+        discharge_rotbach_year_doy = df_discharge_rotbach.loc[(df_discharge_rotbach["year"] == year) & (df_discharge_rotbach["DOY"] == doy), "Q"].values[0]
+        lateral_recharge_anomaly_year_doy = df_lateral_recharge_anomaly.loc[(df_lateral_recharge_anomaly["year"] == year) & (df_lateral_recharge_anomaly["DOY"] == doy), "anomaly"].values[0]
 
         # update groundwater head
         groundwater_head = np.zeros(config_modflow['ny'] * config_modflow['nx'])
@@ -1038,13 +1109,14 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         roger_interface.update_until(roger_interface._model._config["OUTPUT_FREQUENCY"])
 
         # update recharge and pass it to MODFLOW
-        recharge = np.zeros(roger_interface.get_grid_node_count())
-        roger_interface.get_value("q_ss", recharge)
-        recharge[(groundwater_depth_ <= soildepth)] = 0 # constrain recharge to zero where groundwater depth is equal to soil depth
-        recharge = aggregate_to_coarser_resolution(recharge, 25, 50, method="average")
-        recharge[~modflow_mask] = np.nan
-        recharge = recharge.flatten()
-        recharge[recharge > 0.1] = 0.1  # constrain recharge to 0.1 m/day
+        recharge_vertical = np.zeros(roger_interface.get_grid_node_count())
+        roger_interface.get_value("q_ss", recharge_vertical)
+        recharge_vertical[(groundwater_depth_ <= soildepth)] = 0 # constrain recharge to zero where groundwater depth is equal to soil depth
+        recharge_vertical = aggregate_to_coarser_resolution(recharge_vertical, 25, 50, method="average")
+        recharge_vertical[~modflow_mask] = np.nan
+        recharge_vertical[recharge_vertical > 0.1] = 0.1  # constrain recharge to 0.1 m/day
+        recharge_lateral = ((ds_bc["lateral_inflow_bc_mmday"].values) / 1000) * (1 + lateral_recharge_anomaly_year_doy)  # mm/day to m/day
+        recharge = (recharge_vertical.flatten() + recharge_lateral.flatten())  # set recharge to zero for testing
         recharge = np.where(np.isnan(recharge), 0, recharge)  # set negative recharge to zero
         modflow_interface.set_recharge(recharge)
 
@@ -1078,6 +1150,27 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         well_extraction_rate[:] = -well_extraction_rate[:]  # extraction is negative
         well_extraction_rate = np.where(np.isnan(well_extraction_rate), 0, well_extraction_rate)  # set nan values to zero
         modflow_interface.set_well_rate(well_extraction_rate)
+
+        # update SFR inflow and pass it to MODFLOW
+        sfr_inflow = np.zeros((n_reaches,), dtype=np.float64)
+        # set Eschbach inflow to the observed discharge of the current year and day
+        sfr_inflow[449] = discharge_rotbach_year_doy * 86400 * (0.1/0.548)
+        # set Ibenbach inflow to the observed discharge of the current year and day
+        sfr_inflow[137] = discharge_rotbach_year_doy * 86400 * (0.1/0.548)
+        # set Wagensteigbach inflow to the observed discharge of the current year and day
+        sfr_inflow[168] = discharge_rotbach_year_doy * 86400 * (0.354/0.548)
+        # set Rotbach inflow to the observed discharge of the current year and day
+        sfr_inflow[103] = discharge_rotbach_year_doy * 86400
+        # set Brugga inflow to the observed discharge
+        sfr_inflow[6] = discharge_dreisam_year_doy * 86400 * (0.7/2.8)
+        # set Moehlin inflow to the observed discharge of the current year and day
+        sfr_inflow[3633] = discharge_moehlin_year_doy * 86400 * 0.5
+        sfr_inflow[3539] = discharge_moehlin_year_doy * 86400 * 0.5
+        # set Muehlbach inflow to the observed discharge of the current year and day
+        sfr_inflow[1155] = discharge_moehlin_year_doy * 86400 * (0.1/0.33)
+        # set Neumagen inflow to the observed discharge of the current year and day
+        sfr_inflow[1272] = discharge_neumagen_year_doy * 86400
+        modflow_interface.set_sfr_inflow(sfr_inflow)
 
         # run MODFLOW for one timestep
         modflow_interface.step()

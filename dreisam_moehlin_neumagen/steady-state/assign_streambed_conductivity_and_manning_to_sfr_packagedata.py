@@ -11,6 +11,7 @@ base_path = Path(__file__).parent
 path = base_path / "input" / "parameters_modflow_.nc"
 ds_params = xr.open_dataset(path, engine="h5netcdf")
 
+topography = ds_params["elevations"].isel(z=0).values
 hydraulic_conductivities_layer1 = ds_params["kf"].isel(layer=0).values
 hydraulic_conductivities_layer2 = ds_params["kf"].isel(layer=1).values
 hydraulic_conductivities_layer3 = ds_params["kf"].isel(layer=2).values
@@ -54,6 +55,8 @@ gdf_reaches["man"] = np.nan
 gdf_reaches["fc"] = 0.
 gdf_reaches["ss"] = 0
 gdf_reaches["kf"] = np.nan
+gdf_reaches["topo50"] = np.nan
+gdf_reaches["topo50-rtp"] = np.nan
 
 for rno, z, y, x in zip(gdf_reaches.loc[:, "rno"] - 1, gdf_reaches.loc[:, "k"], gdf_reaches.loc[:, "i"], gdf_reaches.loc[:, "j"]):
     if z == 0:
@@ -64,6 +67,9 @@ for rno, z, y, x in zip(gdf_reaches.loc[:, "rno"] - 1, gdf_reaches.loc[:, "k"], 
         gdf_reaches.loc[rno, "kf"] = hydraulic_conductivities_layer3[y, x] / 86400
     elif z == 3:
         gdf_reaches.loc[rno, "kf"] = hydraulic_conductivities_layer3[y, x] / 86400
+    gdf_reaches.loc[rno, "topo50"] = topography[y, x]
+
+gdf_reaches["topo50-rtp"] = gdf_reaches["topo50"] - gdf_reaches["rtp"]
 
 # assign manning coefficient and streambed hydraulic conductivity to each reach based on the rasters
 for idx, row in gdf_reaches.iterrows():
@@ -104,7 +110,7 @@ gdf_reaches["k"] = gdf_reaches["k"] + 1
 gdf_reaches["i"] = gdf_reaches["i"] + 1
 gdf_reaches["j"] = gdf_reaches["j"] + 1
 
-gdf_reaches = gdf_reaches[["rno", "k", "i", "j", "rlen", "rwid", "rgrd", "rtp", "rbth", "rhk", "man", "ncon", "ustrf", "ndv", "line_id", "fc", "ss", "kf", "geometry"]]
+gdf_reaches = gdf_reaches[["rno", "k", "i", "j", "rlen", "rwid", "rgrd", "rtp", "rbth", "rhk", "man", "ncon", "ustrf", "ndv", "line_id", "fc", "ss", "kf", "topo50", "topo50-rtp", "geometry"]]
 
 file = base_path / "input" / "sfr_packagedata_modified.gpkg"
 gdf_reaches.to_file(file, driver="GPKG")

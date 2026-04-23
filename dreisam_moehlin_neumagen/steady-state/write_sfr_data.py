@@ -150,7 +150,7 @@ sfrdata.reach_data.loc[:, "thts"] = 0.035  # set the Manning"s roughness coeffic
 dem_file = base_path / "input" / "dem_5m.tif"
 sfrdata.set_streambed_top_elevations_from_dem(dem_file,
                                               elevation_units="meters",
-                                              method="buffers",
+                                              method="cell polygons",
                                               smooth=True,
                                               buffer_distance=100)
 sfrdata.update_slopes(default_slope=0.01, minimum_slope=0.001, maximum_slope=0.45)  # update slopes based on the new streambed top elevations
@@ -163,8 +163,10 @@ cond_widht17 = (sfrdata.reach_data.loc[:, "width"] >= 17.0)
 sfrdata.reach_data.loc[cond_widht17, "width"] = 17.0  # set width to 17 m if it is larger than 17 m
 
 df_sfr_elevations = sfrdata.reach_data.loc[:, ["rno", "strtop"]]
+df_sfr_elevations["x"] = 0
+df_sfr_elevations["y"] = 0
 df_sfr_elevations["topo50"] = np.nan
-df_sfr_elevations["diff"] = np.nan
+df_sfr_elevations["topo50-strtop"] = np.nan
 
 # assign the layer
 for rno, i, j in zip(sfrdata.reach_data["rno"], sfrdata.reach_data["i"], sfrdata.reach_data["j"]):
@@ -183,8 +185,11 @@ for rno, i, j in zip(sfrdata.reach_data["rno"], sfrdata.reach_data["i"], sfrdata
         k = 3
     sfrdata.reach_data.loc[cond, "k"] = k  # set the layer index for each reach
     df_sfr_elevations.loc[cond, "topo50"] = topography[i, j]
+    df_sfr_elevations.loc[cond, "x"] = i
+    df_sfr_elevations.loc[cond, "y"] = j
 
-df_sfr_elevations["diff"] = df_sfr_elevations["topo50"] - df_sfr_elevations["strtop"]
+
+df_sfr_elevations["topo50-strtop"] = df_sfr_elevations["topo50"] - df_sfr_elevations["strtop"]
 file = base_path / "input" / "sfr_elevations.csv"
 df_sfr_elevations.to_csv(file, index=False, sep=";")
 
@@ -194,7 +199,7 @@ sfrdata.write_tables(str(base_path / "input" / " "))
 sfrdata.write_shapefiles(str(base_path / "input" / " "))
 
 gdf_sfr_elevations = gpd.read_file(base_path / "input" / "sfr_lines.shp")
-gdf_sfr_elevations = gdf_sfr_elevations.merge(df_sfr_elevations.loc[:, ["rno", "topo50", "diff"]], on="rno", how="left")
+gdf_sfr_elevations = gdf_sfr_elevations.merge(df_sfr_elevations.loc[:, ["rno", "topo50", "topo50-strtop"]], on="rno", how="left")
 file = base_path / "input" / "sfr_elevations.gpkg"
 gdf_sfr_elevations.to_file(file, driver="GPKG")
 
