@@ -993,6 +993,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     # get number of days in the simulation which also used as number of time steps in MODFLOW
     NDAYS = len(date_time)
     doys = date_time.dayofyear.values
+    months = date_time.month.values
     years = date_time.year.values
 
     # initialize the MODFLOW model using XMI
@@ -1080,6 +1081,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
 
     for i in range(NDAYS):
         year = years[i]
+        month = months[i]
         doy = doys[i]
         if stress_test_well_extraction == "stress":
             cond_doy_year = (date_time.dayofyear == doy) & (date_time.year == year)
@@ -1144,7 +1146,11 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
 
         # update well rate and pass it to MODFLOW
         well_extraction_rate = np.zeros((n_wells,), dtype=np.float64)
-        well_extraction_rate[:] = groundwater_extraction[f"{year}"].values.astype(np.float64)
+        if month in [7, 8] and year in [2016, 2017, 2018] and stress_test_well_extraction == "stress" and stress_test_meteo == "summer-drought" and stress_test_meteo_magnitude == 2 and stress_test_meteo_duration in [2, 3]:
+            # set well extraction to zero for testing
+            well_extraction_rate[:] = groundwater_extraction["2018"].values.astype(np.float64)
+        else:
+            well_extraction_rate[:] = groundwater_extraction[f"{year}"].values.astype(np.float64)
         well_extraction_rate[cond_drinking_water_supply] = well_extraction_rate[cond_drinking_water_supply] * daily_weights_drinking_water_supply_year_doy
         well_extraction_rate[~cond_drinking_water_supply] = well_extraction_rate[~cond_drinking_water_supply] / 365.25
         well_extraction_rate[:] = -well_extraction_rate[:]  # extraction is negative
