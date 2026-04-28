@@ -647,10 +647,10 @@ class ModFlowSimulation:
         obs_dict = {
             (f"{name}_sfr.obs.csv", "binary"): ls_obs
         }
-        # sfr = flopy.mf6.modflow.mfgwfsfr.ModflowGwfsfr(gwf, pname="sfr",
-        #     time_conversion=86400, length_conversion=1.0, nreaches=nstrm, packagedata=packagedata, 
-        #     connectiondata=connectiondata, diversions=diversiondata, save_flows=True,
-        #     maximum_depth_change=0.001, maximum_iterations=500, observations=obs_dict)
+        sfr = flopy.mf6.modflow.mfgwfsfr.ModflowGwfsfr(gwf, pname="sfr",
+            time_conversion=86400, length_conversion=1.0, nreaches=nstrm, packagedata=packagedata, 
+            connectiondata=connectiondata, diversions=diversiondata, save_flows=True,
+            maximum_depth_change=0.001, maximum_iterations=500, observations=obs_dict)
         # Create the drainage package (Neumann boundary condition i.e. second type)
         for x, y in zip(reaches.iloc[:, 2], reaches.iloc[:, 3]):
             if mask_drainage_area[x, y]:
