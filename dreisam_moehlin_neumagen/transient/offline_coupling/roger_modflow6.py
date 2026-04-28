@@ -336,8 +336,8 @@ class ModFlowSimulation:
 
         hydraulic_conductivities_layer1[mask71] = hydraulic_conductivities_layer1[mask71] * fudge_parameters["-7_1"].values[model_run]
         hydraulic_conductivities_layer2[mask72] = 10e-6 * 86400
-        hydraulic_conductivities_layer3[mask73] = 10e-6 * 86400
-        hydraulic_conductivities_layer4[mask74] = 10e-6 * 86400
+        hydraulic_conductivities_layer3[mask73] = 50e-7 * 86400
+        hydraulic_conductivities_layer4[mask74] = 10e-7 * 86400
 
         hydraulic_conductivities_layer1[mask61] = hydraulic_conductivities_layer1[mask61] * fudge_parameters["-6_1"].values[model_run]
 
@@ -368,10 +368,10 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer2[hydraulic_conductivities_layer2 > 1000] = 1000
         hydraulic_conductivities_layer3[hydraulic_conductivities_layer3 > 1000] = 1000
         hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 > 1000] = 1000
-        hydraulic_conductivities_layer1[hydraulic_conductivities_layer1 < 10e-6 * 86400] = 10e-6 * 86400
-        hydraulic_conductivities_layer2[hydraulic_conductivities_layer2 < 10e-6 * 86400] = 10e-6 * 86400
-        hydraulic_conductivities_layer3[hydraulic_conductivities_layer3 < 10e-6 * 86400] = 10e-6 * 86400
-        hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 < 10e-6 * 86400] = 10e-6 * 86400
+        hydraulic_conductivities_layer1[hydraulic_conductivities_layer1 < 10e-7 * 86400] = 10e-7 * 86400
+        hydraulic_conductivities_layer2[hydraulic_conductivities_layer2 < 10e-7 * 86400] = 10e-7 * 86400
+        hydraulic_conductivities_layer3[hydraulic_conductivities_layer3 < 50e-7 * 86400] = 50e-7 * 86400
+        hydraulic_conductivities_layer4[hydraulic_conductivities_layer4 < 10e-7 * 86400] = 10e-7 * 86400
 
         # prepare SFR data
         reaches = pd.read_csv(base_path.parent / "input" / "sfr_packagedata_modified.csv", sep=";")
@@ -549,9 +549,9 @@ class ModFlowSimulation:
         cond2 = (hydraulic_conductivities_layer2_ < 10.0e-06)
         specific_yield_layer2[cond2] = 0.05
         cond3 = (hydraulic_conductivities_layer3_ < 10.0e-06)
-        specific_yield_layer3[cond3] = 0.03
+        specific_yield_layer3[cond3] = 0.02
         cond4 = (hydraulic_conductivities_layer4_ < 10.0e-06)
-        specific_yield_layer4[cond4] = 0.02
+        specific_yield_layer4[cond4] = 0.01
         specific_yield_layer1[np.isnan(specific_yield_layer1)] = 0
         specific_yield_layer2[np.isnan(specific_yield_layer2)] = 0
         specific_yield_layer3[np.isnan(specific_yield_layer3)] = 0
@@ -926,8 +926,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     cond_drinking_water_supply = groundwater_extraction["purpose"].isin(['Badenova WW Ebnet', 'Badenova WW Hausen', 'Eigenwasserversorgung', 'oeffentliche Wasserversorgung']).values
 
     # get number of days in the simulation which also used as number of time steps in MODFLOW
-    # NDAYS = len(date_time)
-    NDAYS = 366  # for testing purposes only
+    NDAYS = len(date_time)
     doys = date_time.dayofyear.values
     years = date_time.year.values
 
