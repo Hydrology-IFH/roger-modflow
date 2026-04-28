@@ -1033,6 +1033,9 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
 
     # update SFR inflow and pass it to MODFLOW
     sfr_inflow = np.zeros((n_reaches,), dtype=np.float64)
+    # set Schobbach inflow to the observed discharge of the current year and day
+    sfr_inflow[1816] = 86400 * 0.1 * 0.33
+    sfr_inflow[3213] = 86400 * 0.05 * 0.33
     # set Eschbach inflow to the observed discharge of the current year and day
     sfr_inflow[449] = 86400 * 0.1 * 0.548
     # set Ibenbach inflow to the observed discharge of the current year and day
@@ -1044,10 +1047,12 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     # set Brugga inflow to the observed discharge
     sfr_inflow[6] = 86400 * 0.7 * 2.8
     # set Moehlin inflow to the observed discharge of the current year and day
-    sfr_inflow[3633] = 86400 * 0.5
-    sfr_inflow[3539] = 86400 * 0.5
+    sfr_inflow[3556] = 86400 * 0.8
+    sfr_inflow[3659] = 86400 * 0.1
+    sfr_inflow[5759] = 86400 * 0.1
     # set Muehlbach inflow to the observed discharge of the current year and day
     sfr_inflow[1155] = 86400 * 0.1 * 0.33
+    sfr_inflow[1036] = 86400 * 0.05 * 0.33
     # set Neumagen inflow to the observed discharge of the current year and day
     sfr_inflow[1272] = 86400
     modflow_interface.set_sfr_inflow(sfr_inflow)
@@ -1173,6 +1178,9 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
 
         # update SFR inflow and pass it to MODFLOW
         sfr_inflow = np.zeros((n_reaches,), dtype=np.float64)
+        # set Schobbach inflow to the observed discharge of the current year and day
+        sfr_inflow[1816] = discharge_rotbach_year_doy * 86400 * 0.1 * 0.33
+        sfr_inflow[3213] = discharge_rotbach_year_doy * 86400 * 0.05 * 0.33
         # set Eschbach inflow to the observed discharge of the current year and day
         sfr_inflow[449] = discharge_rotbach_year_doy * 86400 * (0.1/0.548)
         # set Ibenbach inflow to the observed discharge of the current year and day
@@ -1184,10 +1192,12 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         # set Brugga inflow to the observed discharge
         sfr_inflow[6] = discharge_dreisam_year_doy * 86400 * (0.7/2.8)
         # set Moehlin inflow to the observed discharge of the current year and day
-        sfr_inflow[3633] = discharge_moehlin_year_doy * 86400 * 0.5
-        sfr_inflow[3539] = discharge_moehlin_year_doy * 86400 * 0.5
+        sfr_inflow[3556] = discharge_moehlin_year_doy * 86400 * 0.8
+        sfr_inflow[3659] = discharge_moehlin_year_doy * 86400 * 0.1
+        sfr_inflow[5759] = discharge_moehlin_year_doy * 86400 * 0.1
         # set Muehlbach inflow to the observed discharge of the current year and day
         sfr_inflow[1155] = discharge_moehlin_year_doy * 86400 * (0.1/0.33)
+        sfr_inflow[1036] = discharge_moehlin_year_doy * 86400 * (0.05/0.33)
         # set Neumagen inflow to the observed discharge of the current year and day
         sfr_inflow[1272] = discharge_neumagen_year_doy * 86400
         modflow_interface.set_sfr_inflow(sfr_inflow)
