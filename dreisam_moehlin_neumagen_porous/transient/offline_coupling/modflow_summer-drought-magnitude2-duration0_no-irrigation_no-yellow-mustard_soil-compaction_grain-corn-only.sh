@@ -25,15 +25,17 @@ cp -r /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_po
 cp -r /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient
 cp -r /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/fudge_parameters_modflow.csv ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient
 cp -r /pfs/10/project/bw22g004/fr_rs1092/workspace-1773831854/roger/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed/output/ONEDCROP_rci_summer-drought-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only.tar.gz /pfs/10/work/fr_rs1092-workspace/roger/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed/output/
-sleep 120
+sleep 240
 cp -r /pfs/10/work/fr_rs1092-workspace/roger/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed/output/ONEDCROP_rci_summer-drought-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only.tar.gz ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/
+sleep 240
 tar -xf ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/ONEDCROP_rci_summer-drought-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only.tar.gz -C ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/
-sleep 120
-rm /pfs/10/work/fr_rs1092-workspace/roger/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed/output/ONEDCROP_rci_summer-drought-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only.tar.gz
+sleep 240
 cd ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling
 echo "Start simulation ..."
 python roger_modflow6.py --stress-test-meteo summer-drought --stress-test-meteo-magnitude 2 --stress-test-meteo-duration 0 --soil-compaction soil-compaction --grain-corn-only grain-corn-only
 echo "... finalised simulation"
+# Remove files from workspace
+rm /pfs/10/work/fr_rs1092-workspace/roger/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed/output/ONEDCROP_rci_summer-drought-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only.tar.gz
 # Move output from local SSD to global workspace
 echo "Move output to /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/modflow_summer-drought-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only"
 mkdir -p /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/modflow_summer-drought-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only

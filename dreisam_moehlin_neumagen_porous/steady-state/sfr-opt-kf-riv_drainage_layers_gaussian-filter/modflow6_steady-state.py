@@ -344,14 +344,6 @@ class ModFlowSimulation:
         hydraulic_conductivities_layer4[~mask] = np.nan
 
         # fudge streambed conductivity
-        cond_eschbach1 = reaches["line_id"].isin([184])  # Eschbach reach
-        cond_eschbach2 = reaches["line_id"].isin([185, 186, 187])  # Eschbach reach
-        cond_dreisam = reaches["line_id"].isin([339, 340, 140])  # Dreisam reach
-        reaches.loc[cond_eschbach1, "rhk"] = reaches.loc[cond_eschbach1, "rhk"] * 1.0 # set specific streambed conductance for Eschbach reach
-        reaches.loc[cond_eschbach2, "rhk"] = reaches.loc[cond_eschbach2, "rhk"] * 1.0 # set specific streambed conductance for Eschbach reach
-        reaches.loc[cond_dreisam, "rhk"] = reaches.loc[cond_dreisam, "rhk"] * 1.0 # set specific streambed conductance for Dreisam reach
-
-        # fudge streambed conductivity
         cond = (reaches["kf"] >= 10e-6)
         reaches.loc[cond, "rhk"] = reaches.loc[cond, "rhk"] * fudge_parameters["rhkp"].values[model_run]
         cond = (reaches["kf"] < 10e-6)
