@@ -29,6 +29,8 @@ cp -r /pfs/10/project/bw22g004/fr_rs1092/workspace-1773831854/roger/examples/cat
 cp -r /pfs/10/work/fr_rs1092-workspace/roger/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed/output/ONEDCROP_rci_summer-drought-magnitude0-duration3_no-irrigation_yellow-mustard_no-soil-compaction.tar.gz ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/ &&
 echo "Start extracting archives ..."
 tar -xf ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/ONEDCROP_rci_summer-drought-magnitude0-duration3_no-irrigation_yellow-mustard_no-soil-compaction.tar.gz -C ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/ &&
+echo "ls ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/"
+echo "exit=$?"
 echo "Finished copying data and extracting archives ..."
 cd ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling
 echo "Start simulation ..."
