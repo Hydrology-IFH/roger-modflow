@@ -134,8 +134,8 @@ def main():
         lines.append("cp -r %s/input ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient &&\n" % (str(base_path_ws_modflow.parent)))
         lines.append("cp -r %s/fudge_parameters_modflow.csv ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient &&\n" % (str(base_path_ws_modflow.parent)))
         input_file = script_name.replace("modflow_", "ONEDCROP_rci_").replace("_well-extraction-stress", "") + ".tar.gz"
-        lines.append("cp -r %s/output/%s %s/output/\n" % (base_path_bwhpc_roger_project, input_file, (base_path_bwhpc_roger)))
-        lines.append("cp -r %s/output/%s ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/\n" % (base_path_bwhpc_roger, input_file))
+        lines.append("cp -r %s/output/%s %s/output/ &&\n" % (base_path_bwhpc_roger_project, input_file, (base_path_bwhpc_roger)))
+        lines.append("cp -r %s/output/%s ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/ &&\n" % (base_path_bwhpc_roger, input_file))
         lines.append('echo "Start extracting archives ..."\n')
         lines.append("tar -xf ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/%s -C ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/ &&\n" % (input_file))
         lines.append('echo "Finished copying data and extracting archives ..."\n')
