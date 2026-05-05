@@ -1156,9 +1156,9 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         if irrigation == "irrigation":
             # update irrigation and pass it to MODFLOW as capillary rise (i.e. evapotranspiration) since the water is extracted from the groundwater by plants
             irrigation_ = irrigation_year[doy - 1, :, :] / 1000  # mm/day to m/day
-            irrigation = aggregate_to_coarser_resolution(irrigation_, 25, config_modflow['dx'], method="average")
-            irrigation[irrigation > 0.03] = 0.03  # constrain irrigation to 0.03 m/day
-            capillary_rise_irrigation = capillary_rise.flatten() + irrigation.flatten()
+            irrigation_ = aggregate_to_coarser_resolution(irrigation_, 25, config_modflow['dx'], method="average")
+            irrigation_[irrigation_ > 0.03] = 0.03  # constrain irrigation to 0.03 m/day
+            capillary_rise_irrigation = capillary_rise.flatten() + irrigation_.flatten()
         else:
             capillary_rise_irrigation = capillary_rise.flatten()
 
