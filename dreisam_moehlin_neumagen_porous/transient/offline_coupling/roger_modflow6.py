@@ -1103,7 +1103,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
 
         if irrigation == "irrigation":
             # load irrigation data of the current year
-            file = f"irrigation_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}_year{year}.nc"
+            file = f"irrigation_{stress_test_meteo}-magnitude{stress_test_meteo_magnitude}-duration{stress_test_meteo_duration}_{irrigation}_{yellow_mustard}_{soil_compaction}{_grain_corn_only}_year{year}.nc"
             path = Path(__file__).parent.parent / "input" / file
             if i == 0:
                 with xr.open_dataset(path, engine="h5netcdf", decode_timedelta=True) as ds_irrigation:
