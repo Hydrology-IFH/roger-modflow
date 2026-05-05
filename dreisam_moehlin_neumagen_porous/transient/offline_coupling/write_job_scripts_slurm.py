@@ -139,7 +139,7 @@ def main():
         lines.append('echo "Start extracting archives ..."\n')
         lines.append("tar -xf ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/%s -C ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/ &&\n" % (input_file))
         lines.append('echo "exit=$?"\n')
-        lines.append('echo "ls ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/"\n')
+        lines.append('ls ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/input/\n')
         lines.append('echo "Finished copying data and extracting archives ..."\n')
         lines.append("cd ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling\n")
         lines.append('echo "Start simulation ..."\n')
