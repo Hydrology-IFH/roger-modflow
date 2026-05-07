@@ -3,13 +3,7 @@ import numpy as np
 import scipy as sp
 import xarray as xr
 import pandas as pd
-import geopandas as gpd
-import rasterio
 import matplotlib.pyplot as plt
-import datetime
-import contextily as ctx
-from matplotlib_map_utils.core.north_arrow import north_arrow
-from matplotlib_map_utils.core.scale_bar import scale_bar
 import click
 
 

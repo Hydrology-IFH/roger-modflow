@@ -10,6 +10,8 @@ sbatch -p compute modflow_summer-drought-magnitude0-duration3_irrigation_no-yell
 sbatch -p compute modflow_summer-drought-magnitude0-duration3_no-irrigation_yellow-mustard_no-soil-compaction.sh
 sbatch -p compute modflow_summer-drought-magnitude0-duration3_irrigation_yellow-mustard_no-soil-compaction.sh
 sbatch -p compute modflow_summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only.sh
+sbatch -p compute modflow_summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress.sh
+sbatch -p compute modflow_summer-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress.sh
 sbatch -p compute modflow_summer-drought-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction.sh
 sbatch -p compute modflow_summer-drought-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction.sh
 sbatch -p compute modflow_summer-drought-magnitude2-duration0_no-irrigation_yellow-mustard_no-soil-compaction.sh

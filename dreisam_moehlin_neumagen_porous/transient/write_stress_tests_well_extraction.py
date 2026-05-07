@@ -19,7 +19,7 @@ cond_drinking_water_supply = df_groundwater_extraction["purpose"].isin(['Badenov
 # load daily weights for drinking water supply wells to scale the pumping rates of the drinking water supply wells in the well package
 _daily_weights_drinking_water_supply = pd.read_csv(base_path / "input" / "daily_weights_drinking_water_supply.csv", sep=";", index_col=0)
 
-date_time = pd.date_range(start="2013-07-01", end="2023-08-31", freq="D")
+date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="D")
 NDAYS = len(date_time)
 doys = date_time.dayofyear.values
 years = date_time.year.values
@@ -74,9 +74,9 @@ for duration, magnitude in zip(durations, magnitudes):
             os.makedirs(path_to_dir)  
 
         if magnitude == 1:
-            q_magnitude = 0.1
+            q_magnitude = 0.05
         elif magnitude == 2:
-            q_magnitude = 0.2
+            q_magnitude = 0.1
 
         groundwater_extraction = df_groundwater_extraction.copy()
         daily_weights_drinking_water_supply = df_daily_weights_drinking_water_supply.copy()
@@ -111,9 +111,9 @@ for duration, magnitude in zip(durations, magnitudes):
             os.makedirs(path_to_dir)  
 
         if magnitude == 1:
-            q_magnitude = 0.1
+            q_magnitude = 0.05
         elif magnitude == 2:
-            q_magnitude = 0.2
+            q_magnitude = 0.1
 
         groundwater_extraction = df_groundwater_extraction.copy()
         daily_weights_drinking_water_supply = df_daily_weights_drinking_water_supply.copy()
@@ -142,9 +142,9 @@ for duration, magnitude in zip(durations, magnitudes):
             os.makedirs(path_to_dir)  
 
         if magnitude == 1:
-            q_magnitude = 0.1
+            q_magnitude = 0.05
         elif magnitude == 2:
-            q_magnitude = 0.2
+            q_magnitude = 0.1
 
         groundwater_extraction = df_groundwater_extraction.copy()
         daily_weights_drinking_water_supply = df_daily_weights_drinking_water_supply.copy()

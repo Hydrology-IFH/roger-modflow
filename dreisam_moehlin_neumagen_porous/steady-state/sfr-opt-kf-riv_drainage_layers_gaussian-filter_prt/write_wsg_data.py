@@ -25,7 +25,7 @@ def recalc_specific_yield(hydraulic_conductivity, specific_yield_min=0.05, speci
     specific_yield[specific_yield > specific_yield_max] = specific_yield_max
     return specific_yield
 
-@click.option("-mr", "--model-run", type=int, default=9491)
+@click.option("-mr", "--model-run", type=int, default=1806)
 @click.command("main")
 def main(model_run):
     base_path = Path(__file__).parent

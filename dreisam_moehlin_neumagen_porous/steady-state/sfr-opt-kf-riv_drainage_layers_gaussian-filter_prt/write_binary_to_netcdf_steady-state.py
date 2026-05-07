@@ -9,7 +9,7 @@ import flopy.utils.binaryfile as bf
 
 import click
 
-@click.option("-mr", "--model-run", type=int, default=5)
+@click.option("-mr", "--model-run", type=int, default=1806)
 @click.option("-c", "--converged", type=int, default=1)
 @click.command("main")
 def main(model_run, converged):

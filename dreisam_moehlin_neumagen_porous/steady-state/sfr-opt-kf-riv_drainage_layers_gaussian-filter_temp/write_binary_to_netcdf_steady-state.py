@@ -9,7 +9,7 @@ import flopy.utils.binaryfile as bf
 
 import click
 
-@click.option("-mr", "--model-run", type=int, default=5)
+@click.option("-mr", "--model-run", type=int, default=1806)
 @click.option("-c", "--converged", type=int, default=1)
 @click.command("main")
 def main(model_run, converged):
@@ -81,7 +81,7 @@ def main(model_run, converged):
             # create spatial reference
             ds = ds.geo.write_crs("EPSG:25832")
             ds.coords["spatial_ref"] = spatial_ref  # update spatial reference from parameters_modflow.nc
-            file = base_path / "output" / f"modflow_output_run_{model_run}_pre.nc"
+            file = base_path / "output" / f"modflow_output_run_{model_run}.nc"
             comp = dict(zlib=True, complevel=1)  # compress data to save storage
             encoding = {var: comp for var in ds.data_vars}
             ds.to_netcdf(file, engine="h5netcdf", encoding=encoding)

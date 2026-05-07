@@ -41,7 +41,7 @@ def main():
     path = base_path / "input" / "mask_catchment.gpkg"
     catchment_boundary_porous = gpd.read_file(path)
 
-    # load drinkin water protection areas
+    # load drinking water protection areas
     path = base_path / "input" / "wsg_hausen.gpkg"
     wsg_hausen = gpd.read_file(path)
 
@@ -133,7 +133,7 @@ def main():
     # add drinking water protection areas and fill with diagonal hatching
     wsg_hausen.plot(ax=ax, color='none', edgecolor='blue', linewidth=1, hatch='////', label='WSG Hausen', alpha=0.5, zorder=1)
     wsg_zartener_becken.plot(ax=ax, color='none', edgecolor='blue', linewidth=1, hatch='////', label='WSG Zartener Becken', alpha=0.5, zorder=1)
-    ctx.add_basemap(ax, source=ctx.providers.CartoDB.Positron, crs=groundwater_observation_wells.crs)
+    ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.DE, crs=groundwater_observation_wells.crs)
     north_arrow(
     ax, scale=0.25, location="upper right", rotation={"crs": groundwater_observation_wells.crs, "reference": "center"}
     )
@@ -173,7 +173,7 @@ def main():
     # Add basemap tiles (pick a provider you like)
     ctx.add_basemap(
         ax,
-        source=ctx.providers.CartoDB.Positron,  # try also: cx.providers.OpenStreetMap.Mapnik
+        source=ctx.providers.OpenStreetMap.DE,  # try also: cx.providers.OpenStreetMap.Mapnik
         crs=germany_25832.crs,
         attribution_size=6,
     )
