@@ -31,7 +31,7 @@ for i in range(len(_wells_x)):
 
 def get_release_points(well_locs, grid, well_id=0):
     particles_pos = []
-    localzz = np.linspace(0.1, 1.0, 3).tolist()
+    localzz = [0.1, 0.25, 0.5, 0.75, 0.9]
     for localz in localzz:
         particles_pos.append((0.5, 0.5, float(localz)))
         # angles uniformly spaced
@@ -70,7 +70,7 @@ def get_release_points(well_locs, grid, well_id=0):
 
 def get_well_particle_data(well_locs, well_id=0):
     particles_pos = []
-    localzz = np.linspace(0.1, 1.0, 3).tolist()
+    localzz = [0.1, 0.25, 0.5, 0.75, 0.9]
     for localz in localzz:
         particles_pos.append((0.5, 0.5, float(localz)))
         # angles uniformly spaced
@@ -855,11 +855,20 @@ class ModpathSimulation:
         mp7bas = flopy.modpath.Modpath7Bas(mp7, porosity=0.1)
 
         # Instantiate the MODPATH 7 simulation data
+        # mp7sim = flopy.modpath.Modpath7Sim(
+        #     mp7,
+        #     simulationtype="pathline",
+        #     trackingdirection="backward",
+        #     budgetoutputoption="summary",
+        #     particlegroups=[pg],
+        # )
+
         mp7sim = flopy.modpath.Modpath7Sim(
             mp7,
-            simulationtype="pathline",
+            simulationtype="combined",
             trackingdirection="backward",
             budgetoutputoption="summary",
+            timepointdata=[50, 50.0],
             particlegroups=[pg],
         )
 

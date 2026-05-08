@@ -1,6 +1,5 @@
 from pathlib import Path
 import flopy
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pandas as pd
 from flopy.plot.styles import styles
@@ -9,43 +8,22 @@ import contextily as ctx
 from matplotlib_map_utils.core.north_arrow import north_arrow
 from matplotlib_map_utils.core.scale_bar import scale_bar
 import numpy as np
-import yaml
 import pickle
 
 base_path = Path(__file__).parent
-
-# load the groundwater extraction data
-_groundwater_extraction = pd.read_csv(base_path.parent / "input" / "groundwater_extraction.csv", sep=";")
-_groundwater_extraction["cell_y"] = _groundwater_extraction["cell_y"].values - 1
-_groundwater_extraction["cell_x"] = _groundwater_extraction["cell_x"].values - 1
-_groundwater_extraction["layer"] = _groundwater_extraction["layer"].values - 1
-
-_wells_y = _groundwater_extraction["cell_y"].values.tolist()
-_wells_x = _groundwater_extraction["cell_x"].values.tolist()
-_wells_layer = _groundwater_extraction["layer"].values.tolist()
-WEL_LOCS = []
-for i in range(len(_wells_x)):
-    WEL_LOCS.append((_wells_layer[i], _wells_y[i], _wells_x[i]))
-
-file_config = base_path.parent / "config.yml"
-with open(file_config, "r") as file:
-    modflow_config = yaml.safe_load(file)
-
-nrow = modflow_config["nx"]
-ncol = modflow_config["ny"]
-rowsize = modflow_config["dx"]
-colsize = modflow_config["dy"]
 
 # load catchment boundary
 path = base_path.parent / "input" / "mask_catchment.gpkg"
 catchment_boundary_porous = gpd.read_file(path)
 
+# load groundwater extraction wells
+path = base_path.parent / "input" / "groundwater_extraction.gpkg"
+gw_extraction_wells = gpd.read_file(path)
+
 def plot_map_view(ax, gwf):
     # plot map view of grid
     catchment_boundary_porous.boundary.plot(ax=ax, color='green', linewidth=0.5, zorder=1)
     mv = flopy.plot.PlotMapView(model=gwf, ax=ax)
-    # mv.plot_grid(alpha=0.3)
-    # mv.plot_ibound()  # inactive cells
     mv.plot_bc("WEL", plotAll=True)  # wells (red)
     mv.plot_bc("SFR", plotAll=True)
     mv.plot_bc("GHB", plotAll=True)
@@ -67,12 +45,13 @@ def plot_grid(gwf):
         fig.tight_layout()
         fig.savefig(base_path / "figures" / "particle_tracking_grid.png", dpi=300)
 
-def plot_pathlines_grid(ax, grid, hd, pl):
+def plot_pathlines_grid(ax, grid, hd, pl, well):
     ax.set_aspect("equal")
     mm = flopy.plot.PlotMapView(modelgrid=grid, ax=ax, layer=2)
     pc = mm.plot_array(hd, alpha=0.5)
     cb = plt.colorbar(pc, shrink=0.35, pad=0.1, label=r"GW-Hoehe [m]")
-    mm.plot_pathline(pl, layer="all", lw=0.3, colors=["purple"])
+    mm.plot_pathline(pl, layer="all", lw=0.3, colors=["purple"], alpha=0.5)
+    ax.scatter(well['x-coordinate'], well['y-coordinate'], c='orange', s=6, marker='^', label=well["ID"].values[0], zorder=3)
     catchment_boundary_porous.boundary.plot(ax=ax, color='green', linewidth=1.5, zorder=1)
     ax.set_xlabel("X-Koordinate")
     ax.set_ylabel("Y-Koordinate")
@@ -83,25 +62,26 @@ def plot_pathlines_grid(ax, grid, hd, pl):
     )
     scale_bar(ax, location="lower right", style="boxes", bar={"projection": catchment_boundary_porous.crs, "height": 0.05}, text = {"fontfamily": "monospace", "fontsize": 10})
 
-def plot_pathlines_contours(ax, grid, hd, pl):
+def plot_pathlines_contours(ax, grid, hd, pl, well):
     ax.set_aspect("equal")
     mm = flopy.plot.PlotMapView(modelgrid=grid, ax=ax, layer=2)
     levels = np.arange(200, 425, 25)
     CS = mm.contour_array(hd, levels=levels, colors="black")
     ax.clabel(CS, fontsize=8)
-    mm.plot_pathline(pl, layer="all", lw=0.3, colors=["purple"])
+    mm.plot_pathline(pl, layer="all", lw=0.3, colors=["purple"], alpha=0.5)
+    ax.scatter(well['x-coordinate'], well['y-coordinate'], c='orange', s=6, marker='^', label=well["ID"].values[0], zorder=3)
     catchment_boundary_porous.boundary.plot(ax=ax, color='green', linewidth=2)
-    ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.DE, crs=catchment_boundary_porous.crs)
     ax.set_xlabel("X-Koordinate")
     ax.set_ylabel("Y-Koordinate")
     ax.set_ylim(5.3e6, 5.327e6)
     ax.set_xlim(395000, 427000)
+    ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.DE, crs=catchment_boundary_porous.crs)
     north_arrow(
     ax, scale=0.25, location="upper right", rotation={"crs": catchment_boundary_porous.crs, "reference": "center"}
     )
     scale_bar(ax, location="lower right", style="boxes", bar={"projection": catchment_boundary_porous.crs, "height": 0.05}, text = {"fontfamily": "monospace", "fontsize": 10})
 
-def plot_pathlines_grid_zoom(ax, grid, hd, pl):
+def plot_pathlines_grid_zoom(ax, grid, hd, pl, well):
     x1 = int((pl.x.min() - 500)/50)
     x2 = int((pl.x.max() + 500)/50)
     y2 = grid.shape[1] - int((pl.y.min() - 500)/50)
@@ -112,11 +92,12 @@ def plot_pathlines_grid_zoom(ax, grid, hd, pl):
     mm = flopy.plot.PlotMapView(modelgrid=grid, ax=ax, layer=2)
     pc = mm.plot_array(hd, alpha=0.5, vmin=zmin, vmax=zmax, cmap="viridis_r")
     cb = plt.colorbar(pc, shrink=0.35, pad=0.1, label=r"GW-Hoehe [m]")
-    mm.plot_pathline(pl, layer="all", lw=0.3, colors=["purple"])
+    mm.plot_pathline(pl, layer="all", lw=0.3, colors=["purple"], alpha=0.5)
+    ax.scatter(well['x-coordinate'], well['y-coordinate'], c='orange', s=6, marker='^', label=well["ID"].values[0], zorder=3)
     north_arrow(
     ax, scale=0.25, location="upper right", rotation={"crs": catchment_boundary_porous.crs, "reference": "center"}
     )
-    scale_bar(ax, location="lower right", style="boxes", bar={"projection": catchment_boundary_porous.crs, "height": 0.05}, text = {"fontfamily": "monospace", "fontsize": 10})
+    scale_bar(ax, location="lower right", style="boxes", bar={"projection": catchment_boundary_porous.crs, "height": 0.05}, text = {"fontfamily": "monospace", "fontsize": 9})
     xx = grid.xoffset + pl["x"].values
     yy = grid.yoffset + pl["y"].values
     xmin = xx.min() - 500
@@ -128,7 +109,7 @@ def plot_pathlines_grid_zoom(ax, grid, hd, pl):
     ax.set_xlabel("X-Koordinate")
     ax.set_ylabel("Y-Koordinate")
 
-def plot_pathlines_contours_zoom(ax, grid, hd, pl):
+def plot_pathlines_contours_zoom(ax, grid, hd, pl, well):
     x1 = int((pl.x.min() - 500)/50)
     x2 = int((pl.x.max() + 500)/50)
     y2 = grid.shape[1] - int((pl.y.min() - 500)/50)
@@ -137,11 +118,11 @@ def plot_pathlines_contours_zoom(ax, grid, hd, pl):
     zmax = int(np.nanmax(hd[0, y1:y2, x1:x2]) + 1)
     ax.set_aspect("equal")
     mm = flopy.plot.PlotMapView(modelgrid=grid, ax=ax, layer=2)
+    mm.plot_pathline(pl, layer="all", lw=0.3, colors=["purple"], alpha=0.5)
     levels = np.arange(zmin, zmax, 2.5)
     CS = mm.contour_array(hd, levels=levels, colors="black")
     ax.clabel(CS, fontsize=8)
-    mm.plot_pathline(pl, layer="all", lw=0.3, colors=["purple"])
-    ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.DE, crs=catchment_boundary_porous.crs, zoom_adjust=1)
+    ax.scatter(well['x-coordinate'], well['y-coordinate'], c='orange', s=6, marker='^', label=well["ID"].values[0], zorder=3)
     xx = grid.xoffset + pl["x"].values
     yy = grid.yoffset + pl["y"].values
     xmin = xx.min() - 500
@@ -150,6 +131,7 @@ def plot_pathlines_contours_zoom(ax, grid, hd, pl):
     ymax = yy.max() + 500
     ax.set_ylim(ymin, ymax)
     ax.set_xlim(xmin, xmax)
+    ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.DE, crs=catchment_boundary_porous.crs)
     ax.set_xlabel("X-Koordinate")
     ax.set_ylabel("Y-Koordinate")
     north_arrow(
@@ -161,12 +143,15 @@ def plot_pathlines_contours_zoom(ax, grid, hd, pl):
 def plot_all_pathlines(grid, heads, mp7pl, well_name):
     with styles.USGSPlot():
 
+        well = gw_extraction_wells[gw_extraction_wells["ID"] == well_name]
+
         fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(6, 6))
         plot_pathlines_grid(
             ax,
             grid,
             heads,
-            mp7pl
+            mp7pl,
+            well
         )
         fig.tight_layout()
         fig.savefig(base_path / "figures" / f"particle_tracking_grid_mp7_well{well_name}.png", dpi=300)
@@ -175,7 +160,8 @@ def plot_all_pathlines(grid, heads, mp7pl, well_name):
         plot_pathlines_grid_zoom(ax1,
             grid,
             heads,
-            mp7pl)
+            mp7pl,
+            well)
         fig1.tight_layout()
         fig1.savefig(base_path / "figures" / f"particle_tracking_grid_mp7_well{well_name}_zoom.png", dpi=300)
         
@@ -183,7 +169,8 @@ def plot_all_pathlines(grid, heads, mp7pl, well_name):
         plot_pathlines_contours(ax2,
             grid,
             heads,
-            mp7pl)
+            mp7pl,
+            well)
         fig2.tight_layout()
         fig2.savefig(base_path / "figures" / f"particle_tracking_contours_mp7_well{well_name}.png", dpi=300)
         
@@ -191,7 +178,8 @@ def plot_all_pathlines(grid, heads, mp7pl, well_name):
         plot_pathlines_contours_zoom(ax3,
             grid,
             heads,
-            mp7pl)
+            mp7pl,
+            well)
         fig3.tight_layout()
         fig3.savefig(base_path / "figures" / f"particle_tracking_contours_mp7_well{well_name}_zoom.png", dpi=300)
 
