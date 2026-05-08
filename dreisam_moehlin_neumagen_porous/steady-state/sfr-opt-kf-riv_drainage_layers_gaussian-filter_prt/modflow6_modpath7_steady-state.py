@@ -918,9 +918,9 @@ def main(model_run):
             for ext in ["*.mppth", "*.timeseries", "*.mplst", "*.mpsim", "*.mpnam", "*.mpend", "*.sloc", "*.mpbas", "*.log"]:
                 files = glob.glob(str(output_folder / ext))
                 for file in files:
-                    shutil.move(file, output_folder_external / file.name)
-                    if os.path.exists(output_folder / file.name):
-                        os.remove(output_folder / file.name)
+                    shutil.move(file, output_folder_external / file.split('/')[-1])
+                    if os.path.exists(file):
+                        os.remove(file)
 
     else:
         print("MODFLOW did not converge.")
