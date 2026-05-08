@@ -1,6 +1,7 @@
 from time import time
 from pathlib import Path
 import os
+import shutil
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -13,6 +14,7 @@ import yaml
 import click
 import signal
 import pickle
+import glob
 
 base_path = Path(__file__).parent
 
@@ -854,15 +856,6 @@ class ModpathSimulation:
         # Instantiate the MODPATH 7 basic data
         mp7bas = flopy.modpath.Modpath7Bas(mp7, porosity=0.1)
 
-        # Instantiate the MODPATH 7 simulation data
-        # mp7sim = flopy.modpath.Modpath7Sim(
-        #     mp7,
-        #     simulationtype="pathline",
-        #     trackingdirection="backward",
-        #     budgetoutputoption="summary",
-        #     particlegroups=[pg],
-        # )
-
         mp7sim = flopy.modpath.Modpath7Sim(
             mp7,
             simulationtype="combined",
@@ -905,7 +898,7 @@ def main(model_run):
         reverse_headfile(base_path / "output" / f"dmn_run_{model_run}.hds", base_path / "output" / f"dmn_run_{model_run}_rev.hds", modflow_interface.tdis)
 
         # initialize the MODFLOW particle model
-        well_ids = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+        well_ids = list(range(len(WEL_LOCS)))
         for well_id in well_ids:
             # initialize the MODPATH model
             modpath_interface = ModpathSimulation(
@@ -918,6 +911,16 @@ def main(model_run):
             success, buff = modpath_interface.mp7.run_model(silent=False, report=True)
 
             print(f"MODPATH (steady-state) finalized for well {well_id}")
+
+            # move the output files to external storage
+            output_folder = base_path / "output"
+            output_folder_external = Path("/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen_porous/steady-state/sfr-opt-kf-riv_drainage_layers_gaussian-filter_prt") / "output"
+            for ext in ["*.mppth", "*.timeseries", "*.mplst", "*.mpsim", "*.mpnam", "*.mpend", "*.sloc", "*.mpbas", "*.log"]:
+                files = glob.glob(str(output_folder / ext))
+                for file in files:
+                    shutil.move(file, output_folder_external / file.name)
+                    if os.path.exists(output_folder / file.name):
+                        os.remove(output_folder / file.name)
 
     else:
         print("MODFLOW did not converge.")

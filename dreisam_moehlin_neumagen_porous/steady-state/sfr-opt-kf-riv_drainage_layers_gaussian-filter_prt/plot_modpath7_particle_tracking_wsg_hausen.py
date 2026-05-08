@@ -7,10 +7,12 @@ import geopandas as gpd
 import contextily as ctx
 from matplotlib_map_utils.core.north_arrow import north_arrow
 from matplotlib_map_utils.core.scale_bar import scale_bar
+from adjustText import adjust_text
 import numpy as np
 import pickle
 
 base_path = Path(__file__).parent
+base_path_external = Path("/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen_porous/steady-state/sfr-opt-kf-riv_drainage_layers_gaussian-filter_prt")
 
 # load catchment boundary
 path = base_path.parent / "input" / "mask_catchment.gpkg"
@@ -84,16 +86,28 @@ def plot_pathlines_grid_zoom(ax, grid, hd, pl, wells):
     ax, scale=0.25, location="upper right", rotation={"crs": catchment_boundary_porous.crs, "reference": "center"}
     )
     scale_bar(ax, location="lower right", style="boxes", bar={"projection": catchment_boundary_porous.crs, "height": 0.05}, text = {"fontfamily": "monospace", "fontsize": 10})
-    xx = grid.xoffset + pl["x"].values
-    yy = grid.yoffset + pl["y"].values
-    xmin = xx.min() - 1000
-    xmax = xx.max() + 2000
-    ymin = yy.min() - 1000
-    ymax = yy.max() + 1000
+    xmin = wsg_hausen.bounds.minx[0] - 1000
+    xmax = wsg_hausen.bounds.maxx[0] + 1000
+    ymin = wsg_hausen.bounds.miny[0] - 1000
+    ymax = wsg_hausen.bounds.maxy[0] + 1000
     ax.set_ylim(ymin, ymax)
     ax.set_xlim(xmin, xmax)
     ax.set_xlabel("X-Koordinate")
     ax.set_ylabel("Y-Koordinate")
+
+    TEXTS = []
+    bprops = dict(boxstyle='round', facecolor='white', alpha=0.75, edgecolor='none')
+    for i in range(len(wells)):
+        x = wells['x-coordinate'].iloc[i]
+        y = wells['y-coordinate'].iloc[i]
+        text = wells["ID"].iloc[i]
+        TEXTS.append(ax.text(x, y, text, fontsize=7, bbox=bprops))
+
+    adjust_text(
+        TEXTS, 
+        expand=(1, 1),
+        ax=ax
+    )
 
 def plot_pathlines_contours_zoom(ax, grid, hd, pl, wells):
     ax.set_aspect("equal")
@@ -112,17 +126,29 @@ def plot_pathlines_contours_zoom(ax, grid, hd, pl, wells):
     ax, scale=0.25, location="upper right", rotation={"crs": catchment_boundary_porous.crs, "reference": "center"}
     )
     scale_bar(ax, location="lower right", style="boxes", bar={"projection": catchment_boundary_porous.crs, "height": 0.05}, text = {"fontfamily": "monospace", "fontsize": 9})
-    xx = grid.xoffset + pl["x"].values
-    yy = grid.yoffset + pl["y"].values
-    xmin = xx.min() - 1000
-    xmax = xx.max() + 2000
-    ymin = yy.min() - 1000
-    ymax = yy.max() + 1000
+    xmin = wsg_hausen.bounds.minx[0] - 1000
+    xmax = wsg_hausen.bounds.maxx[0] + 1000
+    ymin = wsg_hausen.bounds.miny[0] - 1000
+    ymax = wsg_hausen.bounds.maxy[0] + 1000
     ax.set_ylim(ymin, ymax)
     ax.set_xlim(xmin, xmax)
     ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.DE, crs=catchment_boundary_porous.crs)
     ax.set_xlabel("X-Koordinate")
     ax.set_ylabel("Y-Koordinate")
+
+    TEXTS = []
+    bprops = dict(boxstyle='round', facecolor='white', alpha=0.75, edgecolor='none')
+    for i in range(len(wells)):
+        x = wells['x-coordinate'].iloc[i]
+        y = wells['y-coordinate'].iloc[i]
+        text = wells["ID"].iloc[i]
+        TEXTS.append(ax.text(x, y, text, fontsize=7, bbox=bprops))
+
+    adjust_text(
+        TEXTS, 
+        expand=(1, 1),
+        ax=ax
+    )
 
 
 def plot_all_pathlines(grid, heads, mp7pl, wells):
@@ -137,7 +163,7 @@ def plot_all_pathlines(grid, heads, mp7pl, wells):
             wells
         )
         fig.tight_layout()
-        fig.savefig(base_path / "figures" / "particle_tracking_grid_mp7_wsg_hausen.png", dpi=300)
+        fig.savefig(base_path_external / "figures" / "particle_tracking_grid_mp7_wsg_hausen.png", dpi=300)
 
         fig1, ax1 = plt.subplots(ncols=1, nrows=1, figsize=(6, 6))
         plot_pathlines_grid_zoom(ax1,
@@ -146,7 +172,7 @@ def plot_all_pathlines(grid, heads, mp7pl, wells):
             mp7pl,
             wells)
         fig1.tight_layout()
-        fig1.savefig(base_path / "figures" / "particle_tracking_grid_mp7_wsg_hausen_zoom.png", dpi=300)
+        fig1.savefig(base_path_external / "figures" / "particle_tracking_grid_mp7_wsg_hausen_zoom.png", dpi=300)
         
         fig2, ax2 = plt.subplots(ncols=1, nrows=1, figsize=(6, 6))
         plot_pathlines_contours(ax2,
@@ -155,7 +181,7 @@ def plot_all_pathlines(grid, heads, mp7pl, wells):
             mp7pl,
             wells)
         fig2.tight_layout()
-        fig2.savefig(base_path / "figures" / "particle_tracking_contours_mp7_wsg_hausen.png", dpi=300)
+        fig2.savefig(base_path_external / "figures" / "particle_tracking_contours_mp7_wsg_hausen.png", dpi=300)
         
         fig3, ax3 = plt.subplots(ncols=1, nrows=1, figsize=(6, 6))
         plot_pathlines_contours_zoom(ax3,
@@ -164,7 +190,7 @@ def plot_all_pathlines(grid, heads, mp7pl, wells):
             mp7pl,
             wells)
         fig3.tight_layout()
-        fig3.savefig(base_path / "figures" / "particle_tracking_contours_mp7_wsg_hausen_zoom.png", dpi=300)
+        fig3.savefig(base_path_external / "figures" / "particle_tracking_contours_mp7_wsg_hausen_zoom.png", dpi=300)
 
 
 def plot_all(gwf, well_ids=[6], well_names=["A4"]):
@@ -172,7 +198,7 @@ def plot_all(gwf, well_ids=[6], well_names=["A4"]):
     grid = gwf.modelgrid
 
     # load mf6 gwf head results
-    hf = flopy.utils.HeadFile(base_path / "output" / "dmn_run_1806.hds")
+    hf = flopy.utils.HeadFile(base_path_external / "output" / "dmn_run_1806.hds")
     hds = hf.get_data()
     cond_na = (hds > 1000) | (hds < 0)
     hds[cond_na] = np.nan
@@ -180,12 +206,14 @@ def plot_all(gwf, well_ids=[6], well_names=["A4"]):
     ll_pathlines = []
     for well_id, well_name in zip(well_ids, well_names):
         # load mp7 pathline results
-        plf = flopy.utils.PathlineFile(base_path / "output" / f"well{well_id}_mp7.mppth")
+        plf = flopy.utils.PathlineFile(base_path_external / "output" / f"well{well_id}_mp7.mppth")
         mp7_pl = pd.DataFrame(
             plf.get_destination_pathline_data(range(grid.nnodes), to_recarray=True)
         )
         mp7_pl["well_id"] = well_id
         mp7_pl["well_name"] = well_name
+        cond_time = (mp7_pl["time"] < (365.25 * 5))
+        mp7_pl = mp7_pl[cond_time]
         ll_pathlines.append(mp7_pl)
 
     pl = pd.concat(ll_pathlines, ignore_index=True)
@@ -195,7 +223,7 @@ def plot_all(gwf, well_ids=[6], well_names=["A4"]):
     plot_all_pathlines(grid, hds, pl, wells)
 
 # load the MODFLOW 6 model using pickle
-with open(base_path / "output" / "dmn_run_1806.pkl", "rb") as f:
+with open(base_path_external / "output" / "dmn_run_1806.pkl", "rb") as f:
     gwfsim = pickle.load(f)
 gwf = gwfsim.get_model("dmn_run_1806")
 

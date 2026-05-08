@@ -11,6 +11,7 @@ import numpy as np
 import pickle
 
 base_path = Path(__file__).parent
+base_path_external = Path("/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen_porous/steady-state/sfr-opt-kf-riv_drainage_layers_gaussian-filter_prt")
 
 # load catchment boundary
 path = base_path.parent / "input" / "mask_catchment.gpkg"
@@ -189,7 +190,7 @@ def plot_all(gwf, well_ids=[6], well_names=["A4"]):
     grid = gwf.modelgrid
 
     # load mf6 gwf head results
-    hf = flopy.utils.HeadFile(base_path / "output" / "dmn_run_1806.hds")
+    hf = flopy.utils.HeadFile(base_path_external / "output" / "dmn_run_1806.hds")
     hds = hf.get_data()
     cond_na = (hds > 1000) | (hds < 0)
     hds[cond_na] = np.nan
@@ -198,20 +199,22 @@ def plot_all(gwf, well_ids=[6], well_names=["A4"]):
 
     for well_id, well_name in zip(well_ids, well_names):
         # load mp7 pathline results
-        plf = flopy.utils.PathlineFile(base_path / "output" / f"well{well_id}_mp7.mppth")
+        plf = flopy.utils.PathlineFile(base_path_external / "output" / f"well{well_id}_mp7.mppth")
         mp7_pl = pd.DataFrame(
             plf.get_destination_pathline_data(range(grid.nnodes), to_recarray=True)
         )
+        cond_time = (mp7_pl["time"] < (365.25 * 5))
+        mp7_pl = mp7_pl[cond_time]
 
         plot_all_pathlines(grid, hds, mp7_pl, well_name)
 
 # load the MODFLOW 6 model using pickle
-with open(base_path / "output" / "dmn_run_1806.pkl", "rb") as f:
+with open(base_path_external / "output" / "dmn_run_1806.pkl", "rb") as f:
     gwfsim = pickle.load(f)
 gwf = gwfsim.get_model("dmn_run_1806")
 
-well_ids = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
-well_names = ["HU1", "HU2", "A4", "K5", "HU3", "A2", "K2", "B1", "A3", "S2", "B4", "C1"]
+well_ids = list(range(len(gw_extraction_wells["ID"].values)))
+well_names = gw_extraction_wells["ID"].values.astype(str).replace("/", "_").replace(".", "-").tolist()
 # well_ids = [5]
 # well_names = ["A2"]
 plot_all(gwf, well_ids=well_ids, well_names=well_names)
