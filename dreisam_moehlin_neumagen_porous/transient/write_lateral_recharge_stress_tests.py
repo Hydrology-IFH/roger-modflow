@@ -214,10 +214,10 @@ for duration in durations:
                 os.makedirs(path_to_dir)  
 
             lateral_recharge_anomaly = df_lateral_recharge_anomaly.copy()
-            q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_spring_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
-            q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_summer_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
-            q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_autumn_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
-            q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_winter_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
+            q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_spring_stress_magnitude.loc["Breitnau", "magnitude2"])
+            q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_summer_stress_magnitude.loc["Breitnau", "magnitude2"])
+            q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_autumn_stress_magnitude.loc["Breitnau", "magnitude2"])
+            q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_winter_stress_magnitude.loc["Breitnau", "magnitude2"])
     
             # insert spring period of 2020 in spring period of 2019
             lateral_recharge_anomaly.loc["2018-03-01":"2018-05-31"] = lateral_recharge_anomaly_spring_2020.values
@@ -237,6 +237,9 @@ for duration in durations:
             cond = (lateral_recharge_anomaly.index.month.isin([12, 1, 2]))
             lateral_recharge_anomaly.loc[cond, "anomaly"] = lateral_recharge_anomaly.loc[cond, "anomaly"] * (1 + (q_magnitude_winter / 100))
 
+            # set negative anomalies to 0.01 to avoid numerical issues in the model
+            lateral_recharge_anomaly.loc[lateral_recharge_anomaly['anomaly'] < 0, 'anomaly'] = 0.01
+
             Q_path = path_to_dir / "lateral_recharge_anomaly.csv"
             lateral_recharge_anomaly.columns = [['[-]'], ['anomaly']]
             lateral_recharge_anomaly.to_csv(Q_path, header=True, index=True, sep=";")
@@ -246,10 +249,10 @@ for duration in durations:
                 os.makedirs(path_to_dir)  
 
             lateral_recharge_anomaly = df_lateral_recharge_anomaly.copy()
-            q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_spring_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
-            q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_summer_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
-            q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_autumn_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
-            q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_winter_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
+            q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_spring_stress_magnitude.loc["Breitnau", "magnitude2"])
+            q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_summer_stress_magnitude.loc["Breitnau", "magnitude2"])
+            q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_autumn_stress_magnitude.loc["Breitnau", "magnitude2"])
+            q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_winter_stress_magnitude.loc["Breitnau", "magnitude2"])
     
             # insert summer period of 2018 in summer period of 2017
             lateral_recharge_anomaly.loc["2017-06-01":"2017-08-31"] = lateral_recharge_anomaly_summer_2018.values
@@ -269,6 +272,9 @@ for duration in durations:
             cond = (lateral_recharge_anomaly.index.month.isin([12, 1, 2]))
             lateral_recharge_anomaly.loc[cond, "anomaly"] = lateral_recharge_anomaly.loc[cond, "anomaly"] * (1 + (q_magnitude_winter / 100))
 
+            # set negative anomalies to 0.01 to avoid numerical issues in the model
+            lateral_recharge_anomaly.loc[lateral_recharge_anomaly['anomaly'] < 0, 'anomaly'] = 0.01
+
             Q_path = path_to_dir / "lateral_recharge_anomaly.csv"
             lateral_recharge_anomaly.columns = [['[-]'], ['anomaly']]
             lateral_recharge_anomaly.to_csv(Q_path, header=True, index=True, sep=";")
@@ -278,10 +284,10 @@ for duration in durations:
                 os.makedirs(path_to_dir)  
 
             lateral_recharge_anomaly = df_lateral_recharge_anomaly.copy()
-            q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_spring_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
-            q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_summer_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
-            q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_autumn_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
-            q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_winter_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
+            q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_spring_stress_magnitude.loc["Breitnau", "magnitude2"])
+            q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_summer_stress_magnitude.loc["Breitnau", "magnitude2"])
+            q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_autumn_stress_magnitude.loc["Breitnau", "magnitude2"])
+            q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_winter_stress_magnitude.loc["Breitnau", "magnitude2"])
     
             lateral_recharge_anomaly.loc["2019-03-01":"2019-05-31", "anomaly"] = lateral_recharge_anomaly_spring_2020.loc[:, "anomaly"].values - q_magnitude_spring
             # insert spring period of 2019 in spring period of 2018
@@ -295,6 +301,9 @@ for duration in durations:
             # insert summer period of 2020 in summer period of 2018
             lateral_recharge_anomaly.loc["2018-06-01":"2018-08-31", "anomaly"] = lateral_recharge_anomaly_summer_2018.loc[:, "anomaly"].values - q_magnitude_summer
 
+            # set negative anomalies to 0.01 to avoid numerical issues in the model
+            lateral_recharge_anomaly.loc[lateral_recharge_anomaly['anomaly'] < 0, 'anomaly'] = 0.01
+
             Q_path = path_to_dir / "lateral_recharge_anomaly.csv"
             lateral_recharge_anomaly.columns = [['[-]'], ['anomaly']]
             lateral_recharge_anomaly.to_csv(Q_path, header=True, index=True, sep=";")
@@ -305,10 +314,10 @@ for duration in durations:
                 os.makedirs(path_to_dir)  
 
             lateral_recharge_anomaly = df_lateral_recharge_anomaly.copy()
-            q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_spring_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
-            q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_summer_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
-            q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_autumn_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
-            q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_winter_stress_magnitude.loc["Breitnau", "magnitude2"]) * 100
+            q_magnitude_spring = (df_prec_spring_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_spring_stress_magnitude.loc["Breitnau", "magnitude2"])
+            q_magnitude_summer = (df_prec_summer_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_summer_stress_magnitude.loc["Breitnau", "magnitude2"])
+            q_magnitude_autumn = (df_prec_autumn_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_autumn_stress_magnitude.loc["Breitnau", "magnitude2"])
+            q_magnitude_winter = (df_prec_winter_stress_magnitude.loc["Breitnau", "magnitude2"] - df_pet_winter_stress_magnitude.loc["Breitnau", "magnitude2"])
     
             # select only spring periods and modify them according to the stress magnitude
             cond = (lateral_recharge_anomaly.index.month.isin([3, 4, 5]))
@@ -322,6 +331,9 @@ for duration in durations:
             # select only winter periods and modify them according to the stress magnitude
             cond = (lateral_recharge_anomaly.index.month.isin([12, 1, 2]))
             lateral_recharge_anomaly.loc[cond, "anomaly"] = lateral_recharge_anomaly.loc[cond, "anomaly"] * (1 + (q_magnitude_winter / 100))
+
+            # set negative anomalies to 0.01 to avoid numerical issues in the model
+            lateral_recharge_anomaly.loc[lateral_recharge_anomaly['anomaly'] < 0, 'anomaly'] = 0.01
 
             Q_path = path_to_dir / "lateral_recharge_anomaly.csv"
             lateral_recharge_anomaly.columns = [['[-]'], ['anomaly']]
