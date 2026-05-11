@@ -1218,6 +1218,12 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         sfr_inflow[1036] = discharge_moehlin_year_doy * 86400 * (0.05/0.33)
         # set Neumagen inflow to the observed discharge of the current year and day
         sfr_inflow[1272] = discharge_neumagen_year_doy * 86400
+
+        # find nan values in sfr inflow
+        if np.isnan(sfr_inflow).any():
+            click.echo(f"Warning: NaN values found in SFR inflow for doy {doy} of year {year}. Setting NaN values to zero.")
+            sfr_inflow[np.isnan(sfr_inflow)] = 0
+
         modflow_interface.set_sfr_inflow(sfr_inflow)
 
         # run MODFLOW for one timestep
