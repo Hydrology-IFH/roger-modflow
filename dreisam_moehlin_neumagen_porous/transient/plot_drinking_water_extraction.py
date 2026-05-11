@@ -83,15 +83,16 @@ def main():
     # barplot monthly drinking water well extraction    
     fig, ax = plt.subplots(figsize=(6, 3))
     ax.bar(df_drinking_water_well_extraction_monthly.index, df_drinking_water_well_extraction_monthly['well_extraction']/ 1000000, color='purple', width=20, zorder=1)
-    # select July and August of year 2018 and 2020 and increase values by 40% to visualize the effect of increased pumping rates during droughts
-    cond = (df_drinking_water_well_extraction_monthly.index.month == 7) & (df_drinking_water_well_extraction_monthly.index.year == 2018)
-    df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] = df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] * 1.4
-    cond = (df_drinking_water_well_extraction_monthly.index.month == 8) & (df_drinking_water_well_extraction_monthly.index.year == 2018)
-    df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] = df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] * 1.4
-    cond = (df_drinking_water_well_extraction_monthly.index.month == 7) & (df_drinking_water_well_extraction_monthly.index.year == 2020)
-    df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] = df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] * 1.4
-    cond = (df_drinking_water_well_extraction_monthly.index.month == 8) & (df_drinking_water_well_extraction_monthly.index.year == 2020)
-    df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] = df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] * 1.4
+    df_drinking_water_well_extraction_monthly.loc[:, 'well_extraction'] = df_drinking_water_well_extraction_monthly.loc[:, 'well_extraction'] * 1.1
+    # # select July and August of year 2018 and 2020 and increase values by 40% to visualize the effect of increased pumping rates during droughts
+    # cond = (df_drinking_water_well_extraction_monthly.index.month == 7) & (df_drinking_water_well_extraction_monthly.index.year == 2018)
+    # df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] = df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] * 1.1
+    # cond = (df_drinking_water_well_extraction_monthly.index.month == 8) & (df_drinking_water_well_extraction_monthly.index.year == 2018)
+    # df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] = df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] * 1.1
+    # cond = (df_drinking_water_well_extraction_monthly.index.month == 7) & (df_drinking_water_well_extraction_monthly.index.year == 2020)
+    # df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] = df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] * 1.1
+    # cond = (df_drinking_water_well_extraction_monthly.index.month == 8) & (df_drinking_water_well_extraction_monthly.index.year == 2020)
+    # df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] = df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] * 1.1
     ax.bar(df_drinking_water_well_extraction_monthly.index, df_drinking_water_well_extraction_monthly['well_extraction']/ 1000000, color='red', width=20, zorder=0)
     ax.set_xlim(df_drinking_water_well_extraction_monthly.index[0] - pd.Timedelta(days=15), df_drinking_water_well_extraction_monthly.index[-1] + pd.Timedelta(days=15))
     ax.set_xlabel('Zeit')

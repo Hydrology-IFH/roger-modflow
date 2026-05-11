@@ -146,6 +146,26 @@ def main():
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
+    fig, ax = plt.subplots(1, 1, figsize=(6, 4))
+    ax.scatter(gdf_drinking_water_wells['x-coordinate'], gdf_drinking_water_wells['y-coordinate'], c='magenta', s=20, marker='^', label='Trinkwasserbrunnen', zorder=2)
+    # add catchment boundary
+    catchment_boundary_porous.boundary.plot(ax=ax, color='black', linewidth=1, zorder=1)
+    # add drinking water protection areas and fill with diagonal hatching
+    wsg_hausen.plot(ax=ax, color='none', edgecolor='blue', linewidth=1, hatch='////', label='WSG Hausen', alpha=0.5, zorder=1)
+    wsg_zartener_becken.plot(ax=ax, color='none', edgecolor='blue', linewidth=1, hatch='////', label='WSG Zartener Becken', alpha=0.5, zorder=1)
+    ctx.add_basemap(ax, source=ctx.providers.OpenStreetMap.DE, crs=groundwater_observation_wells.crs)
+    north_arrow(
+    ax, scale=0.25, location="upper right", rotation={"crs": groundwater_observation_wells.crs, "reference": "center"}
+    )
+    scale_bar(ax, location="lower right", style="boxes", bar={"projection": groundwater_observation_wells.crs, "height": 0.05}, text = {"fontfamily": "monospace", "fontsize": 10})
+    ax.set_xlabel('X-Koordinate', fontsize=12)
+    ax.set_ylabel('Y-Koordinate', fontsize=12)
+
+    fig.tight_layout()
+    file = base_path / "figures" / "drinking_water_wells_map.png"
+    fig.savefig(file, dpi=300)
+    plt.close(fig)
+
 
     # 1) Load a world dataset and filter to Germany
     file = base_path / "input" / "ne_110m_admin_0_countries.shp"

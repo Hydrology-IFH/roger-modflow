@@ -64,11 +64,7 @@ def main(model_run):
     stress_test_scenarios = ["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction",
                              "base-magnitude0-duration0_irrigation_no-yellow-mustard_soil-compaction",
                              "summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-                             "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-                             "summer-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-                             "summer-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-                             "long-term-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-                             "long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"]
+                             "summer-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"]
     
     
     date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="D")
@@ -245,10 +241,6 @@ def main(model_run):
     # make figures directory if it does not exist
     figures_dir = base_path.parent / "figures" / "groundwater_anomalies"
     figures_dir.mkdir(exist_ok=True)
-
-    stress_test_scenarios = ["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction",
-                             "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
-                             "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"]
 
     for area in areas:
         click.echo(f"Plotting time series of groundwater depth anomalies for {area}...")

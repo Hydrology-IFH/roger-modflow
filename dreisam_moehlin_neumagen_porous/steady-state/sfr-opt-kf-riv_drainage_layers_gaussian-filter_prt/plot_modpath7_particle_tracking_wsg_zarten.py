@@ -227,7 +227,7 @@ def plot_all(gwf, well_ids=[6], well_names=["A4"]):
     plot_all_pathlines(grid, hds, pl, wells)
 
 # load the MODFLOW 6 model using pickle
-with open(base_path / "output" / "dmn_run_1806.pkl", "rb") as f:
+with open(base_path_external / "output" / "dmn_run_1806.pkl", "rb") as f:
     gwfsim = pickle.load(f)
 gwf = gwfsim.get_model("dmn_run_1806")
 

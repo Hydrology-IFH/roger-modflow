@@ -22,10 +22,12 @@ path = base_path.parent / "input" / "groundwater_extraction.gpkg"
 gw_extraction_wells = gpd.read_file(path)
 
 well_ids = list(range(len(gw_extraction_wells["ID"].values)))
-well_names = gw_extraction_wells["ID"].values.astype(str).replace("/", "_").replace(".", "-").tolist()
+well_names = gw_extraction_wells["ID"].values.astype(str).tolist()
+# replace / and . in well names with _ and - respectively to avoid issues with file names
+well_names = [well_name.replace("/", "_").replace(".", "-") for well_name in well_names]
 # well_ids = [5]
 # well_names = ["A2"]
-for well_id, well_name in zip(well_ids, well_names):
+for well_id, well_name in zip(well_ids[:11], well_names[:11]):
     try:
         os.remove(base_path_external / "output" / f"well{well_id}_mp7.timeseries")
     except FileNotFoundError:
@@ -62,7 +64,7 @@ for well_id, well_name in zip(well_ids, well_names):
     coords = np.unique(coords, axis=0)
     polygon_zone2_ = Polygon(coords)
     # make polygon convex hull
-    polygon_zone2 = shapely.concave_hull(polygon_zone2_)
+    polygon_zone2 = polygon_zone2_.convex_hull
     gdf = gpd.GeoDataFrame(
     {"zone2": [f"{well_name}"]},
     geometry=[polygon_zone2],
