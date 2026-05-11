@@ -1131,7 +1131,13 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             recharge_ = recharge_year[doy - 1, :, :] / 1000  # mm/day to m/day
         except IndexError:
             click.echo(f"IndexError: doy {doy} of year {year} is out of bounds for recharge. Setting recharge to zero for this timestep.")
-            recharge_ = np.zeros((config_modflow['ny'] * 2, config_modflow['nx'] * 2)) 
+            recharge_ = np.zeros((config_modflow['ny'] * 2, config_modflow['nx'] * 2))
+        
+        # find nan values in recharge
+        if np.isnan(recharge_).any():
+            click.echo(f"Warning: NaN values found in recharge for doy {doy} of year {year}. Setting NaN values to zero.")
+            recharge_[np.isnan(recharge_)] = 0
+
         recharge = recharge_.flatten()
         recharge[(groundwater_depth <= soildepth)] = 0 # constrain recharge to zero where groundwater depth is equal to soil depth
         recharge = recharge.reshape(config_modflow['ny'] * 2, config_modflow['nx'] * 2).astype(np.float64)
@@ -1148,6 +1154,10 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         except IndexError:
             click.echo(f"IndexError: doy {doy} of year {year} is out of bounds for capillary rise. Setting capillary rise to zero for this timestep.")
             capillary_rise_ = np.zeros((config_modflow['ny'] * 2, config_modflow['nx'] * 2))
+        # find nan values in capillary rise
+        if np.isnan(capillary_rise_).any():
+            click.echo(f"Warning: NaN values found in capillary rise for doy {doy} of year {year}. Setting NaN values to zero.")
+            capillary_rise_[np.isnan(capillary_rise_)] = 0
         capillary_rise = aggregate_to_coarser_resolution(capillary_rise_, 25, config_modflow['dx'], method="average")
         capillary_rise[capillary_rise > 0.003] = 0.003  # constrain capillary rise to 0.003 m/day i.e. 3 mm/day
         # set ET surface to the current groundwater head for the entire model domain
@@ -1158,6 +1168,10 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
             irrigation_ = irrigation_year[doy - 1, :, :] / 1000  # mm/day to m/day
             irrigation_ = aggregate_to_coarser_resolution(irrigation_, 25, config_modflow['dx'], method="average")
             irrigation_[irrigation_ > 0.03] = 0.03  # constrain irrigation to 0.03 m/day
+            # find nan values in irrigation
+            if np.isnan(irrigation_).any():
+                click.echo(f"Warning: NaN values found in irrigation for doy {doy} of year {year}. Setting NaN values to zero.")
+                irrigation_[np.isnan(irrigation_)] = 0
             capillary_rise_irrigation = capillary_rise.flatten() + irrigation_.flatten()
         else:
             capillary_rise_irrigation = capillary_rise.flatten()
@@ -1174,6 +1188,10 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         well_extraction_rate[cond_drinking_water_supply] = well_extraction_rate[cond_drinking_water_supply] * daily_weights_drinking_water_supply_year_doy
         well_extraction_rate[~cond_drinking_water_supply] = well_extraction_rate[~cond_drinking_water_supply] / 365.25
         well_extraction_rate[:] = -well_extraction_rate[:] # extraction is negative
+        # find nan values in well extraction rate
+        if np.isnan(well_extraction_rate).any():
+            click.echo(f"Warning: NaN values found in well extraction rate for doy {doy} of year {year}. Setting NaN values to zero.")
+            well_extraction_rate[np.isnan(well_extraction_rate)] = 0
         modflow_interface.set_well_rate(well_extraction_rate)
 
         # update SFR inflow and pass it to MODFLOW
