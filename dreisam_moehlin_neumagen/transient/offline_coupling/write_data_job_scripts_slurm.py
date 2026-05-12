@@ -9,7 +9,7 @@ def main():
     base_path_bwhpc = "/pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen/transient/offline_coupling"
 
     # identifiers of the simulations
-    stress_tests_meteo = ["base", "spring-drought", "long-term"]
+    stress_tests_meteo = ["base", "summer-drought", "long-term"]
     stress_test_meteo_magnitudes = [0, 2]
     stress_test_meteo_durations = [0, 3]
     scenario_flags = []

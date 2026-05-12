@@ -62,7 +62,8 @@ def main(model_run):
     base = "base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"
 
     stress_test_scenarios = ["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction",
-                             "summer-drought-magnitude2-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"]
+                             "summer-drought-magnitude2-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
+                             "long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"]
     
     
     date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="D")
@@ -235,10 +236,6 @@ def main(model_run):
             fig.tight_layout()
             fig.savefig(figures_dir / f"gw_depth_anomalies_percent_annual_2018_{area}.png", dpi=300)
             plt.close(fig)
-
-    # make figures directory if it does not exist
-    figures_dir = base_path.parent / "figures" / "groundwater_anomalies"
-    figures_dir.mkdir(exist_ok=True)
 
     for area in areas:
         click.echo(f"Plotting time series of groundwater depth anomalies for {area}...")

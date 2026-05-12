@@ -36,9 +36,11 @@ cd ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_cou
 echo "Start simulation ..."
 python roger_modflow6.py --stress-test-meteo long-term --stress-test-meteo-magnitude 2 --stress-test-meteo-duration 0 --soil-compaction soil-compaction --irrigation irrigation
 echo "... finalised simulation"
-# Remove files from workspace
-rm /pfs/10/work/fr_rs1092-workspace/roger/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed/output/ONEDCROP_rci_long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction.tar.gz
 # Move output from local SSD to global workspace
 echo "Move output to /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/modflow_long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction"
 mkdir -p /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/modflow_long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction
 mv -v "${TMPDIR}"/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/modflow_long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction/{*,.[!.]*} /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/modflow_long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction
+cd ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output
+ls
+cd modflow_long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction
+ls

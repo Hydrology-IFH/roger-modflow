@@ -36,9 +36,11 @@ cd ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_cou
 echo "Start simulation ..."
 python roger_modflow6.py --stress-test-meteo base --soil-compaction soil-compaction --grain-corn-only grain-corn-only
 echo "... finalised simulation"
-# Remove files from workspace
-rm /pfs/10/work/fr_rs1092-workspace/roger/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed/output/ONEDCROP_rci_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only.tar.gz
 # Move output from local SSD to global workspace
 echo "Move output to /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only"
 mkdir -p /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only
 mv -v "${TMPDIR}"/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only/{*,.[!.]*} /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output/modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only
+cd ${TMPDIR}/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling/output
+ls
+cd modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction_grain-corn-only
+ls
