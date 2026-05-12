@@ -60,8 +60,8 @@ def main(model_run):
 
     areas = ["dmn", "wsg_hausen", "wsg_zartener_becken"]
 
-    stress_test_scenarios = ["long-term-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-                             "long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"]
+    stress_test_scenarios = ["long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"]
+
     
     date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="D")
     years = np.unique(date_time.year.values)
