@@ -1,12 +1,12 @@
-# Dreisam-Moehlin-Neumagen catchment
+# Porous Aquifer and fissured aquifer of the Dreisam-Moehlin-Neumagen catchment
 
 Steady-state optimisation of different MODFLOW6 setups (i.e. different combinations of MODFLOW6 packages) of the porous aquifer in the Dreisam-Moehlin-Neumagen catchment.
 
-## TODO
+The folders contain mutltiple model structures. We finally used `sfr-opt-kf-riv_drainage_layers_gaussian-filter`.
 
-- Description of the preprocessing steps to derive the hydrogeologic data (mainly kf and layer thickness) --> Julian
-- Recharge data --> Hannes: Period of simulation? Which model and assumptions?
-- Interpolated groundwater heads: Andreas S./Markus --> Reference to the map
+## Models
+- `sfr-opt-kf-riv_drainage_layers_gaussian-filter`: steady-state groundwater model of the period 2013 - 2023
+- `sfr-opt-kf-riv_drainage_layers_gaussian-filter_prt`: particle tracking of the steady-state groundwater model of the period 2013 - 2023 to define the well catchment areas
 
 
 ## Files

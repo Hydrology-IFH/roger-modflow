@@ -1,6 +1,6 @@
-# Moehlin catchment
+# Porous Aquifer of the Dreisam-Moehlin-Neumagen catchment
 
-Simulation of the soil water and groundwater of the Moehlin catchment (Germany) using MODFLOW coupled with RoGeR. The models are coupled online (i.e. variables/boundary conditions are updated after every time step).
+Simulation of the soil water and groundwater of the Moehlin catchment (Germany) using MODFLOW coupled with RoGeR. The two models are coupled offline (i.e. run RoGeR first and pass the simulated values to MODFLOW loading the RoGeR model output).
 
 Short description of files and folders:
 - `input/`: contains precipitation data (`PREC.txt`; 10 minutes time steps), air temperature data (`TA.txt`; daily time steps) and potential evapotranspiration data (`PET.txt`; daily time steps).
@@ -30,5 +30,3 @@ Workflow:
 6. Run `python plot_time_series.py`
 7. Run `python make_gif.py`
 
-Coordinate system:
-proj=utm +zone=32 +ellps=GRS80 +units=m +no_defs
