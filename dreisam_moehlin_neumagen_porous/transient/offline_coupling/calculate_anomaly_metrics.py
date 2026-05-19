@@ -97,7 +97,7 @@ def main(model_run):
 
         click.echo(f"Processing area {area}...")
         click.echo(f"Processing scenario {base}...")
-        # load the indirect recharge
+        # load the groundwater depths for the base scenario
         click.echo("Loading groundwater depths (base)...")
         ll_gw_depths = []
         for year in years:
@@ -140,7 +140,7 @@ def main(model_run):
             ds_indirect_recharge = xr.open_dataset(output_file, engine="h5netcdf")
             indirect_recharge_year = ds_indirect_recharge["indirect_recharge"].values * 86400  # convert from m3/s to m3/day
             ds_indirect_recharge.close()
-            indirect_recharge_year[indirect_recharge_year > 0] = 0  # set positive values to zero
+            indirect_recharge_year[indirect_recharge_year > 0] = np.nan  # set positive values to zero
             indirect_recharge_year = np.abs(indirect_recharge_year)
             indirect_recharge_year = np.where(mask[np.newaxis, :, :], indirect_recharge_year, np.nan)
             ll_indirect_recharge.append(indirect_recharge_year)
@@ -320,7 +320,7 @@ def main(model_run):
 
         for stress_test_scenario in stress_test_scenarios:
             click.echo(f"Processing scenario {stress_test_scenario}...")
-            # load the indirect recharge
+            # load the groundwater depths for the stress test scenario
             click.echo("Loading groundwater depths (stress test)...")
             ll_gw_depths = []
             for year in years:
@@ -394,7 +394,7 @@ def main(model_run):
                 ds_indirect_recharge = xr.open_dataset(output_file, engine="h5netcdf")
                 indirect_recharge_year = ds_indirect_recharge["indirect_recharge"].values * 86400  # convert from m3/s to m3/day
                 ds_indirect_recharge.close()
-                indirect_recharge_year[indirect_recharge_year > 0] = 0  # set positive values to zero
+                indirect_recharge_year[indirect_recharge_year > 0] = np.nan  # set positive values to zero
                 indirect_recharge_year = np.abs(indirect_recharge_year)
                 indirect_recharge_year = np.where(mask[np.newaxis, :, :], indirect_recharge_year, np.nan)
                 ll_indirect_recharge.append(indirect_recharge_year)
