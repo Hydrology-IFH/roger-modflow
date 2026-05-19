@@ -277,32 +277,31 @@ def main(model_run):
             value_base = np.nanmax(np.nanmean(da_gw_depths_base.values, axis=0))
             anomaly_abs = (value - value_base) * (-1)
             anomaly_rel = ((value - value_base) * (-1)) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics = df_metrics.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "maximum", "value": value}, ignore_index=True)
-            df_anomaly_metrics_abs = df_anomaly_metrics_abs.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "maximum", "value": anomaly_abs}, ignore_index=True)
-            df_anomaly_metrics_rel = df_anomaly_metrics_rel.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "maximum", "value": anomaly_rel}, ignore_index=True)
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "maximum", "value": value}
+            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "maximum", "value": anomaly_abs}
+            df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "maximum", "value": anomaly_rel}
             value = np.nanpercentile(np.nanmean(da_gw_depths.values, axis=0), 5)
             value_base = np.nanpercentile(np.nanmean(da_gw_depths_base.values, axis=0), 5)
             anomaly_abs = (value - value_base) * (-1)
             anomaly_rel = ((value - value_base) * (-1)) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics = df_metrics.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "5th_percentile", "value": value}, ignore_index=True)
-            df_anomaly_metrics_abs = df_anomaly_metrics_abs.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "5th_percentile", "value": anomaly_abs}, ignore_index=True)
-            df_anomaly_metrics_rel = df_anomaly_metrics_rel.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "5th_percentile", "value": anomaly_rel}, ignore_index=True)    
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "5th_percentile", "value": value}
+            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "5th_percentile", "value": anomaly_abs}
+            df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "5th_percentile", "value": anomaly_rel}
             value = np.nanpercentile(np.nanmean(da_gw_depths.values, axis=0), 50)
             value_base = np.nanpercentile(np.nanmean(da_gw_depths_base.values, axis=0), 50)
             anomaly_abs = (value - value_base) * (-1)
             anomaly_rel = ((value - value_base) * (-1)) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics = df_metrics.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "median", "value": value}, ignore_index=True)
-            df_anomaly_metrics_abs = df_anomaly_metrics_abs.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "median", "value": anomaly_abs}, ignore_index=True)
-            df_anomaly_metrics_rel = df_anomaly_metrics_rel.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "median", "value": anomaly_rel}, ignore_index=True)
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "median", "value": value}
+            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "median", "value": anomaly_abs}
+            df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "median", "value": anomaly_rel}
             value = np.nanpercentile(np.nanmean(da_gw_depths.values, axis=0), 95)
             value_base = np.nanpercentile(np.nanmean(da_gw_depths_base.values, axis=0), 95)
             anomaly_abs = (value - value_base) * (-1)
             anomaly_rel = ((value - value_base) * (-1)) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics = df_metrics.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "95th_percentile", "value": value}, ignore_index=True)
-            df_anomaly_metrics_abs = df_anomaly_metrics_abs.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "95th_percentile", "value": anomaly_abs}, ignore_index=True)
-            df_anomaly_metrics_rel = df_anomaly_metrics_rel.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "95th_percentile", "value": anomaly_rel}, ignore_index=True)
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "95th_percentile", "value": value}
+            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "95th_percentile", "value": anomaly_abs}
+            df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "95th_percentile", "value": anomaly_rel}
 
-        
             click.echo(f"Processing scenario {stress_test_scenario}...")
             # load the indirect recharge
             click.echo("Loading indirect recharge...")
@@ -333,44 +332,45 @@ def main(model_run):
             value_base = np.nanmean(np.nanmean(da_indirect_recharge_base.values, axis=0))
             anomaly_abs = value - value_base
             anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics = df_metrics.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "average", "value": value}, ignore_index=True)
-            df_anomaly_metrics_abs = df_anomaly_metrics_abs.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "average", "value": anomaly_abs}, ignore_index=True)
-            df_anomaly_metrics_rel = df_anomaly_metrics_rel.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "average", "value": anomaly_rel}, ignore_index=True)
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "average", "value": value}
+            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "average", "value": anomaly_abs}
+            df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "average", "value": anomaly_rel}
             value = np.nanmin(np.nanmean(da_indirect_recharge.values, axis=0))
             value_base = np.nanmin(np.nanmean(da_indirect_recharge_base.values, axis=0))
             anomaly_abs = value - value_base
             anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics = df_metrics.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "minimum", "value": value}, ignore_index=True)
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "minimum", "value": value}
+            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "minimum", "value": anomaly_abs}
+            df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "minimum", "value": anomaly_rel}
             df_anomaly_metrics_abs = df_anomaly_metrics_abs.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "minimum", "value": anomaly_abs}, ignore_index=True)
             df_anomaly_metrics_rel = df_anomaly_metrics_rel.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "minimum", "value": anomaly_rel}, ignore_index=True)
             value = np.nanmax(np.nanmean(da_indirect_recharge.values, axis=0))
             value_base = np.nanmax(np.nanmean(da_indirect_recharge_base.values, axis=0))
             anomaly_abs = value - value_base
             anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics = df_metrics.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "maximum", "value": value}, ignore_index=True)
-            df_anomaly_metrics_abs = df_anomaly_metrics_abs.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "maximum", "value": anomaly_abs}, ignore_index=True)
-            df_anomaly_metrics_rel = df_anomaly_metrics_rel.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "maximum", "value": anomaly_rel}, ignore_index=True)
-            value = np.nanpercentile(np.nanmean(da_indirect_recharge.values, axis=0), 5)
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "maximum", "value": value}
+            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "maximum", "value": anomaly_abs}
+            df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "maximum", "value": anomaly_rel}
             value_base = np.nanpercentile(np.nanmean(da_indirect_recharge_base.values, axis=0), 5)
             anomaly_abs = value - value_base
             anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics = df_metrics.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "5th_percentile", "value": value}, ignore_index=True)
-            df_anomaly_metrics_abs = df_anomaly_metrics_abs.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "5th_percentile", "value": anomaly_abs}, ignore_index=True)
-            df_anomaly_metrics_rel = df_anomaly_metrics_rel.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "5th_percentile", "value": anomaly_rel}, ignore_index=True)    
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "5th_percentile", "value": value}
+            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "5th_percentile", "value": anomaly_abs}
+            df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "5th_percentile", "value": anomaly_rel}
             value = np.nanpercentile(np.nanmean(da_indirect_recharge.values, axis=0), 50)
             value_base = np.nanpercentile(np.nanmean(da_indirect_recharge_base.values, axis=0), 50)
             anomaly_abs = value - value_base
             anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics = df_metrics.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "median", "value": value}, ignore_index=True)
-            df_anomaly_metrics_abs = df_anomaly_metrics_abs.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "median", "value": anomaly_abs}, ignore_index=True)   
-            df_anomaly_metrics_rel = df_anomaly_metrics_rel.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "median", "value": anomaly_rel}, ignore_index=True)
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "median", "value": value}
+            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "median", "value": anomaly_abs}
+            df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "median", "value": anomaly_rel}
             value = np.nanpercentile(np.nanmean(da_indirect_recharge.values, axis=0), 95)
             value_base = np.nanpercentile(np.nanmean(da_indirect_recharge_base.values, axis=0), 95)
             anomaly_abs = value - value_base
             anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics = df_metrics.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "95th_percentile", "value": value}, ignore_index=True)
-            df_anomaly_metrics_abs = df_anomaly_metrics_abs.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "95th_percentile", "value": anomaly_abs}, ignore_index=True)   
-            df_anomaly_metrics_rel = df_anomaly_metrics_rel.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "95th_percentile", "value": anomaly_rel}, ignore_index=True)
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "95th_percentile", "value": value}
+            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "95th_percentile", "value": anomaly_abs}
+            df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "95th_percentile", "value": anomaly_rel}
 
             # load direct recharge
             click.echo("Loading direct recharge...")
@@ -410,44 +410,44 @@ def main(model_run):
             value_base = np.nanmean(np.nanmean(da_direct_recharge_base.values, axis=0))
             anomaly_abs = value - value_base
             anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics = df_metrics.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "average", "value": value}, ignore_index=True)
-            df_anomaly_metrics_abs = df_anomaly_metrics_abs.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "average", "value": anomaly_abs}, ignore_index=True)
-            df_anomaly_metrics_rel = df_anomaly_metrics_rel.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "average", "value": anomaly_rel}, ignore_index=True)
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "average", "value": value}
+            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "average", "value": anomaly_abs}
+            df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "average", "value": anomaly_rel}
             value = np.nanmin(np.nanmean(da_direct_recharge.values, axis=0))
             value_base = np.nanmin(np.nanmean(da_direct_recharge_base.values, axis=0))
             anomaly_abs = value - value_base
             anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics = df_metrics.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "minimum", "value": value}, ignore_index=True)
-            df_anomaly_metrics_abs = df_anomaly_metrics_abs.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "minimum", "value": anomaly_abs}, ignore_index=True)
-            df_anomaly_metrics_rel = df_anomaly_metrics_rel.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "minimum", "value": anomaly_rel}, ignore_index=True)
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "minimum", "value": value}
+            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "minimum", "value": anomaly_abs}
+            df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "minimum", "value": anomaly_rel}
             value = np.nanmax(np.nanmean(da_direct_recharge.values, axis=0))
             value_base = np.nanmax(np.nanmean(da_direct_recharge_base.values, axis=0))
             anomaly_abs = value - value_base
             anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics = df_metrics.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "maximum", "value": value}, ignore_index=True)
-            df_anomaly_metrics_abs = df_anomaly_metrics_abs.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "maximum", "value": anomaly_abs}, ignore_index=True)
-            df_anomaly_metrics_rel = df_anomaly_metrics_rel.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "maximum", "value": anomaly_rel}, ignore_index=True)
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "maximum", "value": value}
+            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "maximum", "value": anomaly_abs}
+            df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "maximum", "value": anomaly_rel}
             value = np.nanpercentile(np.nanmean(da_direct_recharge.values, axis=0), 5)
             value_base = np.nanpercentile(np.nanmean(da_direct_recharge_base.values, axis=0), 5)
             anomaly_abs = value - value_base
             anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics = df_metrics.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "5th_percentile", "value": value}, ignore_index=True)
-            df_anomaly_metrics_abs = df_anomaly_metrics_abs.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "5th_percentile", "value": anomaly_abs}, ignore_index=True)
-            df_anomaly_metrics_rel = df_anomaly_metrics_rel.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "5th_percentile", "value": anomaly_rel}, ignore_index=True)    
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "5th_percentile", "value": value}
+            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "5th_percentile", "value": anomaly_abs}
+            df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "5th_percentile", "value": anomaly_rel}    
             value = np.nanpercentile(np.nanmean(da_direct_recharge.values, axis=0), 50)
             value_base = np.nanpercentile(np.nanmean(da_direct_recharge_base.values, axis=0), 50)
             anomaly_abs = value - value_base
             anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics = df_metrics.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "median", "value": value}, ignore_index=True)
-            df_anomaly_metrics_abs = df_anomaly_metrics_abs.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "median", "value": anomaly_abs}, ignore_index=True)   
-            df_anomaly_metrics_rel = df_anomaly_metrics_rel.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "median", "value": anomaly_rel}, ignore_index=True)
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "median", "value": value}
+            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "median", "value": anomaly_abs}
+            df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "median", "value": anomaly_rel}
             value = np.nanpercentile(np.nanmean(da_direct_recharge.values, axis=0), 95)
             value_base = np.nanpercentile(np.nanmean(da_direct_recharge_base.values, axis=0), 95)
             anomaly_abs = value - value_base
             anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics = df_metrics.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "95th_percentile", "value": value}, ignore_index=True)
-            df_anomaly_metrics_abs = df_anomaly_metrics_abs.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "95th_percentile", "value": anomaly_abs}, ignore_index=True)   
-            df_anomaly_metrics_rel = df_anomaly_metrics_rel.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "95th_percentile", "value": anomaly_rel}, ignore_index=True)
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "95th_percentile", "value": value}
+            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "95th_percentile", "value": anomaly_abs}
+            df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "metric": "95th_percentile", "value": anomaly_rel}
 
             # load well extraction
             click.echo("Loading well extraction...")
