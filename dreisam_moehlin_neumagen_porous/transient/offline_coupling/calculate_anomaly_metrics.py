@@ -96,6 +96,7 @@ def main(model_run):
                 mask = src.read(1)
                 mask = np.where(mask == 1, True, False)
 
+        click.echo(f"Processing area {area}...")
         click.echo(f"Processing scenario {base}...")
         # load the indirect recharge
         click.echo("Loading groundwater depths (base)...")
@@ -105,6 +106,7 @@ def main(model_run):
             # output_file = base_path_output / f"{base}" / f"gw_depth_run{model_run}_year{year}.nc"
             ds_gw_depths = xr.open_dataset(output_file, engine="h5netcdf")
             gw_depths_year = ds_gw_depths["depth"].values[:, 1, :, :]
+            gw_depths_year = np.where(mask[np.newaxis, :, :], gw_depths_year, np.nan)
             ll_gw_depths.append(gw_depths_year)
         gw_depths = np.concatenate(ll_gw_depths, axis=0)
         # create xarray data array for groundwater depths
@@ -247,6 +249,7 @@ def main(model_run):
                 # output_file = base_path_output / f"{stress_test_scenario}" / f"gw_depth_run{model_run}_year{year}.nc"
                 ds_gw_depths = xr.open_dataset(output_file, engine="h5netcdf")
                 gw_depths_year = ds_gw_depths["depth"].values[:, 1, :, :]
+                gw_depths_year = np.where(mask[np.newaxis, :, :], gw_depths_year, np.nan)
                 ll_gw_depths.append(gw_depths_year)
             gw_depths = np.concatenate(ll_gw_depths, axis=0)
             # create xarray data array for groundwater depths
@@ -259,6 +262,7 @@ def main(model_run):
                     "x": ds_gw_depths["lon"].values,
                 },
             )
+            click.echo("Calculating groundwater anomalies...")
             value = np.nanmean(np.nanmean(da_gw_depths.values, axis=0))
             value_base = np.nanmean(np.nanmean(da_gw_depths_base.values, axis=0))
             anomaly_abs = (value - value_base) * (-1)
@@ -302,7 +306,6 @@ def main(model_run):
             df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "95th_percentile", "value": anomaly_abs}
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "metric": "95th_percentile", "value": anomaly_rel}
 
-            click.echo(f"Processing scenario {stress_test_scenario}...")
             # load the indirect recharge
             click.echo("Loading indirect recharge...")
             ll_indirect_recharge = []
@@ -327,7 +330,7 @@ def main(model_run):
                     "x": ds_indirect_recharge["lon"].values,
                 },
             )
-
+            click.echo("Calculating indirect recharge anomalies...")
             value = np.nanmean(np.nanmean(da_indirect_recharge.values, axis=0))
             value_base = np.nanmean(np.nanmean(da_indirect_recharge_base.values, axis=0))
             anomaly_abs = value - value_base
@@ -404,6 +407,7 @@ def main(model_run):
                     "x": xcoords,
                 },
             )
+            click.echo("Calculating direct recharge anomalies...")
             value = np.nanmean(np.nanmean(da_direct_recharge.values, axis=0))
             value_base = np.nanmean(np.nanmean(da_direct_recharge_base.values, axis=0))
             anomaly_abs = value - value_base
@@ -478,13 +482,17 @@ def main(model_run):
             # remove list of arrays to free up memory
             del ll_gw_depths, ll_indirect_recharge, ll_direct_recharge, ll_well_extraction
 
-    # save the metrics to csv
-    output_file = base_path / "output" / f"metrics_run{model_run}.csv"
-    df_metrics.to_csv(output_file, index=False, sep=";")
-    output_file = base_path / "output" / f"anomaly_metrics_abs_run{model_run}.csv"
-    df_anomaly_metrics_abs.to_csv(output_file, index=False, sep=";")
-    output_file = base_path / "output" / f"anomaly_metrics_rel_run{model_run}.csv"
-    df_anomaly_metrics_rel.to_csv(output_file, index=False, sep=";")
+            df_metrics = df_metrics.copy()
+            df_anomaly_metrics_abs = df_anomaly_metrics_abs.copy()
+            df_anomaly_metrics_rel = df_anomaly_metrics_rel.copy()
+
+            # save the metrics to csv
+            output_file = base_path / "output" / f"metrics_run{model_run}.csv"
+            df_metrics.to_csv(output_file, index=False, sep=";")
+            output_file = base_path / "output" / f"anomaly_metrics_abs_run{model_run}.csv"
+            df_anomaly_metrics_abs.to_csv(output_file, index=False, sep=";")
+            output_file = base_path / "output" / f"anomaly_metrics_rel_run{model_run}.csv"
+            df_anomaly_metrics_rel.to_csv(output_file, index=False, sep=";")
 
     return
 
