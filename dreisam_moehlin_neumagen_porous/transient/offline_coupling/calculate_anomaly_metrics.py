@@ -342,8 +342,6 @@ def main(model_run):
             df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "minimum", "value": value}
             df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "minimum", "value": anomaly_abs}
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "minimum", "value": anomaly_rel}
-            df_anomaly_metrics_abs = df_anomaly_metrics_abs.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "minimum", "value": anomaly_abs}, ignore_index=True)
-            df_anomaly_metrics_rel = df_anomaly_metrics_rel.append({"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "metric": "minimum", "value": anomaly_rel}, ignore_index=True)
             value = np.nanmax(np.nanmean(da_indirect_recharge.values, axis=0))
             value_base = np.nanmax(np.nanmean(da_indirect_recharge_base.values, axis=0))
             anomaly_abs = value - value_base
