@@ -140,7 +140,7 @@ def main(model_run):
             ds_indirect_recharge = xr.open_dataset(output_file, engine="h5netcdf")
             indirect_recharge_year = ds_indirect_recharge["indirect_recharge"].values * 86400  # convert from m3/s to m3/day
             ds_indirect_recharge.close()
-            indirect_recharge_year[indirect_recharge_year > 0] = np.nan  # set positive values to zero
+            indirect_recharge_year[indirect_recharge_year >= 0] = np.nan  # set positive values to zero
             indirect_recharge_year = np.abs(indirect_recharge_year)
             indirect_recharge_year = np.where(mask[np.newaxis, :, :], indirect_recharge_year, np.nan)
             ll_indirect_recharge.append(indirect_recharge_year)
@@ -394,7 +394,7 @@ def main(model_run):
                 ds_indirect_recharge = xr.open_dataset(output_file, engine="h5netcdf")
                 indirect_recharge_year = ds_indirect_recharge["indirect_recharge"].values * 86400  # convert from m3/s to m3/day
                 ds_indirect_recharge.close()
-                indirect_recharge_year[indirect_recharge_year > 0] = np.nan  # set positive values to zero
+                indirect_recharge_year[indirect_recharge_year >= 0] = np.nan  # set positive values to zero
                 indirect_recharge_year = np.abs(indirect_recharge_year)
                 indirect_recharge_year = np.where(mask[np.newaxis, :, :], indirect_recharge_year, np.nan)
                 ll_indirect_recharge.append(indirect_recharge_year)
@@ -606,7 +606,7 @@ def main(model_run):
             # for year in years:
             #     _stress_test_scenario = stress_test_scenario.replace("_well-extraction-stress", "")
             #     base_path_roger = base_path.parent.parent.parent.parent / "roger"
-            #     output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"air_temperature_{_stress_test_scenario}_year{year}.nc"
+            #     output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"ta_{_stress_test_scenario}_year{year}.nc"
             #     # _stress_test_scenario = stress_test_scenario.replace("_well-extraction-stress", "")
             #     # output_file = base_path_output / f"{stress_test_scenario}" / f"air_temperature_{_stress_test_scenario}_year{year}.nc"
             #     ds_air_temperature = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
