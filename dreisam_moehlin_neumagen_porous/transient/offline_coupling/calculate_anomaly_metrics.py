@@ -183,7 +183,7 @@ def main(model_run):
             _direct_recharge_year[_direct_recharge_year > 100] = 100  # set values above 100 mm/day to 100 mm/day
             for i in range(_direct_recharge_year.shape[0]):
                 direct_recharge_day = aggregate_to_coarser_resolution(_direct_recharge_year[i, :, :], 25, 50, method="average")
-                direct_recharge_day = np.where(mask, direct_recharge_day, 0)
+                direct_recharge_day = np.where(mask, direct_recharge_day, np.nan)
                 ll_direct_recharge.append(direct_recharge_day)
         direct_recharge = np.stack(ll_direct_recharge, axis=0)
         # convert from mm/day to m3/day
@@ -229,7 +229,7 @@ def main(model_run):
             _potential_evapotranspiration_year[_potential_evapotranspiration_year > 100] = 100  # set values above 100 mm/day to 100 mm/day
             for i in range(_potential_evapotranspiration_year.shape[0]):
                 potential_evapotranspiration_day = aggregate_to_coarser_resolution(_potential_evapotranspiration_year[i, :, :], 25, 50, method="average")
-                potential_evapotranspiration_day = np.where(mask, potential_evapotranspiration_day, 0)
+                potential_evapotranspiration_day = np.where(mask, potential_evapotranspiration_day, np.nan)
                 ll_potential_evapotranspiration.append(potential_evapotranspiration_day)
         potential_evapotranspiration = np.stack(ll_potential_evapotranspiration, axis=0)
         # create xarray data array for potential evapotranspiration
@@ -469,7 +469,7 @@ def main(model_run):
                 _direct_recharge_year[_direct_recharge_year > 100] = 100  # set values above 100 mm/day to 100 mm/day
                 for i in range(_direct_recharge_year.shape[0]):
                     direct_recharge_day = aggregate_to_coarser_resolution(_direct_recharge_year[i, :, :], 25, 50, method="average")
-                    direct_recharge_day = np.where(mask, direct_recharge_day, 0)
+                    direct_recharge_day = np.where(mask, direct_recharge_day, np.nan)
                     ll_direct_recharge.append(direct_recharge_day)
             direct_recharge = np.stack(ll_direct_recharge, axis=0)
             # convert from mm/day to m3/day
@@ -545,7 +545,7 @@ def main(model_run):
                 ds_potential_evapotranspiration.close()
                 for i in range(_potential_evapotranspiration_year.shape[0]):
                     potential_evapotranspiration_day = aggregate_to_coarser_resolution(_potential_evapotranspiration_year[i, :, :], 25, 50, method="average")
-                    potential_evapotranspiration_day = np.where(mask, potential_evapotranspiration_day, 0)
+                    potential_evapotranspiration_day = np.where(mask, potential_evapotranspiration_day, np.nan)
                     ll_potential_evapotranspiration.append(potential_evapotranspiration_day)
             potential_evapotranspiration = np.stack(ll_potential_evapotranspiration, axis=0)
             # create xarray data array for potential evapotranspiration
@@ -616,7 +616,7 @@ def main(model_run):
                 ds_air_temperature.close()
                 for i in range(_air_temperature_year.shape[0]):
                     air_temperature_day = aggregate_to_coarser_resolution(_air_temperature_year[i, :, :], 25, 50, method="average")
-                    air_temperature_day = np.where(mask, air_temperature_day, 0)
+                    air_temperature_day = np.where(mask, air_temperature_day, np.nan)
                     ll_air_temperature.append(air_temperature_day)
             air_temperature = np.stack(ll_air_temperature, axis=0)
             # create xarray data array for air temperature
