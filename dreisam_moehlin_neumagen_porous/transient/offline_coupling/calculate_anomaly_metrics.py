@@ -319,6 +319,10 @@ def main(model_run):
             },
         )
 
+        # save the metrics to csv
+        output_file = base_path / "output" / f"metrics_run{model_run}.csv"
+        df_metrics.to_csv(output_file, index=False, sep=";")
+
         for stress_test_scenario in stress_test_scenarios:
             click.echo(f"Processing scenario {stress_test_scenario}...")
             # load the groundwater depths for the stress test scenario
@@ -611,7 +615,7 @@ def main(model_run):
                 # _stress_test_scenario = stress_test_scenario.replace("_well-extraction-stress", "")
                 # output_file = base_path_output / f"{stress_test_scenario}" / f"air_temperature_{_stress_test_scenario}_year{year}.nc"
                 ds_air_temperature = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
-                _air_temperature_year = ds_air_temperature["air_temperature"].values
+                _air_temperature_year = ds_air_temperature["ta"].values
                 _air_temperature_year = np.where(_air_temperature_year < -50, np.nan, _air_temperature_year)
                 ds_air_temperature.close()
                 for i in range(_air_temperature_year.shape[0]):
@@ -671,6 +675,27 @@ def main(model_run):
             df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "air_temperature", "metric": "95th_percentile", "value": value}
             df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "air_temperature", "metric": "95th_percentile", "value": anomaly_abs}
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "air_temperature", "metric": "95th_percentile", "value": anomaly_rel}
+
+            # if "_irrigation" in stress_test_scenario:
+            #     # load irrigation
+            #     click.echo("Loading irrigation...")
+            #     ll_irrigation = []
+            #     for year in years:
+            #         _stress_test_scenario = stress_test_scenario.replace("_well-extraction-stress", "")
+            #         base_path_roger = base_path.parent.parent.parent.parent / "roger"
+            #         output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"irrigation_{_stress_test_scenario}_year{year}.nc"
+            #         # _stress_test_scenario = stress_test_scenario.replace("_well-extraction-stress", "")
+            #         # output_file = base_path_output / f"{stress_test_scenario}" / f"air_temperature_{_stress_test_scenario}_year{year}.nc"
+            #         ds_irrigation = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
+            #         _irrigation_year = ds_irrigation["irrigation"].values
+            #         ds_irrigation.close()
+            #         for i in range(_irrigation_year.shape[0]):
+            #             irrigation_day = aggregate_to_coarser_resolution(_irrigation_year[i, :, :], 25, 50, method="average")
+            #             irrigation_day = np.where(mask, irrigation_day, np.nan)
+            #             ll_irrigation.append(irrigation_day)
+            #     irrigation = np.stack(ll_irrigation, axis=0)
+
+
 
             # load well extraction
             click.echo("Loading well extraction...")
