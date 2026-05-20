@@ -743,7 +743,7 @@ def main(model_run):
             del da_direct_recharge, direct_recharge
             del da_potential_evapotranspiration, potential_evapotranspiration
             del da_air_temperature, air_temperature
-            del da_irrigation, irrigation
+            # del da_irrigation, irrigation
             del da_well_extraction, well_extraction
             # remove list of arrays to free up memory
             del ll_gw_depths, ll_indirect_recharge, ll_direct_recharge, ll_well_extraction
