@@ -251,7 +251,7 @@ def main(model_run):
             # set legend off        
             ax.legend().set_visible(False)
             fig.tight_layout()
-            fig.savefig(figures_dir / f"well_extraction_annual_{area}.png", dpi=300)
+            fig.savefig(figures_dir / f"well_extraction_annual_{area}.pdf", dpi=300)
 
             # plot long-term average annual drinking water well extraction
             fig, ax = plt.subplots(figsize=(2, 2))
@@ -268,7 +268,7 @@ def main(model_run):
             # set legend off
             ax.legend().set_visible(False)
             fig.tight_layout()
-            fig.savefig(figures_dir / f"well_extraction_annual_long_term_average_{area}.png", dpi=300)
+            fig.savefig(figures_dir / f"well_extraction_annual_long_term_average_{area}.pdf", dpi=300)
             click.echo(f"Long-term average annual drinking water well extraction: {long_term_average:.2f} million m3/year")
 
             # plot monthly direct and indirect recharge using stacked bar plot use blue for direct recharge and purple for indirect recharge 
@@ -295,7 +295,7 @@ def main(model_run):
             # set legend off
             ax.legend().set_visible(False)
             fig.tight_layout()
-            fig.savefig(figures_dir / f"recharge_monthly_stacked_{area}.png", dpi=300)
+            fig.savefig(figures_dir / f"recharge_monthly_stacked_{area}.pdf", dpi=300)
             plt.close(fig)
 
             # plot annual direct and indirect recharge using stacked bar plot use blue for direct recharge and purple for indirect recharge
@@ -315,7 +315,7 @@ def main(model_run):
             # set legend off
             ax.legend().set_visible(False)
             fig.tight_layout()
-            fig.savefig(figures_dir / f"recharge_annual_stacked_{area}.png", dpi=300)
+            fig.savefig(figures_dir / f"recharge_annual_stacked_{area}.pdf", dpi=300)
             plt.close(fig)
 
             # plot long-term annual average direct and indirect recharge using stacked bar plot use blue for direct recharge and purple for indirect recharge
@@ -335,7 +335,7 @@ def main(model_run):
             # set legend off    
             ax.legend().set_visible(False)
             fig.tight_layout()
-            fig.savefig(figures_dir / f"recharge_long_term_stacked_{area}.png", dpi=300)
+            fig.savefig(figures_dir / f"recharge_long_term_stacked_{area}.pdf", dpi=300)
             plt.close(fig)
             click.echo(f"Long-term average recharge ({area}): {df_recharge_long_term_stacked['direct_recharge'].values[0] + df_recharge_long_term_stacked['indirect_recharge'].values[0]:.2f} million m3/year")
             click.echo(f"Long-term average direct recharge ({area}): {df_recharge_long_term_stacked['direct_recharge'].values[0]:.2f} million m3/year")
@@ -360,7 +360,7 @@ def main(model_run):
             ax.set_xlabel("Zeit [Jahr-Monat]")
             ax.set_ylabel("GW-Entnahmebilanz\n[Mio. m³/Monat]")
             fig.tight_layout()
-            fig.savefig(figures_dir / f"extraction_balance_monthly_{area}.png", dpi=300)
+            fig.savefig(figures_dir / f"extraction_balance_monthly_{area}.pdf", dpi=300)
             plt.close(fig)
 
             # plot the annual extraction balance using bar plot, make bars with negative values orange and bars with positive values blue
@@ -370,7 +370,7 @@ def main(model_run):
             ax.set_xlabel("Jahr")
             ax.set_ylabel("GW-Entnahmebilanz\n[Mio. m³/Jahr]")
             fig.tight_layout()
-            fig.savefig(figures_dir / f"extraction_balance_annual_{area}.png", dpi=300)
+            fig.savefig(figures_dir / f"extraction_balance_annual_{area}.pdf", dpi=300)
             plt.close(fig)
 
             # plot the long-term balance of the extraction balance using a bar plot, make bars with negative values orange and bars with positive values blue
@@ -380,7 +380,7 @@ def main(model_run):
             ax.bar([""], [long_term_balance/1e6], color=color)
             ax.set_ylabel("GW-Entnahmebilanz\n[Mio. m³]")
             fig.tight_layout()
-            fig.savefig(figures_dir / f"extraction_balance_long_term_{area}.png", dpi=300)
+            fig.savefig(figures_dir / f"extraction_balance_long_term_{area}.pdf", dpi=300)
             plt.close(fig)
 
             # remove data arrays to free up memory

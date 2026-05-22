@@ -939,21 +939,12 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     # load groundwater extraction data
     # load daily weights for drinking water supply wells to scale the pumping rates of the drinking water supply wells in the well package
     if stress_test_well_extraction == "no-stress":
-        daily_weights_drinking_water_supply = pd.read_csv(base_path.parent / "input" / "daily_weights_drinking_water_supply.csv", sep=";", index_col=0)
-        groundwater_extraction = pd.read_csv(base_path.parent / "input" / "groundwater_extraction.csv", sep=";")
-    elif stress_test_well_extraction == "stress" and stress_test_meteo in ["summer-drought", "long-term"]:
-        daily_weights_drinking_water_supply = pd.read_csv(base_path.parent / "input" / "stress_tests_well_extraction" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "daily_weights_drinking_water_supply.csv", sep=";", index_col=0, skiprows=1)
-        groundwater_extraction = pd.read_csv(base_path.parent / "input" / "stress_tests_well_extraction" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "groundwater_extraction.csv", sep=";")
+        groundwater_extraction_daily = pd.read_csv(base_path.parent / "input" / "well_extraction_daily.csv", sep=";", index_col=0)
+        groundwater_extraction_daily.index = pd.to_datetime(groundwater_extraction_daily.index)
 
-    groundwater_extraction["cell_y"] = groundwater_extraction["cell_y"].astype(int)
-    groundwater_extraction["cell_x"] = groundwater_extraction["cell_x"].astype(int)
-    groundwater_extraction["layer"] = groundwater_extraction["layer"].astype(int)
-    groundwater_extraction["purpose"] = groundwater_extraction["purpose"].astype(str)
-    groundwater_extraction["cell_y"] = groundwater_extraction["cell_y"].values - 1
-    groundwater_extraction["cell_x"] = groundwater_extraction["cell_x"].values - 1
-    groundwater_extraction["layer"] = groundwater_extraction["layer"].values - 1
-    n_wells = len(groundwater_extraction)
-    cond_drinking_water_supply = groundwater_extraction["purpose"].isin(['Badenova WW Ebnet', 'Badenova WW Hausen', 'Eigenwasserversorgung', 'oeffentliche Wasserversorgung']).values
+    elif stress_test_well_extraction == "stress" and stress_test_meteo in ["summer-drought", "long-term"]:
+        groundwater_extraction_daily = pd.read_csv(base_path.parent / "input" / "stress_tests_well_extraction" / f"{stress_test_meteo}" / f"duration{stress_test_meteo_duration}_magnitude{stress_test_meteo_magnitude}" / "well_extraction_daily.csv", sep=";", index_col=0)
+        groundwater_extraction_daily.index = pd.to_datetime(groundwater_extraction_daily.index)
 
     # get number of days in the simulation which also used as number of time steps in MODFLOW
     NDAYS = len(date_time)
@@ -980,11 +971,6 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     # initialize the model running in steady-state mode
     year = years[0]
     doy = doys[0]
-    if stress_test_well_extraction == "stress":
-        cond_doy_year = (date_time.dayofyear == doy) & (date_time.year == year)
-        daily_weights_drinking_water_supply_year_doy = daily_weights_drinking_water_supply.loc[cond_doy_year, "weights"].values[0]
-    else:
-        daily_weights_drinking_water_supply_year_doy = daily_weights_drinking_water_supply.loc[int(year), f"{int(doy)}"]
     discharge_dreisam_year_doy = df_discharge_dreisam.loc[(df_discharge_dreisam["year"] == year) & (df_discharge_dreisam["DOY"] == doy), "Q"].values[0]
     discharge_moehlin_year_doy = df_discharge_moehlin.loc[(df_discharge_moehlin["year"] == year) & (df_discharge_moehlin["DOY"] == doy), "Q"].values[0]
     discharge_neumagen_year_doy = df_discharge_neumagen.loc[(df_discharge_neumagen["year"] == year) & (df_discharge_neumagen["DOY"] == doy), "Q"].values[0]
@@ -1024,11 +1010,9 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
     modflow_interface.set_cpr_irr_depth(extinction_depth)
 
     # update well rate and pass it to MODFLOW
+    n_wells = len(groundwater_extraction_daily.columns)
     well_extraction_rate = np.zeros((n_wells,), dtype=np.float64)
-    well_extraction_rate[:] = groundwater_extraction[f"{year}"].values.astype(np.float64)
-    well_extraction_rate[cond_drinking_water_supply] = well_extraction_rate[cond_drinking_water_supply] * daily_weights_drinking_water_supply_year_doy
-    well_extraction_rate[~cond_drinking_water_supply] = well_extraction_rate[~cond_drinking_water_supply] / 365.25
-    well_extraction_rate[:] = -well_extraction_rate[:]  # extraction is negative
+    well_extraction_rate[:] = groundwater_extraction_daily.mean(axis=0).values  * (-1)
     modflow_interface.set_well_rate(well_extraction_rate)
 
     # update SFR inflow and pass it to MODFLOW
@@ -1066,11 +1050,6 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         year = years[i]
         doy = doys[i]
         month = months[i]
-        if stress_test_well_extraction == "stress":
-            cond_doy_year = (date_time.dayofyear == doy) & (date_time.year == year)
-            daily_weights_drinking_water_supply_year_doy = daily_weights_drinking_water_supply.loc[cond_doy_year, "weights"].values[0]
-        else:
-            daily_weights_drinking_water_supply_year_doy = daily_weights_drinking_water_supply.loc[int(year), f"{int(doy)}"]
         discharge_dreisam_year_doy = df_discharge_dreisam.loc[(df_discharge_dreisam["year"] == year) & (df_discharge_dreisam["DOY"] == doy), "Q"].values[0]
         discharge_moehlin_year_doy = df_discharge_moehlin.loc[(df_discharge_moehlin["year"] == year) & (df_discharge_moehlin["DOY"] == doy), "Q"].values[0]
         discharge_neumagen_year_doy = df_discharge_neumagen.loc[(df_discharge_neumagen["year"] == year) & (df_discharge_neumagen["DOY"] == doy), "Q"].values[0]
@@ -1167,14 +1146,7 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
 
         # update well rate and pass it to MODFLOW
         well_extraction_rate = np.zeros((n_wells,), dtype=np.float64)
-        if month in [7, 8] and year in [2016, 2017, 2018] and stress_test_well_extraction == "stress" and stress_test_meteo == "summer-drought" and stress_test_meteo_magnitude == 2 and stress_test_meteo_duration in [2, 3]:
-            # set well extraction to zero for testing
-            well_extraction_rate[:] = groundwater_extraction["2018"].values.astype(np.float64)
-        else:
-            well_extraction_rate[:] = groundwater_extraction[f"{year}"].values.astype(np.float64)
-        well_extraction_rate[cond_drinking_water_supply] = well_extraction_rate[cond_drinking_water_supply] * daily_weights_drinking_water_supply_year_doy
-        well_extraction_rate[~cond_drinking_water_supply] = well_extraction_rate[~cond_drinking_water_supply] / 365.25
-        well_extraction_rate[:] = -well_extraction_rate[:] # extraction is negative
+        well_extraction_rate[:] = groundwater_extraction_daily.iloc[i, :].values * (-1)
         modflow_interface.set_well_rate(well_extraction_rate)
 
         # update SFR inflow and pass it to MODFLOW

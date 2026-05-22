@@ -217,7 +217,7 @@ def main(model_run):
             ax.grid(True, alpha=0.3)
             fig.colorbar(im, ax=ax, label="GWFA Anomalie [m]")
             fig.tight_layout()
-            fig.savefig(figures_dir / f"gw_depth_anomalies_abs_annual_2018_{area}.png", dpi=300)
+            fig.savefig(figures_dir / f"gw_depth_anomalies_abs_annual_2018_{area}.pdf", dpi=300)
             plt.close(fig)
 
             fig, ax = plt.subplots(figsize=(5, 4))
@@ -234,7 +234,7 @@ def main(model_run):
             ax.grid(True, alpha=0.3)
             fig.colorbar(im, ax=ax, label="GWFA Anomalie [%]")
             fig.tight_layout()
-            fig.savefig(figures_dir / f"gw_depth_anomalies_percent_annual_2018_{area}.png", dpi=300)
+            fig.savefig(figures_dir / f"gw_depth_anomalies_percent_annual_2018_{area}.pdf", dpi=300)
             plt.close(fig)
 
         for area in areas:
@@ -251,7 +251,7 @@ def main(model_run):
             # turn legend off
             ax.legend().set_visible(False)
             fig.tight_layout()
-            fig.savefig(figures_dir / f"gw_depth_anomalies_abs_time_series_{area}_1.png", dpi=300)
+            fig.savefig(figures_dir / f"gw_depth_anomalies_abs_time_series_{area}_1.pdf", dpi=300)
             plt.close(fig)
 
             # plot time series of average groundwater depth anomalies for the three stress test scenarios
@@ -267,7 +267,7 @@ def main(model_run):
             # turn legend off
             ax.legend().set_visible(False)
             fig.tight_layout()
-            fig.savefig(figures_dir / f"gw_depth_anomalies_abs_time_series_{area}_2.png", dpi=300)
+            fig.savefig(figures_dir / f"gw_depth_anomalies_abs_time_series_{area}_2.pdf", dpi=300)
             plt.close(fig)
 
             # # plot time series of average groundwater depth anomalies for the three stress test scenarios
@@ -284,7 +284,7 @@ def main(model_run):
             # # turn legend off
             # ax.legend().set_visible(False)
             # fig.tight_layout()
-            # fig.savefig(figures_dir / f"gw_depth_anomalies_abs_time_series_{area}_3.png", dpi=300)
+            # fig.savefig(figures_dir / f"gw_depth_anomalies_abs_time_series_{area}_3.pdf", dpi=300)
             # plt.close(fig)
 
             # plot time series of average groundwater depth anomalies for the three stress test scenarios
@@ -298,7 +298,7 @@ def main(model_run):
             # turn legend off
             ax.legend().set_visible(False)
             fig.tight_layout()
-            fig.savefig(figures_dir / f"gw_depth_anomalies_percent_time_series_{area}_1.png", dpi=300)
+            fig.savefig(figures_dir / f"gw_depth_anomalies_percent_time_series_{area}_1.pdf", dpi=300)
             plt.close(fig)
 
             # plot time series of average groundwater depth anomalies for the three stress test scenarios
@@ -313,7 +313,7 @@ def main(model_run):
             # turn legend off        
             ax.legend().set_visible(False)
             fig.tight_layout()
-            fig.savefig(figures_dir / f"gw_depth_anomalies_percent_time_series_{area}_2.png", dpi=300)
+            fig.savefig(figures_dir / f"gw_depth_anomalies_percent_time_series_{area}_2.pdf", dpi=300)
             plt.close(fig)
 
             # # plot time series of average groundwater depth anomalies for the three stress test scenarios
@@ -329,7 +329,7 @@ def main(model_run):
             # # turn legend off
             # ax.legend().set_visible(False)
             # fig.tight_layout()
-            # fig.savefig(figures_dir / f"gw_depth_anomalies_percent_time_series_{area}_3.png", dpi=300)
+            # fig.savefig(figures_dir / f"gw_depth_anomalies_percent_time_series_{area}_3.pdf", dpi=300)
             # plt.close(fig)
 
     return

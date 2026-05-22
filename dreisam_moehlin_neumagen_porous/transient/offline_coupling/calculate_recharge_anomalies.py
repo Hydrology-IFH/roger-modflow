@@ -311,7 +311,7 @@ def main(model_run):
             ax.set_xlim(df_recharge_anomalies_monthly_abs.index[0] - pd.Timedelta(days=15), df_recharge_anomalies_monthly_abs.index[-1] + pd.Timedelta(days=15))
             # ax.set_ylim(-10, 10)
             fig.tight_layout()
-            fig.savefig(figures_dir / f"recharge_anomalies_abs_monthly_{area}.png", dpi=300)
+            fig.savefig(figures_dir / f"recharge_anomalies_abs_monthly_{area}.pdf", dpi=300)
             plt.close(fig)
 
             # plot monthly relative anomalies of the recharge using a bar plot, make bars with negative values orange and bars with positive values blue
@@ -328,7 +328,7 @@ def main(model_run):
             ax.set_ylim(-100, 100)
             ax.set_xlim(df_recharge_anomalies_monthly_percent.index[0] - pd.Timedelta(days=15), df_recharge_anomalies_monthly_percent.index[-1] + pd.Timedelta(days=15))
             fig.tight_layout()
-            fig.savefig(figures_dir / f"recharge_anomalies_percent_monthly_{area}.png", dpi=300)
+            fig.savefig(figures_dir / f"recharge_anomalies_percent_monthly_{area}.pdf", dpi=300)
             plt.close(fig)
 
             fig, ax = plt.subplots(figsize=(6, 2.5))
@@ -345,7 +345,7 @@ def main(model_run):
             ax.set_ylim(-100, 100)
             ax.set_xlim(df_recharge_anomalies_monthly_percent.index[0] - pd.Timedelta(days=15), df_recharge_anomalies_monthly_percent.index[-1] + pd.Timedelta(days=15))
             fig.tight_layout()
-            fig.savefig(figures_dir / f"recharge_anomalies_percent_monthly_2016-2018_{area}.png", dpi=300)
+            fig.savefig(figures_dir / f"recharge_anomalies_percent_monthly_2016-2018_{area}.pdf", dpi=300)
             plt.close(fig)
 
             # plot monthly absolute anomalies of the indirect recharge using a bar plot, make bars with negative values orange and bars with positive values blue
@@ -364,7 +364,7 @@ def main(model_run):
             # set legend off
             ax.legend().set_visible(False)
             fig.tight_layout()
-            fig.savefig(figures_dir / f"indirect_recharge_anomalies_monthly_{area}.png", dpi=300)
+            fig.savefig(figures_dir / f"indirect_recharge_anomalies_monthly_{area}.pdf", dpi=300)
             plt.close(fig)
 
             # plot mmonthly relative anomalies of the indirect recharge using a bar plot, make bars with negative values orange and bars with positive values blue
@@ -381,7 +381,7 @@ def main(model_run):
             ax.set_xlabel("Zeit [Jahr-Monat]")
             ax.set_ylabel("GWN-Anomalie\n[%]")
             fig.tight_layout()
-            fig.savefig(figures_dir / f"indirect_recharge_anomalies_percent_monthly_{area}.png", dpi=300)
+            fig.savefig(figures_dir / f"indirect_recharge_anomalies_percent_monthly_{area}.pdf", dpi=300)
             plt.close(fig)
 
             # plot mmonthly relative anomalies of the direct recharge using a bar plot, make bars with negative values orange and bars with positive values blue
@@ -398,7 +398,7 @@ def main(model_run):
             ax.set_xlabel("Zeit [Jahr-Monat]")
             ax.set_ylabel("GWN-Anomalie\n[%]")
             fig.tight_layout()
-            fig.savefig(figures_dir / f"direct_recharge_anomalies_percent_monthly_{area}.png", dpi=300)
+            fig.savefig(figures_dir / f"direct_recharge_anomalies_percent_monthly_{area}.pdf", dpi=300)
             plt.close(fig)
 
     return
