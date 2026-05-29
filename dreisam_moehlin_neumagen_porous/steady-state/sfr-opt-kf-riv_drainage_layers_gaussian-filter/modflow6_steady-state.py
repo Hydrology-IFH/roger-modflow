@@ -566,8 +566,8 @@ class ModFlowSimulation:
         # pumping rate in m3/day
         wells_q = groundwater_extraction["annual_average"].values.tolist()
         # location of the wells
-        groundwater_extraction["cell_y"] = groundwater_extraction["cell_y"].values - 1
-        groundwater_extraction["cell_x"] = groundwater_extraction["cell_x"].values - 1
+        groundwater_extraction["cell_y"] = groundwater_extraction["cell_y"].values
+        groundwater_extraction["cell_x"] = groundwater_extraction["cell_x"].values
         groundwater_extraction["layer"] = groundwater_extraction["layer"].values - 1
 
         wells_y = groundwater_extraction["cell_y"].values.tolist()

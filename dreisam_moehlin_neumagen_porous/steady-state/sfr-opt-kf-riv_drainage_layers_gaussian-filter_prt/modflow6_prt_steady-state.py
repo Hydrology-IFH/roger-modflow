@@ -63,48 +63,6 @@ def get_release_points(well_locs, grid, well_id=0):
         release_points.append([i, (well_locs[well_id][0], y, x), localx, localy, localz])
     return release_points
 
-def get_well_particle_data(well_locs, well_id=0):
-    particles_pos = []
-    localzz = np.linspace(0.1, 1.0, 20).tolist()
-    for localz in localzz:
-        # angles uniformly spaced
-        thetas = np.linspace(0.0, 2.0 * np.pi, 360, endpoint=False)
-        for theta in thetas:
-            # local coordinates in [0,1] within the well cell
-            # center is (0.5, 0.5); radius in local units
-            for r in [0.05, 0.1, 0.25, 0.5]:
-                localx = r * np.cos(theta)
-                localy = r * np.sin(theta)
-                if localx > 0.5:
-                    localx = 0.5
-                elif localx < -0.5:
-                    localx = -0.5
-                if localy > 0.5:
-                    localy = 0.5
-                elif localy < -0.5:
-                    localy = -0.5
-                particles_pos.append((float(localy), float(localx), float(localz)))
-    
-    partlocs = []
-    localx = []
-    localy = []
-    localz = []
-    for i, xyz in enumerate(particles_pos):
-        _localx, _localy, _localz = xyz
-        partlocs.append(well_locs[well_id])
-        localx.append(0.5 + _localx)
-        localy.append(0.5 + _localy)
-        localz.append(_localz)
-    return flopy.modpath.ParticleData(
-        partlocs=partlocs,
-        structured=True,
-        localx=localx,
-        localy=localy,
-        localz=localz,
-        timeoffset=0,
-        drape=0,
-    )
-
 def reverse_budgetfile(fpth, rev_fpth, tdis):
     f = bf.CellBudgetFile(fpth, tdis=tdis)
     f.reverse(rev_fpth)

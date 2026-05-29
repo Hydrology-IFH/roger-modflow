@@ -141,7 +141,7 @@ def plot_pathlines_contours_zoom(ax, grid, hd, pl, well):
     scale_bar(ax, location="lower right", style="boxes", bar={"projection": catchment_boundary_porous.crs, "height": 0.05}, text = {"fontfamily": "monospace", "fontsize": 10})
 
 
-def plot_all_pathlines(grid, heads, mp7pl, well_name):
+def plot_all_pathlines(grid, heads, mp7pl, well_name, figures_dir=base_path / "figures"):
     with styles.USGSPlot():
 
         well = gw_extraction_wells[gw_extraction_wells["ID"] == well_name]
@@ -155,7 +155,7 @@ def plot_all_pathlines(grid, heads, mp7pl, well_name):
             well
         )
         fig.tight_layout()
-        fig.savefig(base_path / "figures" / f"particle_tracking_grid_mp7_well{well_name}.png", dpi=300)
+        fig.savefig(figures_dir / f"particle_tracking_grid_mp7_well{well_name}.png", dpi=300)
 
         fig1, ax1 = plt.subplots(ncols=1, nrows=1, figsize=(6, 6))
         plot_pathlines_grid_zoom(ax1,
@@ -164,7 +164,7 @@ def plot_all_pathlines(grid, heads, mp7pl, well_name):
             mp7pl,
             well)
         fig1.tight_layout()
-        fig1.savefig(base_path / "figures" / f"particle_tracking_grid_mp7_well{well_name}_zoom.png", dpi=300)
+        fig1.savefig(figures_dir / f"particle_tracking_grid_mp7_well{well_name}_zoom.png", dpi=300)
         
         fig2, ax2 = plt.subplots(ncols=1, nrows=1, figsize=(6, 6))
         plot_pathlines_contours(ax2,
@@ -173,7 +173,7 @@ def plot_all_pathlines(grid, heads, mp7pl, well_name):
             mp7pl,
             well)
         fig2.tight_layout()
-        fig2.savefig(base_path / "figures" / f"particle_tracking_contours_mp7_well{well_name}.png", dpi=300)
+        fig2.savefig(figures_dir / f"particle_tracking_contours_mp7_well{well_name}.png", dpi=300)
         
         fig3, ax3 = plt.subplots(ncols=1, nrows=1, figsize=(6, 6))
         plot_pathlines_contours_zoom(ax3,
@@ -182,7 +182,7 @@ def plot_all_pathlines(grid, heads, mp7pl, well_name):
             mp7pl,
             well)
         fig3.tight_layout()
-        fig3.savefig(base_path / "figures" / f"particle_tracking_contours_mp7_well{well_name}_zoom.png", dpi=300)
+        fig3.savefig(figures_dir / f"particle_tracking_contours_mp7_well{well_name}_zoom.png", dpi=300)
 
 
 def plot_all(gwf, well_ids=[6], well_names=["A4"]):
@@ -197,16 +197,20 @@ def plot_all(gwf, well_ids=[6], well_names=["A4"]):
 
     plot_grid(gwf)
 
-    for well_id, well_name in zip(well_ids, well_names):
-        # load mp7 pathline results
-        plf = flopy.utils.PathlineFile(base_path_external / "output" / f"well{well_id}_mp7.mppth")
-        mp7_pl = pd.DataFrame(
-            plf.get_destination_pathline_data(range(grid.nnodes), to_recarray=True)
-        )
-        cond_time = (mp7_pl["time"] < (365.25 * 5))
-        mp7_pl = mp7_pl[cond_time]
+    release_scenarios = ["near_surface", "pump_installation_depth", "deep"]
+    for release_scenario in release_scenarios:
+        for well_id, well_name in zip(well_ids, well_names):
+            # load mp7 pathline results
+            plf = flopy.utils.PathlineFile(base_path_external / "output" / release_scenario / f"well{well_id}" / f"well{well_id}_mp7.mppth")
+            mp7_pl = pd.DataFrame(
+                plf.get_destination_pathline_data(range(grid.nnodes), to_recarray=True)
+            )
+            cond_time = (mp7_pl["time"] < (365.25 * 5))
+            mp7_pl = mp7_pl[cond_time]
 
-        plot_all_pathlines(grid, hds, mp7_pl, well_name)
+            figures_dir = base_path / "figures" / f"{release_scenario}"
+            figures_dir.mkdir(parents=True, exist_ok=True)
+            plot_all_pathlines(grid, hds, mp7_pl, well_name, figures_dir=figures_dir)
 
 # load the MODFLOW 6 model using pickle
 with open(base_path_external / "output" / "dmn_run_1806.pkl", "rb") as f:
@@ -214,7 +218,8 @@ with open(base_path_external / "output" / "dmn_run_1806.pkl", "rb") as f:
 gwf = gwfsim.get_model("dmn_run_1806")
 
 well_ids = list(range(len(gw_extraction_wells["ID"].values)))
-well_names = gw_extraction_wells["ID"].values.astype(str).replace("/", "_").replace(".", "-").tolist()
+well_ids = well_ids[:11]
+well_names = [str(well_id).replace("/", "_").replace(".", "-") for well_id in well_ids]
 # well_ids = [5]
 # well_names = ["A2"]
 plot_all(gwf, well_ids=well_ids, well_names=well_names)

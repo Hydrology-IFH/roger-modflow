@@ -685,8 +685,8 @@ class ModFlowSimulation:
         wells = np.zeros((n_wells, 4), dtype=np.int32)
         # 0: layer, 1: y-idx, 2: x-idx, 3: rate
         wells[:, 0] = groundwater_extraction["layer"].values.astype(np.int32) - 1
-        wells[:, 1] = groundwater_extraction["cell_y"].values.astype(np.int32) - 1
-        wells[:, 2] = groundwater_extraction["cell_x"].values.astype(np.int32) - 1
+        wells[:, 1] = groundwater_extraction["cell_y"].values.astype(np.int32)
+        wells[:, 2] = groundwater_extraction["cell_x"].values.astype(np.int32)
         wells = wells.tolist()
 
         wells = flopy.mf6.ModflowGwfwel(gwf, print_input=False, print_flows=False, save_flows=True,
@@ -860,7 +860,7 @@ class ModFlowSimulation:
     def finalize(self):
         self.mf6.finalize()
 
-@click.option("-stm", "--stress-test-meteo", type=click.Choice(["base", "base_2000-2024", "spring-drought", "summer-drought", "long-term", "spring-summer-wet"]), default="summer-drought", help="Type of meteorological stress test")
+@click.option("-stm", "--stress-test-meteo", type=click.Choice(["base", "base_2000-2024", "spring-drought", "summer-drought", "long-term", "spring-summer-wet"]), default="base", help="Type of meteorological stress test")
 @click.option("-stmm", "--stress-test-meteo-magnitude", type=click.Choice([0, 1, 2]), default=0, help="Magnitude of meteorological stress test")
 @click.option("-stmd", "--stress-test-meteo-duration", type=click.Choice([0, 2, 3]), default=0, help="Duration of meteorological stress test in consecutive years")
 @click.option("-irr", "--irrigation", type=click.Choice(["no-irrigation", "irrigation"]), default="no-irrigation", help="Enable irrigation")

@@ -1,4 +1,4 @@
-# Steady-state groundwater model of porous Aquifer of the Dreisam-Moehlin-Neumagen catchment
+# Steady-state groundwater model of porous Aquifer in the Dreisam-Moehlin-Neumagen catchment
 
 ## Files
 - `cleanup.py`: Cleanup after every model run and remove that is not needed anymore

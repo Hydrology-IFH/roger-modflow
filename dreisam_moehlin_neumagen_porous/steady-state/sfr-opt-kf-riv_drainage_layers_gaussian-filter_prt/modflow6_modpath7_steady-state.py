@@ -20,67 +20,28 @@ base_path = Path(__file__).parent
 
 # load the groundwater extraction data
 _groundwater_extraction = pd.read_csv(base_path.parent / "input" / "groundwater_extraction.csv", sep=";")
-_groundwater_extraction["cell_y"] = _groundwater_extraction["cell_y"].values - 1
-_groundwater_extraction["cell_x"] = _groundwater_extraction["cell_x"].values - 1
+_groundwater_extraction["cell_y"] = _groundwater_extraction["cell_y"].values
+_groundwater_extraction["cell_x"] = _groundwater_extraction["cell_x"].values
 _groundwater_extraction["layer"] = _groundwater_extraction["layer"].values - 1
 
 _wells_y = _groundwater_extraction["cell_y"].values.tolist()
 _wells_x = _groundwater_extraction["cell_x"].values.tolist()
 _wells_layer = _groundwater_extraction["layer"].values.tolist()
-WEL_LOCS = []
+_WEL_LOCS = []
 for i in range(len(_wells_x)):
-    WEL_LOCS.append((_wells_layer[i], _wells_y[i], _wells_x[i]))
+    _WEL_LOCS.append((_wells_layer[i], _wells_y[i], _wells_x[i]))
 
-def get_release_points(well_locs, grid, well_id=0):
+WEL_LOCS = _WEL_LOCS[:11]
+
+def get_well_particle_data(well_locs, localzz, well_id=0):
     particles_pos = []
-    localzz = [0.1, 0.25, 0.5, 0.75, 0.9]
     for localz in localzz:
-        particles_pos.append((0.5, 0.5, float(localz)))
         # angles uniformly spaced
-        thetas = np.linspace(0.0, 2.0 * np.pi, 8, endpoint=False)
-        for theta in thetas:
-            for r in [0.05, 0.25, 0.5]:
-                localx = r * np.cos(theta)
-                localy = r * np.sin(theta)
-                if localx > 0.5:
-                    localx = 0.5
-                elif localx < -0.5:
-                    localx = -0.5
-                if localy > 0.5:
-                    localy = 0.5
-                elif localy < -0.5:
-                    localy = -0.5
-                particles_pos.append((float(localy), float(localx), float(localz)))
-
-    xcenters = grid.xcellcenters
-    ycenters = grid.ycellcenters
-    release_points = []
-    rotations = [(0, 0), (0, 1), (1, 0), (1, 1), (0, -1), (-1, 0), (-1, -1), (-1, 1), (1, -1), 
-                 (0, 2), (2, 0), (2, 2), (0, -2), (-2, 0), (-2, -2), (-2, 2), (2, -2), 
-                 (2, 1), (1, 2), (1, -2), (-1, 2), (-1, -2), (-2, 1), (-2, -1)]
-    for rotation in rotations:
-        x = well_locs[well_id][2] + rotation[1]
-        y = well_locs[well_id][1] + rotation[0]
-        xp = xcenters[y, x]
-        yp = ycenters[y, x]
-        for i, xyz in enumerate(particles_pos):
-            xdrift, ydrift, localz = xyz
-            localx = xp + xdrift * 50
-            localy = yp + ydrift * 50
-            release_points.append([i, (well_locs[well_id][0], y, x), localx, localy, localz])
-    return release_points
-
-def get_well_particle_data(well_locs, well_id=0):
-    particles_pos = []
-    localzz = [0.1, 0.25, 0.5, 0.75, 0.9]
-    for localz in localzz:
-        particles_pos.append((0.5, 0.5, float(localz)))
-        # angles uniformly spaced
-        thetas = np.linspace(0.0, 2.0 * np.pi, 8, endpoint=False)
+        thetas = np.linspace(0.0, 2.0 * np.pi, 72, endpoint=False)
         for theta in thetas:
             # local coordinates in [0,1] within the well cell
             # center is (0.5, 0.5); radius in local units
-            for r in [0.05, 0.25, 0.5]:
+            for r in [0.02, 0.1, 0.2, 0.5]:
                 localx = r * np.cos(theta)
                 localy = r * np.sin(theta)
                 if localx > 0.5:
@@ -97,16 +58,12 @@ def get_well_particle_data(well_locs, well_id=0):
     localx = []
     localy = []
     localz = []
-    rotations = [(0, 0), (0, 1), (1, 0), (1, 1), (0, -1), (-1, 0), (-1, -1), (-1, 1), (1, -1), 
-                 (0, 2), (2, 0), (2, 2), (0, -2), (-2, 0), (-2, -2), (-2, 2), (2, -2), 
-                 (2, 1), (1, 2), (1, -2), (-1, 2), (-1, -2), (-2, 1), (-2, -1)]
-    for rotation in rotations:
-        for i, xyz in enumerate(particles_pos):
-            _localx, _localy, _localz = xyz
-            partlocs.append((well_locs[well_id][0], well_locs[well_id][1] + rotation[0], well_locs[well_id][2] + rotation[1]))
-            localx.append(0.5 + _localx)
-            localy.append(0.5 + _localy)
-            localz.append(_localz)
+    for i, xyz in enumerate(particles_pos):
+        _localx, _localy, _localz = xyz
+        partlocs.append((well_locs[well_id][0], well_locs[well_id][1], well_locs[well_id][2]))
+        localx.append(0.5 + _localx)
+        localy.append(0.5 + _localy)
+        localz.append(_localz)
     return flopy.modpath.ParticleData(
         partlocs=partlocs,
         structured=True,
@@ -678,8 +635,8 @@ class ModFlowSimulation:
         # pumping rate in m3/day
         wells_q = groundwater_extraction["annual_average"].values.tolist()
         # location of the wells
-        groundwater_extraction["cell_y"] = groundwater_extraction["cell_y"].values - 1
-        groundwater_extraction["cell_x"] = groundwater_extraction["cell_x"].values - 1
+        groundwater_extraction["cell_y"] = groundwater_extraction["cell_y"].values
+        groundwater_extraction["cell_x"] = groundwater_extraction["cell_x"].values
         groundwater_extraction["layer"] = groundwater_extraction["layer"].values - 1
 
         wells_y = groundwater_extraction["cell_y"].values.tolist()
@@ -827,6 +784,7 @@ class ModpathSimulation:
         gwf_name,
         folder,
         gwf_sim=None,
+        release_scenario="near_surface",
         well_id=0,
     ):
         self.folder = folder
@@ -836,10 +794,23 @@ class ModpathSimulation:
         gwf = gwf_sim.get_model(gwf_name)
         self.mp7 = None
 
+        if release_scenario == "near_surface":
+            localzz = np.linspace(0, 0.1, 10).tolist()
+        elif release_scenario == "pump_installation_depth":
+            file = base_path.parent / "input" / "badenova_wells_depths.csv"
+            df = pd.read_csv(file, sep=";")
+            pump_installation_depth = df.loc[well_id, "pump_installation_depth"]
+            min_depth = df.loc[well_id, "depth_layer1"]
+            max_depth = df.loc[well_id, "deep"]
+            localz_max = (pump_installation_depth - min_depth) / (max_depth - min_depth)
+            localzz = np.linspace(0, localz_max, 10).tolist()
+        elif release_scenario == "deep":
+            localzz = np.linspace(0, 1.0, 10).tolist()
+
         # Create particle groups
         pg = flopy.modpath.ParticleGroup(
             particlegroupname=f"PG2{well_id}",
-            particledata=get_well_particle_data(WEL_LOCS, well_id=well_id),
+            particledata=get_well_particle_data(WEL_LOCS, localzz, well_id=well_id),
             filename=f"{well_id}.sloc",
         )
 
@@ -899,28 +870,36 @@ def main(model_run):
 
         # initialize the MODFLOW particle model
         well_ids = list(range(len(WEL_LOCS)))
-        for well_id in well_ids:
-            # initialize the MODPATH model
-            modpath_interface = ModpathSimulation(
-                f"dmn_run_{model_run}",
-                base_path,
-                gwf_sim=modflow_interface.sim,
-                well_id=well_id,
-            )
-            # run MODPATH
-            success, buff = modpath_interface.mp7.run_model(silent=False, report=True)
+        release_scenarios = ["near_surface", "pump_installation_depth", "deep"]
+        for release_scenario in release_scenarios:
+            for well_id in well_ids:
+                # initialize the MODPATH model
+                modpath_interface = ModpathSimulation(
+                    f"dmn_run_{model_run}",
+                    base_path,
+                    gwf_sim=modflow_interface.sim,
+                    release_scenario=release_scenario,
+                    well_id=well_id,
+                )
+                # run MODPATH
+                success, buff = modpath_interface.mp7.run_model(silent=False, report=True)
 
-            print(f"MODPATH (steady-state) finalized for well {well_id}")
+                print(f"MODPATH (steady-state) finalized for well {well_id}")
 
-            # move the output files to external storage
-            output_folder = base_path / "output"
-            output_folder_external = Path("/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen_porous/steady-state/sfr-opt-kf-riv_drainage_layers_gaussian-filter_prt") / "output"
-            for ext in ["*.mppth", "*.timeseries", "*.mplst", "*.mpsim", "*.mpnam", "*.mpend", "*.sloc", "*.mpbas", "*.log"]:
-                files = glob.glob(str(output_folder / ext))
-                for file in files:
-                    shutil.move(file, output_folder_external / file.split('/')[-1])
-                    if os.path.exists(file):
-                        os.remove(file)
+                # move the output files to external storage
+                output_folder = base_path / "output"
+                output_folder_external = Path("/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen_porous/steady-state/sfr-opt-kf-riv_drainage_layers_gaussian-filter_prt") / "output" / release_scenario / f"well_{well_id}"
+                if not os.path.exists(output_folder_external):
+                    os.makedirs(output_folder_external)
+                for ext in ["*.mppth", "*.timeseries", "*.mplst", "*.mpsim", "*.mpnam", "*.mpend", "*.sloc", "*.mpbas", "*.log"]:
+                    files = glob.glob(str(output_folder / ext))
+                    for file in files:
+                        shutil.move(file, output_folder_external / file.split('/')[-1])
+                        if os.path.exists(file):
+                            os.remove(file)
+
+        file = base_path / "output" / f"dmn_run_{model_run}.pkl"
+        shutil.move(file, Path("/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen_porous/steady-state/sfr-opt-kf-riv_drainage_layers_gaussian-filter_prt") / "output" / f"dmn_run_{model_run}.pkl")
 
     else:
         print("MODFLOW did not converge.")

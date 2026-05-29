@@ -33,8 +33,8 @@ NDAYS = len(date_time)
 doys = date_time.dayofyear.values
 years = date_time.year.values
 
-durations = [0, 3]
-magnitudes = [2, 2]
+durations = [0, 3, 3]
+magnitudes = [2, 2, 0]
 
 for duration, magnitude in zip(durations, magnitudes):
     if magnitude == 0 and duration == 3:
@@ -48,9 +48,36 @@ for duration, magnitude in zip(durations, magnitudes):
         # insert 2018 in 2016
         df_well_extraction_daily_stress_test.loc["2016-07-01":"2016-08-31"] = df_well_extraction_daily.loc["2018-07-01":"2018-08-31"].values
 
+        df_extraction_shares = pd.DataFrame(index=df_well_extraction_daily_stress_test.index, columns=['wsg_hausen_share', 'wsg_zartener_becken_share'])
+        df_extraction_shares.loc[:, 'wsg_hausen_share'] = df_well_extraction_daily_stress_test.loc[:, wells_wsg_hausen].sum(axis=1).values / (df_well_extraction_daily_stress_test.loc[:, wells_wsg_hausen].sum(axis=1).values + df_well_extraction_daily_stress_test.loc[:, wells_wsg_zartener_becken].sum(axis=1).values)
+        df_extraction_shares.loc[:, 'wsg_zartener_becken_share'] = df_well_extraction_daily_stress_test.loc[:, wells_wsg_zartener_becken].sum(axis=1).values / (df_well_extraction_daily_stress_test.loc[:, wells_wsg_hausen].sum(axis=1).values + df_well_extraction_daily_stress_test.loc[:, wells_wsg_zartener_becken].sum(axis=1).values)
+
+        # increase water supply wells extraction by q_magnitude
+        df_well_extraction_daily_stress_test.loc[:, wells_water_supply] = df_well_extraction_daily_stress_test.loc[:, wells_water_supply] * (1 + q_magnitude)
+
+        # if extraction exceeds 1000 m3/hour, redistribute extraction to Hausen wells
+        redistribution_to_hausen = df_well_extraction_daily_stress_test.loc[:, wells_wsg_zartener_becken].sum(axis=1).values - (1000 * 24)
+        cond = (redistribution_to_hausen < 0)
+        redistribution_to_hausen[cond] = 0
+        cond = (df_extraction_shares.loc[:, 'wsg_zartener_becken_share'] > 0.4) & (df_extraction_shares.loc[:, 'wsg_zartener_becken_share'] < 0.2)
+        redistribution_to_hausen[cond] = 0
+
+        cond = (redistribution_to_hausen > 0)
+        redistribution_factor_hausen = 1 + (redistribution_to_hausen[cond] / df_well_extraction_daily_stress_test.loc[cond, wells_wsg_hausen].sum(axis=1))
+        redistribution_factor_zartener_becken = 1 - (redistribution_to_hausen[cond] / df_well_extraction_daily_stress_test.loc[cond, wells_wsg_zartener_becken].sum(axis=1))
+
+        df_well_extraction_daily_stress_test.loc[cond, wells_wsg_hausen] = df_well_extraction_daily_stress_test.loc[cond, wells_wsg_hausen].multiply(redistribution_factor_hausen, axis=0)
+        df_well_extraction_daily_stress_test.loc[cond, wells_wsg_zartener_becken] = df_well_extraction_daily_stress_test.loc[cond, wells_wsg_zartener_becken].multiply(redistribution_factor_zartener_becken, axis=0)
+
         # save daily drinking water well extraction to csv
         path = path_to_dir / "well_extraction_daily.csv"
         df_well_extraction_daily_stress_test.to_csv(path, sep=";")
+
+        # save redistribution factors to csv
+        df_redistribution_factors = pd.DataFrame(index=df_well_extraction_daily_stress_test.index, columns=['redistribution_factor_hausen', 'redistribution_factor_zartener_becken'])
+        df_redistribution_factors.loc[cond, 'redistribution_factor_hausen'] = redistribution_factor_hausen
+        df_redistribution_factors.loc[cond, 'redistribution_factor_zartener_becken'] = redistribution_factor_zartener_becken
+        df_redistribution_factors.to_csv(path_to_dir / "redistribution_factors.csv", sep=";")
         
     elif magnitude == 2 and duration == 3:
         path_to_dir = base_path / "input" / "stress_tests_well_extraction" / "summer-drought" / f"duration{duration}_magnitude{magnitude}"
