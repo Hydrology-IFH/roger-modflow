@@ -32,8 +32,10 @@ for i in range(len(_wells_x)):
     _WEL_LOCS.append((_wells_layer[i], _wells_y[i], _wells_x[i]))
 
 WEL_LOCS = _WEL_LOCS[:11]
+_WEL_NAMES = _groundwater_extraction["ID"].values.astype(str).tolist()[:11]
+WEL_NAMES = [well_name.replace("/", "_").replace(".", "-") for well_name in _WEL_NAMES]
 
-def get_well_particle_data(well_locs, localzz, well_id=0):
+def get_well_particle_data(well_locs, localzz, release_scenario=None, well_id=0):
     particles_pos = []
     for localz in localzz:
         # angles uniformly spaced
@@ -64,6 +66,7 @@ def get_well_particle_data(well_locs, localzz, well_id=0):
         localx.append(0.5 + _localx)
         localy.append(0.5 + _localy)
         localz.append(_localz)
+
     return flopy.modpath.ParticleData(
         partlocs=partlocs,
         structured=True,
@@ -182,7 +185,7 @@ class ModFlowSimulation:
 
         # Create the Flopy temporal discretization object
         tdis = flopy.mf6.modflow.mftdis.ModflowTdis(
-            sim, pname="tdis", time_units="DAYS", nper=1, perioddata=[(100.0, 1, 1.0)]
+            sim, pname="tdis", time_units="DAYS", nper=1, perioddata=[(18250.0, 1, 1.0)]
         )
 
         # Create the Flopy groundwater flow (gwf) model object
@@ -795,7 +798,7 @@ class ModpathSimulation:
         self.mp7 = None
 
         if release_scenario == "near_surface":
-            localzz = np.linspace(0, 0.1, 10).tolist()
+            localzz = np.linspace(0.9, 1.0, 10).tolist()
         elif release_scenario == "pump_installation_depth":
             file = base_path.parent / "input" / "badenova_wells_depths.csv"
             df = pd.read_csv(file, sep=";")
@@ -803,14 +806,14 @@ class ModpathSimulation:
             min_depth = df.loc[well_id, "depth_layer1"]
             max_depth = df.loc[well_id, "deep"]
             localz_max = (pump_installation_depth - min_depth) / (max_depth - min_depth)
-            localzz = np.linspace(0, localz_max, 10).tolist()
+            localzz = np.linspace(localz_max, 1.0, 10).tolist()
         elif release_scenario == "deep":
             localzz = np.linspace(0, 1.0, 10).tolist()
 
         # Create particle groups
         pg = flopy.modpath.ParticleGroup(
             particlegroupname=f"PG2{well_id}",
-            particledata=get_well_particle_data(WEL_LOCS, localzz, well_id=well_id),
+            particledata=get_well_particle_data(WEL_LOCS, localzz, release_scenario=release_scenario, well_id=well_id),
             filename=f"{well_id}.sloc",
         )
 
@@ -825,14 +828,18 @@ class ModpathSimulation:
         )
 
         # Instantiate the MODPATH 7 basic data
-        mp7bas = flopy.modpath.Modpath7Bas(mp7, porosity=0.1)
+        mp7bas = flopy.modpath.Modpath7Bas(mp7, porosity=0.3)
 
         mp7sim = flopy.modpath.Modpath7Sim(
             mp7,
             simulationtype="combined",
             trackingdirection="backward",
             budgetoutputoption="summary",
-            timepointdata=[50, 50.0],
+            weaksinkoption="pass_through",
+            weaksourceoption="pass_through",
+            stoptimeoption="extend",
+            stoptime=18250,
+            timepointdata=[365, 50.0],
             particlegroups=[pg],
         )
 
@@ -873,6 +880,7 @@ def main(model_run):
         release_scenarios = ["near_surface", "pump_installation_depth", "deep"]
         for release_scenario in release_scenarios:
             for well_id in well_ids:
+                well_name = WEL_NAMES[well_id]
                 # initialize the MODPATH model
                 modpath_interface = ModpathSimulation(
                     f"dmn_run_{model_run}",
@@ -888,7 +896,7 @@ def main(model_run):
 
                 # move the output files to external storage
                 output_folder = base_path / "output"
-                output_folder_external = Path("/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen_porous/steady-state/sfr-opt-kf-riv_drainage_layers_gaussian-filter_prt") / "output" / release_scenario / f"well_{well_id}"
+                output_folder_external = Path("/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen_porous/steady-state/sfr-opt-kf-riv_drainage_layers_gaussian-filter_prt") / "output" / release_scenario / f"well{well_name}"
                 if not os.path.exists(output_folder_external):
                     os.makedirs(output_folder_external)
                 for ext in ["*.mppth", "*.timeseries", "*.mplst", "*.mpsim", "*.mpnam", "*.mpend", "*.sloc", "*.mpbas", "*.log"]:

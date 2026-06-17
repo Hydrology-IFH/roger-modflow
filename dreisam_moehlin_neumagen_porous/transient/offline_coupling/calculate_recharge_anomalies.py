@@ -73,8 +73,8 @@ def main(model_run):
     click.echo("Loading topography...")
     path = base_path.parent / "input" / "parameters_modflow.nc"
     ds_params = xr.open_dataset(path, engine="h5netcdf")
-    xcoords = ds_params["x"].values
-    ycoords = ds_params["y"].values
+    xcoords = ds_params.x.values + 25
+    ycoords = ds_params.y.values - 25
 
     for area in areas:
         if area == "dmn":

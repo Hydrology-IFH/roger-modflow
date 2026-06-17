@@ -22,7 +22,6 @@ def main():
     df_well_extraction_wsg_hausen = df_well_extraction_wsg_hausen.loc["2013-01-01":"2023-12-31", :]    
     df_well_extraction_wsg_zartener_becken = df_well_extraction_wsg_zartener_becken.loc["2013-01-01":"2023-12-31", :]   
 
-
     df_groundwater_extraction = pd.read_csv(base_path / "input" / "groundwater_extraction.csv", sep=";")
     df_groundwater_extraction.index = df_groundwater_extraction["ID"].values
     df_daily_weights_drinking_water_supply = pd.read_csv(base_path / "input" / "drinking_water_well_extraction_data" / "daily_weights_drinking_water_supply.csv", sep=";", index_col=0, skiprows=1)

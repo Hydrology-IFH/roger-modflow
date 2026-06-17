@@ -34,14 +34,14 @@ def main(model_run, converged):
             with xr.open_dataset(base_path.parent / "input" / "parameters_modflow.nc") as ds:
                 topography = ds['elevations'].isel(z=0).values
                 spatial_ref = ds.spatial_ref
-                xcoords = ds.x.values
-                ycoords = ds.y.values
+                xcoords = ds.x.values + 25
+                ycoords = ds.y.values - 25
 
             # write groundwater head to netcdf
             fhead = base_path / "output" / f"dmn_run_{model_run}.hds"
             hds = flopy.utils.HeadFile(fhead)
 
-            fbudget = base_path / "output" / f"dmn_run_{model_run}.cbc"
+            fbudget = base_path / "output" / f"dmn_run_{model_run}.cbb"
             cbb = flopy.utils.CellBudgetFile(fbudget)
 
             flowja = ml.oc.output.budget().get_data(text="FLOW-JA-FACE", kstpkper=(0, 0))[0]

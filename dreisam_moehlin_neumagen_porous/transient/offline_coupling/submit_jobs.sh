@@ -1,6 +1,5 @@
 #!/bin/bash
 
-sbatch -p compute modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction.sh
 sbatch -p compute modflow_base-magnitude0-duration0_irrigation_no-yellow-mustard_soil-compaction.sh
 sbatch -p compute modflow_base-magnitude0-duration0_no-irrigation_yellow-mustard_no-soil-compaction.sh
 sbatch -p compute modflow_base-magnitude0-duration0_irrigation_yellow-mustard_no-soil-compaction.sh

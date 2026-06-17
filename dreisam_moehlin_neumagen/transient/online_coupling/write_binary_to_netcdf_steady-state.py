@@ -31,8 +31,8 @@ def main(model_run):
         with xr.open_dataset(base_path / "parameters_modflow.nc") as ds:
             topography = ds['elevations'].isel(z=0).values
             spatial_ref = ds.spatial_ref
-            xcoords = ds.x.values
-            ycoords = ds.y.values[::-1]
+            xcoords = ds.x.values + 25
+            ycoords = ds.y.values - 25
 
         # export groundwater head to netcdf
         fhead = base_path / "output" / "steady-state" / f"dmn_run_{model_run}.hds"

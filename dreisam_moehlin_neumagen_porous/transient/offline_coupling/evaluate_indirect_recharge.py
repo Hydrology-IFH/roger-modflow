@@ -58,10 +58,10 @@ def main(model_run):
     mask = np.isfinite(topography)
     mask = np.where(mask_schoenberg, False, mask)
     topography = np.where(mask, topography, np.nan)
-    xcoords = ds_params["x"].values
-    ycoords = ds_params["y"].values
-    x0 = xcoords[0] - 25
-    y0 = ycoords[0] + 25
+    xcoords = ds_params.x.values + 25
+    ycoords = ds_params.y.values - 25
+    x0 = xcoords[0]
+    y0 = ycoords[0]
 
     click.echo("Loading indirect recharge...")
     ll_indirect_recharge = []

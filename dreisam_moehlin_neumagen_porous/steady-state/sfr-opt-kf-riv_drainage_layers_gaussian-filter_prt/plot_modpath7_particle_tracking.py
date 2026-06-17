@@ -205,8 +205,6 @@ def plot_all(gwf, well_ids=[6], well_names=["A4"]):
             mp7_pl = pd.DataFrame(
                 plf.get_destination_pathline_data(range(grid.nnodes), to_recarray=True)
             )
-            cond_time = (mp7_pl["time"] < (365.25 * 5))
-            mp7_pl = mp7_pl[cond_time]
 
             figures_dir = base_path / "figures" / f"{release_scenario}"
             figures_dir.mkdir(parents=True, exist_ok=True)

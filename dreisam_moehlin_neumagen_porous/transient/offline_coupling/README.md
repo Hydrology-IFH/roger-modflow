@@ -1,32 +1,67 @@
 # Porous Aquifer of the Dreisam-Moehlin-Neumagen catchment
 
-Simulation of the soil water and groundwater of the Moehlin catchment (Germany) using MODFLOW coupled with RoGeR. The two models are coupled offline (i.e. run RoGeR first and pass the simulated values to MODFLOW loading the RoGeR model output).
+Simulation of the soil water and groundwater of the porous Aquifer of the Dreisam-Moehlin-Neumagen catchment (Germany) using MODFLOW coupled with RoGeR. The two models are coupled offline (i.e. run RoGeR first and pass the simulated values to MODFLOW loading the RoGeR model output).
 
 Short description of files and folders:
-- `input/`: contains precipitation data (`PREC.txt`; 10 minutes time steps), air temperature data (`TA.txt`; daily time steps) and potential evapotranspiration data (`PET.txt`; daily time steps).
 - `output/`: contains the model output
 - `figures/`: contains the figures
-- `elevation.tiff`: Topography of the hillslope
-- `config.yml`: File to set parameters and output variables of RoGeR
-- `write_parameters_to_csv_for_SVAT.py`: Generates model parameters (`parameters.csv`) and writes model parameter file of RoGeR with vertical fluxes only
-- `write_parameters_to_csv_for_ONED.py`: Generates model parameters (`parameters.csv`) and writes model parameter file of RoGeR with lateral fluxes (i.e. no transfer between grid cells)
-- `calculate_PET_for_climate_projections.py`: Calculates potential evapotranspiration from projected air temperature and projected solar radiation using the Makkink formula.
-- `parameters.csv`: Model parameters of RoGeR
-- `modflow6_steady-state.py`: Python script to run MODFLOW6 using xmipy for steady-state simulations
-- `roger-xxxx_modflow6_transient.py`: Python script to run RoGeR and MODFLOW6 using xmipy for transient simulations (`xxxx` represents the model structure either SVAT or ONED). SVAT means only vertical fluxes are considered. ONED includes lateral fluxes.
-- `export_binary_output_to_netcdf.py`: Writes the MODFLOW6 output into a single netCDF file
-- `plot_input_data.py`: Plots the topography and model parameters (e.g. hydraulic conductivity)
-- `plot_groundwater_heads.py`: Plots the groundwater head at different time steps
-- `plot_time_series.py`: Plots observed and simulated groundwater head time series and simulated recharge time series
-- `make_gif.py`: Animated visualisation of spatially distributed simulations of the groundwater recharge and groundwater head
-- `test_regrid.py`: Minimal working example for the spatial aggregation (from finer to coarser resolution and from coarser to finer resolution)
+- `config_roger.yml`: Configuration-File of RoGeR
+- `config_modflow.yml`: Configuration-File of MODFLOW6
+- `roger_modflow6.py`: Python script to run MODFLOW6 using xmipy for transient simulations
+- `write_binary_to_netcdf_transient.py`: Writes the MODFLOW6 output files of the transient simulations into a single netCDF file
+- `evaluate_groundwater_depths.py`: Compare simulated groundwater depths with observed groundwater depths
+- `evaluate_groundwater_depths.sh`: Runs `evaluate_groundwater_depths.py` as computing job on BinAC2
+- `evaluate_indirect_recharge.py`: Compare simulated streamflow with observed groundwater streamflow
+- `evaluate_indirect_recharge.sh`: Runs `evaluate_indirect_recharge.py` as computing job on BinAC2
+- `calculate_anomaly_metrics.py`: Calculate anomalies of evapotranspiration, precipitation, air temperature, irrigation, groundwater recharge and groundwater heads for different years and water protection areas within the catchment
+- `calculate_anomaly_metrics.sh`: Runs `calculate_anomaly_metrics.py` as computing job on BinAC2
+- `plot_anomaly_metrics.py`: Plot anomalies of evapotranspiration, precipitation, air temperature, irrigation, groundwater recharge and groundwater heads for different years and water protection areas within the catchment
+- `plot_anomaly_metrics.sh`: Runs `plot_anomaly_metrics.py` as computing job on BinAC2
+- `calculate_gw_anomalies.py`: Calculate groundwater head anomalies of the entire catchment, the water protection area Hausen and Zartener Becken and plot anomalies as time series and maps
+- `calculate_gw_anomalies.sh`: Runs `calculate_gw_anomalies.py` as computing job on BinAC2
+- `calculate_gw_extraction_balance.py`: Calculate the groundwater extraction balance of the water protection area Hausen and Zartener Becken and make bar plots
+- `calculate_gw_extraction_balance.sh`: Runs `calculate_gw_extraction_balance.py` as computing job on BinAC2
+- `calculate_recharge_anomalies.py`: Calculate groundwater recharge anomalies of the entire catchment, the water protection area Hausen and Zartener Becken and plot anomalies as time series and maps
+- `calculate_recharge_anomalies.sh`: Runs `calculate_recharge_anomalies.py` as computing job on BinAC2
+- `write_data_job_scripts_slurm.py`: Write SLURM job scripts to write the MODFLOW6 output files of the transient simulations into a single netCDF file
+- `submit_data_jobs.sh`: Submit writing output data of scenario runs as computing jobs on BinAC2
+- `write_job_scripts_slurm.py`: Write SLURM job scripts to compute RoGeR-MODFLOW6 simulations
+- `submit_jobs.sh`: Submit scenario runs as computing jobs on BinAC2
 
-Workflow:
-1. Run `plot_input_data.py`
-2. Run the steady-state simulation `python modflow6_steady-state.py`. Steady-state simulation is required to set the boundary and initial conditions of the transient simulation. 
-3. Run the transient simulation `python roger_modflow6_transient.py`
-4. Run `python export_binary_output_to_netcdf.py`
-5. Run `python plot_groundwater_heads.py`
-6. Run `python plot_time_series.py`
-7. Run `python make_gif.py`
+`input/`, `output/` and larger *.nc.files are stored on FUHYS018 in `StressRes_RoGeR-ModFlow/` since GitHub is not meant to be a large data storage facility. Please contact [Jürgen Strub](juergen.strub@hydrology.uni-freiburg.de) or [Markus Weiler](markus.weiler@hydrology.uni-freiburg.de) to access the data and put the required data into your local disk.
 
+
+## Reference scenario (base)
+Workflow on local computer:
+1. Run the [RoGeR-ONED model](https://github.com/Hydrology-IFH/roger/tree/main/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed)
+2. `python roger_modflow6.py`
+3. `python write_binary_to_netcdf_transient.py`
+4. `python evaluate_groundwater_depths.py`
+5. `python evaluate_indirect_recharge.py`
+
+Workflow on BinAC2-cluster: 
+1. Run the [RoGeR-ONED model](https://github.com/Hydrology-IFH/roger/tree/main/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed)
+2. `python write_job_scripts_slurm.py`
+3. `sbatch -p compute modflow_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction.sh`
+4. `sbatch -p compute write_modflow_data_base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction.sh`
+5. `sbatch -p compute evaluate_groundwater_depths.sh`
+6. `sbatch -p compute evaluate_indirect_recharge.sh`
+
+## Stress test scenarios
+Workflow on local computer:
+1. Run the [RoGeR-ONED model](https://github.com/Hydrology-IFH/roger/tree/main/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed)
+2. `python roger_modflow6.py --stress-test-meteo summer-drought --stress-test-meteo-magnitude 2 --stress-test-meteo-duration 3 --soil-compaction soil-compaction --irrigation irrigation --stress-test-well-extraction stress`
+3. `python write_binary_to_netcdf_transient.py --stress-test-meteo summer-drought --stress-test-meteo-magnitude 2 --stress-test-meteo-duration 3 --soil-compaction soil-compaction --irrigation irrigation --stress-test-well-extraction stress`
+4. `python calculate_gw_anomalies.py`
+5. `python calculate_recharge_anomalies.py`
+
+Workflow on BinAC2-cluster: 
+1. Run the [RoGeR-ONED model](https://github.com/Hydrology-IFH/roger/tree/main/examples/catchment_scale/dreisam_moehlin_neumagen/oneD_crop_distributed)
+2. `python write_job_scripts_slurm.py`
+3. `./submit_jobs.sh`
+4. `./submit_data_jobs.sh`
+From here on the order does not matter.
+5. `sbatch -p compute calculate_anomaly_metrics.sh`
+6. `sbatch -p compute calculate_gw_anomalies.sh`
+7. `sbatch -p compute calculate_recharge_anomalies.sh`
+8. `sbatch -p compute calculate_gw_extraction_balance.sh`

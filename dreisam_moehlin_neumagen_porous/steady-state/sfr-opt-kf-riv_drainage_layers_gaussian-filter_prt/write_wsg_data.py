@@ -45,12 +45,6 @@ def main(model_run):
     topography = ds_params['elevations'].isel(z=0).values
     spatial_ref = ds_params.spatial_ref
 
-    output_file = Path(__file__).parent / "output" / f"modflow_output_run_{model_run}_pre.nc"
-    ds_mf_pre = xr.open_dataset(output_file, engine="h5netcdf")
-
-    output_file = Path(__file__).parent / "output" / f"modflow_output_run_{model_run}_pre1.nc"
-    ds_mf_pre1 = xr.open_dataset(output_file, engine="h5netcdf")
-
     # load the netcdf file
     output_file = Path(__file__).parent / "output" / f"modflow_output_run_{model_run}.nc"
     ds_mf = xr.open_dataset(output_file, engine="h5netcdf")
@@ -113,22 +107,6 @@ def main(model_run):
     reaches.iloc[:, 12] = reaches.iloc[:, 12].astype(float)
     reaches.iloc[:, 13] = reaches.iloc[:, 13].astype(int)
 
-    rwid = np.empty_like(topography)
-    rwid[:, :] = np.nan
-    rlen = np.empty_like(topography)
-    rlen[:, :] = np.nan
-    rhk = np.empty_like(topography)
-    rhk[:, :] = np.nan
-    man = np.empty_like(topography)
-    man[:, :] = np.nan
-
-    for rno, x, y in zip(reaches.iloc[:, 0], reaches.iloc[:, 2], reaches.iloc[:, 3]):
-        rwid[x, y] = reaches.loc[rno, 'rwid']
-        rlen[x, y] = reaches.loc[rno, 'rlen']
-        man[x, y] = reaches.loc[rno, 'man']
-        rhk[x, y] = reaches.loc[rno, 'rhk']
-
-    rarea = rlen * rwid + ds_mf['sfr_stage'].values * rlen * 2  # in m2
     indirect_recharge = np.nanmean(ds_mf['gw_sw'].isel(Time=0).values, axis=0)
 
     # fudge parameters
@@ -233,13 +211,6 @@ def main(model_run):
     hydraulic_conductivities_layer2[mask432] = hydraulic_conductivities_layer2[mask432] * fudge_parameters["4-3_2"].values[model_run]
     hydraulic_conductivities_layer3[mask433] = hydraulic_conductivities_layer3[mask433] * fudge_parameters["4-3_3"].values[model_run]
 
-    # adjust hydraulic conductivities
-    hydraulic_conductivities_layer2[mask232 & mask_custom_hausen1] = hydraulic_conductivities_layer2[mask232 & mask_custom_hausen1] * fudge_parameters["hausen1_re"].values[model_run]
-    hydraulic_conductivities_layer3[mask233 & mask_custom_hausen1] = hydraulic_conductivities_layer2[mask233 & mask_custom_hausen1] * fudge_parameters["hausen1_re"].values[model_run]
-
-    hydraulic_conductivities_layer2[mask72 & mask_custom_hausen2] = hydraulic_conductivities_layer2[mask72 & mask_custom_hausen2] * fudge_parameters["hausen2_re"].values[model_run]
-    hydraulic_conductivities_layer3[mask73 & mask_custom_hausen2] = hydraulic_conductivities_layer3[mask73 & mask_custom_hausen2] * fudge_parameters["hausen2_re"].values[model_run]
-
     # smooth transition between fissured and porous aquifers
     hydraulic_conductivities_layer1[np.isnan(hydraulic_conductivities_layer1)] = 0
     hydraulic_conductivities_layer2[np.isnan(hydraulic_conductivities_layer2)] = 0
@@ -257,60 +228,6 @@ def main(model_run):
     hydraulic_conductivities_layer2[cond2] = _hydraulic_conductivities_layer2[cond2]
     hydraulic_conductivities_layer3[cond3] = _hydraulic_conductivities_layer3[cond3]
     hydraulic_conductivities_layer4[cond4] = _hydraulic_conductivities_layer4[cond4]
-
-    gw_depth_layer2 = topography - ds_mf_pre['head'].isel(Time=0, layer=1).values
-    gw_depth_layer3 = topography - ds_mf_pre['head'].isel(Time=0, layer=2).values
-    gw_depth_layer4 = topography - ds_mf_pre['head'].isel(Time=0, layer=3).values
-
-    cond2 = (gw_depth_layer2 >= 0)
-    cond3 = (gw_depth_layer3 >= 0)
-    cond4 = (gw_depth_layer4 >= 0)
-
-    gw_depth_layer2[cond2] = 0
-    gw_depth_layer3[cond3] = 0
-    gw_depth_layer4[cond4] = 0
-
-    gw_depth_min_layer2 = np.nanmin(gw_depth_layer2)
-    gw_depth_min_layer3 = np.nanmin(gw_depth_layer3)
-    gw_depth_min_layer4 = np.nanmin(gw_depth_layer4)
-
-    scale2 = np.abs(gw_depth_layer2) / np.abs(gw_depth_min_layer2)
-    scale3 = np.abs(gw_depth_layer3) / np.abs(gw_depth_min_layer3)
-    scale4 = np.abs(gw_depth_layer4) / np.abs(gw_depth_min_layer4)
-
-    cond2 = (gw_depth_layer2 < 0) & (hydraulic_conductivities_layer2_ <= 10.0e-07)
-    cond3 = (gw_depth_layer3 < 0) & (hydraulic_conductivities_layer3_ <= 10.0e-07)
-    cond4 = (gw_depth_layer4 < 0) & (hydraulic_conductivities_layer4_ <= 10.0e-07)
-    hydraulic_conductivities_layer2[cond2] = hydraulic_conductivities_layer2[cond2] * (fudge_parameters["-7_2_re"].values[model_run] * scale2[cond2])
-    hydraulic_conductivities_layer3[cond3] = hydraulic_conductivities_layer3[cond3] * (fudge_parameters["-7_3_re"].values[model_run] * scale3[cond3])
-    hydraulic_conductivities_layer4[cond4] = hydraulic_conductivities_layer4[cond4] * (fudge_parameters["-7_4_re"].values[model_run] * scale4[cond4])
-
-    gw_depth_layer2 = topography - ds_mf_pre1['head'].isel(Time=0, layer=1).values
-    gw_depth_layer3 = topography - ds_mf_pre1['head'].isel(Time=0, layer=2).values
-    gw_depth_layer4 = topography - ds_mf_pre1['head'].isel(Time=0, layer=3).values
-
-    cond2 = (gw_depth_layer2 >= 0)
-    cond3 = (gw_depth_layer3 >= 0)
-    cond4 = (gw_depth_layer4 >= 0)
-
-    gw_depth_layer2[cond2] = 0
-    gw_depth_layer3[cond3] = 0
-    gw_depth_layer4[cond4] = 0
-
-    gw_depth_min_layer2 = np.nanmin(gw_depth_layer2)
-    gw_depth_min_layer3 = np.nanmin(gw_depth_layer3)
-    gw_depth_min_layer4 = np.nanmin(gw_depth_layer4)
-
-    scale2 = np.abs(gw_depth_layer2) / np.abs(gw_depth_min_layer2)
-    scale3 = np.abs(gw_depth_layer3) / np.abs(gw_depth_min_layer3)
-    scale4 = np.abs(gw_depth_layer4) / np.abs(gw_depth_min_layer4)
-
-    cond2 = (gw_depth_layer2 < 0) & (hydraulic_conductivities_layer2_ <= 10.0e-07)
-    cond3 = (gw_depth_layer3 < 0) & (hydraulic_conductivities_layer3_ <= 10.0e-07)
-    cond4 = (gw_depth_layer4 < 0) & (hydraulic_conductivities_layer4_ <= 10.0e-07)
-    hydraulic_conductivities_layer2[cond2] = hydraulic_conductivities_layer2[cond2] * (1 + fudge_parameters["-7_2_re1"].values[model_run] * scale2[cond2])
-    hydraulic_conductivities_layer3[cond3] = hydraulic_conductivities_layer3[cond3] * (1 + fudge_parameters["-7_3_re1"].values[model_run] * scale3[cond3])
-    hydraulic_conductivities_layer4[cond4] = hydraulic_conductivities_layer4[cond4] * (1 + fudge_parameters["-7_4_re1"].values[model_run] * scale4[cond4])
 
     # increase the hydraulic conductivities of the reach cell by a factor of xx
     reaches["kf"] = np.nan
@@ -474,19 +391,6 @@ def main(model_run):
             sy=(["layer", "lat", "lon"], sy[:, y1:y2, x1:x2]),
             kf_fudged=(["layer", "lat", "lon"], kf_fudged[:, y1:y2, x1:x2] / 86400),
             sy_fudged=(["layer", "lat", "lon"], sy_fudged[:, y1:y2, x1:x2]),
-            rhk=(["lat", "lon"], rhk[y1:y2, x1:x2]),
-            rhk_fudged=(["lat", "lon"], rhk_fudged[y1:y2, x1:x2]),
-            man=(["lat", "lon"], man[y1:y2, x1:x2]),
-            man_fudged=(["lat", "lon"], man_fudged[y1:y2, x1:x2]),
-            rwid=(["lat", "lon"], rwid[y1:y2, x1:x2]),
-            rlen=(["lat", "lon"], rlen[y1:y2, x1:x2]),
-            rarea=(["lat", "lon"], rarea[y1:y2, x1:x2]),
-            rgrd=(["lat", "lon"], ds_mf['sfr_gradient'].values[y1:y2, x1:x2]),
-            sfr_stage=(["Time", "lat", "lon"], ds_mf['sfr_stage'].values[np.newaxis, y1:y2, x1:x2]),
-            sfr_head=(["Time", "lat", "lon"], ds_mf['sfr_head'].values[np.newaxis, y1:y2, x1:x2]),
-            sfr_flow=(["Time", "lat", "lon"], ds_mf['sfr_flow'].values[np.newaxis, y1:y2, x1:x2]),
-            delta_sw_gw_head=(["Time", "lat", "lon"], ds_mf['delta_sw_gw_head'].values[np.newaxis, y1:y2, x1:x2]),
-            delta_rtp_gw_head=(["Time", "lat", "lon"], ds_mf['delta_rtp_gw_head'].values[np.newaxis, y1:y2, x1:x2]),
         )
 
     ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
@@ -510,28 +414,6 @@ def main(model_run):
     ds["gw_head"].attrs["long_name"] = "Groundwater head"
     ds["gw_depth"].attrs["units"] = "m"
     ds["gw_depth"].attrs["long_name"] = "Groundwater depth"
-    ds["sfr_stage"].attrs["units"] = "m"
-    ds["sfr_stage"].attrs["long_name"] = "Streamflow depth"
-    ds["sfr_head"].attrs["units"] = "m a.s.l."
-    ds["sfr_head"].attrs["long_name"] = "Streamflow head"
-    ds["sfr_flow"].attrs["units"] = "m3/s"
-    ds["sfr_flow"].attrs["long_name"] = "Streamflow"
-    ds["rwid"].attrs["units"] = "m"
-    ds["rwid"].attrs["long_name"] = "Reach width"
-    ds["rlen"].attrs["units"] = "m"
-    ds["rlen"].attrs["long_name"] = "Reach length"
-    ds["rarea"].attrs["units"] = "m2"
-    ds["rarea"].attrs["long_name"] = "Reach area of wetted surface"
-    ds["man"].attrs["units"] = ""
-    ds["man"].attrs["long_name"] = "Reach Manning's roughness coefficient"
-    ds["rhk"].attrs["units"] = "m/s"
-    ds["rhk"].attrs["long_name"] = "Reach hydraulic conductivity"
-    ds["rgrd"].attrs["units"] = ""
-    ds["rgrd"].attrs["long_name"] = "Reach gradient"
-    ds["delta_sw_gw_head"].attrs["units"] = "m"
-    ds["delta_sw_gw_head"].attrs["long_name"] = "Difference between surface water head and groundwater head"
-    ds["delta_rtp_gw_head"].attrs["units"] = "m"
-    ds["delta_rtp_gw_head"].attrs["long_name"] = "Difference between elevation of the riverbed and groundwater head"
     # create spatial reference
     ds = ds.geo.write_crs("EPSG:25832")
     ds["spatial_ref"] = spatial_ref
@@ -592,19 +474,6 @@ def main(model_run):
             sy=(["layer", "lat", "lon"], sy[:, y1:y2, x1:x2]),
             kf_fudged=(["layer", "lat", "lon"], kf_fudged[:, y1:y2, x1:x2] / 86400),
             sy_fudged=(["layer", "lat", "lon"], sy_fudged[:, y1:y2, x1:x2]),
-            rhk=(["lat", "lon"], rhk[y1:y2, x1:x2]),
-            rhk_fudged=(["lat", "lon"], rhk_fudged[y1:y2, x1:x2]),
-            man=(["lat", "lon"], man[y1:y2, x1:x2]),
-            man_fudged=(["lat", "lon"], man_fudged[y1:y2, x1:x2]),
-            rwid=(["lat", "lon"], rwid[y1:y2, x1:x2]),
-            rlen=(["lat", "lon"], rlen[y1:y2, x1:x2]),
-            rarea=(["lat", "lon"], rarea[y1:y2, x1:x2]),
-            rgrd=(["lat", "lon"], ds_mf['sfr_gradient'].values[y1:y2, x1:x2]),
-            sfr_stage=(["Time", "lat", "lon"], ds_mf['sfr_stage'].values[np.newaxis, y1:y2, x1:x2]),
-            sfr_head=(["Time", "lat", "lon"], ds_mf['sfr_head'].values[np.newaxis, y1:y2, x1:x2]),
-            sfr_flow=(["Time", "lat", "lon"], ds_mf['sfr_flow'].values[np.newaxis, y1:y2, x1:x2]),
-            delta_sw_gw_head=(["Time", "lat", "lon"], ds_mf['delta_sw_gw_head'].values[np.newaxis, y1:y2, x1:x2]),
-            delta_rtp_gw_head=(["Time", "lat", "lon"], ds_mf['delta_rtp_gw_head'].values[np.newaxis, y1:y2, x1:x2]),
         )
 
     ds = xr.Dataset(data_vars=data_vars, coords=coords, attrs=attrs)
@@ -628,28 +497,6 @@ def main(model_run):
     ds["gw_head"].attrs["long_name"] = "Groundwater head"
     ds["gw_depth"].attrs["units"] = "m"
     ds["gw_depth"].attrs["long_name"] = "Groundwater depth"
-    ds["sfr_stage"].attrs["units"] = "m"
-    ds["sfr_stage"].attrs["long_name"] = "Streamflow depth"
-    ds["sfr_head"].attrs["units"] = "m a.s.l."
-    ds["sfr_head"].attrs["long_name"] = "Streamflow head"
-    ds["sfr_flow"].attrs["units"] = "m3/s"
-    ds["sfr_flow"].attrs["long_name"] = "Streamflow"
-    ds["rwid"].attrs["units"] = "m"
-    ds["rwid"].attrs["long_name"] = "Reach width"
-    ds["rlen"].attrs["units"] = "m"
-    ds["rlen"].attrs["long_name"] = "Reach length"
-    ds["rarea"].attrs["units"] = "m2"
-    ds["rarea"].attrs["long_name"] = "Reach area of wetted surface"
-    ds["man"].attrs["units"] = ""
-    ds["man"].attrs["long_name"] = "Reach Manning's roughness coefficient"
-    ds["rhk"].attrs["units"] = "m/s"
-    ds["rhk"].attrs["long_name"] = "Reach hydraulic conductivity"
-    ds["rgrd"].attrs["units"] = ""
-    ds["rgrd"].attrs["long_name"] = "Reach gradient"
-    ds["delta_sw_gw_head"].attrs["units"] = "m"
-    ds["delta_sw_gw_head"].attrs["long_name"] = "Difference between surface water head and groundwater head"
-    ds["delta_rtp_gw_head"].attrs["units"] = "m"
-    ds["delta_rtp_gw_head"].attrs["long_name"] = "Difference between elevation of the riverbed and groundwater head"
     # create spatial reference
     ds = ds.geo.write_crs("EPSG:25832")
     ds["spatial_ref"] = spatial_ref

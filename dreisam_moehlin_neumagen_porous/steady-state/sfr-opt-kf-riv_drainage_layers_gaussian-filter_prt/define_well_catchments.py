@@ -31,18 +31,16 @@ release_scenarios = ["near_surface", "pump_installation_depth", "deep"]
 for release_scenario in release_scenarios:
     for well_id, well_name in zip(well_ids[:11], well_names[:11]):
         try:
-            os.remove(base_path_external / "output" / f"{release_scenario}" / f"well_{well_id}" / f"well{well_id}_mp7.timeseries")
+            os.remove(base_path_external / "output" / f"{release_scenario}" / f"well{well_name}" / f"well{well_id}_mp7.timeseries")
         except FileNotFoundError:
             pass
         # load mp7 pathline results
-        plf = flopy.utils.PathlineFile(base_path_external / "output" / f"{release_scenario}" / f"well_{well_id}" / f"well{well_id}_mp7.mppth")
+        plf = flopy.utils.PathlineFile(base_path_external / "output" / f"{release_scenario}" / f"well{well_name}" / f"well{well_id}_mp7.mppth")
         pl = pd.DataFrame(
             plf.get_destination_pathline_data(range(grid.nnodes), to_recarray=True)
         )
         pl["x"] = grid.xoffset + pl["x"].values
         pl["y"] = grid.yoffset + pl["y"].values
-        cond_time = (pl["time"] < (365.25 * 5))
-        pl = pl[cond_time]
 
         coords = pl[["x", "y"]].values
         # remove duplicate coordinates
@@ -55,7 +53,7 @@ for release_scenario in release_scenarios:
         geometry=[polygon],
         crs="EPSG:25832"
         )
-        gdf.to_file(base_path_external / "output" / f"{release_scenario}" / f"well_{well_id}" / f"well{well_name}_catchment.gpkg", layer=f"well{well_name}_catchment", driver="GPKG")
+        gdf.to_file(base_path_external / "output" / f"{release_scenario}" / f"well{well_name}" / f"well{well_name}_catchment.gpkg", layer=f"well{well_name}_catchment", driver="GPKG")
 
         pl_zone2 = pl[pl["time"] <= 50]
         coords = pl_zone2[["x", "y"]].values
@@ -69,7 +67,7 @@ for release_scenario in release_scenarios:
         geometry=[polygon_zone2],
         crs="EPSG:25832"
         )
-        gdf.to_file(base_path_external / "output" / f"{release_scenario}" / f"well_{well_id}" / f"well{well_name}_zone2.gpkg", layer=f"well{well_name}_zone2", driver="GPKG")
+        gdf.to_file(base_path_external / "output" / f"{release_scenario}" / f"well{well_name}" / f"well{well_name}_zone2.gpkg", layer=f"well{well_name}_zone2", driver="GPKG")
 
         # make difference between the two polygons and remove zone2 from catchment
         polygon_zone3 = polygon.difference(polygon_zone2)
@@ -78,4 +76,4 @@ for release_scenario in release_scenarios:
         geometry=[polygon_zone3],
         crs="EPSG:25832"
         )
-        gdf.to_file(base_path_external / "output" / f"{release_scenario}" / f"well_{well_id}" / f"well{well_name}_zone3.gpkg", layer=f"well{well_name}_zone3", driver="GPKG")
+        gdf.to_file(base_path_external / "output" / f"{release_scenario}" / f"well{well_name}" / f"well{well_name}_zone3.gpkg", layer=f"well{well_name}_zone3", driver="GPKG")

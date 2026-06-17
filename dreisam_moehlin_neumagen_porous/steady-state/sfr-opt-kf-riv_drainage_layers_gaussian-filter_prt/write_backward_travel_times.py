@@ -27,38 +27,51 @@ release_scenarios = ["near_surface", "pump_installation_depth", "deep"]
 for release_scenario in release_scenarios:
     for well_id, well_name in zip(well_ids[:11], well_names[:11]):
         try:
-            os.remove(base_path_external / "output" / f"{release_scenario}" / f"well_{well_id}" / f"well{well_id}_mp7.timeseries")
+            os.remove(base_path_external / "output" / f"{release_scenario}" / f"well{well_name}" / f"well{well_id}_mp7.timeseries")
         except FileNotFoundError:
             pass
         # load mp7 pathline results
-        plf = flopy.utils.PathlineFile(base_path_external / "output" / f"{release_scenario}" / f"well_{well_id}" / f"well{well_id}_mp7.mppth")
+        plf = flopy.utils.PathlineFile(base_path_external / "output" / f"{release_scenario}" / f"well{well_name}" / f"well{well_id}_mp7.mppth")
         pl = pd.DataFrame(
             plf.get_destination_pathline_data(range(grid.nnodes), to_recarray=True)
         )
         pl["x"] = grid.xoffset + pl["x"].values
         pl["y"] = grid.yoffset + pl["y"].values
-        cond_time = (pl["time"] < (365.25 * 5))
-        pl = pl[cond_time]
 
-        # file = base_path_external / "output" / f"{release_scenario}" / f"well_{well_id}" / f"well{well_name}_mp7.csv"
-        # pl.to_csv(file, index=False, sep=";")
+        file = base_path_external / "output" / f"{release_scenario}" / f"well{well_name}" / f"well{well_name}_pathlines.csv"
+        pl.to_csv(file, index=False, sep=";")
+        gdf_pathlines = gpd.GeoDataFrame(pl, geometry=gpd.points_from_xy(pl["x"], pl["y"]), crs="EPSG:25832")
+        file = base_path_external / "output" / f"{release_scenario}" / f"well{well_name}" / f"well{well_name}_pathlines.gpkg"
+        gdf_pathlines.to_file(file, layer=f"well{well_name}_pathlines", driver="GPKG")
 
         # get unique particle IDs
         particle_ids = pl["particleid"].unique()
 
-        df_backward_travel_times = pd.DataFrame(index=particle_ids, columns=["particleID", "backward_travel_time"])
+        df_backward_travel_times = pd.DataFrame(index=particle_ids, columns=["particleID", "x", "y", "backward_travel_time"])
         for particle_id in particle_ids[1:]:
             pl_particle = pl[pl["particleid"] == particle_id]
             backward_travel_time = pl_particle["time"].values[-1]
+            x = pl_particle["x"].values[-1]
+            y = pl_particle["y"].values[-1]
+            z = pl_particle["z"].values[-1]
             df_backward_travel_times.loc[particle_id, "particleID"] = particle_id
+            df_backward_travel_times.loc[particle_id, "x"] = x
+            df_backward_travel_times.loc[particle_id, "y"] = y
+            df_backward_travel_times.loc[particle_id, "z"] = z
             df_backward_travel_times.loc[particle_id, "backward_travel_time"] = backward_travel_time
 
-        file = base_path_external / "output" / f"{release_scenario}" / f"well_{well_id}" / f"well{well_name}_backward_travel_times.csv"
+        cond_nozeros = (df_backward_travel_times["backward_travel_time"] > 0)
+        df_backward_travel_times = df_backward_travel_times.loc[cond_nozeros, :]
+        gdf_backward_travel_times = gpd.GeoDataFrame(df_backward_travel_times, geometry=gpd.points_from_xy(df_backward_travel_times["x"], df_backward_travel_times["y"]), crs="EPSG:25832")
+
+        file = base_path_external / "output" / f"{release_scenario}" / f"well{well_name}" / f"well{well_name}_backward_travel_times.csv"
         # rename index
-        df_backward_travel_times.columns = [["", "[days]"], ["particleID", "backward_travel_time"]]
+        df_backward_travel_times.columns = [["", "[m]", "[m]", "[m a.s.l.]", "[days]"], ["particleID", "x", "y", "z", "backward_travel_time"]]
         # remove blank rows
         df_backward_travel_times = df_backward_travel_times.dropna(how="all")
         df_backward_travel_times.to_csv(file, index=False, sep=";")
+        file = base_path_external / "output" / f"{release_scenario}" / f"well{well_name}" / f"well{well_name}_backward_travel_times.gpkg"
+        gdf_backward_travel_times.to_file(file, layer=f"well{well_name}_backward_travel_times", driver="GPKG")
 
         df_release_points = pd.DataFrame(index=particle_ids, columns=["particleID", "x-coordinate", "y-coordinate", "elevation"])
         for particle_id in particle_ids[1:]:
@@ -73,11 +86,12 @@ for release_scenario in release_scenarios:
 
         # convert to geopandas dataframe
         df_release_points = df_release_points.dropna(how="all")
+        df_release_points = df_release_points.loc[cond_nozeros, :]
         gdf_release_points = gpd.GeoDataFrame(df_release_points, geometry=gpd.points_from_xy(df_release_points["x-coordinate"], df_release_points["y-coordinate"]), crs="EPSG:25832")
-        file = base_path_external / "output" / f"{release_scenario}" / f"well_{well_id}" / f"well{well_name}_release_points.gpkg"
+        file = base_path_external / "output" / f"{release_scenario}" / f"well{well_name}" / f"well{well_name}_release_points.gpkg"
         gdf_release_points.to_file(file, layer=f"well{well_name}_release_points", driver="GPKG")
 
-        file = base_path_external / "output" / f"{release_scenario}" / f"well_{well_id}" / f"well{well_name}_release_points.csv"
+        file = base_path_external / "output" / f"{release_scenario}" / f"well{well_name}" / f"well{well_name}_release_points.csv"
         # rename index
         df_release_points.columns = [["", "[m]", "[m]", "[m a.s.l.]"], ["particleID", "x-coordinate", "y-coordinate", "elevation"]]
         # remove blank rows

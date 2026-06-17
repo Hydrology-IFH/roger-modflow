@@ -58,7 +58,7 @@ def main(model_run):
     # base_path_output = base_path / "output"
     # base_path_output = Path("/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline-coupling/output")
 
-    areas = ["dmn", "wsg_hausen", "wsg_zartener_becken"]
+    areas = ["wsg_hausen", "wsg_zartener_becken"]
 
     stress_test_scenarios = ["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction",
                              "summer-drought-magnitude2-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
@@ -67,14 +67,13 @@ def main(model_run):
     
     date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="D")
     years = np.unique(date_time.year.values)
-    timesteps = np.arange(len(date_time))
 
     # load modflow parameters to get the coordinates of the grid
     click.echo("Loading topography...")
     path = base_path.parent / "input" / "parameters_modflow.nc"
     ds_params = xr.open_dataset(path, engine="h5netcdf")
-    xcoords = ds_params["x"].values
-    ycoords = ds_params["y"].values
+    xcoords = ds_params.x.values + 25
+    ycoords = ds_params.y.values - 25
 
     for area in areas:
         if area == "dmn":

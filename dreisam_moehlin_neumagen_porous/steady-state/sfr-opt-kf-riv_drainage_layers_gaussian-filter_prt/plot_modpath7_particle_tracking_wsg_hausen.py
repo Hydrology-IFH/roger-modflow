@@ -208,14 +208,12 @@ def plot_all(gwf, well_ids=[6], well_names=["A4"]):
         ll_pathlines = []
         for well_id, well_name in zip(well_ids, well_names):
             # load mp7 pathline results
-            plf = flopy.utils.PathlineFile(base_path_external / "output" / f"{release_scenario}" / f"well_{well_id}" / f"well{well_id}_mp7.mppth")
+            plf = flopy.utils.PathlineFile(base_path_external / "output" / f"{release_scenario}" / f"well{well_name}" / f"well{well_id}_mp7.mppth")
             mp7_pl = pd.DataFrame(
                 plf.get_destination_pathline_data(range(grid.nnodes), to_recarray=True)
             )
             mp7_pl["well_id"] = well_id
             mp7_pl["well_name"] = well_name
-            cond_time = (mp7_pl["time"] < (365.25 * 5))
-            mp7_pl = mp7_pl[cond_time]
             ll_pathlines.append(mp7_pl)
 
         pl = pd.concat(ll_pathlines, ignore_index=True)
@@ -231,8 +229,6 @@ with open(base_path_external / "output" / "dmn_run_1806.pkl", "rb") as f:
     gwfsim = pickle.load(f)
 gwf = gwfsim.get_model("dmn_run_1806")
 
-# well_ids = [2, 5, 7, 8, 10, 11]
-# well_names = ["A4", "A2", "B1", "A3", "B4", "C1"]
-well_ids = [5, 7, 10]
+well_ids = [6, 9, 10]
 well_names = ["A2", "B1", "B4"]
 plot_all(gwf, well_ids=well_ids, well_names=well_names)

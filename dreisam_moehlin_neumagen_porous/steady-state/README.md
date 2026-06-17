@@ -2,7 +2,7 @@
 
 Steady-state optimisation of different MODFLOW6 setups (i.e. different combinations of MODFLOW6 packages) of the porous aquifer in the Dreisam-Moehlin-Neumagen catchment.
 
-The folders contain mutltiple model structures. We finally used `sfr-opt-kf-riv_drainage_layers_gaussian-filter`.
+The folders contain mutltiple model structures. We finally used `sfr-opt-kf-riv_drainage_layers_gaussian-filter` to peform 10 000 Monte-Carlo simulations. The best model run is used for backward particle tracking `sfr-opt-kf-riv_drainage_layers_gaussian-filter_prt`.
 
 ## Models
 - `sfr-opt-kf-riv_drainage_layers_gaussian-filter`: steady-state groundwater model of the period 2013 - 2023
@@ -17,7 +17,7 @@ The folders contain mutltiple model structures. We finally used `sfr-opt-kf-riv_
 - `modify_elevations.py`: Ensure that bottom elevations of the layers do not overlap. Bottom elevations are adjusted in case of intersections. 
 - `modify_hydraulic_conductivity_and_specific_yield_of_layer1.py`: Replace hydraulic conductivities by hydraulic conductivities of the BK50 soil map.
 - `modify_hydraulic_conductivity_and_specific_yield_of_gravel.py`: Assign values of gravel layers 
-- `generate_boundary_conditions.py`: Generate the boundary conditions file and add the no flow, constant head and recharge boundary condition.
+- `generate_boundary_conditions.py`: Generate the boundary conditions file and add the no flow, constant head and recharge boundary condition. We used average interpolated groundwater heads to calculate the gradients at the boundary between porous and fissured aquifer. Using a kf of 1.97 x 10e-7, we used Darcy's law to calculate the lateral inflow from the fissured aquifer.
 - `define_drainage_area.py`: Define the drainage area of the former Tuniberg wetland and the mask to `modflow_parameters.nc`. 
 - `make_stream_segment_routing.py`: Identify the downstream segment for each stream segment.
 - `repair_geometries_of_stream_segments.py`: Repair the geometries of the stream segments by reversing the order of the vertices.

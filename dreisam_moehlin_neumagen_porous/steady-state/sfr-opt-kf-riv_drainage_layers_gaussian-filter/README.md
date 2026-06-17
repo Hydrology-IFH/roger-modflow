@@ -14,10 +14,17 @@
 - `write_binary_to_netcdf_steady-state.py`: Writes the values of the MODFLOW6 output files in a single netCDF-file
 - `write_fudge_parameters.py`: Write fudge parameters used for Monte Carlo simualtions. Parameter ranges are defined in the file. Fudging means hydraulic conductivity is decreased/increased by a factor.
 
+## Workflow for Monte-Carlo simulations on local computer
+1. `./modflow_steady-state_monte_carlo.sh`
+2. `python evaluate_steady-state_simulations.py`
 
-## Workflow
-1. `write_fudge_parameters.py`
-2. `modflow6_steady-state.py --model-run 5`: Run the model. --model-run 5 means initial paramters are used
-3. `write_binary_to_netcdf_steady-state.py --model-run 5`: Write the output to netCDF
-4. `plot_groundwater_heads_steady-state.py --model-run 5`: Plot the groundwater heads
-5. `evaluate_steady-state_simulation.py --model-run 5`: Compare to observations
+## Workflow for Monte-Carlo simulations on BwUniCluster3.0
+1. `python make_parallel_jobs.py`
+2. `./submit_jobs.sh`
+
+## Workflow for a single run
+1. `python write_fudge_parameters.py`
+2. `python modflow6_steady-state.py --model-run 5`: Run the model. --model-run 5 means initial paramters are used
+3. `python write_binary_to_netcdf_steady-state.py --model-run 5`: Write the output to netCDF
+4. `python plot_groundwater_heads_steady-state.py --model-run 5`: Plot the groundwater heads
+5. `python evaluate_steady-state_simulation.py --model-run 5`: Compare to observations

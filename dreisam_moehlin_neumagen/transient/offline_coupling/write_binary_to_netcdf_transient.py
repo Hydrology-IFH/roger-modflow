@@ -67,8 +67,8 @@ def main(stress_test_meteo, stress_test_meteo_magnitude, stress_test_meteo_durat
         elevation_bottom_layer3 = ds['elevations'].isel(z=3).values
         elevation_bottom_layer4 = ds['elevations'].isel(z=4).values
         spatial_ref = ds.spatial_ref
-        xcoords = ds.x.values
-        ycoords = ds.y.values
+        xcoords = ds.x.values + 25
+        ycoords = ds.y.values - 25
 
     fhead = base_path / "output" / stress_test_name / f"dmn_run_{model_run}.hds"
     click.echo(f"Reading head file {fhead}...")

@@ -6,4 +6,8 @@ Short description of the folders:
 - `steady-state/`: steady-state groundwater model
 - `transient/`: transient groundwater model
 
-See READMEs in the subfolders for more information.
+Data of `input/` or `output/` is stored on FUHYS018 in `StressRes_RoGeR-ModFlow/` since GitHub is not meant to be a large data storage facility. Please contact [Jürgen Strub](juergen.strub@hydrology.uni-freiburg.de) or [Markus Weiler](markus.weiler@hydrology.uni-freiburg.de) to access the data.
+
+In order to run the Python scripts, you have to install the anaconda environment using `../conda-environment.yml`. You can follow the instructions provided in `../README.md`.
+
+See READMEs in the subfolders for more information. I have tried my best to document everything as good as possible and for sure the you will encounter some bugs or incomplete documentation. My advice is that for larger modelling projects a single person is not sufficient and I suggest the four eye principle. Many conceptual and technical issues can be avoided if you are working in development teams.
