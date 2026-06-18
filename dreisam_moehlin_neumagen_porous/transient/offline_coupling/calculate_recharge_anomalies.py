@@ -286,14 +286,14 @@ def main(model_run):
             da_recharge_annual = da_recharge.resample(time="YE").sum()
 
             df_recharge_monthly = pd.DataFrame(index=da_recharge_monthly.time.values, data=da_recharge_monthly.sum(dim=["y", "x"]).values, columns=["recharge"])
-            df_recharge_annual = pd.DataFrame(index=da_recharge_annual.time.values, data=da_recharge_annual.sum(dim=["y", "x"]).values, columns=["recharge"])
+            # df_recharge_annual = pd.DataFrame(index=da_recharge_annual.time.values, data=da_recharge_annual.sum(dim=["y", "x"]).values, columns=["recharge"])
 
             recharge_avg = np.nanmean(df_recharge_base_monthly)
             df_recharge_anomalies_monthly_abs = pd.DataFrame(index=df_recharge_monthly.index, data=df_recharge_monthly["recharge"].values - recharge_avg, columns=["anomaly"])
             df_recharge_anomalies_monthly_percent = pd.DataFrame(index=df_recharge_monthly.index, data=(df_recharge_monthly["recharge"].values - recharge_avg) / recharge_avg * 100, columns=["anomaly"])
             recharge_avg = np.nanmean(df_recharge_base_annual)
-            df_recharge_anomalies_annual_abs = pd.DataFrame(index=df_recharge_annual.index, data=df_recharge_annual["recharge"].values - recharge_avg, columns=["anomaly"])
-            df_recharge_anomalies_annual_percent = pd.DataFrame(index=df_recharge_annual.index, data=(df_recharge_annual["recharge"].values - recharge_avg) / recharge_avg * 100, columns=["anomaly"])
+            # df_recharge_anomalies_annual_abs = pd.DataFrame(index=df_recharge_annual.index, data=df_recharge_annual["recharge"].values - recharge_avg, columns=["anomaly"])
+            # df_recharge_anomalies_annual_percent = pd.DataFrame(index=df_recharge_annual.index, data=(df_recharge_annual["recharge"].values - recharge_avg) / recharge_avg * 100, columns=["anomaly"])
 
             # make figures directory if it does not exist
             figures_dir = base_path.parent / "figures" / "recharge_anomalies" / stress_test_scenario

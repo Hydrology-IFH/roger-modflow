@@ -94,8 +94,6 @@ def main(model_run):
                 mask = src.read(1)
                 mask = np.where(mask == 1, True, False)
 
-        area_m2 = np.sum(mask) * 50 * 50  # number of grid cells in the area multiplied by the area of each grid cell (50 m x 50 m)
-
         click.echo(f"Processing area {area}...")
         click.echo(f"Processing scenario {base}...")
         # load the groundwater depths for the base scenario
