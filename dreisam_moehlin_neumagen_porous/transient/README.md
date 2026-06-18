@@ -39,7 +39,11 @@ summer-drought:
 - duration3-magnitude2: Summer drought of 2018 is repeated and occurs in 2016, 2017 and 2018 in future climate
 
 long-term:
-- duration0-magnitude2: Future climate
+- duration0-magnitude2: Far future climate (2070 - 2099)
+
+durationx: event is x years repeated.
+magnitude1: using seasonal delta values of [RheiKlim](https://apps.hydro.uni-freiburg.de/de/RheiKlim/) for the near future (2040 - 2069)
+magnitude2: using seasonale delta values of [RheiKlim](https://apps.hydro.uni-freiburg.de/de/RheiKlim/) for the far future (2070 - 2099)
 
 ### Agricultural management
 - no-irrigation: no irrigation is applied on agricultural areas
@@ -53,7 +57,9 @@ long-term:
 
 ## Files in output/
 File names contain a combination of the stress test scenarios. For example:
-- modflow_long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress.nc: MODFLOW6 simulation result of the period 2013-2023 with a future climate, agricultural irrigation, soil compaction of agricultural areas and increased extraction of drinking water wells
+- modflow_long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress.nc: MODFLOW6 simulation result of the period 2013-2023 with a future climate, agricultural irrigation, soil compaction of agricultural areas and increased extraction of drinking water wells.
+
+If soil-compaction or well-extraction-stress does not occur in the file name, the stress test scenario is not applied.
 
 
 ## Spatio-temporal kriging of groundwater heads
