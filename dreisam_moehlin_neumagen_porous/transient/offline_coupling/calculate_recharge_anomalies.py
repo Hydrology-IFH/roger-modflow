@@ -58,32 +58,25 @@ def main(model_run):
 
     areas = ["dmn", "wsg_hausen", "wsg_zartener_becken", "wsg_boetzingen", "wsg_breisach", "wsg_ebringen", "wsg_eichstetten", "wsg_gottenheim", "wsg_krozinger_berg", "wsg_march", "wsg_schlatt", "wsg_tuniberg", "wsg_umkirch"]
 
-    areas = ["dmn", "wsg_hausen"]
-
     base = "base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"
 
-    # stress_test_scenarios = ["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction",
-    #                          "base-magnitude0-duration0_irrigation_no-yellow-mustard_soil-compaction",
-    #                          "summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
-    #                          "summer-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction",
-    #                          "summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-    #                          "summer-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-    #                          "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
-    #                          "summer-drought-magnitude2-duration3_irrigation_no-yellow-mustard_soil-compaction",
-    #                          "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-    #                          "summer-drought-magnitude2-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-    #                          "long-term-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction",
-    #                          "long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction",
-    #                          "long-term-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-    #                          "long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"]
+    stress_test_scenarios = ["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction",
+                             "base-magnitude0-duration0_irrigation_no-yellow-mustard_soil-compaction",
+                             "summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
+                             "summer-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction",
+                             "summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
+                             "summer-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
+                             "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
+                             "summer-drought-magnitude2-duration3_irrigation_no-yellow-mustard_soil-compaction",
+                             "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
+                             "summer-drought-magnitude2-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
+                             "long-term-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction",
+                             "long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction",
+                             "long-term-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
+                             "long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"]
     
-
-    stress_test_scenarios = ["summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction"]
-
-
     date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="D")
     years = np.unique(date_time.year.values)
-    timesteps = np.arange(len(date_time))
 
     # load modflow parameters to get the coordinates of the grid
     click.echo("Loading topography...")
@@ -174,9 +167,16 @@ def main(model_run):
         # dataframe with annual total sum of direct recharge
         df_direct_recharge_base_annual = pd.DataFrame(index=da_direct_recharge_base_annual.time.values, data=da_direct_recharge_base_annual.sum(dim=["y", "x"]).values, columns=["direct_recharge"])
 
-        recharge_base = indirect_recharge_base + direct_recharge_base
         # create xarray data array for total recharge
-        da_recharge_base = da_indirect_recharge_base + da_direct_recharge_base
+        da_recharge_base = xr.DataArray(
+            data=da_indirect_recharge_base.values + da_direct_recharge_base.values,
+            dims=["time", "y", "x"],
+            coords={
+                "time": date_time,
+                "y": ycoords,
+                "x": xcoords,
+            },
+        )
         # resample to monthly
         da_recharge_base_monthly = da_recharge_base.resample(time="ME").sum()
         # resample to annual
@@ -318,7 +318,7 @@ def main(model_run):
 
             recharge_base_avg = np.nanmean(df_recharge_base_monthly.values.flatten())
             df_recharge_anomalies_monthly_abs = pd.DataFrame(index=df_recharge_monthly.index, data=df_recharge_monthly["recharge"].values - recharge_base_avg, columns=["anomaly"])
-            df_recharge_anomalies_monthly_percent = pd.DataFrame(index=df_recharge_monthly.index, data=(df_recharge_monthly["recharge"].values - recharge_base_avg) / recharge_base_avg * 100, columns=["anomaly"])
+            df_recharge_anomalies_monthly_percent = pd.DataFrame(index=df_recharge_monthly.index, data=((df_recharge_monthly["recharge"].values - recharge_base_avg) / recharge_base_avg) * 100, columns=["anomaly"])
             recharge_base_avg_annual = np.nanmean(df_recharge_base_annual.values.flatten())
             # df_recharge_anomalies_annual_abs = pd.DataFrame(index=df_recharge_annual.index, data=df_recharge_annual["recharge"].values - recharge_base_avg_annual, columns=["anomaly"])
             # df_recharge_anomalies_annual_percent = pd.DataFrame(index=df_recharge_annual.index, data=(df_recharge_annual["recharge"].values - recharge_base_avg_annual) / recharge_base_avg_annual * 100, columns=["anomaly"])
