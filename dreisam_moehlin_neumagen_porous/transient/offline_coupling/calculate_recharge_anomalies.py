@@ -58,22 +58,28 @@ def main(model_run):
 
     areas = ["dmn", "wsg_hausen", "wsg_zartener_becken", "wsg_boetzingen", "wsg_breisach", "wsg_ebringen", "wsg_eichstetten", "wsg_gottenheim", "wsg_krozinger_berg", "wsg_march", "wsg_schlatt", "wsg_tuniberg", "wsg_umkirch"]
 
+    areas = ["dmn", "wsg_hausen"]
+
     base = "base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"
 
-    stress_test_scenarios = ["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction",
-                             "base-magnitude0-duration0_irrigation_no-yellow-mustard_soil-compaction",
-                             "summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
-                             "summer-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction",
-                             "summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-                             "summer-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-                             "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
-                             "summer-drought-magnitude2-duration3_irrigation_no-yellow-mustard_soil-compaction",
-                             "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-                             "summer-drought-magnitude2-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-                             "long-term-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction",
-                             "long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction",
-                             "long-term-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-                             "long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"]
+    # stress_test_scenarios = ["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction",
+    #                          "base-magnitude0-duration0_irrigation_no-yellow-mustard_soil-compaction",
+    #                          "summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
+    #                          "summer-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction",
+    #                          "summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
+    #                          "summer-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
+    #                          "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
+    #                          "summer-drought-magnitude2-duration3_irrigation_no-yellow-mustard_soil-compaction",
+    #                          "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
+    #                          "summer-drought-magnitude2-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
+    #                          "long-term-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction",
+    #                          "long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction",
+    #                          "long-term-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
+    #                          "long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"]
+    
+
+    stress_test_scenarios = ["summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction"]
+
 
     date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="D")
     years = np.unique(date_time.year.values)
@@ -94,11 +100,6 @@ def main(model_run):
             with rasterio.open(file) as src:
                 mask = src.read(1)
                 mask = np.where(mask == 1, True, False)
-            x1 = np.where(mask)[1].min()
-            x2 = np.where(mask)[1].max()
-            y1 = np.where(mask)[0].min()
-            y2 = np.where(mask)[0].max()
-            grid_extent = (xcoords[x1], xcoords[x2], ycoords[y1], ycoords[y2])
 
         click.echo(f"Processing scenario {base}...")
         # load the indirect recharge
@@ -219,9 +220,11 @@ def main(model_run):
             df_indirect_recharge_annual = pd.DataFrame(index=da_indirect_recharge_annual.time.values, data=da_indirect_recharge_annual.sum(dim=["y", "x"]).values, columns=["indirect_recharge"])
 
             indirect_recharge_avg = np.nanmean(df_indirect_recharge_base_monthly)
+            click.echo(f"indirect recharge average (monthly): {indirect_recharge_avg}")
             df_indirect_recharge_anomalies_monthly_abs = df_indirect_recharge_monthly - indirect_recharge_avg
             df_indirect_recharge_anomalies_monthly_percent = (df_indirect_recharge_monthly - indirect_recharge_avg) / indirect_recharge_avg * 100
             indirect_recharge_avg = np.nanmean(df_indirect_recharge_base_annual)
+            click.echo(f"indirect recharge average (annual): {indirect_recharge_avg}")
             df_indirect_recharge_anomalies_annual_abs = df_indirect_recharge_annual - indirect_recharge_avg
             df_indirect_recharge_anomalies_annual_percent = (df_indirect_recharge_annual - indirect_recharge_avg) / indirect_recharge_avg * 100
 
@@ -273,9 +276,11 @@ def main(model_run):
             df_direct_recharge_annual = pd.DataFrame(index=da_direct_recharge_annual.time.values, data=da_direct_recharge_annual.sum(dim=["y", "x"]).values, columns=["direct_recharge"])
 
             direct_recharge_avg = np.nanmean(df_direct_recharge_base_monthly)
+            click.echo(f"direct recharge average (monthly): {direct_recharge_avg}")
             df_direct_recharge_anomalies_monthly_abs = df_direct_recharge_monthly - direct_recharge_avg
             df_direct_recharge_anomalies_monthly_percent = (df_direct_recharge_monthly - direct_recharge_avg) / direct_recharge_avg * 100
             direct_recharge_avg = np.nanmean(df_direct_recharge_base_annual)
+            click.echo(f"direct recharge average (annual): {direct_recharge_avg}")
             df_direct_recharge_anomalies_annual_abs = df_direct_recharge_annual - direct_recharge_avg
             df_direct_recharge_anomalies_annual_percent = (df_direct_recharge_annual - direct_recharge_avg) / direct_recharge_avg * 100
 
