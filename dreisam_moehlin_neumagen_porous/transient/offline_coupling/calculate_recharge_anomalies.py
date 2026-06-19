@@ -331,7 +331,7 @@ def main(model_run):
             # plot monthly absolute anomalies of the recharge using a bar plot, make bars with negative values orange and bars with positive values blue
             fig, ax = plt.subplots(figsize=(6, 2.5))
             # use blue for positive anomalies and orange for negative anomalies
-            ax.bar(df_recharge_monthly.index, df_recharge_monthly["anomaly"], color="black", width=20)
+            ax.bar(df_recharge_monthly.index, df_recharge_monthly["recharge"], color="black", width=20)
             ax.set_xticks(df_recharge_monthly.index)
             # reformat xticklabels to show only the year and month and plot labels of every 4th month
             xticklabels = df_recharge_monthly.index.strftime("%y-%m")
