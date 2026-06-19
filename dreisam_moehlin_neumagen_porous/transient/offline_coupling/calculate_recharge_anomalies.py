@@ -219,14 +219,18 @@ def main(model_run):
             # dataframe with annual total sum of indirect recharge
             df_indirect_recharge_annual = pd.DataFrame(index=da_indirect_recharge_annual.time.values, data=da_indirect_recharge_annual.sum(dim=["y", "x"]).values, columns=["indirect_recharge"])
 
-            indirect_recharge_avg = np.nanmean(df_indirect_recharge_base_monthly)
-            click.echo(f"indirect recharge average (monthly): {indirect_recharge_avg}")
-            df_indirect_recharge_anomalies_monthly_abs = df_indirect_recharge_monthly - indirect_recharge_avg
-            df_indirect_recharge_anomalies_monthly_percent = (df_indirect_recharge_monthly - indirect_recharge_avg) / indirect_recharge_avg * 100
-            indirect_recharge_avg = np.nanmean(df_indirect_recharge_base_annual)
-            click.echo(f"indirect recharge average (annual): {indirect_recharge_avg}")
-            df_indirect_recharge_anomalies_annual_abs = df_indirect_recharge_annual - indirect_recharge_avg
-            df_indirect_recharge_anomalies_annual_percent = (df_indirect_recharge_annual - indirect_recharge_avg) / indirect_recharge_avg * 100
+            indirect_recharge_base_avg = np.nanmean(df_indirect_recharge_base_monthly.values.flatten())
+            indirect_recharge_avg = np.nanmean(df_indirect_recharge_monthly.values.flatten())
+            click.echo(f"indirect recharge average (base; monthly): {indirect_recharge_base_avg}")
+            click.echo(f"indirect recharge average (stress test; monthly): {indirect_recharge_avg}")
+            df_indirect_recharge_anomalies_monthly_abs = df_indirect_recharge_monthly - indirect_recharge_base_avg
+            df_indirect_recharge_anomalies_monthly_percent = ((df_indirect_recharge_monthly - indirect_recharge_base_avg) / indirect_recharge_base_avg) * 100
+            indirect_recharge_base_avg_annual = np.nanmean(df_indirect_recharge_base_annual.values.flatten())
+            indirect_recharge_avg_annual = np.nanmean(df_indirect_recharge_annual.values.flatten())
+            click.echo(f"indirect recharge average (base; annual): {indirect_recharge_base_avg_annual}")
+            click.echo(f"indirect recharge average (stress test; annual): {indirect_recharge_avg_annual}")
+            df_indirect_recharge_anomalies_annual_abs = df_indirect_recharge_annual - indirect_recharge_base_avg_annual
+            df_indirect_recharge_anomalies_annual_percent = ((df_indirect_recharge_annual - indirect_recharge_base_avg_annual) / indirect_recharge_base_avg_annual) * 100
 
             df_indirect_recharge_anomalies_monthly_abs.columns = ["anomaly"]
             df_indirect_recharge_anomalies_monthly_percent.columns = ["anomaly"]
@@ -275,14 +279,18 @@ def main(model_run):
             # dataframe with annual total sum of direct recharge
             df_direct_recharge_annual = pd.DataFrame(index=da_direct_recharge_annual.time.values, data=da_direct_recharge_annual.sum(dim=["y", "x"]).values, columns=["direct_recharge"])
 
-            direct_recharge_avg = np.nanmean(df_direct_recharge_base_monthly)
-            click.echo(f"direct recharge average (monthly): {direct_recharge_avg}")
-            df_direct_recharge_anomalies_monthly_abs = df_direct_recharge_monthly - direct_recharge_avg
-            df_direct_recharge_anomalies_monthly_percent = (df_direct_recharge_monthly - direct_recharge_avg) / direct_recharge_avg * 100
-            direct_recharge_avg = np.nanmean(df_direct_recharge_base_annual)
-            click.echo(f"direct recharge average (annual): {direct_recharge_avg}")
-            df_direct_recharge_anomalies_annual_abs = df_direct_recharge_annual - direct_recharge_avg
-            df_direct_recharge_anomalies_annual_percent = (df_direct_recharge_annual - direct_recharge_avg) / direct_recharge_avg * 100
+            direct_recharge_base_avg = np.nanmean(df_direct_recharge_base_monthly.values.flatten())
+            direct_recharge_avg = np.nanmean(df_direct_recharge_monthly.values.flatten())
+            click.echo(f"direct recharge average (base; monthly): {direct_recharge_base_avg}")
+            click.echo(f"direct recharge average (stress test; monthly): {direct_recharge_avg}")
+            df_direct_recharge_anomalies_monthly_abs = df_direct_recharge_monthly - direct_recharge_base_avg
+            df_direct_recharge_anomalies_monthly_percent = ((df_direct_recharge_monthly - direct_recharge_base_avg) / direct_recharge_base_avg) * 100
+            direct_recharge_base_avg_annual = np.nanmean(df_direct_recharge_base_annual.values.flatten())
+            direct_recharge_avg_annual = np.nanmean(df_direct_recharge_annual.values.flatten())
+            click.echo(f"direct recharge average (annual): {direct_recharge_base_avg_annual}")
+            click.echo(f"direct recharge average (stress test; annual): {direct_recharge_avg_annual}")
+            df_direct_recharge_anomalies_annual_abs = df_direct_recharge_annual - direct_recharge_base_avg_annual
+            df_direct_recharge_anomalies_annual_percent = ((df_direct_recharge_annual - direct_recharge_base_avg_annual) / direct_recharge_base_avg_annual) * 100
 
             df_direct_recharge_anomalies_monthly_abs.columns = ["anomaly"]
             df_direct_recharge_anomalies_monthly_percent.columns = ["anomaly"]
@@ -299,12 +307,12 @@ def main(model_run):
             df_recharge_monthly = pd.DataFrame(index=da_recharge_monthly.time.values, data=da_recharge_monthly.sum(dim=["y", "x"]).values, columns=["recharge"])
             # df_recharge_annual = pd.DataFrame(index=da_recharge_annual.time.values, data=da_recharge_annual.sum(dim=["y", "x"]).values, columns=["recharge"])
 
-            recharge_avg = np.nanmean(df_recharge_base_monthly)
-            df_recharge_anomalies_monthly_abs = pd.DataFrame(index=df_recharge_monthly.index, data=df_recharge_monthly["recharge"].values - recharge_avg, columns=["anomaly"])
-            df_recharge_anomalies_monthly_percent = pd.DataFrame(index=df_recharge_monthly.index, data=(df_recharge_monthly["recharge"].values - recharge_avg) / recharge_avg * 100, columns=["anomaly"])
-            recharge_avg = np.nanmean(df_recharge_base_annual)
-            # df_recharge_anomalies_annual_abs = pd.DataFrame(index=df_recharge_annual.index, data=df_recharge_annual["recharge"].values - recharge_avg, columns=["anomaly"])
-            # df_recharge_anomalies_annual_percent = pd.DataFrame(index=df_recharge_annual.index, data=(df_recharge_annual["recharge"].values - recharge_avg) / recharge_avg * 100, columns=["anomaly"])
+            recharge_base_avg = np.nanmean(df_recharge_base_monthly.values.flatten())
+            df_recharge_anomalies_monthly_abs = pd.DataFrame(index=df_recharge_monthly.index, data=df_recharge_monthly["recharge"].values - recharge_base_avg, columns=["anomaly"])
+            df_recharge_anomalies_monthly_percent = pd.DataFrame(index=df_recharge_monthly.index, data=(df_recharge_monthly["recharge"].values - recharge_base_avg) / recharge_base_avg * 100, columns=["anomaly"])
+            recharge_base_avg_annual = np.nanmean(df_recharge_base_annual.values.flatten())
+            # df_recharge_anomalies_annual_abs = pd.DataFrame(index=df_recharge_annual.index, data=df_recharge_annual["recharge"].values - recharge_base_avg_annual, columns=["anomaly"])
+            # df_recharge_anomalies_annual_percent = pd.DataFrame(index=df_recharge_annual.index, data=(df_recharge_annual["recharge"].values - recharge_base_avg_annual) / recharge_base_avg_annual * 100, columns=["anomaly"])
 
             # make figures directory if it does not exist
             figures_dir = base_path.parent / "figures" / "recharge_anomalies" / stress_test_scenario
