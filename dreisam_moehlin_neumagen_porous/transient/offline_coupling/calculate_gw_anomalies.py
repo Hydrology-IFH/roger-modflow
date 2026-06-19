@@ -220,7 +220,7 @@ def main(model_run):
                 ax.grid(True, alpha=0.3)
                 fig.colorbar(im, ax=ax, label="GWFA Anomalie [m]")
                 fig.tight_layout()
-                fig.savefig(figures_dir / f"gw_depth_anomalies_abs_annual_2018_{area}.pdf", dpi=300)
+                fig.savefig(figures_dir / f"gw_depth_anomalies_abs_annual_{year}_{area}.pdf", dpi=300)
                 plt.close(fig)
 
                 fig, ax = plt.subplots(figsize=(5, 4))
@@ -237,7 +237,7 @@ def main(model_run):
                 ax.grid(True, alpha=0.3)
                 fig.colorbar(im, ax=ax, label="GWFA Anomalie [%]")
                 fig.tight_layout()
-                fig.savefig(figures_dir / f"gw_depth_anomalies_percent_annual_2018_{area}.pdf", dpi=300)
+                fig.savefig(figures_dir / f"gw_depth_anomalies_percent_annual_{year}_{area}.pdf", dpi=300)
                 plt.close(fig)
 
         for area in areas:
@@ -265,8 +265,12 @@ def main(model_run):
             ax.set_xlim(date_time[0], date_time[-1])
             ax.set_xlabel("Zeit")
             ax.set_ylabel("Mittlere GWFA Anomalie [m]")
-            # set y-axis limits to -10 to 10        
-            ax.set_ylim(-3, 3)
+            # set y-axis limits to -10 to 10
+            # get ylimits of the current plot
+            ylims = ax.get_ylim()
+            _ylim = max(abs(ylims[0]), abs(ylims[1]))
+            ylim = np.ceil(_ylim)  
+            ax.set_ylim(-ylim, ylim)
             # turn legend off
             ax.legend().set_visible(False)
             fig.tight_layout()
