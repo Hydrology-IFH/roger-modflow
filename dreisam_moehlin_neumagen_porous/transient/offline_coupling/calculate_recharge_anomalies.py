@@ -56,7 +56,7 @@ def aggregate_to_coarser_resolution(vals, res_fine, res_coarse, method="sum", x_
 def main(model_run):
     base_path = Path(__file__).parent
 
-    areas = ["dmn", "wsg_hausen", "wsg_zartener_becken"]
+    areas = ["dmn", "wsg_hausen", "wsg_zartener_becken", "wsg_boetzingen", "wsg_breisach", "wsg_ebringen", "wsg_eichstetten", "wsg_gottenheim", "wsg_krozinger_berg", "wsg_march", "wsg_schlatt", "wsg_tuniberg", "wsg_umkirch"]
 
     base = "base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"
 
@@ -89,16 +89,16 @@ def main(model_run):
     for area in areas:
         if area == "dmn":
             mask = ds_params["mask_porous_aquifer"].values
-        elif area == "wsg_hausen":
-            file = base_path.parent / "input" / "wsg_hausen_.tif"
+        else:
+            file = base_path.parent / "input" / f"{area}_.tif"
             with rasterio.open(file) as src:
                 mask = src.read(1)
                 mask = np.where(mask == 1, True, False)
-        elif area == "wsg_zartener_becken":
-            file = base_path.parent / "input" / "wsg_zartener_becken_.tif"
-            with rasterio.open(file) as src:
-                mask = src.read(1)
-                mask = np.where(mask == 1, True, False)
+            x1 = np.where(mask)[1].min()
+            x2 = np.where(mask)[1].max()
+            y1 = np.where(mask)[0].min()
+            y2 = np.where(mask)[0].max()
+            grid_extent = (xcoords[x1], xcoords[x2], ycoords[y1], ycoords[y2])
 
         click.echo(f"Processing scenario {base}...")
         # load the indirect recharge

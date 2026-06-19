@@ -57,6 +57,8 @@ def main(model_run):
     # base_path_output = base_path / "output"
     base_path_output = Path("/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline-coupling/output")
 
+    # areas = ["dmn", "wsg_hausen", "wsg_zartener_becken", "wsg_boetzingen", "wsg_breisach", "wsg_ebringen", "wsg_eichstetten", "wsg_gottenheim", "wsg_krozinger_berg", "wsg_march", "wsg_schlatt", "wsg_tuniberg", "wsg_umkirch"]
+
     areas = ["dmn"]
 
     base = "base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"
@@ -75,15 +77,25 @@ def main(model_run):
     output_file = base_path_output / f"anomaly_metrics_rel_run{model_run}.csv"
     df_anomaly_metrics_rel = pd.read_csv(output_file, sep=";")
 
-    _labels = {"air_temperature": "TA", 
+    _labels = {"air_temperature": "Lufttemp.",
+               "potential_evapotranspiration": "PET",
+               "actual_evapotranspiration": "AET",
+               "precipitation": "Niederschlag",
                "direct_recharge": "Dir. GWR", 
                "indirect_recharge": "Indir. GWR", 
-               "gw_depth": "GW Depth"}
+               "gw_depth": "GWFA",
+               "well_extraction": "GW-Entnahme",
+               "irrigation": "Bewaesserung"}
     
-    _units_abs = {"air_temperature": " [°C]", 
+    _units_abs = {"air_temperature": " [°C]",
+                  "potential_evapotranspiration": " [mm/Tag]",
+                  "actual_evapotranspiration": " [mm/Tag]",
+                  "precipitation": " [mm/Tag]",
                   "direct_recharge": " [$m^3$/d]", 
                   "indirect_recharge": " [$m^3$/d]", 
-                  "gw_depth": " [m]"}
+                  "gw_depth": " [m]",
+                  "well_extraction": " [$m^3$/d]",
+                  "irrigation": " [$m^3$/d]"}
 
     for area in areas:
         # # select metrics for the base scenario and for the current area 

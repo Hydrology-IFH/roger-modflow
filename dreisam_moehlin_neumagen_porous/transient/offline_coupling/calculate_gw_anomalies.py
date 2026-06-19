@@ -57,6 +57,8 @@ def main(model_run):
     base_path = Path(__file__).parent
     # base_path_output = Path("/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline-coupling/output")
 
+    # areas = ["dmn", "wsg_hausen", "wsg_zartener_becken", "wsg_boetzingen", "wsg_breisach", "wsg_ebringen", "wsg_eichstetten", "wsg_gottenheim", "wsg_krozinger_berg", "wsg_march", "wsg_schlatt", "wsg_tuniberg", "wsg_umkirch"]
+
     areas = ["dmn", "wsg_hausen", "wsg_zartener_becken"]
 
     base = "base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"
@@ -161,18 +163,8 @@ def main(model_run):
                 y1 = np.where(mask)[0].min()
                 y2 = np.where(mask)[0].max()
                 grid_extent = (xcoords[x1], xcoords[x2], ycoords[y1], ycoords[y2])
-            elif area == "wsg_hausen":
-                file = base_path.parent / "input" / "wsg_hausen_.tif"
-                with rasterio.open(file) as src:
-                    mask = src.read(1)
-                    mask = np.where(mask == 1, True, False)
-                x1 = np.where(mask)[1].min()
-                x2 = np.where(mask)[1].max()
-                y1 = np.where(mask)[0].min()
-                y2 = np.where(mask)[0].max()
-                grid_extent = (xcoords[x1], xcoords[x2], ycoords[y1], ycoords[y2])
-            elif area == "wsg_zartener_becken":
-                file = base_path.parent / "input" / "wsg_zartener_becken_.tif"
+            else:
+                file = base_path.parent / "input" / f"{area}_.tif"
                 with rasterio.open(file) as src:
                     mask = src.read(1)
                     mask = np.where(mask == 1, True, False)
@@ -211,41 +203,42 @@ def main(model_run):
             gw_depths_annual_anomalies_percent = np.where(mask, gw_depths_annual_anomalies_percent, np.nan)
 
             # plot map of annual anomalies of groundwater depths for the year 2018
-            click.echo(f"Plotting groundwater depth anomalies for {area} (2018)...")
-            cond = (da_gw_depths_annual.time.dt.year == 2018).values
-            fig, ax = plt.subplots(figsize=(5, 4))
-            im = ax.imshow(gw_depths_annual_anomalies_abs[cond, y1:y2, x1:x2][0], cmap="RdBu", vmin=-3, vmax=3, extent=grid_extent)
-            if area == "dmn":
-                # plot every second xticklabels
-                xticks = ax.get_xticks()
-                ax.set_xticks(xticks[::2])
-                xticklabels = [f"{int(tick)}" for tick in xticks[::2]]
-                ax.set_xticklabels(xticklabels)
-            ax.set_xlabel("X-Koordinate")
-            ax.set_ylabel("Y-Koordinate")
-            ax.axis('equal')
-            ax.grid(True, alpha=0.3)
-            fig.colorbar(im, ax=ax, label="GWFA Anomalie [m]")
-            fig.tight_layout()
-            fig.savefig(figures_dir / f"gw_depth_anomalies_abs_annual_2018_{area}.pdf", dpi=300)
-            plt.close(fig)
+            for year in years:
+                click.echo(f"Plotting groundwater depth anomalies for {area} ({year})...")
+                cond = (da_gw_depths_annual.time.dt.year == year).values
+                fig, ax = plt.subplots(figsize=(5, 4))
+                im = ax.imshow(gw_depths_annual_anomalies_abs[cond, y1:y2, x1:x2][0], cmap="RdBu", vmin=-3, vmax=3, extent=grid_extent)
+                if area == "dmn":
+                    # plot every second xticklabels
+                    xticks = ax.get_xticks()
+                    ax.set_xticks(xticks[::2])
+                    xticklabels = [f"{int(tick)}" for tick in xticks[::2]]
+                    ax.set_xticklabels(xticklabels)
+                ax.set_xlabel("X-Koordinate")
+                ax.set_ylabel("Y-Koordinate")
+                ax.axis('equal')
+                ax.grid(True, alpha=0.3)
+                fig.colorbar(im, ax=ax, label="GWFA Anomalie [m]")
+                fig.tight_layout()
+                fig.savefig(figures_dir / f"gw_depth_anomalies_abs_annual_2018_{area}.pdf", dpi=300)
+                plt.close(fig)
 
-            fig, ax = plt.subplots(figsize=(5, 4))
-            im = ax.imshow(gw_depths_annual_anomalies_percent[cond, y1:y2, x1:x2][0], cmap="RdBu", vmin=-50, vmax=50, extent=grid_extent)
-            if area == "dmn":
-                # plot every second xticklabels
-                xticks = ax.get_xticks()
-                ax.set_xticks(xticks[::2])
-                xticklabels = [f"{int(tick)}" for tick in xticks[::2]]
-                ax.set_xticklabels(xticklabels)
-            ax.set_xlabel("X-Koordinate")
-            ax.set_ylabel("Y-Koordinate")
-            ax.axis('equal')
-            ax.grid(True, alpha=0.3)
-            fig.colorbar(im, ax=ax, label="GWFA Anomalie [%]")
-            fig.tight_layout()
-            fig.savefig(figures_dir / f"gw_depth_anomalies_percent_annual_2018_{area}.pdf", dpi=300)
-            plt.close(fig)
+                fig, ax = plt.subplots(figsize=(5, 4))
+                im = ax.imshow(gw_depths_annual_anomalies_percent[cond, y1:y2, x1:x2][0], cmap="RdBu", vmin=-50, vmax=50, extent=grid_extent)
+                if area == "dmn":
+                    # plot every second xticklabels
+                    xticks = ax.get_xticks()
+                    ax.set_xticks(xticks[::2])
+                    xticklabels = [f"{int(tick)}" for tick in xticks[::2]]
+                    ax.set_xticklabels(xticklabels)
+                ax.set_xlabel("X-Koordinate")
+                ax.set_ylabel("Y-Koordinate")
+                ax.axis('equal')
+                ax.grid(True, alpha=0.3)
+                fig.colorbar(im, ax=ax, label="GWFA Anomalie [%]")
+                fig.tight_layout()
+                fig.savefig(figures_dir / f"gw_depth_anomalies_percent_annual_2018_{area}.pdf", dpi=300)
+                plt.close(fig)
 
         for area in areas:
             # click.echo(f"Plotting time series of groundwater depth anomalies for {area}...")

@@ -58,7 +58,7 @@ def main(model_run):
     # base_path_output = base_path / "output"
     # base_path_output = Path("/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline-coupling/output")
 
-    areas = ["wsg_hausen", "wsg_zartener_becken"]
+    areas = ["wsg_hausen", "wsg_zartener_becken", "wsg_boetzingen", "wsg_breisach", "wsg_ebringen", "wsg_eichstetten", "wsg_gottenheim", "wsg_krozinger_berg", "wsg_march", "wsg_schlatt", "wsg_tuniberg", "wsg_umkirch"]
 
     stress_test_scenarios = ["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction",
                              "base-magnitude0-duration0_irrigation_no-yellow-mustard_soil-compaction",
@@ -88,14 +88,8 @@ def main(model_run):
     for area in areas:
         if area == "dmn":
             mask = ds_params["mask_porous_aquifer"].values
-        elif area == "wsg_hausen":
-            file = base_path.parent / "input" / "wsg_hausen_.tif"
-            with rasterio.open(file) as src:
-                mask = src.read(1)
-                mask = np.where(mask == 1, True, False)
-
-        elif area == "wsg_zartener_becken":
-            file = base_path.parent / "input" / "wsg_zartener_becken_.tif"
+        else:
+            file = base_path.parent / "input" / f"{area}_.tif"
             with rasterio.open(file) as src:
                 mask = src.read(1)
                 mask = np.where(mask == 1, True, False)

@@ -65,18 +65,19 @@ def main(model_run):
 
     base = "base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"
     
-    # stress_test_scenarios = ["summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
-    #                          "summer-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction",
-    #                          "summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-    #                          "summer-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-    #                          "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
-    #                          "summer-drought-magnitude2-duration3_irrigation_no-yellow-mustard_soil-compaction",
-    #                          "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-    #                          "summer-drought-magnitude2-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-    #                          "long-term-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction",
-    #                          "long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction",
-    #                          "long-term-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-    #                          "long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"]
+    stress_test_scenarios = ["base-magnitude0-duration0_irrigation_no-yellow-mustard_soil-compaction",
+                             "summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
+                             "summer-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction",
+                             "summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
+                             "summer-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
+                             "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
+                             "summer-drought-magnitude2-duration3_irrigation_no-yellow-mustard_soil-compaction",
+                             "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
+                             "summer-drought-magnitude2-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
+                             "long-term-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction",
+                             "long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction",
+                             "long-term-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
+                             "long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"]
     
     stress_test_scenarios = ["summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction"]
 
