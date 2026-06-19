@@ -591,17 +591,17 @@ def main(model_run):
             },
         )
 
-        value = np.nanmean(da_well_extraction_base.flatten())
+        value = np.nanmean(da_well_extraction_base.values.flatten())
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/day", "metric": "average", "value": value}
-        value = np.nanpercentile(da_well_extraction_base.flatten(), 5)
+        value = np.nanpercentile(da_well_extraction_base.values.flatten(), 5)
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/day", "metric": "5th_percentile", "value": value}
-        value = np.nanpercentile(da_well_extraction_base.flatten(), 25)
+        value = np.nanpercentile(da_well_extraction_base.values.flatten(), 25)
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/day", "metric": "25th_percentile", "value": value}
-        value = np.nanpercentile(da_well_extraction_base.flatten(), 50)
+        value = np.nanpercentile(da_well_extraction_base.values.flatten(), 50)
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/day", "metric": "median", "value": value}
-        value = np.nanpercentile(da_well_extraction_base.flatten(), 75)
+        value = np.nanpercentile(da_well_extraction_base.values.flatten(), 75)
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/day", "metric": "75th_percentile", "value": value}
-        value = np.nanpercentile(da_well_extraction_base.flatten(), 95)
+        value = np.nanpercentile(da_well_extraction_base.values.flatten(), 95)
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/day", "metric": "95th_percentile", "value": value}
 
         for year in years:
