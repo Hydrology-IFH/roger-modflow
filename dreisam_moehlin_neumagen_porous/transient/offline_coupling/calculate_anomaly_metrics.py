@@ -62,7 +62,11 @@ def main(model_run):
 
     base = "base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"
     
-    stress_test_scenarios = ["summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
+    stress_test_scenarios = ["summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
+                             "summer-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction",
+                             "summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
+                             "summer-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
+                             "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
                              "summer-drought-magnitude2-duration3_irrigation_no-yellow-mustard_soil-compaction",
                              "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
                              "summer-drought-magnitude2-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
@@ -131,6 +135,7 @@ def main(model_run):
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "gw_depth", "unit": "m", "metric": "95th_percentile", "value": value}
 
         for year in years:
+            click.echo(f"Processing year {year}...")
             output_file = base_path / "output" / f"modflow_{base}" / f"gw_depth_run{model_run}_year{year}.nc"
             # output_file = base_path_output / f"{base}" / f"gw_depth_run{model_run}_year{year}.nc"
             ds_gw_depths = xr.open_dataset(output_file, engine="h5netcdf")
@@ -188,6 +193,7 @@ def main(model_run):
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "indirect_recharge", "unit": "m3/day", "metric": "95th_percentile", "value": value}
 
         for year in years:
+            click.echo(f"Processing year {year}...")
             output_file = base_path / "output" / f"modflow_{base}" / f"indirect_recharge_run{model_run}_year{year}.nc"
             # output_file = base_path_output / f"{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
             ds_indirect_recharge = xr.open_dataset(output_file, engine="h5netcdf")
@@ -255,6 +261,7 @@ def main(model_run):
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "m3/day", "metric": "95th_percentile", "value": value}
 
         for year in years:
+            click.echo(f"Processing year {year}...")
             base_path_roger = base_path.parent.parent.parent.parent / "roger"
             output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"recharge_{base}_year{year}.nc"
             ds_direct_recharge = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
@@ -325,6 +332,7 @@ def main(model_run):
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "potential_evapotranspiration", "unit": "mm/day", "metric": "95th_percentile", "value": value}
 
         for year in years:
+            click.echo(f"Processing year {year}...")
             base_path_roger = base_path.parent.parent.parent.parent / "roger"
             output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"potential_evapotranspiration_{base}_year{year}.nc"
             ds_potential_evapotranspiration = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
@@ -389,6 +397,7 @@ def main(model_run):
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "actual_evapotranspiration", "unit": "mm/day", "metric": "95th_percentile", "value": value}
 
         for year in years:
+            click.echo(f"Processing year {year}...")
             base_path_roger = base_path.parent.parent.parent.parent / "roger"
             output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"actual_evapotranspiration_{base}_year{year}.nc"
             ds_actual_evapotranspiration = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
@@ -485,6 +494,7 @@ def main(model_run):
         click.echo("Loading air temperature...")
         ll_air_temperature = []
         for year in years:
+            click.echo(f"Processing year {year}...")
             base_path_roger = base_path.parent.parent.parent.parent / "roger"
             output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"ta_{base}_year{year}.nc"
             # _stress_test_scenario = stress_test_scenario.replace("_well-extraction-stress", "")
@@ -523,6 +533,7 @@ def main(model_run):
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "air_temperature", "unit": "degC", "metric": "95th_percentile", "value": value}
 
         for year in years:
+            click.echo(f"Processing year {year}...")
             base_path_roger = base_path.parent.parent.parent.parent / "roger"
             output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"ta_{base}_year{year}.nc"
             # _stress_test_scenario = stress_test_scenario.replace("_well-extraction-stress", "")
@@ -588,6 +599,7 @@ def main(model_run):
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/day", "metric": "95th_percentile", "value": value}
 
         for year in years:
+            click.echo(f"Processing year {year}...")
             output_file = base_path / "output" / f"modflow_{base}" / f"well_extraction_run{model_run}_year{year}.nc"
             ds_well_extraction = xr.open_dataset(output_file, engine="h5netcdf")
             well_extraction_year = ds_well_extraction["well_extraction"].values
@@ -618,6 +630,7 @@ def main(model_run):
             click.echo("Loading groundwater depths (stress test)...")
             ll_gw_depths = []
             for year in years:
+                click.echo(f"Processing year {year}...")
                 output_file = base_path / "output" / f"modflow_{stress_test_scenario}" / f"gw_depth_run{model_run}_year{year}.nc"
                 # output_file = base_path_output / f"{stress_test_scenario}" / f"gw_depth_run{model_run}_year{year}.nc"
                 ds_gw_depths = xr.open_dataset(output_file, engine="h5netcdf")
@@ -680,6 +693,7 @@ def main(model_run):
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "gw_depth", "unit": "%", "metric": "95th_percentile", "value": anomaly_rel}
 
             for year in years:
+                click.echo(f"Processing year {year}...")
                 output_file = base_path / "output" / f"modflow_{base}" / f"gw_depth_run{model_run}_year{year}.nc"
                 # output_file = base_path_output / f"{stress_test_scenario}" / f"gw_depth_run{model_run}_year{year}.nc"
                 ds_gw_depths = xr.open_dataset(output_file, engine="h5netcdf")
@@ -804,6 +818,7 @@ def main(model_run):
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "indirect_recharge", "unit": "%", "metric": "95th_percentile", "value": anomaly_rel}
 
             for year in years:
+                click.echo(f"Processing year {year}...")
                 output_file = base_path / "output" / f"modflow_{base}" / f"indirect_recharge_run{model_run}_year{year}.nc"
                 # output_file = base_path_output / f"{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
                 ds_indirect_recharge = xr.open_dataset(output_file, engine="h5netcdf")
@@ -938,6 +953,7 @@ def main(model_run):
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "%", "metric": "95th_percentile", "value": anomaly_rel}
 
             for year in years:
+                click.echo(f"Processing year {year}...")
                 base_path_roger = base_path.parent.parent.parent.parent / "roger"
                 output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"recharge_{base}_year{year}.nc"
                 ds_direct_recharge = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
@@ -1090,6 +1106,7 @@ def main(model_run):
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "potential_evapotranspiration", "unit": "%", "metric": "95th_percentile", "value": anomaly_rel}    
 
             for year in years:
+                click.echo(f"Processing year {year}...")
                 base_path_roger = base_path.parent.parent.parent.parent / "roger"
                 output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"potential_evapotranspiration_{base}_year{year}.nc"
                 ds_potential_evapotranspiration = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
@@ -1223,6 +1240,7 @@ def main(model_run):
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "actual_evapotranspiration", "unit": "%", "metric": "95th_percentile", "value": anomaly_rel}    
 
             for year in years:
+                click.echo(f"Processing year {year}...")
                 base_path_roger = base_path.parent.parent.parent.parent / "roger"
                 output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"actual_evapotranspiration_{base}_year{year}.nc"
                 ds_actual_evapotranspiration = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
@@ -1363,6 +1381,7 @@ def main(model_run):
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "precipitation", "unit": "%", "metric": "95th_percentile", "value": anomaly_rel}    
 
             for year in years:
+                click.echo(f"Processing year {year}...")
                 base_path_roger = base_path.parent.parent.parent.parent / "roger"
                 output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"precipitation_{base}_year{year}.nc"
                 ds_precipitation = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
@@ -1514,6 +1533,7 @@ def main(model_run):
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "air_temperature", "unit": "%", "metric": "95th_percentile", "value": anomaly_rel}
 
             for year in years:
+                click.echo(f"Processing year {year}...")
                 base_path_roger = base_path.parent.parent.parent.parent / "roger"
                 output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"ta_{base}_year{year}.nc"
                 # _stress_test_scenario = stress_test_scenario.replace("_well-extraction-stress", "")
@@ -1627,6 +1647,7 @@ def main(model_run):
                 df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "irrigation", "unit": "m3/year", "metric": "95th_percentile", "value": value}
 
                 for year in years:
+                    click.echo(f"Processing year {year}...")
                     _stress_test_scenario = stress_test_scenario.replace("_well-extraction-stress", "")
                     base_path_roger = base_path.parent.parent.parent.parent / "roger"
                     output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"irrigation_{_stress_test_scenario}_year{year}.nc"
@@ -1716,6 +1737,7 @@ def main(model_run):
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "well_extraction", "unit": "%", "metric": "95th_percentile", "value": anomaly_rel}
 
             for year in years:
+                click.echo(f"Processing year {year}...")
                 output_file = base_path / "output" / f"modflow_{base}" / f"well_extraction_run{model_run}_year{year}.nc"
                 ds_well_extraction = xr.open_dataset(output_file, engine="h5netcdf")
                 well_extraction_year = ds_well_extraction["well_extraction"].values
