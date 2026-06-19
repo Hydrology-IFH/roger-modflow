@@ -58,22 +58,27 @@ def main(model_run):
     # base_path_output = base_path / "output"
     # base_path_output = Path("/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline-coupling/output")
 
-    areas = ["dmn", "wsg_hausen", "wsg_zartener_becken", "wsg_boetzingen", "wsg_breisach", "wsg_ebringen", "wsg_eichstetten", "wsg_gottenheim", "wsg_krozinger_berg", "wsg_march", "wsg_schlatt", "wsg_tuniberg", "wsg_umkirch"]
+    # areas = ["dmn", "wsg_hausen", "wsg_zartener_becken", "wsg_boetzingen", "wsg_breisach", "wsg_ebringen", "wsg_eichstetten", "wsg_gottenheim", "wsg_krozinger_berg", "wsg_march", "wsg_schlatt", "wsg_tuniberg", "wsg_umkirch"]
+
+    areas = ["wsg_umkirch"]
+
 
     base = "base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"
     
-    stress_test_scenarios = ["summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
-                             "summer-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction",
-                             "summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-                             "summer-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-                             "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
-                             "summer-drought-magnitude2-duration3_irrigation_no-yellow-mustard_soil-compaction",
-                             "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-                             "summer-drought-magnitude2-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-                             "long-term-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction",
-                             "long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction",
-                             "long-term-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
-                             "long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"]
+    # stress_test_scenarios = ["summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
+    #                          "summer-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction",
+    #                          "summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
+    #                          "summer-drought-magnitude0-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
+    #                          "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
+    #                          "summer-drought-magnitude2-duration3_irrigation_no-yellow-mustard_soil-compaction",
+    #                          "summer-drought-magnitude2-duration3_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
+    #                          "summer-drought-magnitude2-duration3_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
+    #                          "long-term-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction",
+    #                          "long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction",
+    #                          "long-term-magnitude2-duration0_no-irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress",
+    #                          "long-term-magnitude2-duration0_irrigation_no-yellow-mustard_soil-compaction_well-extraction-stress"]
+    
+    stress_test_scenarios = ["summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction"]
 
     date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="D")
     years = np.unique(date_time.year.values)
