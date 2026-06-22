@@ -239,6 +239,8 @@ def main(model_run, area):
         ds_direct_recharge.close()
         _direct_recharge_year[_direct_recharge_year < 0] = 0  # set negative values to zero
         _direct_recharge_year[_direct_recharge_year > 100] = 100  # set values above 100 mm/day to 100 mm/day
+        _direct_recharge_year = np.where(mask25[np.newaxis, :, :], _direct_recharge_year, np.nan)
+        click.echo(f"{_direct_recharge_year.shape}")
         ll_direct_recharge.append(_direct_recharge_year)
     direct_recharge = np.stack(ll_direct_recharge, axis=0)
     # convert from mm/day to m3/day
@@ -302,6 +304,7 @@ def main(model_run, area):
         _potential_evapotranspiration_year = ds_potential_evapotranspiration["potential_evapotranspiration"].values
         ds_potential_evapotranspiration.close()
         _potential_evapotranspiration_year[_potential_evapotranspiration_year < 0] = 0  # set negative values to zero
+        _potential_evapotranspiration_year = np.where(mask25[np.newaxis, :, :], _potential_evapotranspiration_year, np.nan)
         ll_potential_evapotranspiration.append(_potential_evapotranspiration_year)
     potential_evapotranspiration = np.stack(ll_potential_evapotranspiration, axis=0)
     # create xarray data array for potential evapotranspiration
@@ -354,6 +357,7 @@ def main(model_run, area):
         _actual_evapotranspiration_year = ds_actual_evapotranspiration["actual_evapotranspiration"].values
         ds_actual_evapotranspiration.close()
         _actual_evapotranspiration_year[_actual_evapotranspiration_year < 0] = 0  # set negative values to zero
+        _actual_evapotranspiration_year = np.where(mask25[np.newaxis, :, :], _actual_evapotranspiration_year, np.nan)
         ll_actual_evapotranspiration.append(_actual_evapotranspiration_year)
     actual_evapotranspiration = np.stack(ll_actual_evapotranspiration, axis=0)
     # create xarray data array for actual evapotranspiration
@@ -407,6 +411,7 @@ def main(model_run, area):
         _precipitation_year = ds_precipitation["precipitation"].values
         ds_precipitation.close()
         _precipitation_year[_precipitation_year < 0] = 0  # set negative values to zero
+        _precipitation_year = np.where(mask25[np.newaxis, :, :], _precipitation_year, np.nan)
         ll_precipitation.append(_precipitation_year)
     precipitation = np.stack(ll_precipitation, axis=0)
     # create xarray data array for precipitation
@@ -816,6 +821,7 @@ def main(model_run, area):
             ds_direct_recharge.close()
             _direct_recharge_year[_direct_recharge_year < 0] = 0  # set negative values to zero
             _direct_recharge_year[_direct_recharge_year > 100] = 100  # set values above 100 mm/day to 100 mm/day
+            _direct_recharge_year = np.where(mask25[np.newaxis, :, :], _direct_recharge_year, np.nan)
             ll_direct_recharge.append(_direct_recharge_year)
         direct_recharge = np.stack(ll_direct_recharge, axis=0)
         # convert from mm/day to m3/day
@@ -928,9 +934,10 @@ def main(model_run, area):
             output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"potential_evapotranspiration_{_stress_test_scenario}_year{year}.nc"
             ds_potential_evapotranspiration = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
             _potential_evapotranspiration_year = ds_potential_evapotranspiration["potential_evapotranspiration"].values
+            ds_potential_evapotranspiration.close()
             # set negative values to zero
             _potential_evapotranspiration_year[_potential_evapotranspiration_year < 0] = 0
-            ds_potential_evapotranspiration.close()
+            _potential_evapotranspiration_year = np.where(mask25[np.newaxis, :, :], _potential_evapotranspiration_year, np.nan)
             ll_potential_evapotranspiration.append(_potential_evapotranspiration_year)
         potential_evapotranspiration = np.stack(ll_potential_evapotranspiration, axis=0)
         # create xarray data array for potential evapotranspiration
@@ -1044,9 +1051,10 @@ def main(model_run, area):
             output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"actual_evapotranspiration_{_stress_test_scenario}_year{year}.nc"
             ds_actual_evapotranspiration = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
             _actual_evapotranspiration_year = ds_actual_evapotranspiration["actual_evapotranspiration"].values
+            ds_actual_evapotranspiration.close()
             # set negative values to zero
             _actual_evapotranspiration_year[_actual_evapotranspiration_year < 0] = 0
-            ds_actual_evapotranspiration.close()
+            _actual_evapotranspiration_year = np.where(mask25[np.newaxis, :, :], _actual_evapotranspiration_year, np.nan)
             ll_actual_evapotranspiration.append(_actual_evapotranspiration_year)
         actual_evapotranspiration = np.stack(ll_actual_evapotranspiration, axis=0)
         # create xarray data array for actual evapotranspiration
@@ -1154,6 +1162,7 @@ def main(model_run, area):
             _precipitation_year = ds_precipitation["precipitation"].values
             ds_precipitation.close()
             _precipitation_year[_precipitation_year < 0] = 0  # set negative values to zero
+            _precipitation_year = np.where(mask25[np.newaxis, :, :], _precipitation_year, np.nan)
             ll_precipitation.append(_precipitation_year)
         precipitation = np.stack(ll_precipitation, axis=0)
         # create xarray data array for precipitation
@@ -1280,8 +1289,9 @@ def main(model_run, area):
             # output_file = base_path_output / f"{stress_test_scenario}" / f"air_temperature_{_stress_test_scenario}_year{year}.nc"
             ds_air_temperature = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
             _air_temperature_year = ds_air_temperature["ta"].values
-            _air_temperature_year = np.where(_air_temperature_year < -50, np.nan, _air_temperature_year)
             ds_air_temperature.close()
+            _air_temperature_year = np.where(_air_temperature_year < -50, np.nan, _air_temperature_year)
+            _air_temperature_year = np.where(mask25[np.newaxis, :, :], _air_temperature_year, np.nan)
             ll_air_temperature.append(_air_temperature_year)
         air_temperature = np.stack(ll_air_temperature, axis=0)
         # create xarray data array for air temperature
@@ -1397,7 +1407,8 @@ def main(model_run, area):
                 output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"irrigation_{_stress_test_scenario}_year{year}.nc"
                 ds_irrigation = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
                 ds_irrigation.close()
-                _irrigation_year = np.sum(ds_irrigation["irrigation"].values, axis=0)
+                _irrigation_year = np.where(_irrigation_year < 0, np.nan, _irrigation_year)
+                _irrigation_year = np.where(mask25, _irrigation_year, np.nan)
                 ll_irrigation.append(_irrigation_year)
             irrigation = np.stack(ll_irrigation, axis=0)
             irrigation = np.where(irrigation <= 0, np.nan, irrigation)  # set negative values to nan
