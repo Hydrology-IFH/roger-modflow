@@ -125,8 +125,8 @@ def main(model_run, area):
         dims=["time", "y", "x"],
         coords={
             "time": date_time,
-            "y": ds_gw_depths["lat"].values,
-            "x": ds_gw_depths["lon"].values,
+            "y": ds_gw_depths["y"].values,
+            "x": ds_gw_depths["x"].values,
         },
     )
     # calculate annual average
@@ -181,8 +181,8 @@ def main(model_run, area):
         dims=["time", "y", "x"],
         coords={
             "time": date_time,
-            "y": ds_indirect_recharge["lat"].values,
-            "x": ds_indirect_recharge["lon"].values,
+            "y": ds_indirect_recharge["y"].values,
+            "x": ds_indirect_recharge["x"].values,
         },
     )
     da_indirect_recharge_base = _da_indirect_recharge_base.resample(time="YE").sum(dim="time")
@@ -241,8 +241,8 @@ def main(model_run, area):
         dims=["time", "y", "x"],
         coords={
             "time": date_time,
-            "y": ds_direct_recharge["lat"].values,
-            "x": ds_direct_recharge["lon"].values,
+            "y": ds_direct_recharge["y"].values,
+            "x": ds_direct_recharge["x"].values,
         },
     )
     da_direct_recharge_base = _da_direct_recharge_base.resample(time="YE").sum(dim="time")
@@ -300,8 +300,8 @@ def main(model_run, area):
         dims=["time", "y", "x"],
         coords={
             "time": date_time,
-            "y": ds_potential_evapotranspiration["lat"].values,
-            "x": ds_potential_evapotranspiration["lon"].values,
+            "y": ds_potential_evapotranspiration["y"].values,
+            "x": ds_potential_evapotranspiration["x"].values,
         },
     )
     da_potential_evapotranspiration_base = _da_potential_evapotranspiration_base.resample(time="YE").sum(dim="time")
@@ -353,8 +353,8 @@ def main(model_run, area):
         dims=["time", "y", "x"],
         coords={
             "time": date_time,
-            "y": ds_actual_evapotranspiration["lat"].values,
-            "x": ds_actual_evapotranspiration["lon"].values,
+            "y": ds_actual_evapotranspiration["y"].values,
+            "x": ds_actual_evapotranspiration["x"].values,
         },
     )
     da_actual_evapotranspiration_base = _da_actual_evapotranspiration_base.resample(time="YE").sum(dim="time")
@@ -407,8 +407,8 @@ def main(model_run, area):
         dims=["time", "y", "x"],
         coords={
             "time": date_time,
-            "y": ds_precipitation["lat"].values,
-            "x": ds_precipitation["lon"].values,
+            "y": ds_precipitation["y"].values,
+            "x": ds_precipitation["x"].values,
         },
     )
     da_precipitation_base = _da_precipitation_base.resample(time="YE").sum(dim="time")
@@ -464,8 +464,8 @@ def main(model_run, area):
         dims=["time", "y", "x"],
         coords={
             "time": date_time,
-            "y": ds_air_temperature["lat"].values,
-            "x": ds_air_temperature["lon"].values,
+            "y": ds_air_temperature["y"].values,
+            "x": ds_air_temperature["x"].values,
         },
     )
     da_air_temperature_base = _da_air_temperature_base.resample(time="YE").mean(dim="time")
@@ -518,8 +518,8 @@ def main(model_run, area):
         dims=["time", "y", "x"],
         coords={
             "time": date_time,
-            "y": ds_well_extraction["lat"].values,
-            "x": ds_well_extraction["lon"].values,
+            "y": ds_well_extraction["y"].values,
+            "x": ds_well_extraction["x"].values,
         },
     )
     da_well_extraction_base = _da_well_extraction_base.resample(time="YE").sum(dim="time")
@@ -579,8 +579,8 @@ def main(model_run, area):
             dims=["time", "y", "x"],
             coords={
                 "time": date_time,
-                "y": ds_gw_depths["lat"].values,
-                "x": ds_gw_depths["lon"].values,
+                "y": ds_gw_depths["y"].values,
+                "x": ds_gw_depths["x"].values,
             },
         )
         da_gw_depths = _da_gw_depths.resample(time="YE").mean(dim="time")
@@ -696,8 +696,8 @@ def main(model_run, area):
             dims=["time", "y", "x"],
             coords={
                 "time": date_time,
-                "y": ds_indirect_recharge["lat"].values,
-                "x": ds_indirect_recharge["lon"].values,
+                "y": ds_indirect_recharge["y"].values,
+                "x": ds_indirect_recharge["x"].values,
             },
         )
         da_indirect_recharge = _da_indirect_recharge.resample(time="YE").sum(dim="time")
@@ -822,8 +822,8 @@ def main(model_run, area):
             dims=["time", "y", "x"],
             coords={
                 "time": date_time,
-                "y": ds_direct_recharge["lat"].values,
-                "x": ds_direct_recharge["lon"].values,
+                "y": ds_direct_recharge["y"].values,
+                "x": ds_direct_recharge["x"].values,
             },
         )
         da_direct_recharge = _da_direct_recharge.resample(time="YE").sum(dim="time")
@@ -933,8 +933,8 @@ def main(model_run, area):
             dims=["time", "y", "x"],
             coords={
                 "time": date_time,
-                "y": ds_potential_evapotranspiration["lat"].values,
-                "x": ds_potential_evapotranspiration["lon"].values,
+                "y": ds_potential_evapotranspiration["y"].values,
+                "x": ds_potential_evapotranspiration["x"].values,
             },
         )
         da_potential_evapotranspiration = _da_potential_evapotranspiration.resample(time="YE").sum(dim="time")
@@ -1050,8 +1050,8 @@ def main(model_run, area):
             dims=["time", "y", "x"],
             coords={
                 "time": date_time,
-                "y": ds_actual_evapotranspiration["lat"].values,
-                "x": ds_actual_evapotranspiration["lon"].values,
+                "y": ds_actual_evapotranspiration["y"].values,
+                "x": ds_actual_evapotranspiration["x"].values,
             },
         )
         da_actual_evapotranspiration = _da_actual_evapotranspiration.resample(time="YE").sum(dim="time")
@@ -1158,8 +1158,8 @@ def main(model_run, area):
             dims=["time", "y", "x"],
             coords={
                 "time": date_time,
-                "y": ds_precipitation["lat"].values,
-                "x": ds_precipitation["lon"].values,
+                "y": ds_precipitation["y"].values,
+                "x": ds_precipitation["x"].values,
             },
         )
         da_precipitation = da_precipitation.resample(time="YE").sum(dim="time")
@@ -1287,8 +1287,8 @@ def main(model_run, area):
             dims=["time", "y", "x"],
             coords={
                 "time": date_time,
-                "y": ds_air_temperature["lat"].values,
-                "x": ds_air_temperature["lon"].values,
+                "y": ds_air_temperature["y"].values,
+                "x": ds_air_temperature["x"].values,
             },
         )
         da_air_temperature = _da_air_temperature.resample(time="YE").mean(dim="time")
@@ -1405,8 +1405,8 @@ def main(model_run, area):
                 dims=["time", "y", "x"],
                 coords={
                     "time": years,
-                    "y": ds_irrigation["lat"].values,
-                    "x": ds_irrigation["lon"].values,
+                    "y": ds_irrigation["y"].values,
+                    "x": ds_irrigation["x"].values,
                 },
             )
             da_irrigation = _da_irrigation.resample(time="YE").sum(dim="time")
@@ -1458,8 +1458,8 @@ def main(model_run, area):
             dims=["time", "y", "x"],
             coords={
                 "time": date_time,
-                "y": ds_well_extraction["lat"].values,
-                "x": ds_well_extraction["lon"].values,
+                "y": ds_well_extraction["y"].values,
+                "x": ds_well_extraction["x"].values,
             },
         )
         da_well_extraction = _da_well_extraction.resample(time="YE").sum(dim="time")

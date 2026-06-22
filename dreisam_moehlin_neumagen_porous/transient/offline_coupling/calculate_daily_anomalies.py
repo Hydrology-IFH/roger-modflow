@@ -125,8 +125,8 @@ def main(model_run, area):
         dims=["time", "y", "x"],
         coords={
             "time": date_time,
-            "y": ds_gw_depths["lat"].values,
-            "x": ds_gw_depths["lon"].values,
+            "y": ds_gw_depths["y"].values,
+            "x": ds_gw_depths["x"].values,
         },
     )
     value = np.nanmean(da_gw_depths_base.values.flatten())
@@ -183,8 +183,8 @@ def main(model_run, area):
         dims=["time", "y", "x"],
         coords={
             "time": date_time,
-            "y": ds_indirect_recharge["lat"].values,
-            "x": ds_indirect_recharge["lon"].values,
+            "y": ds_indirect_recharge["y"].values,
+            "x": ds_indirect_recharge["x"].values,
         },
     )
     value = np.nanmean(da_indirect_recharge_base.values.flatten())
@@ -248,8 +248,8 @@ def main(model_run, area):
         dims=["time", "y", "x"],
         coords={
             "time": date_time,
-            "y": ds_direct_recharge["lat"].values,
-            "x": ds_direct_recharge["lon"].values,
+            "y": ds_direct_recharge["y"].values,
+            "x": ds_direct_recharge["x"].values,
         },
     )
     value = np.nanmean(da_direct_recharge_base.values.flatten())
@@ -298,8 +298,8 @@ def main(model_run, area):
         dims=["time", "y", "x"],
         coords={
             "time": date_time,
-            "y": ds_potential_evapotranspiration["lat"].values,
-            "x": ds_potential_evapotranspiration["lon"].values,
+            "y": ds_potential_evapotranspiration["y"].values,
+            "x": ds_potential_evapotranspiration["x"].values,
         },
     )
     value = np.nanmean(da_potential_evapotranspiration_base.values.flatten())
@@ -349,8 +349,8 @@ def main(model_run, area):
         dims=["time", "y", "x"],
         coords={
             "time": date_time,
-            "y": ds_actual_evapotranspiration["lat"].values,
-            "x": ds_actual_evapotranspiration["lon"].values,
+            "y": ds_actual_evapotranspiration["y"].values,
+            "x": ds_actual_evapotranspiration["x"].values,
         },
     )
     value = np.nanmean(da_actual_evapotranspiration_base.values.flatten())
@@ -401,8 +401,8 @@ def main(model_run, area):
         dims=["time", "y", "x"],
         coords={
             "time": date_time,
-            "y": ds_precipitation["lat"].values,
-            "x": ds_precipitation["lon"].values,
+            "y": ds_precipitation["y"].values,
+            "x": ds_precipitation["x"].values,
         },
     )
 
@@ -456,8 +456,8 @@ def main(model_run, area):
         dims=["time", "y", "x"],
         coords={
             "time": date_time,
-            "y": ds_air_temperature["lat"].values,
-            "x": ds_air_temperature["lon"].values,
+            "y": ds_air_temperature["y"].values,
+            "x": ds_air_temperature["x"].values,
         },
     )
 
@@ -509,8 +509,8 @@ def main(model_run, area):
         dims=["time", "y", "x"],
         coords={
             "time": date_time,
-            "y": ds_well_extraction["lat"].values,
-            "x": ds_well_extraction["lon"].values,
+            "y": ds_well_extraction["y"].values,
+            "x": ds_well_extraction["x"].values,
         },
     )
 
@@ -573,8 +573,8 @@ def main(model_run, area):
             dims=["time", "y", "x"],
             coords={
                 "time": date_time,
-                "y": ds_gw_depths["lat"].values,
-                "x": ds_gw_depths["lon"].values,
+                "y": ds_gw_depths["y"].values,
+                "x": ds_gw_depths["x"].values,
             },
         )
         click.echo("Calculating groundwater anomalies...")
@@ -698,8 +698,8 @@ def main(model_run, area):
             dims=["time", "y", "x"],
             coords={
                 "time": date_time,
-                "y": ds_indirect_recharge["lat"].values,
-                "x": ds_indirect_recharge["lon"].values,
+                "y": ds_indirect_recharge["y"].values,
+                "x": ds_indirect_recharge["x"].values,
             },
         )
         click.echo("Calculating indirect recharge anomalies...")
@@ -837,8 +837,8 @@ def main(model_run, area):
             dims=["time", "y", "x"],
             coords={
                 "time": date_time,
-                "y": ds_direct_recharge["lat"].values,
-                "x": ds_direct_recharge["lon"].values,
+                "y": ds_direct_recharge["y"].values,
+                "x": ds_direct_recharge["x"].values,
             },
         )
         click.echo("Calculating direct recharge anomalies...")
@@ -946,8 +946,8 @@ def main(model_run, area):
             dims=["time", "y", "x"],
             coords={
                 "time": date_time,
-                "y": ds_potential_evapotranspiration["lat"].values,
-                "x": ds_potential_evapotranspiration["lon"].values,
+                "y": ds_potential_evapotranspiration["y"].values,
+                "x": ds_potential_evapotranspiration["x"].values,
             },
         )
         value = np.nanmean(da_potential_evapotranspiration.values.flatten())
@@ -1061,8 +1061,8 @@ def main(model_run, area):
             dims=["time", "y", "x"],
             coords={
                 "time": date_time,
-                "y": ds_actual_evapotranspiration["lat"].values,
-                "x": ds_actual_evapotranspiration["lon"].values,
+                "y": ds_actual_evapotranspiration["y"].values,
+                "x": ds_actual_evapotranspiration["x"].values,
             },
         )
         value = np.nanmean(da_actual_evapotranspiration.values.flatten())
@@ -1167,8 +1167,8 @@ def main(model_run, area):
             dims=["time", "y", "x"],
             coords={
                 "time": date_time,
-                "y": ds_precipitation["lat"].values,
-                "x": ds_precipitation["lon"].values,
+                "y": ds_precipitation["y"].values,
+                "x": ds_precipitation["x"].values,
             },
         )
 
@@ -1294,8 +1294,8 @@ def main(model_run, area):
             dims=["time", "y", "x"],
             coords={
                 "time": date_time,
-                "y": ds_air_temperature["lat"].values,
-                "x": ds_air_temperature["lon"].values,
+                "y": ds_air_temperature["y"].values,
+                "x": ds_air_temperature["x"].values,
             },
         )
         value = np.nanmean(da_air_temperature.values.flatten())
@@ -1410,8 +1410,8 @@ def main(model_run, area):
                 dims=["time", "y", "x"],
                 coords={
                     "time": years,
-                    "y": ds_irrigation["lat"].values,
-                    "x": ds_irrigation["lon"].values,
+                    "y": ds_irrigation["y"].values,
+                    "x": ds_irrigation["x"].values,
                 },
             )
             value = np.nanmean(da_irrigation.values.flatten())
@@ -1468,8 +1468,8 @@ def main(model_run, area):
             dims=["time", "y", "x"],
             coords={
                 "time": date_time,
-                "y": ds_well_extraction["lat"].values,
-                "x": ds_well_extraction["lon"].values,
+                "y": ds_well_extraction["y"].values,
+                "x": ds_well_extraction["x"].values,
             },
         )
 
