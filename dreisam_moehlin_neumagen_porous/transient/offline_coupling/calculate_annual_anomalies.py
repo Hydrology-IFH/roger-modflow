@@ -127,6 +127,7 @@ def main(model_run, area):
             "x": ds_gw_depths["lon"].values,
         },
     )
+    del gw_depths
     # calculate annual average
     da_gw_depths_base = _da_gw_depths_base.resample(time="YE").mean(dim="time")
     value = np.nanmean(da_gw_depths_base.values.flatten())
@@ -183,6 +184,7 @@ def main(model_run, area):
             "x": ds_indirect_recharge["lon"].values,
         },
     )
+    del indirect_recharge
     da_indirect_recharge_base = _da_indirect_recharge_base.resample(time="YE").sum(dim="time")
     value = np.nanmean(da_indirect_recharge_base.values.flatten())
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "indirect_recharge", "unit": "m3/year", "metric": "average", "value": value}
@@ -243,6 +245,7 @@ def main(model_run, area):
             "x": ds_direct_recharge["x"].values,
         },
     )
+    del direct_recharge
     da_direct_recharge_base = _da_direct_recharge_base.resample(time="YE").sum(dim="time")
     value = np.nanmean(da_direct_recharge_base.values.flatten())
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "m3/year", "metric": "average", "value": value}
@@ -302,6 +305,7 @@ def main(model_run, area):
             "x": ds_potential_evapotranspiration["x"].values,
         },
     )
+    del potential_evapotranspiration
     da_potential_evapotranspiration_base = _da_potential_evapotranspiration_base.resample(time="YE").sum(dim="time")
     value = np.nanmean(da_potential_evapotranspiration_base.values.flatten())
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "potential_evapotranspiration", "unit": "mm/year", "metric": "average", "value": value}
@@ -355,6 +359,7 @@ def main(model_run, area):
             "x": ds_actual_evapotranspiration["x"].values,
         },
     )
+    del actual_evapotranspiration
     da_actual_evapotranspiration_base = _da_actual_evapotranspiration_base.resample(time="YE").sum(dim="time")
     value = np.nanmean(da_actual_evapotranspiration_base.values.flatten())
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "actual_evapotranspiration", "unit": "mm/year", "metric": "average", "value": value}
@@ -409,6 +414,7 @@ def main(model_run, area):
             "x": ds_precipitation["x"].values,
         },
     )
+    del precipitation
     da_precipitation_base = _da_precipitation_base.resample(time="YE").sum(dim="time")
 
     value = np.nanmean(da_precipitation_base.values.flatten())
@@ -466,6 +472,7 @@ def main(model_run, area):
             "x": ds_air_temperature["x"].values,
         },
     )
+    del air_temperature
     da_air_temperature_base = _da_air_temperature_base.resample(time="YE").mean(dim="time")
 
     value = np.nanmean(da_air_temperature_base.values.flatten())
@@ -520,6 +527,7 @@ def main(model_run, area):
             "x": ds_well_extraction["x"].values,
         },
     )
+    del well_extraction
     da_well_extraction_base = _da_well_extraction_base.resample(time="YE").sum(dim="time")
 
     value = np.nanmean(da_well_extraction_base.values.flatten())
@@ -581,6 +589,7 @@ def main(model_run, area):
                 "x": ds_gw_depths["lon"].values,
             },
         )
+        del gw_depths
         da_gw_depths = _da_gw_depths.resample(time="YE").mean(dim="time")
         click.echo("Calculating groundwater anomalies...")
         value = np.nanmean(da_gw_depths.values.flatten())
@@ -698,6 +707,7 @@ def main(model_run, area):
                 "x": ds_indirect_recharge["lon"].values,
             },
         )
+        del indirect_recharge
         da_indirect_recharge = _da_indirect_recharge.resample(time="YE").sum(dim="time")
         click.echo("Calculating indirect recharge anomalies...")
         value = np.nanmean(da_indirect_recharge.values.flatten())
@@ -824,6 +834,7 @@ def main(model_run, area):
                 "x": ds_direct_recharge["x"].values,
             },
         )
+        del direct_recharge
         da_direct_recharge = _da_direct_recharge.resample(time="YE").sum(dim="time")
         click.echo("Calculating direct recharge anomalies...")
         value = np.nanmean(da_direct_recharge.values.flatten())
@@ -935,6 +946,7 @@ def main(model_run, area):
                 "x": ds_potential_evapotranspiration["x"].values,
             },
         )
+        del potential_evapotranspiration
         da_potential_evapotranspiration = _da_potential_evapotranspiration.resample(time="YE").sum(dim="time")
         value = np.nanmean(da_potential_evapotranspiration.values.flatten())
         value_base = np.nanmean(da_potential_evapotranspiration_base.values.flatten())
@@ -1052,6 +1064,7 @@ def main(model_run, area):
                 "x": ds_actual_evapotranspiration["x"].values,
             },
         )
+        del actual_evapotranspiration
         da_actual_evapotranspiration = _da_actual_evapotranspiration.resample(time="YE").sum(dim="time")
         value = np.nanmean(da_actual_evapotranspiration.values.flatten())
         value_base = np.nanmean(da_actual_evapotranspiration_base.values.flatten())
@@ -1160,6 +1173,7 @@ def main(model_run, area):
                 "x": ds_precipitation["x"].values,
             },
         )
+        del precipitation
         da_precipitation = da_precipitation.resample(time="YE").sum(dim="time")
 
         value = np.nanmean(da_precipitation.values.flatten())
@@ -1289,6 +1303,7 @@ def main(model_run, area):
                 "x": ds_air_temperature["x"].values,
             },
         )
+        del air_temperature
         da_air_temperature = _da_air_temperature.resample(time="YE").mean(dim="time")
         value = np.nanmean(da_air_temperature.values.flatten())
         value_base = np.nanmean(da_air_temperature_base.values.flatten())
@@ -1407,6 +1422,7 @@ def main(model_run, area):
                     "x": ds_irrigation["x"].values,
                 },
             )
+            del irrigation
             da_irrigation = _da_irrigation.resample(time="YE").sum(dim="time")
             value = np.nanmean(da_irrigation.values.flatten())
             df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "irrigation", "unit": "m3/year", "metric": "average", "value": value}
@@ -1460,6 +1476,7 @@ def main(model_run, area):
                 "x": ds_well_extraction["x"].values,
             },
         )
+        del well_extraction
         da_well_extraction = _da_well_extraction.resample(time="YE").sum(dim="time")
         value = np.nanmean(da_well_extraction.values.flatten())
         value_base = np.nanmean(da_well_extraction_base.values.flatten())
