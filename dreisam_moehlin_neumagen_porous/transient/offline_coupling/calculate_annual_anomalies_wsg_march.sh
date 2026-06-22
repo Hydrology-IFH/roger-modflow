@@ -13,5 +13,5 @@ module load devel/miniforge
 conda activate roger-modflow
 cd /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling
 
-python calculate_annual_anomaly_metrics.py --area wsg_march
+python calculate_annual_anomalies.py --area wsg_march
 ls

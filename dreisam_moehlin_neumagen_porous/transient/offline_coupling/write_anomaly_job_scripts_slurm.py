@@ -29,7 +29,7 @@ def main():
         lines.append("conda activate roger-modflow\n")
         lines.append(f"cd {base_path_bwhpc}\n")
         lines.append("\n")
-        lines.append('python calculate_daily_anomaly_metrics.py --area %s\n' % (area))
+        lines.append('python calculate_daily_anomalies.py --area %s\n' % (area))
         lines.append('ls\n')
         file_path = base_path / f"{script_name}.sh"
         file = open(file_path, "w")
@@ -39,7 +39,7 @@ def main():
         jobs.append(f"{script_name}.sh")
 
 
-    file_path = base_path / "submit_daily_anomaly_metrics_jobs.sh"
+    file_path = base_path / "submit_daily_anomaly_jobs.sh"
     with open(file_path, "w") as job_file:
         job_file.write("#!/bin/bash\n")
         job_file.write("\n")
@@ -67,7 +67,7 @@ def main():
         lines.append("conda activate roger-modflow\n")
         lines.append(f"cd {base_path_bwhpc}\n")
         lines.append("\n")
-        lines.append('python calculate_annual_anomaly_metrics.py --area %s\n' % (area))
+        lines.append('python calculate_annual_anomalies.py --area %s\n' % (area))
         lines.append('ls\n')
         file_path = base_path / f"{script_name}.sh"
         file = open(file_path, "w")
@@ -77,7 +77,7 @@ def main():
         jobs.append(f"{script_name}.sh")
 
 
-    file_path = base_path / "submit_annual_anomaly_metrics_jobs.sh"
+    file_path = base_path / "submit_annual_anomaly_jobs.sh"
     with open(file_path, "w") as job_file:
         job_file.write("#!/bin/bash\n")
         job_file.write("\n")
