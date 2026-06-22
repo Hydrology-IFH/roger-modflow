@@ -236,7 +236,7 @@ def main(model_run, area):
         _direct_recharge_year[_direct_recharge_year < 0] = 0  # set negative values to zero
         _direct_recharge_year[_direct_recharge_year > 100] = 100  # set values above 100 mm/day to 100 mm/day
         ll_direct_recharge.append(_direct_recharge_year)
-    direct_recharge = np.stack(ll_direct_recharge, axis=0)
+    direct_recharge = np.concatenate(ll_direct_recharge, axis=0)
     # convert from mm/day to m3/day
     # get the area of each grid cell in m2
     _area = 50 * 50  # 50 m x 50 m grid cells
@@ -291,7 +291,7 @@ def main(model_run, area):
         ds_potential_evapotranspiration.close()
         _potential_evapotranspiration_year[_potential_evapotranspiration_year < 0] = 0  # set negative values to zero
         ll_potential_evapotranspiration.append(_potential_evapotranspiration_year)
-    potential_evapotranspiration = np.stack(ll_potential_evapotranspiration, axis=0)
+    potential_evapotranspiration = np.concatenate(ll_potential_evapotranspiration, axis=0)
     # create xarray data array for potential evapotranspiration
     da_potential_evapotranspiration_base = xr.DataArray(
         data=potential_evapotranspiration,
@@ -342,7 +342,7 @@ def main(model_run, area):
         ds_actual_evapotranspiration.close()
         _actual_evapotranspiration_year[_actual_evapotranspiration_year < 0] = 0  # set negative values to zero
         ll_actual_evapotranspiration.append(_actual_evapotranspiration_year)
-    actual_evapotranspiration = np.stack(ll_actual_evapotranspiration, axis=0)
+    actual_evapotranspiration = np.concatenate(ll_actual_evapotranspiration, axis=0)
     # create xarray data array for actual evapotranspiration
     da_actual_evapotranspiration_base = xr.DataArray(
         data=actual_evapotranspiration,
@@ -394,7 +394,7 @@ def main(model_run, area):
         ds_precipitation.close()
         _precipitation_year[_precipitation_year < 0] = 0  # set negative values to zero
         ll_precipitation.append(_precipitation_year)
-    precipitation = np.stack(ll_precipitation, axis=0)
+    precipitation = np.concatenate(ll_precipitation, axis=0)
     # create xarray data array for precipitation
     da_precipitation_base = xr.DataArray(
         data=precipitation,
@@ -449,7 +449,7 @@ def main(model_run, area):
         _air_temperature_year = np.where(_air_temperature_year < -50, np.nan, _air_temperature_year)
         ds_air_temperature.close()
         ll_air_temperature.append(_air_temperature_year)
-    air_temperature = np.stack(ll_air_temperature, axis=0)
+    air_temperature = np.concatenate(ll_air_temperature, axis=0)
     # create xarray data array for air temperature
     da_air_temperature_base = xr.DataArray(
         data=air_temperature,
@@ -825,7 +825,7 @@ def main(model_run, area):
             _direct_recharge_year[_direct_recharge_year < 0] = 0  # set negative values to zero
             _direct_recharge_year[_direct_recharge_year > 100] = 100  # set values above 100 mm/day to 100 mm/day
             ll_direct_recharge.append(_direct_recharge_year)
-        direct_recharge = np.stack(ll_direct_recharge, axis=0)
+        direct_recharge = np.concatenate(ll_direct_recharge, axis=0)
         # convert from mm/day to m3/day
         # get the area of each grid cell in m2
         _area = 50 * 50  # 50 m x 50 m grid cells
@@ -939,7 +939,7 @@ def main(model_run, area):
             _potential_evapotranspiration_year[_potential_evapotranspiration_year < 0] = 0
             ds_potential_evapotranspiration.close()
             ll_potential_evapotranspiration.append(_potential_evapotranspiration_year)
-        potential_evapotranspiration = np.stack(ll_potential_evapotranspiration, axis=0)
+        potential_evapotranspiration = np.concatenate(ll_potential_evapotranspiration, axis=0)
         # create xarray data array for potential evapotranspiration
         da_potential_evapotranspiration = xr.DataArray(
             data=potential_evapotranspiration,
@@ -1054,7 +1054,7 @@ def main(model_run, area):
             _actual_evapotranspiration_year[_actual_evapotranspiration_year < 0] = 0
             ds_actual_evapotranspiration.close()
             ll_actual_evapotranspiration.append(_actual_evapotranspiration_year)
-        actual_evapotranspiration = np.stack(ll_actual_evapotranspiration, axis=0)
+        actual_evapotranspiration = np.concatenate(ll_actual_evapotranspiration, axis=0)
         # create xarray data array for actual evapotranspiration
         da_actual_evapotranspiration = xr.DataArray(
             data=actual_evapotranspiration,
@@ -1160,7 +1160,7 @@ def main(model_run, area):
             ds_precipitation.close()
             _precipitation_year[_precipitation_year < 0] = 0  # set negative values to zero
             ll_precipitation.append(_precipitation_year)
-        precipitation = np.stack(ll_precipitation, axis=0)
+        precipitation = np.concatenate(ll_precipitation, axis=0)
         # create xarray data array for precipitation
         da_precipitation = xr.DataArray(
             data=precipitation,
@@ -1287,7 +1287,7 @@ def main(model_run, area):
             _air_temperature_year = np.where(_air_temperature_year < -50, np.nan, _air_temperature_year)
             ds_air_temperature.close()
             ll_air_temperature.append(_air_temperature_year)
-        air_temperature = np.stack(ll_air_temperature, axis=0)
+        air_temperature = np.concatenate(ll_air_temperature, axis=0)
         # create xarray data array for air temperature
         da_air_temperature = xr.DataArray(
             data=air_temperature,
@@ -1402,7 +1402,7 @@ def main(model_run, area):
                 ds_irrigation.close()
                 _irrigation_year = np.sum(ds_irrigation["irrigation"].values, axis=0)
                 ll_irrigation.append(_irrigation_year)
-            irrigation = np.stack(ll_irrigation, axis=0)
+            irrigation = np.concatenate(ll_irrigation, axis=0)
             irrigation = np.where(irrigation <= 0, np.nan, irrigation)  # set negative values to nan
             # create xarray data array for irrigation
             da_irrigation = xr.DataArray(

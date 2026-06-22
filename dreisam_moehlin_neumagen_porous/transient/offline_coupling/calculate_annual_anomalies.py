@@ -144,13 +144,9 @@ def main(model_run, area):
     value = np.nanpercentile(da_gw_depths_base.values.flatten(), 95)
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "gw_depth", "unit": "m", "metric": "95th_percentile", "value": value}
 
-    for year in years:
+    for i, year in enumerate(years):
         click.echo(f"Processing year {year}...")
-        output_file = base_path / "output" / f"modflow_{base}" / f"gw_depth_run{model_run}_year{year}.nc"
-        # output_file = base_path_output / f"{base}" / f"gw_depth_run{model_run}_year{year}.nc"
-        ds_gw_depths = xr.open_dataset(output_file, engine="h5netcdf")
-        gw_depths_year = ds_gw_depths["depth"].values[:, 1, :, :]
-        gw_depths_year = np.where(mask[np.newaxis, :, :], gw_depths_year, np.nan)
+        gw_depths_year = da_gw_depths_base.values[i, :, :]
 
         value = np.nanmean(gw_depths_year.flatten())
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "gw_depth", "unit": "m", "metric": "average", "value": value}
@@ -203,17 +199,9 @@ def main(model_run, area):
     value = np.nanpercentile(da_indirect_recharge_base.values.flatten(), 95)
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "indirect_recharge", "unit": "m3/year", "metric": "95th_percentile", "value": value}
 
-    for year in years:
+    for i, year in enumerate(years):
         click.echo(f"Processing year {year}...")
-        output_file = base_path / "output" / f"modflow_{base}" / f"indirect_recharge_run{model_run}_year{year}.nc"
-        # output_file = base_path_output / f"{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
-        ds_indirect_recharge = xr.open_dataset(output_file, engine="h5netcdf")
-        indirect_recharge_year = ds_indirect_recharge["indirect_recharge"].values * 86400  # convert from m3/s to m3/day
-        ds_indirect_recharge.close()
-        indirect_recharge_year[indirect_recharge_year >= 0] = np.nan  # set positive values to zero
-        indirect_recharge_year = np.abs(indirect_recharge_year)
-        _indirect_recharge_year = np.where(mask[np.newaxis, :, :], indirect_recharge_year, np.nan)
-        indirect_recharge_year = np.sum(_indirect_recharge_year, axis=0)  # sum over time to get annual recharge
+        indirect_recharge_year = da_indirect_recharge_base.values[i, :, :]  # sum over time to get annual recharge
 
         value = np.nanmean(indirect_recharge_year.flatten())
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "indirect_recharge", "unit": "m3/year", "metric": "average", "value": value}
@@ -240,9 +228,8 @@ def main(model_run, area):
         _direct_recharge_year[_direct_recharge_year < 0] = 0  # set negative values to zero
         _direct_recharge_year[_direct_recharge_year > 100] = 100  # set values above 100 mm/day to 100 mm/day
         _direct_recharge_year = np.where(mask25[np.newaxis, :, :], _direct_recharge_year, np.nan)
-        click.echo(f"{_direct_recharge_year.shape}")
         ll_direct_recharge.append(_direct_recharge_year)
-    direct_recharge = np.stack(ll_direct_recharge, axis=0)
+    direct_recharge = np.concatenate(ll_direct_recharge, axis=0)
     # convert from mm/day to m3/day
     # get the area of each grid cell in m2
     _area = 50 * 50  # 50 m x 50 m grid cells
@@ -306,7 +293,7 @@ def main(model_run, area):
         _potential_evapotranspiration_year[_potential_evapotranspiration_year < 0] = 0  # set negative values to zero
         _potential_evapotranspiration_year = np.where(mask25[np.newaxis, :, :], _potential_evapotranspiration_year, np.nan)
         ll_potential_evapotranspiration.append(_potential_evapotranspiration_year)
-    potential_evapotranspiration = np.stack(ll_potential_evapotranspiration, axis=0)
+    potential_evapotranspiration = np.concatenate(ll_potential_evapotranspiration, axis=0)
     # create xarray data array for potential evapotranspiration
     _da_potential_evapotranspiration_base = xr.DataArray(
         data=potential_evapotranspiration,
@@ -359,7 +346,7 @@ def main(model_run, area):
         _actual_evapotranspiration_year[_actual_evapotranspiration_year < 0] = 0  # set negative values to zero
         _actual_evapotranspiration_year = np.where(mask25[np.newaxis, :, :], _actual_evapotranspiration_year, np.nan)
         ll_actual_evapotranspiration.append(_actual_evapotranspiration_year)
-    actual_evapotranspiration = np.stack(ll_actual_evapotranspiration, axis=0)
+    actual_evapotranspiration = np.concatenate(ll_actual_evapotranspiration, axis=0)
     # create xarray data array for actual evapotranspiration
     _da_actual_evapotranspiration_base = xr.DataArray(
         data=actual_evapotranspiration,
@@ -413,7 +400,7 @@ def main(model_run, area):
         _precipitation_year[_precipitation_year < 0] = 0  # set negative values to zero
         _precipitation_year = np.where(mask25[np.newaxis, :, :], _precipitation_year, np.nan)
         ll_precipitation.append(_precipitation_year)
-    precipitation = np.stack(ll_precipitation, axis=0)
+    precipitation = np.concatenate(ll_precipitation, axis=0)
     # create xarray data array for precipitation
     _da_precipitation_base = xr.DataArray(
         data=precipitation,
@@ -470,7 +457,7 @@ def main(model_run, area):
         _air_temperature_year = np.where(_air_temperature_year < -50, np.nan, _air_temperature_year)
         ds_air_temperature.close()
         ll_air_temperature.append(_air_temperature_year)
-    air_temperature = np.stack(ll_air_temperature, axis=0)
+    air_temperature = np.concatenate(ll_air_temperature, axis=0)
     # create xarray data array for air temperature
     _da_air_temperature_base = xr.DataArray(
         data=air_temperature,
@@ -823,7 +810,7 @@ def main(model_run, area):
             _direct_recharge_year[_direct_recharge_year > 100] = 100  # set values above 100 mm/day to 100 mm/day
             _direct_recharge_year = np.where(mask25[np.newaxis, :, :], _direct_recharge_year, np.nan)
             ll_direct_recharge.append(_direct_recharge_year)
-        direct_recharge = np.stack(ll_direct_recharge, axis=0)
+        direct_recharge = np.concatenate(ll_direct_recharge, axis=0)
         # convert from mm/day to m3/day
         # get the area of each grid cell in m2
         _area = 50 * 50  # 50 m x 50 m grid cells
@@ -939,7 +926,7 @@ def main(model_run, area):
             _potential_evapotranspiration_year[_potential_evapotranspiration_year < 0] = 0
             _potential_evapotranspiration_year = np.where(mask25[np.newaxis, :, :], _potential_evapotranspiration_year, np.nan)
             ll_potential_evapotranspiration.append(_potential_evapotranspiration_year)
-        potential_evapotranspiration = np.stack(ll_potential_evapotranspiration, axis=0)
+        potential_evapotranspiration = np.concatenate(ll_potential_evapotranspiration, axis=0)
         # create xarray data array for potential evapotranspiration
         _da_potential_evapotranspiration = xr.DataArray(
             data=potential_evapotranspiration,
@@ -1056,7 +1043,7 @@ def main(model_run, area):
             _actual_evapotranspiration_year[_actual_evapotranspiration_year < 0] = 0
             _actual_evapotranspiration_year = np.where(mask25[np.newaxis, :, :], _actual_evapotranspiration_year, np.nan)
             ll_actual_evapotranspiration.append(_actual_evapotranspiration_year)
-        actual_evapotranspiration = np.stack(ll_actual_evapotranspiration, axis=0)
+        actual_evapotranspiration = np.concatenate(ll_actual_evapotranspiration, axis=0)
         # create xarray data array for actual evapotranspiration
         _da_actual_evapotranspiration = xr.DataArray(
             data=actual_evapotranspiration,
@@ -1164,7 +1151,7 @@ def main(model_run, area):
             _precipitation_year[_precipitation_year < 0] = 0  # set negative values to zero
             _precipitation_year = np.where(mask25[np.newaxis, :, :], _precipitation_year, np.nan)
             ll_precipitation.append(_precipitation_year)
-        precipitation = np.stack(ll_precipitation, axis=0)
+        precipitation = np.concatenate(ll_precipitation, axis=0)
         # create xarray data array for precipitation
         da_precipitation = xr.DataArray(
             data=precipitation,
@@ -1293,7 +1280,7 @@ def main(model_run, area):
             _air_temperature_year = np.where(_air_temperature_year < -50, np.nan, _air_temperature_year)
             _air_temperature_year = np.where(mask25[np.newaxis, :, :], _air_temperature_year, np.nan)
             ll_air_temperature.append(_air_temperature_year)
-        air_temperature = np.stack(ll_air_temperature, axis=0)
+        air_temperature = np.concatenate(ll_air_temperature, axis=0)
         # create xarray data array for air temperature
         _da_air_temperature = xr.DataArray(
             data=air_temperature,
@@ -1410,7 +1397,7 @@ def main(model_run, area):
                 _irrigation_year = np.where(_irrigation_year < 0, np.nan, _irrigation_year)
                 _irrigation_year = np.where(mask25, _irrigation_year, np.nan)
                 ll_irrigation.append(_irrigation_year)
-            irrigation = np.stack(ll_irrigation, axis=0)
+            irrigation = np.concatenate(ll_irrigation, axis=0)
             irrigation = np.where(irrigation <= 0, np.nan, irrigation)  # set negative values to nan
             # create xarray data array for irrigation
             _da_irrigation = xr.DataArray(
