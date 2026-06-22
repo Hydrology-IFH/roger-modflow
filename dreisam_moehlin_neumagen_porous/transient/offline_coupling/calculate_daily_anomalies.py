@@ -82,8 +82,6 @@ def main(model_run, area):
     click.echo("Loading topography...")
     path = base_path.parent / "input" / "parameters_modflow.nc"
     ds_params = xr.open_dataset(path, engine="h5netcdf")
-    xcoords = ds_params.x.values + 25
-    ycoords = ds_params.y.values - 25
 
     df_metrics = pd.DataFrame(columns=["scenario", "area", "time", "variable", "unit", "metric", "value"])
     df_anomaly_metrics_abs = pd.DataFrame(columns=["scenario", "area", "time", "variable", "unit", "metric", "value"])
@@ -125,8 +123,8 @@ def main(model_run, area):
         dims=["time", "y", "x"],
         coords={
             "time": date_time,
-            "y": ds_gw_depths["y"].values,
-            "x": ds_gw_depths["x"].values,
+            "y": ds_gw_depths["lat"].values,
+            "x": ds_gw_depths["lon"].values,
         },
     )
     value = np.nanmean(da_gw_depths_base.values.flatten())
@@ -183,8 +181,8 @@ def main(model_run, area):
         dims=["time", "y", "x"],
         coords={
             "time": date_time,
-            "y": ds_indirect_recharge["y"].values,
-            "x": ds_indirect_recharge["x"].values,
+            "y": ds_indirect_recharge["lat"].values,
+            "x": ds_indirect_recharge["lon"].values,
         },
     )
     value = np.nanmean(da_indirect_recharge_base.values.flatten())
@@ -573,8 +571,8 @@ def main(model_run, area):
             dims=["time", "y", "x"],
             coords={
                 "time": date_time,
-                "y": ds_gw_depths["y"].values,
-                "x": ds_gw_depths["x"].values,
+                "y": ds_gw_depths["lat"].values,
+                "x": ds_gw_depths["lon"].values,
             },
         )
         click.echo("Calculating groundwater anomalies...")
@@ -698,8 +696,8 @@ def main(model_run, area):
             dims=["time", "y", "x"],
             coords={
                 "time": date_time,
-                "y": ds_indirect_recharge["y"].values,
-                "x": ds_indirect_recharge["x"].values,
+                "y": ds_indirect_recharge["lat"].values,
+                "x": ds_indirect_recharge["lon"].values,
             },
         )
         click.echo("Calculating indirect recharge anomalies...")
