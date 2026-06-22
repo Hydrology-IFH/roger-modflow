@@ -30,7 +30,6 @@ def main():
         lines.append(f"cd {base_path_bwhpc}\n")
         lines.append("\n")
         lines.append('python calculate_daily_anomalies.py --area %s\n' % (area))
-        lines.append('ls\n')
         file_path = base_path / f"{script_name}.sh"
         file = open(file_path, "w")
         file.writelines(lines)
@@ -68,7 +67,6 @@ def main():
         lines.append(f"cd {base_path_bwhpc}\n")
         lines.append("\n")
         lines.append('python calculate_annual_anomalies.py --area %s\n' % (area))
-        lines.append('ls\n')
         file_path = base_path / f"{script_name}.sh"
         file = open(file_path, "w")
         file.writelines(lines)

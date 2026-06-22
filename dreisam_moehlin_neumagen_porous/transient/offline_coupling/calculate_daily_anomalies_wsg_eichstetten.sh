@@ -14,4 +14,3 @@ conda activate roger-modflow
 cd /pfs/10/work/fr_rs1092-workspace/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline_coupling
 
 python calculate_daily_anomalies.py --area wsg_eichstetten
-ls
