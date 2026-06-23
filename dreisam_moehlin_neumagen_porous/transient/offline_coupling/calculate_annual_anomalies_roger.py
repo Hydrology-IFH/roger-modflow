@@ -6,54 +6,9 @@ import rasterio
 import click
 import gc
 
-def aggregate_to_coarser_resolution(vals, res_fine, res_coarse, method="sum", x_origin=0, y_origin=0):
-    """Aggregate raster data to a coarser resolution.
-    
-    Args
-    ----
-    vals : numpy.ndarray
-        2D array with the raster data.
-
-    res_fine : int
-        spatial resolution of the fine grid in meters.
-
-    res_coarse : int
-        spatial resolution of the coarse grid in meters.
-
-    method : str
-        Method to aggregate the data. Options are "sum" and "average".
-
-    x_origin : int
-        x-coordinate of the grid origin (lower left corner).
-
-    y_origin : int
-        y-coordinate of the grid origin (lower left corner).  
-    """
-    ny_fine, nx_fine = vals.shape[0], vals.shape[1]
-    nlat_coarse, nlon_coarse = int(res_coarse / res_fine), int(res_coarse / res_fine)
-    meters_to_latlon = 111195
-    lat_fine = np.linspace(y_origin, y_origin + ny_fine*(res_fine/meters_to_latlon), ny_fine)/meters_to_latlon  # boundaries
-    lon_fine = np.linspace(x_origin, x_origin + nx_fine*(res_fine/meters_to_latlon), nx_fine)/meters_to_latlon  # boundaries
-
-    arr_fine = xr.DataArray(vals, coords={"lat": lat_fine, "lon": lon_fine}, dims=["lat", "lon"])
-
-    if method == "sum":
-        arr_coarse = xr.DataArray(
-            arr_fine.coarsen(lat=nlat_coarse, lon=nlon_coarse).sum().values,
-            dims=("lat", "lon"),
-        )
-        
-    elif method == "average":
-        arr_coarse = xr.DataArray(
-            arr_fine.coarsen(lat=nlat_coarse, lon=nlon_coarse).mean().values,
-            dims=("lat", "lon"),
-        )
-    return arr_coarse.values
-
-
 @click.option("-mr", "--model-run", type=int, default=1806)
 @click.option("-a", "--area", type=click.Choice(["dmn", "wsg_hausen", "wsg_zartener_becken", "wsg_boetzingen", "wsg_breisach", "wsg_ebringen", "wsg_eichstetten", "wsg_gottenheim", "wsg_krozinger_berg", "wsg_march", "wsg_schlatt", "wsg_tuniberg", "wsg_umkirch"]), default="dmn", help="Area to process")
-@click.command("main", short_help="Evaluate the transient simulation")
+@click.command("main", short_help="Calculate annual anomalies for Roger output")
 def main(model_run, area):
     base_path = Path(__file__).parent
     # base_path_output = base_path / "output"
@@ -807,6 +762,7 @@ def main(model_run, area):
                 base_path_roger = base_path.parent.parent.parent.parent / "roger"
                 output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"irrigation_{_stress_test_scenario}_year{year}.nc"
                 ds_irrigation = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
+                _irrigation_year = ds_irrigation["irrigation"].values
                 ds_irrigation.close()
                 _irrigation_year = np.where(_irrigation_year < 0, np.nan, _irrigation_year)
                 _irrigation_year = np.where(mask25, _irrigation_year, np.nan)

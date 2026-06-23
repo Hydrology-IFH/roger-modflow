@@ -6,54 +6,9 @@ import rasterio
 import gc
 import click
 
-def aggregate_to_coarser_resolution(vals, res_fine, res_coarse, method="sum", x_origin=0, y_origin=0):
-    """Aggregate raster data to a coarser resolution.
-    
-    Args
-    ----
-    vals : numpy.ndarray
-        2D array with the raster data.
-
-    res_fine : int
-        spatial resolution of the fine grid in meters.
-
-    res_coarse : int
-        spatial resolution of the coarse grid in meters.
-
-    method : str
-        Method to aggregate the data. Options are "sum" and "average".
-
-    x_origin : int
-        x-coordinate of the grid origin (lower left corner).
-
-    y_origin : int
-        y-coordinate of the grid origin (lower left corner).  
-    """
-    ny_fine, nx_fine = vals.shape[0], vals.shape[1]
-    nlat_coarse, nlon_coarse = int(res_coarse / res_fine), int(res_coarse / res_fine)
-    meters_to_latlon = 111195
-    lat_fine = np.linspace(y_origin, y_origin + ny_fine*(res_fine/meters_to_latlon), ny_fine)/meters_to_latlon  # boundaries
-    lon_fine = np.linspace(x_origin, x_origin + nx_fine*(res_fine/meters_to_latlon), nx_fine)/meters_to_latlon  # boundaries
-
-    arr_fine = xr.DataArray(vals, coords={"lat": lat_fine, "lon": lon_fine}, dims=["lat", "lon"])
-
-    if method == "sum":
-        arr_coarse = xr.DataArray(
-            arr_fine.coarsen(lat=nlat_coarse, lon=nlon_coarse).sum().values,
-            dims=("lat", "lon"),
-        )
-        
-    elif method == "average":
-        arr_coarse = xr.DataArray(
-            arr_fine.coarsen(lat=nlat_coarse, lon=nlon_coarse).mean().values,
-            dims=("lat", "lon"),
-        )
-    return arr_coarse.values
-
-
 @click.option("-mr", "--model-run", type=int, default=1806)
 @click.option("-a", "--area", type=click.Choice(["dmn", "wsg_hausen", "wsg_zartener_becken", "wsg_boetzingen", "wsg_breisach", "wsg_ebringen", "wsg_eichstetten", "wsg_gottenheim", "wsg_krozinger_berg", "wsg_march", "wsg_schlatt", "wsg_tuniberg", "wsg_umkirch"]), default="dmn", help="Area to process")
-@click.command("main", short_help="Evaluate the transient simulation")
+@click.command("main", short_help="Calculate daily anomalies for Roger output")
 def main(model_run, area):
     base_path = Path(__file__).parent
     # base_path_output = base_path / "output"
@@ -844,6 +799,8 @@ def main(model_run, area):
                 df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "irrigation", "unit": "m3/year", "metric": "95th_percentile", "value": value}
         
             del da_irrigation, irrigation
+
+        gc.collect()
         
     return
 

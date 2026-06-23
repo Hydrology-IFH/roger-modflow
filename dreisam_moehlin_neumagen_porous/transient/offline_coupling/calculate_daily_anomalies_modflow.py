@@ -53,7 +53,7 @@ def aggregate_to_coarser_resolution(vals, res_fine, res_coarse, method="sum", x_
 
 @click.option("-mr", "--model-run", type=int, default=1806)
 @click.option("-a", "--area", type=click.Choice(["dmn", "wsg_hausen", "wsg_zartener_becken", "wsg_boetzingen", "wsg_breisach", "wsg_ebringen", "wsg_eichstetten", "wsg_gottenheim", "wsg_krozinger_berg", "wsg_march", "wsg_schlatt", "wsg_tuniberg", "wsg_umkirch"]), default="dmn", help="Area to process")
-@click.command("main", short_help="Evaluate the transient simulation")
+@click.command("main", short_help="Calculate daily anomalies for MODFLOW output")
 def main(model_run, area):
     base_path = Path(__file__).parent
     # base_path_output = base_path / "output"
