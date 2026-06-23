@@ -3,7 +3,7 @@ import numpy as np
 import xarray as xr
 import pandas as pd
 import rasterio
-import matplotlib.pyplot as plt
+import gc
 import click
 
 def aggregate_to_coarser_resolution(vals, res_fine, res_coarse, method="sum", x_origin=0, y_origin=0):
@@ -127,7 +127,7 @@ def main(model_run, area):
             "x": ds_gw_depths["lon"].values,
         },
     )
-    del gw_depths, ll_gw_depths
+    del gw_depths, ll_gw_depths, gw_depths_year, ds_gw_depths
     value = np.nanmean(da_gw_depths_base.values.flatten())
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "gw_depth", "unit": "m", "metric": "average", "value": value}
     value = np.nanpercentile(da_gw_depths_base.values.flatten(), 5)
@@ -143,11 +143,7 @@ def main(model_run, area):
 
     for year in years:
         click.echo(f"Processing year {year}...")
-        output_file = base_path / "output" / f"modflow_{base}" / f"gw_depth_run{model_run}_year{year}.nc"
-        # output_file = base_path_output / f"{base}" / f"gw_depth_run{model_run}_year{year}.nc"
-        ds_gw_depths = xr.open_dataset(output_file, engine="h5netcdf")
-        gw_depths_year = ds_gw_depths["depth"].values[:, 1, :, :]
-        gw_depths_year = np.where(mask[np.newaxis, :, :], gw_depths_year, np.nan)
+        gw_depths_year = da_gw_depths_base.sel(time=str(year)).values
 
         value = np.nanmean(gw_depths_year.flatten())
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "gw_depth", "unit": "m", "metric": "average", "value": value}
@@ -161,6 +157,8 @@ def main(model_run, area):
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "gw_depth", "unit": "m", "metric": "75th_percentile", "value": value}
         value = np.nanpercentile(gw_depths_year.flatten(), 95)
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "gw_depth", "unit": "m", "metric": "95th_percentile", "value": value}
+
+    del gw_depths_year
 
     # load the indirect recharge
     click.echo("Loading indirect recharge...")
@@ -186,7 +184,7 @@ def main(model_run, area):
             "x": ds_indirect_recharge["lon"].values,
         },
     )
-    del indirect_recharge, ll_indirect_recharge
+    del indirect_recharge, ll_indirect_recharge, indirect_recharge_year, ds_indirect_recharge
     value = np.nanmean(da_indirect_recharge_base.values.flatten())
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "indirect_recharge", "unit": "m3/day", "metric": "average", "value": value}
     value = np.nanpercentile(da_indirect_recharge_base.values.flatten(), 5)
@@ -202,14 +200,7 @@ def main(model_run, area):
 
     for year in years:
         click.echo(f"Processing year {year}...")
-        output_file = base_path / "output" / f"modflow_{base}" / f"indirect_recharge_run{model_run}_year{year}.nc"
-        # output_file = base_path_output / f"{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
-        ds_indirect_recharge = xr.open_dataset(output_file, engine="h5netcdf")
-        indirect_recharge_year = ds_indirect_recharge["indirect_recharge"].values * 86400  # convert from m3/s to m3/day
-        ds_indirect_recharge.close()
-        indirect_recharge_year[indirect_recharge_year >= 0] = np.nan  # set positive values to zero
-        indirect_recharge_year = np.abs(indirect_recharge_year)
-        indirect_recharge_year = np.where(mask[np.newaxis, :, :], indirect_recharge_year, np.nan)
+        indirect_recharge_year = da_indirect_recharge_base.sel(time=str(year)).values
 
         value = np.nanmean(indirect_recharge_year.flatten())
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "indirect_recharge", "unit": "m3/day", "metric": "average", "value": value}
@@ -223,6 +214,8 @@ def main(model_run, area):
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "indirect_recharge", "unit": "m3/day", "metric": "75th_percentile", "value": value}
         value = np.nanpercentile(indirect_recharge_year.flatten(), 95)
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "indirect_recharge", "unit": "m3/day", "metric": "95th_percentile", "value": value}
+
+    del indirect_recharge_year
 
     # load direct recharge
     click.echo("Loading direct recharge...")
@@ -252,7 +245,7 @@ def main(model_run, area):
             "x": ds_direct_recharge["x"].values,
         },
     )
-    del direct_recharge, ll_direct_recharge
+    del direct_recharge, ll_direct_recharge, _direct_recharge_year, ds_direct_recharge
     value = np.nanmean(da_direct_recharge_base.values.flatten())
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "m3/day", "metric": "average", "value": value}
     value = np.nanpercentile(da_direct_recharge_base.values.flatten(), 5)
@@ -281,6 +274,8 @@ def main(model_run, area):
         value = np.nanpercentile(direct_recharge.flatten(), 95)
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "m3/day", "metric": "95th_percentile", "value": value}
 
+    del direct_recharge
+
     # load potential evapotranspiration
     click.echo("Loading potential evapotranspiration...")
     ll_potential_evapotranspiration = []
@@ -303,7 +298,7 @@ def main(model_run, area):
             "x": ds_potential_evapotranspiration["x"].values,
         },
     )
-    del potential_evapotranspiration, ll_potential_evapotranspiration
+    del potential_evapotranspiration, ll_potential_evapotranspiration, _potential_evapotranspiration_year, ds_potential_evapotranspiration
     value = np.nanmean(da_potential_evapotranspiration_base.values.flatten())
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "potential_evapotranspiration", "unit": "mm/day", "metric": "average", "value": value}
     value = np.nanpercentile(da_potential_evapotranspiration_base.values.flatten(), 5)
@@ -355,7 +350,7 @@ def main(model_run, area):
             "x": ds_actual_evapotranspiration["x"].values,
         },
     )
-    del actual_evapotranspiration, ll_actual_evapotranspiration
+    del actual_evapotranspiration, ll_actual_evapotranspiration, _actual_evapotranspiration_year, ds_actual_evapotranspiration
     value = np.nanmean(da_actual_evapotranspiration_base.values.flatten())
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "actual_evapotranspiration", "unit": "mm/day", "metric": "average", "value": value}
     value = np.nanpercentile(da_actual_evapotranspiration_base.values.flatten(), 5)
@@ -408,7 +403,7 @@ def main(model_run, area):
             "x": ds_precipitation["x"].values,
         },
     )
-    del precipitation, ll_precipitation
+    del precipitation, ll_precipitation, _precipitation_year, ds_precipitation
     value = np.nanmean(da_precipitation_base.values.flatten())
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "precipitation", "unit": "mm/day", "metric": "average", "value": value}
     value = np.nanpercentile(da_precipitation_base.values.flatten(), 5)
@@ -463,7 +458,7 @@ def main(model_run, area):
             "x": ds_air_temperature["x"].values,
         },
     )
-    del air_temperature, ll_air_temperature
+    del air_temperature, ll_air_temperature, _air_temperature_year, ds_air_temperature
     value = np.nanmean(da_air_temperature_base.values.flatten())
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "air_temperature", "unit": "degC", "metric": "average", "value": value}
     value = np.nanpercentile(da_air_temperature_base.values.flatten(), 5)
@@ -516,7 +511,7 @@ def main(model_run, area):
             "x": ds_well_extraction["x"].values,
         },
     )
-    del well_extraction, ll_well_extraction
+    del well_extraction, ll_well_extraction, well_extraction_year, ds_well_extraction
     value = np.nanmean(da_well_extraction_base.values.flatten())
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/day", "metric": "average", "value": value}
     value = np.nanpercentile(da_well_extraction_base.values.flatten(), 5)
@@ -580,7 +575,7 @@ def main(model_run, area):
                 "x": ds_gw_depths["lon"].values,
             },
         )
-        del gw_depths, ll_gw_depths
+        del gw_depths, ll_gw_depths, gw_depths_year, ds_gw_depths
         click.echo("Calculating groundwater anomalies...")
         value = np.nanmean(da_gw_depths.values.flatten())
         value_base = np.nanmean(da_gw_depths_base.values.flatten())
@@ -627,17 +622,8 @@ def main(model_run, area):
 
         for year in years:
             click.echo(f"Processing year {year}...")
-            output_file = base_path / "output" / f"modflow_{base}" / f"gw_depth_run{model_run}_year{year}.nc"
-            # output_file = base_path_output / f"{stress_test_scenario}" / f"gw_depth_run{model_run}_year{year}.nc"
-            ds_gw_depths = xr.open_dataset(output_file, engine="h5netcdf")
-            gw_depths_base_year = ds_gw_depths["depth"].values[:, 1, :, :]
-            gw_depths_base_year = np.where(mask[np.newaxis, :, :], gw_depths_base_year, np.nan)
-
-            output_file = base_path / "output" / f"modflow_{stress_test_scenario}" / f"gw_depth_run{model_run}_year{year}.nc"
-            # output_file = base_path_output / f"{stress_test_scenario}" / f"gw_depth_run{model_run}_year{year}.nc"
-            ds_gw_depths = xr.open_dataset(output_file, engine="h5netcdf")
-            gw_depths_year = ds_gw_depths["depth"].values[:, 1, :, :]
-            gw_depths_year = np.where(mask[np.newaxis, :, :], gw_depths_year, np.nan)
+            gw_depths_base_year = da_gw_depths_base.sel(time=str(year)).values
+            gw_depths_year = da_gw_depths.sel(time=str(year)).values
 
             value = np.nanmean(gw_depths_year.flatten())
             value_base = np.nanmean(gw_depths_base_year.flatten())
@@ -682,6 +668,8 @@ def main(model_run, area):
             df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "gw_depth", "unit": "m", "metric": "95th_percentile", "value": anomaly_abs}
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "gw_depth", "unit": "%", "metric": "95th_percentile", "value": anomaly_rel}
 
+        del da_gw_depths, gw_depths_year
+
         # load the indirect recharge
         click.echo("Loading indirect recharge...")
         ll_indirect_recharge = []
@@ -706,7 +694,7 @@ def main(model_run, area):
                 "x": ds_indirect_recharge["lon"].values,
             },
         )
-        del indirect_recharge, ll_indirect_recharge
+        del indirect_recharge, ll_indirect_recharge, indirect_recharge_year, ds_indirect_recharge
         click.echo("Calculating indirect recharge anomalies...")
         value = np.nanmean(da_indirect_recharge.values.flatten())
         value_base = np.nanmean(da_indirect_recharge_base.values.flatten())
@@ -753,23 +741,8 @@ def main(model_run, area):
 
         for year in years:
             click.echo(f"Processing year {year}...")
-            output_file = base_path / "output" / f"modflow_{base}" / f"indirect_recharge_run{model_run}_year{year}.nc"
-            # output_file = base_path_output / f"{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
-            ds_indirect_recharge = xr.open_dataset(output_file, engine="h5netcdf")
-            indirect_recharge_year = ds_indirect_recharge["indirect_recharge"].values * 86400  # convert from m3/s to m3/day
-            ds_indirect_recharge.close()
-            indirect_recharge_year[indirect_recharge_year >= 0] = np.nan  # set positive values to zero
-            indirect_recharge_year = np.abs(indirect_recharge_year)
-            indirect_recharge_base_year = np.where(mask[np.newaxis, :, :], indirect_recharge_year, np.nan)
-
-            output_file = base_path / "output" / f"modflow_{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
-            # output_file = base_path_output / f"{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
-            ds_indirect_recharge = xr.open_dataset(output_file, engine="h5netcdf")
-            indirect_recharge_year = ds_indirect_recharge["indirect_recharge"].values * 86400  # convert from m3/s to m3/day
-            ds_indirect_recharge.close()
-            indirect_recharge_year[indirect_recharge_year >= 0] = np.nan  # set positive values to zero
-            indirect_recharge_year = np.abs(indirect_recharge_year)
-            indirect_recharge_year = np.where(mask[np.newaxis, :, :], indirect_recharge_year, np.nan)
+            indirect_recharge_base_year = da_indirect_recharge_base.sel(time=str(year)).values
+            indirect_recharge_year = da_indirect_recharge.sel(time=str(year)).values
 
             value = np.nanmean(indirect_recharge_year.flatten())
             value_base = np.nanmean(indirect_recharge_base_year.flatten())
@@ -814,6 +787,7 @@ def main(model_run, area):
             df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "indirect_recharge", "unit": "m3/day", "metric": "95th_percentile", "value": anomaly_abs}
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "indirect_recharge", "unit": "%", "metric": "95th_percentile", "value": anomaly_rel}
 
+        del da_indirect_recharge, indirect_recharge_year
 
         # load direct recharge
         click.echo("Loading direct recharge...")
@@ -846,7 +820,7 @@ def main(model_run, area):
                 "x": ds_direct_recharge["x"].values,
             },
         )
-        del direct_recharge, ll_direct_recharge
+        del direct_recharge, ll_direct_recharge, _direct_recharge_year, ds_direct_recharge
         click.echo("Calculating direct recharge anomalies...")
         value = np.nanmean(da_direct_recharge.values.flatten())
         value_base = np.nanmean(da_direct_recharge_base.values.flatten())
@@ -932,6 +906,8 @@ def main(model_run, area):
             df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "m3/day", "metric": "95th_percentile", "value": anomaly_abs}
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "%", "metric": "95th_percentile", "value": anomaly_rel}
 
+        del da_direct_recharge, direct_recharge
+
         # load potential evapotranspiration
         click.echo("Loading potential evapotranspiration...")
         ll_potential_evapotranspiration = []
@@ -956,7 +932,8 @@ def main(model_run, area):
                 "x": ds_potential_evapotranspiration["x"].values,
             },
         )
-        del potential_evapotranspiration, ll_potential_evapotranspiration
+        del potential_evapotranspiration, ll_potential_evapotranspiration, _potential_evapotranspiration_year, ds_potential_evapotranspiration
+        click.echo("Calculating potential evapotranspiration anomalies...")
         value = np.nanmean(da_potential_evapotranspiration.values.flatten())
         value_base = np.nanmean(da_potential_evapotranspiration_base.values.flatten())
         anomaly_abs = value - value_base
@@ -1048,6 +1025,8 @@ def main(model_run, area):
             df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "potential_evapotranspiration", "unit": "mm/day", "metric": "95th_percentile", "value": anomaly_abs}
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "potential_evapotranspiration", "unit": "%", "metric": "95th_percentile", "value": anomaly_rel}    
 
+        del da_potential_evapotranspiration, potential_evapotranspiration
+
         # load actual evapotranspiration
         click.echo("Loading actual evapotranspiration...")
         ll_actual_evapotranspiration = []
@@ -1072,7 +1051,8 @@ def main(model_run, area):
                 "x": ds_actual_evapotranspiration["x"].values,
             },
         )
-        del actual_evapotranspiration, ll_actual_evapotranspiration
+        del actual_evapotranspiration, ll_actual_evapotranspiration, _actual_evapotranspiration_year, ds_actual_evapotranspiration
+        click.echo("Calculating actual evapotranspiration anomalies...")
         value = np.nanmean(da_actual_evapotranspiration.values.flatten())
         value_base = np.nanmean(da_actual_evapotranspiration_base.values.flatten())
         anomaly_abs = value - value_base
@@ -1157,6 +1137,8 @@ def main(model_run, area):
             df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "actual_evapotranspiration", "unit": "mm/day", "metric": "95th_percentile", "value": anomaly_abs}
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "actual_evapotranspiration", "unit": "%", "metric": "95th_percentile", "value": anomaly_rel}    
 
+        del da_actual_evapotranspiration, actual_evapotranspiration
+
         # load precipitation
         click.echo("Loading precipitation...")
         ll_precipitation = []
@@ -1179,7 +1161,8 @@ def main(model_run, area):
                 "x": ds_precipitation["x"].values,
             },
         )
-        del precipitation, ll_precipitation
+        del precipitation, ll_precipitation, _precipitation_year, ds_precipitation
+        click.echo("Calculating precipitation anomalies...")
         value = np.nanmean(da_precipitation.values.flatten())
         value_base = np.nanmean(da_precipitation_base.values.flatten())
         anomaly_abs = value - value_base
@@ -1271,15 +1254,7 @@ def main(model_run, area):
             df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "precipitation", "unit": "mm/day", "metric": "95th_percentile", "value": anomaly_abs}
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "precipitation", "unit": "%", "metric": "95th_percentile", "value": anomaly_rel}    
 
-        # load air temperature
-        click.echo("Loading air temperature...")
-        ll_air_temperature = []
-        for year in years:
-            _stress_test_scenario = stress_test_scenario.replace("_well-extraction-stress", "")
-        df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "actual_evapotranspiration", "unit": "mm/day", "metric": "95th_percentile", "value": value}
-        df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "actual_evapotranspiration", "unit": "mm/day", "metric": "95th_percentile", "value": anomaly_abs}
-        df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "actual_evapotranspiration", "unit": "%", "metric": "95th_percentile", "value": anomaly_rel}    
-
+        del da_precipitation, precipitation
 
         # load air temperature
         click.echo("Loading air temperature...")
@@ -1306,7 +1281,8 @@ def main(model_run, area):
                 "x": ds_air_temperature["x"].values,
             },
         )
-        del air_temperature, ll_air_temperature
+        del air_temperature, ll_air_temperature, _air_temperature_year, ds_air_temperature
+        click.echo("Calculating air temperature anomalies...")
         value = np.nanmean(da_air_temperature.values.flatten())
         value_base = np.nanmean(da_air_temperature_base.values.flatten())
         anomaly_abs = value - value_base
@@ -1398,6 +1374,7 @@ def main(model_run, area):
             df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "air_temperature", "unit": "degC", "metric": "95th_percentile", "value": anomaly_abs}
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "air_temperature", "unit": "%", "metric": "95th_percentile", "value": anomaly_rel}
 
+        del da_air_temperature, air_temperature
 
         if "_irrigation" in stress_test_scenario:
             # load irrigation
@@ -1423,7 +1400,8 @@ def main(model_run, area):
                     "x": ds_irrigation["x"].values,
                 },
             )
-            del irrigation, ll_irrigation
+            del irrigation, ll_irrigation, _irrigation_year, ds_irrigation
+            click.echo("Calculating irrigation metrics...")
             value = np.nanmean(da_irrigation.values.flatten())
             df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "irrigation", "unit": "m3/year", "metric": "average", "value": value}
             value = np.nanpercentile(da_irrigation.values.flatten(), 5)
@@ -1458,6 +1436,9 @@ def main(model_run, area):
                 df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "irrigation", "unit": "m3/year", "metric": "75th_percentile", "value": value}
                 value = np.nanpercentile(irrigation.flatten(), 95)
                 df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "irrigation", "unit": "m3/year", "metric": "95th_percentile", "value": value}
+        
+            del da_irrigation, irrigation
+        
         # load well extraction
         click.echo("Loading well extraction...")
         ll_well_extraction = []
@@ -1481,7 +1462,8 @@ def main(model_run, area):
                 "x": ds_well_extraction["x"].values,
             },
         )
-        del well_extraction, ll_well_extraction
+        del well_extraction, ll_well_extraction, well_extraction_year, ds_well_extraction
+        click.echo("Calculating well extraction anomalies...")
         value = np.nanmean(da_well_extraction.values.flatten())
         value_base = np.nanmean(da_well_extraction_base.values.flatten())
         anomaly_abs = value - value_base
@@ -1573,15 +1555,8 @@ def main(model_run, area):
             df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/s", "metric": "95th_percentile", "value": anomaly_abs}
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "%", "metric": "95th_percentile", "value": anomaly_rel}
 
-        # remove data arrays to free up memory
-        del da_gw_depths
-        del da_indirect_recharge
-        del da_direct_recharge
-        del da_potential_evapotranspiration
-        del da_air_temperature
-        # del da_irrigation, irrigation
-        del da_well_extraction
-
+        del da_well_extraction, well_extraction
+        gc.collect()
         df_metrics = df_metrics.copy()
         df_anomaly_metrics_abs = df_anomaly_metrics_abs.copy()
         df_anomaly_metrics_rel = df_anomaly_metrics_rel.copy()
