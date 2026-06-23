@@ -360,7 +360,7 @@ def main(model_run, area):
         },
     )
     da_actual_evapotranspiration_base = _da_actual_evapotranspiration_base.resample(time="YE").sum(dim="time")
-    del actual_evapotranspiration, ll_actual_evapotranspiration, _da_actual_evapotranspiration_base, actual_evapotranspiration_year, ds_actual_evapotranspiration
+    del actual_evapotranspiration, ll_actual_evapotranspiration, _da_actual_evapotranspiration_base, _actual_evapotranspiration_year, ds_actual_evapotranspiration
     value = np.nanmean(da_actual_evapotranspiration_base.values.flatten())
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "actual_evapotranspiration", "unit": "mm/year", "metric": "average", "value": value}
     value = np.nanpercentile(da_actual_evapotranspiration_base.values.flatten(), 5)
