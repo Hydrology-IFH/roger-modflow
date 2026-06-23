@@ -702,8 +702,8 @@ def main(model_run, area):
                 "x": ds_air_temperature["x"].values,
             },
         )
-        del air_temperature, ll_air_temperature, _da_air_temperature, _air_temperature_year, ds_air_temperature
         da_air_temperature = _da_air_temperature.resample(time="YE").mean(dim="time")
+        del air_temperature, ll_air_temperature, _da_air_temperature, _air_temperature_year, ds_air_temperature
         click.echo("Calculating air temperature anomalies...")
         value = np.nanmean(da_air_temperature.values.flatten())
         value_base = np.nanmean(da_air_temperature_base.values.flatten())
