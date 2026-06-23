@@ -306,7 +306,7 @@ def main(model_run, area):
         },
     )
     da_potential_evapotranspiration_base = _da_potential_evapotranspiration_base.resample(time="YE").sum(dim="time")
-    del potential_evapotranspiration, ll_potential_evapotranspiration, _da_potential_evapotranspiration_base, potential_evapotranspiration_year, ds_potential_evapotranspiration
+    del potential_evapotranspiration, ll_potential_evapotranspiration, _da_potential_evapotranspiration_base, _potential_evapotranspiration_year, ds_potential_evapotranspiration
     value = np.nanmean(da_potential_evapotranspiration_base.values.flatten())
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "potential_evapotranspiration", "unit": "mm/year", "metric": "average", "value": value}
     value = np.nanpercentile(da_potential_evapotranspiration_base.values.flatten(), 5)
