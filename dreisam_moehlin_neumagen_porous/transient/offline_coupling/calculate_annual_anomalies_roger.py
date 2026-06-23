@@ -580,8 +580,8 @@ def main(model_run, area):
                 "x": ds_precipitation["x"].values,
             },
         )
-        del precipitation, ll_precipitation, _da_precipitation, _precipitation_year, ds_precipitation
         da_precipitation = _da_precipitation.resample(time="YE").sum(dim="time")
+        del precipitation, ll_precipitation, _da_precipitation, _precipitation_year, ds_precipitation
         click.echo("Calculating precipitation anomalies...")
         value = np.nanmean(da_precipitation.values.flatten())
         value_base = np.nanmean(da_precipitation_base.values.flatten())
