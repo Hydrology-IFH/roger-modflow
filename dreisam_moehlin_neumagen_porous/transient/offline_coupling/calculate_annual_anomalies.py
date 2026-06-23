@@ -167,7 +167,7 @@ def main(model_run, area):
         output_file = base_path / "output" / f"modflow_{base}" / f"indirect_recharge_run{model_run}_year{year}.nc"
         # output_file = base_path_output / f"{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
         ds_indirect_recharge = xr.open_dataset(output_file, engine="h5netcdf")
-        indirect_recharge_year = ds_indirect_recharge["indirect_recharge"].values * 86400  # convert from m3/s to m3/day
+        indirect_recharge_year = ds_indirect_recharge["indirect_recharge"].values * 86400  # convert from m3/s to m3/year
         ds_indirect_recharge.close()
         indirect_recharge_year[indirect_recharge_year >= 0] = np.nan  # set positive values to zero
         indirect_recharge_year = np.abs(indirect_recharge_year)
@@ -226,14 +226,14 @@ def main(model_run, area):
         _direct_recharge_year = ds_direct_recharge["recharge"].values
         ds_direct_recharge.close()
         _direct_recharge_year[_direct_recharge_year < 0] = 0  # set negative values to zero
-        _direct_recharge_year[_direct_recharge_year > 100] = 100  # set values above 100 mm/day to 100 mm/day
+        _direct_recharge_year[_direct_recharge_year > 100] = 100  # set values above 100 mm/year to 100 mm/year
         _direct_recharge_year = np.where(mask25[np.newaxis, :, :], _direct_recharge_year, np.nan)
         ll_direct_recharge.append(_direct_recharge_year)
     direct_recharge = np.concatenate(ll_direct_recharge, axis=0)
-    # convert from mm/day to m3/day
+    # convert from mm/year to m3/year
     # get the area of each grid cell in m2
     _area = 50 * 50  # 50 m x 50 m grid cells
-    # multiply direct recharge by area to get m3/day
+    # multiply direct recharge by area to get m3/year
     direct_recharge = direct_recharge * _area / 1000
     # create xarray data array for direct recharge
     _da_direct_recharge_base = xr.DataArray(
@@ -246,27 +246,27 @@ def main(model_run, area):
         },
     )
     da_direct_recharge_base = _da_direct_recharge_base.resample(time="YE").sum(dim="time")
-    del direct_recharge, ll_direct_recharge, _da_direct_recharge_base, direct_recharge_year, ds_direct_recharge
+    del direct_recharge, ll_direct_recharge, _da_direct_recharge_base, _direct_recharge_year, ds_direct_recharge
     value = np.nanmean(da_direct_recharge_base.values.flatten())
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "m3/year", "metric": "average", "value": value}
     value = np.nanpercentile(da_direct_recharge_base.values.flatten(), 5)
-    df_metrics.loc[len(df_metrics)] = {"scenario ": base,("area"): area, "time": "overall ", "variable": "direct_recharge ", "unit": "m3/day ", "metric": "5th_percentile ", "value": value}
+    df_metrics.loc[len(df_metrics)] = {"scenario ": base,("area"): area, "time": "overall ", "variable": "direct_recharge ", "unit": "m3/year ", "metric": "5th_percentile ", "value": value}
     value = np.nanpercentile(da_direct_recharge_base.values.flatten(), 25)
-    df_metrics.loc[len(df_metrics)] = {"scenario ": base,("area"): area, "time": "overall ", "variable": "direct_recharge ", "unit": "m3/day ", "metric": "25th_percentile ", "value": value}
+    df_metrics.loc[len(df_metrics)] = {"scenario ": base,("area"): area, "time": "overall ", "variable": "direct_recharge ", "unit": "m3/year ", "metric": "25th_percentile ", "value": value}
     value = np.nanpercentile(da_direct_recharge_base.values.flatten(), 50)
-    df_metrics.loc[len(df_metrics)] = {"scenario ": base,("area"): area, "time": "overall ", "variable": "direct_recharge ", "unit": "m3/day ", "metric": "50th_percentile ", "value": value}
+    df_metrics.loc[len(df_metrics)] = {"scenario ": base,("area"): area, "time": "overall ", "variable": "direct_recharge ", "unit": "m3/year ", "metric": "50th_percentile ", "value": value}
     value = np.nanpercentile(da_direct_recharge_base.values.flatten(), 75)
-    df_metrics.loc[len(df_metrics)] = {"scenario ": base,("area"): area, "time": "overall ", "variable": "direct_recharge ", "unit": "m3/day ", "metric": "75th_percentile ", "value": value}
+    df_metrics.loc[len(df_metrics)] = {"scenario ": base,("area"): area, "time": "overall ", "variable": "direct_recharge ", "unit": "m3/year ", "metric": "75th_percentile ", "value": value}
     value = np.nanpercentile(da_direct_recharge_base.values.flatten(), 95)
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "m3/year", "metric": "95th_percentile", "value": value}
 
     for i, year in enumerate(years):
         click.echo(f"Processing year {year}...")
         direct_recharge = da_direct_recharge_base.values[i, :, :]
-        # convert from mm/day to m3/day
+        # convert from mm/year to m3/year
         # get the area of each grid cell in m2
         _area = 50 * 50  # 50 m x 50 m grid cells
-        # multiply direct recharge by area to get m3/day
+        # multiply direct recharge by area to get m3/year
         _direct_recharge = direct_recharge * _area / 1000
         direct_recharge = np.sum(_direct_recharge, axis=0)  # sum over time to get annual recharge
         value = np.nanmean(direct_recharge.flatten())
@@ -692,7 +692,7 @@ def main(model_run, area):
             output_file = base_path / "output" / f"modflow_{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
             # output_file = base_path_output / f"{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
             ds_indirect_recharge = xr.open_dataset(output_file, engine="h5netcdf")
-            indirect_recharge_year = ds_indirect_recharge["indirect_recharge"].values * 86400  # convert from m3/s to m3/day
+            indirect_recharge_year = ds_indirect_recharge["indirect_recharge"].values * 86400  # convert from m3/s to m3/year
             ds_indirect_recharge.close()
             indirect_recharge_year[indirect_recharge_year >= 0] = np.nan  # set positive values to zero
             indirect_recharge_year = np.abs(indirect_recharge_year)
@@ -818,14 +818,14 @@ def main(model_run, area):
             _direct_recharge_year = ds_direct_recharge["recharge"].values
             ds_direct_recharge.close()
             _direct_recharge_year[_direct_recharge_year < 0] = 0  # set negative values to zero
-            _direct_recharge_year[_direct_recharge_year > 100] = 100  # set values above 100 mm/day to 100 mm/day
+            _direct_recharge_year[_direct_recharge_year > 100] = 100  # set values above 100 mm/year to 100 mm/year
             _direct_recharge_year = np.where(mask25[np.newaxis, :, :], _direct_recharge_year, np.nan)
             ll_direct_recharge.append(_direct_recharge_year)
         direct_recharge = np.concatenate(ll_direct_recharge, axis=0)
-        # convert from mm/day to m3/day
+        # convert from mm/year to m3/year
         # get the area of each grid cell in m2
         _area = 50 * 50  # 50 m x 50 m grid cells
-        # multiply direct recharge by area to get m3/day
+        # multiply direct recharge by area to get m3/year
         direct_recharge = direct_recharge * _area / 1000
         # create xarray data array for direct recharge
         _da_direct_recharge = xr.DataArray(
@@ -838,7 +838,7 @@ def main(model_run, area):
             },
         )
         da_direct_recharge = _da_direct_recharge.resample(time="YE").sum(dim="time")
-        del direct_recharge, ll_direct_recharge, _da_direct_recharge, direct_recharge_year, ds_direct_recharge
+        del direct_recharge, ll_direct_recharge, _da_direct_recharge, _direct_recharge_year, ds_direct_recharge
         click.echo("Calculating direct recharge anomalies...")
         value = np.nanmean(da_direct_recharge.values.flatten())
         value_base = np.nanmean(da_direct_recharge_base.values.flatten())
