@@ -811,7 +811,7 @@ def main(model_run, area):
             df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/s", "metric": "95th_percentile", "value": anomaly_abs}
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "%", "metric": "95th_percentile", "value": anomaly_rel}
 
-        del da_well_extraction, well_extraction
+        del da_well_extraction
         gc.collect()
         df_metrics = df_metrics.copy()
         df_anomaly_metrics_abs = df_anomaly_metrics_abs.copy()
