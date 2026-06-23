@@ -774,7 +774,7 @@ def main(model_run, area):
                 data=irrigation,
                 dims=["time", "y", "x"],
                 coords={
-                    "time": years,
+                    "time": date_time,
                     "y": ds_irrigation["y"].values,
                     "x": ds_irrigation["x"].values,
                 },
