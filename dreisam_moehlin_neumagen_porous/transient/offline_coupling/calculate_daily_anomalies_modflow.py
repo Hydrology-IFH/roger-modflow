@@ -294,8 +294,8 @@ def main(model_run, area):
         dims=["time", "y", "x"],
         coords={
             "time": date_time,
-            "y": ds_well_extraction["y"].values,
-            "x": ds_well_extraction["x"].values,
+            "y": ds_well_extraction["lat"].values,
+            "x": ds_well_extraction["lon"].values,
         },
     )
     del well_extraction, ll_well_extraction, well_extraction_year, ds_well_extraction
@@ -714,8 +714,8 @@ def main(model_run, area):
             dims=["time", "y", "x"],
             coords={
                 "time": date_time,
-                "y": ds_well_extraction["y"].values,
-                "x": ds_well_extraction["x"].values,
+                "y": ds_well_extraction["lat"].values,
+                "x": ds_well_extraction["lon"].values,
             },
         )
         del well_extraction, ll_well_extraction, well_extraction_year, ds_well_extraction
