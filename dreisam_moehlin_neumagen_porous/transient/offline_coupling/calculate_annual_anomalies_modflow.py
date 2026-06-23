@@ -294,8 +294,8 @@ def main(model_run, area):
         dims=["time", "y", "x"],
         coords={
             "time": date_time,
-            "y": ds_well_extraction["y"].values,
-            "x": ds_well_extraction["x"].values,
+            "y": ds_well_extraction["lat"].values,
+            "x": ds_well_extraction["lon"].values,
         },
     )
     da_well_extraction_base = _da_well_extraction_base.resample(time="YE").sum(dim="time")
@@ -716,8 +716,8 @@ def main(model_run, area):
             dims=["time", "y", "x"],
             coords={
                 "time": date_time,
-                "y": ds_well_extraction["y"].values,
-                "x": ds_well_extraction["x"].values,
+                "y": ds_well_extraction["lat"].values,
+                "x": ds_well_extraction["lon"].values,
             },
         )
         da_well_extraction = _da_well_extraction.resample(time="YE").sum(dim="time")
