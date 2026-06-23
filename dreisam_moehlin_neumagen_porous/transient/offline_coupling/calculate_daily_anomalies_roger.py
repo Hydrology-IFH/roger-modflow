@@ -83,6 +83,7 @@ def main(model_run, area):
     df_anomaly_metrics_rel = pd.DataFrame(columns=["scenario", "area", "time", "variable", "unit", "metric", "value"])
 
     if area == "dmn":
+        file = base_path.parent / "input" / "dmn_25m.tif"
         with rasterio.open(file) as src:
             mask25 = src.read(1)
             mask25 = np.where(mask25 == 1, True, False)

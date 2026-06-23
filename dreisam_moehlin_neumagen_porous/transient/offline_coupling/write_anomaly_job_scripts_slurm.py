@@ -37,7 +37,6 @@ def main():
         subprocess.Popen(f"chmod +x {file_path}", shell=True)
         jobs.append(f"{script_name}.sh")
 
-    jobs = []
     for area in areas:
         script_name = f"calculate_daily_anomalies_{area}_modflow"
         lines = []
@@ -100,7 +99,6 @@ def main():
         subprocess.Popen(f"chmod +x {file_path}", shell=True)
         jobs.append(f"{script_name}.sh")
 
-    jobs = []
     for area in areas:
         script_name = f"calculate_annual_anomalies_{area}_modflow"
         lines = []

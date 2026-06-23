@@ -1,5 +1,18 @@
 #!/bin/bash
 
+sbatch -p compute calculate_annual_anomalies_dmn_roger.sh
+sbatch -p compute calculate_annual_anomalies_wsg_hausen_roger.sh
+sbatch -p compute calculate_annual_anomalies_wsg_zartener_becken_roger.sh
+sbatch -p compute calculate_annual_anomalies_wsg_boetzingen_roger.sh
+sbatch -p compute calculate_annual_anomalies_wsg_breisach_roger.sh
+sbatch -p compute calculate_annual_anomalies_wsg_ebringen_roger.sh
+sbatch -p compute calculate_annual_anomalies_wsg_eichstetten_roger.sh
+sbatch -p compute calculate_annual_anomalies_wsg_gottenheim_roger.sh
+sbatch -p compute calculate_annual_anomalies_wsg_krozinger_berg_roger.sh
+sbatch -p compute calculate_annual_anomalies_wsg_march_roger.sh
+sbatch -p compute calculate_annual_anomalies_wsg_schlatt_roger.sh
+sbatch -p compute calculate_annual_anomalies_wsg_tuniberg_roger.sh
+sbatch -p compute calculate_annual_anomalies_wsg_umkirch_roger.sh
 sbatch -p compute calculate_annual_anomalies_dmn_modflow.sh
 sbatch -p compute calculate_annual_anomalies_wsg_hausen_modflow.sh
 sbatch -p compute calculate_annual_anomalies_wsg_zartener_becken_modflow.sh
