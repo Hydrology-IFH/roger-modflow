@@ -33,6 +33,13 @@ def main(model_run, area):
     date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="D")
     years = np.unique(date_time.year.values)
 
+    click.echo("Loading RoGeR parameters for agriculture...")
+    path = base_path.parent / "input" / "parameters_roger.nc"
+    ds_params = xr.open_dataset(path, engine="h5netcdf")
+    mask_crop = (ds_params["lanu"].values == 5)
+    ds_params.close()
+    del ds_params
+
     df_metrics = pd.DataFrame(columns=["scenario", "area", "time", "variable", "unit", "metric", "value"])
     df_anomaly_metrics_abs = pd.DataFrame(columns=["scenario", "area", "time", "variable", "unit", "metric", "value"])
     df_anomaly_metrics_rel = pd.DataFrame(columns=["scenario", "area", "time", "variable", "unit", "metric", "value"])
@@ -747,10 +754,11 @@ def main(model_run, area):
                 output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"irrigation_{_stress_test_scenario}_year{year}.nc"
                 ds_irrigation = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
                 ds_irrigation.close()
-                _irrigation_year = np.sum(ds_irrigation["irrigation"].values, axis=0)
+                _irrigation_year = ds_irrigation["irrigation"].values
                 ll_irrigation.append(_irrigation_year)
             irrigation = np.concatenate(ll_irrigation, axis=0)
-            irrigation = np.where(irrigation <= 0, np.nan, irrigation)  # set negative values to nan
+            irrigation = np.where(irrigation < 0, np.nan, irrigation)  # set negative values to nan
+            irrigation = np.where(mask25 & mask_crop, irrigation, np.nan)  # set values greater than 100 to nan
             # create xarray data array for irrigation
             da_irrigation = xr.DataArray(
                 data=irrigation,
@@ -764,17 +772,17 @@ def main(model_run, area):
             del irrigation, ll_irrigation, _irrigation_year, ds_irrigation
             click.echo("Calculating irrigation metrics...")
             value = np.nanmean(da_irrigation.values.flatten())
-            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "irrigation", "unit": "m3/year", "metric": "average", "value": value}
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "irrigation", "unit": "mm/day", "metric": "average", "value": value}
             value = np.nanpercentile(da_irrigation.values.flatten(), 5)
-            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "irrigation", "unit": "m3/year", "metric": "5th_percentile", "value": value}
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "irrigation", "unit": "mm/day", "metric": "5th_percentile", "value": value}
             value = np.nanpercentile(da_irrigation.values.flatten(), 25)
-            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "irrigation", "unit": "m3/year", "metric": "25th_percentile", "value": value}
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "irrigation", "unit": "mm/day", "metric": "25th_percentile", "value": value}
             value = np.nanpercentile(da_irrigation.values.flatten(), 50)
-            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "irrigation", "unit": "m3/year", "metric": "median", "value": value}
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "irrigation", "unit": "mm/day", "metric": "median", "value": value}
             value = np.nanpercentile(da_irrigation.values.flatten(), 75)
-            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "irrigation", "unit": "m3/year", "metric": "75th_percentile", "value": value}
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "irrigation", "unit": "mm/day", "metric": "75th_percentile", "value": value}
             value = np.nanpercentile(da_irrigation.values.flatten(), 95)
-            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "irrigation", "unit": "m3/year", "metric": "95th_percentile", "value": value}
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "irrigation", "unit": "mm/day", "metric": "95th_percentile", "value": value}
 
             for year in years:
                 click.echo(f"Processing year {year}...")
@@ -784,20 +792,20 @@ def main(model_run, area):
                 ds_irrigation = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
                 ds_irrigation.close()
                 _irrigation_year = np.sum(ds_irrigation["irrigation"].values, axis=0)
-                irrigation = np.where(_irrigation_year <= 0, np.nan, _irrigation_year)  # set negative values to nan
+                irrigation = np.where(_irrigation_year < 0, np.nan, _irrigation_year)  # set negative values to nan
                 value = np.nanmean(irrigation.flatten())
-                df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "irrigation", "unit": "m3/year", "metric": "average", "value": value}
+                df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "irrigation", "unit": "mm/day", "metric": "average", "value": value}
                 value = np.nanpercentile(irrigation.flatten(), 5)
-                df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "irrigation", "unit": "m3/year", "metric": "5th_percentile", "value": value}
+                df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "irrigation", "unit": "mm/day", "metric": "5th_percentile", "value": value}
                 value = np.nanpercentile(irrigation.flatten(), 25)
-                df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "irrigation", "unit": "m3/year", "metric": "25th_percentile", "value": value}
+                df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "irrigation", "unit": "mm/day", "metric": "25th_percentile", "value": value}
                 value = np.nanpercentile(irrigation.flatten(), 50)
-                df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "irrigation", "unit": "m3/year", "metric": "median", "value": value}
+                df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "irrigation", "unit": "mm/day", "metric": "median", "value": value}
                 value = np.nanpercentile(irrigation.flatten(), 75)
-                df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "irrigation", "unit": "m3/year", "metric": "75th_percentile", "value": value}
+                df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "irrigation", "unit": "mm/day", "metric": "75th_percentile", "value": value}
                 value = np.nanpercentile(irrigation.flatten(), 95)
-                df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "irrigation", "unit": "m3/year", "metric": "95th_percentile", "value": value}
-        
+                df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "irrigation", "unit": "mm/day", "metric": "95th_percentile", "value": value}
+
             del da_irrigation, irrigation
 
         gc.collect()
