@@ -35,7 +35,7 @@ def main(model_run, area):
 
     click.echo("Loading RoGeR parameters for agriculture...")
     path = base_path.parent / "input" / "parameters_roger.nc"
-    ds_params = xr.open_dataset(path, engine="h5netcdf")
+    ds_params = xr.open_dataset(path)
     mask_crop = (ds_params["lanu"].values == 5)
     ds_params.close()
     del ds_params
