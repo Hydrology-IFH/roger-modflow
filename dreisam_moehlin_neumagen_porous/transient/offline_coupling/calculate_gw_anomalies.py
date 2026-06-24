@@ -275,7 +275,7 @@ def main(model_run):
             ylim = np.ceil(_ylim)  
             ax.set_ylim(0, ylim)
             # turn legend off
-            ax.reverse_yaxis()
+            ax.invert_yaxis()
             ax.legend().set_visible(False)
             fig.tight_layout()
             fig.savefig(figures_dir / f"gw_depth_avg_time_series_{area}.pdf", dpi=300)
