@@ -103,7 +103,7 @@ def main(model_run):
     date_time = pd.date_range(start="2014-01-01", end="2023-12-31", freq="D")
     df_sfr_.index = date_time
 
-    streamflow_gauges = ["EBNET", "OBERAMBRINGEN", "FALKENSTEIG", "UNTERMUENSTERTAL", "OBERRIED"]
+    streamflow_gauges = ["EBNET", "OBERAMBRINGEN"]
     for gauge in streamflow_gauges:
         # make lowercase
         _gauge = gauge.lower()
