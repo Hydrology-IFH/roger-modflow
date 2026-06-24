@@ -263,7 +263,6 @@ def main(model_run):
 
             # plot time series of average groundwater depth
             fig, ax = plt.subplots(figsize=(6, 2.5))
-            ax.axhline(0, color="black", linestyle="-", alpha=0.8)
             ax.plot(date_time, dict_depths_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373", lw=2.0)
             ax.plot(date_time, dict_depths_avg[stress_test_scenario][area], color="#fd8d3c", lw=1.5)
             ax.set_xlim(date_time[0], date_time[-1])
@@ -274,8 +273,9 @@ def main(model_run):
             ylims = ax.get_ylim()
             _ylim = max(abs(ylims[0]), abs(ylims[1]))
             ylim = np.ceil(_ylim)  
-            ax.set_ylim(-ylim, ylim)
+            ax.set_ylim(0, ylim)
             # turn legend off
+            ax.reverse_yaxis()
             ax.legend().set_visible(False)
             fig.tight_layout()
             fig.savefig(figures_dir / f"gw_depth_avg_time_series_{area}.pdf", dpi=300)
