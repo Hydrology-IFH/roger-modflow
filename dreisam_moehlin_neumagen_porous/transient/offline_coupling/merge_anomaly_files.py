@@ -71,7 +71,6 @@ def main():
         output_file = base_path / "output" / f"daily_anomalies_rel_run{model_run}_{area}_modflow.csv"
         df_daily_anomalies_rel = pd.read_csv(output_file, sep=";")
         ll_dfs_daily_anomalies_rel.append(df_daily_anomalies_rel)
-        ll_dfs_annual_anomalies_rel.append(df_anomaly_metrics_rel)
 
     df_daily_values = pd.concat(ll_dfs_daily_values, ignore_index=True)
     df_daily_anomalies_abs = pd.concat(ll_dfs_daily_anomalies_abs, ignore_index=True)

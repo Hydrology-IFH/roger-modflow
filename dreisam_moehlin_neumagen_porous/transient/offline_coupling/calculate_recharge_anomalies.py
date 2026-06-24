@@ -331,7 +331,7 @@ def main(model_run):
             # plot monthly absolute anomalies of the recharge using a bar plot, make bars with negative values orange and bars with positive values blue
             fig, ax = plt.subplots(figsize=(6, 2.5))
             # use blue for positive anomalies and orange for negative anomalies
-            ax.bar(df_recharge_monthly.index, df_recharge_monthly["recharge"], color="black", width=20)
+            ax.bar(df_recharge_monthly.index, df_recharge_monthly["recharge"]/1e6, color="black", width=20)
             ax.set_xticks(df_recharge_monthly.index)
             # reformat xticklabels to show only the year and month and plot labels of every 4th month
             xticklabels = df_recharge_monthly.index.strftime("%y-%m")
@@ -350,8 +350,8 @@ def main(model_run):
             
             fig, ax = plt.subplots(figsize=(6, 2.5))
             # use blue for positive anomalies and orange for negative anomalies
-            colors = ["orange" if x < 0 else "blue" for x in df_recharge_anomalies_monthly_abs["anomaly"]]
-            ax.bar(df_recharge_anomalies_monthly_abs.index, df_recharge_anomalies_monthly_abs["anomaly"], color=colors, width=20)
+            colors = ["orange" if x < 0 else "blue" for x in df_recharge_anomalies_monthly_abs["anomaly"]/1e6]
+            ax.bar(df_recharge_anomalies_monthly_abs.index, df_recharge_anomalies_monthly_abs["anomaly"]/1e6, color=colors, width=20)
             ax.set_xticks(df_recharge_anomalies_monthly_abs.index)
             # reformat xticklabels to show only the year and month and plot labels of every 4th month
             xticklabels = df_recharge_anomalies_monthly_abs.index.strftime("%y-%m")
@@ -404,7 +404,7 @@ def main(model_run):
 
             # plot monthly absolute anomalies of the indirect recharge using a bar plot, make bars with negative values orange and bars with positive values blue
             fig, ax = plt.subplots(figsize=(6, 2.5))
-            ax.bar(df_indirect_recharge_monthly.index, df_indirect_recharge_monthly["indirect_recharge"], color="black", width=20)
+            ax.bar(df_indirect_recharge_monthly.index, df_indirect_recharge_monthly["indirect_recharge"]/1e6, color="black", width=20)
             ax.set_xticks(df_indirect_recharge_monthly.index)
             ax.set_xlim(df_indirect_recharge_monthly.index[0] - pd.Timedelta(days=15), df_indirect_recharge_monthly.index[-1] + pd.Timedelta(days=15))
             # ax.set_ylim(-10, 10)
@@ -423,8 +423,8 @@ def main(model_run):
             plt.close(fig)
             
             fig, ax = plt.subplots(figsize=(6, 2.5))
-            colors = ["orange" if x < 0 else "blue" for x in df_indirect_recharge_anomalies_monthly_abs["anomaly"]]
-            ax.bar(df_indirect_recharge_anomalies_monthly_abs.index, df_indirect_recharge_anomalies_monthly_abs["anomaly"], color=colors, width=20)
+            colors = ["orange" if x < 0 else "blue" for x in df_indirect_recharge_anomalies_monthly_abs["anomaly"]/1e6]
+            ax.bar(df_indirect_recharge_anomalies_monthly_abs.index, df_indirect_recharge_anomalies_monthly_abs["anomaly"]/1e6, color=colors, width=20)
             ax.set_xticks(df_indirect_recharge_anomalies_monthly_abs.index)
             ax.set_xlim(df_indirect_recharge_anomalies_monthly_abs.index[0] - pd.Timedelta(days=15), df_indirect_recharge_anomalies_monthly_abs.index[-1] + pd.Timedelta(days=15))
             # ax.set_ylim(-10, 10)
@@ -461,7 +461,7 @@ def main(model_run):
 
             # plot mmonthly relative anomalies of the direct recharge using a bar plot, make bars with negative values orange and bars with positive values blue
             fig, ax = plt.subplots(figsize=(6, 2.5))
-            ax.bar(df_direct_recharge_monthly.index, df_direct_recharge_monthly["direct_recharge"], color="black", width=20)
+            ax.bar(df_direct_recharge_monthly.index, df_direct_recharge_monthly["direct_recharge"]/1e6, color="black", width=20)
             ax.set_xticks(df_direct_recharge_monthly.index)
             ax.set_xlim(df_direct_recharge_monthly.index[0] - pd.Timedelta(days=15), df_direct_recharge_monthly.index[-1] + pd.Timedelta(days=15))
             # ax.set_ylim(-10, 10)
@@ -480,8 +480,8 @@ def main(model_run):
             plt.close(fig)
             
             fig, ax = plt.subplots(figsize=(6, 2.5))
-            colors = ["orange" if x < 0 else "blue" for x in df_direct_recharge_anomalies_monthly_abs["anomaly"]]
-            ax.bar(df_direct_recharge_anomalies_monthly_abs.index, df_direct_recharge_anomalies_monthly_abs["anomaly"], color=colors, width=20)
+            colors = ["orange" if x < 0 else "blue" for x in df_direct_recharge_anomalies_monthly_abs["anomaly"]/1e6]
+            ax.bar(df_direct_recharge_anomalies_monthly_abs.index, df_direct_recharge_anomalies_monthly_abs["anomaly"]/1e6, color=colors, width=20)
             ax.set_xticks(df_direct_recharge_anomalies_monthly_abs.index)
             ax.set_xlim(df_direct_recharge_anomalies_monthly_abs.index[0] - pd.Timedelta(days=15), df_direct_recharge_anomalies_monthly_abs.index[-1] + pd.Timedelta(days=15))  
             # reformat xticklabels to show only the year and month and plot labels of every 4th month

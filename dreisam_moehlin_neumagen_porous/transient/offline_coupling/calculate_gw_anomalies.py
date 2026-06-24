@@ -115,6 +115,7 @@ def main(model_run):
     # # calculate the average groundwater depth for the base scenario
     # da_gw_depths_base_average = da_gw_depths_base.mean(dim="time")
 
+    dict_depths_avg = {}
     dict_depths_anomalies_abs_avg = {}
     dict_depths_anomalies_percent_avg = {}
 
@@ -150,6 +151,7 @@ def main(model_run):
         figures_dir = base_path.parent / "figures" / "groundwater_anomalies" / stress_test_scenario
         figures_dir.mkdir(exist_ok=True)
 
+        dict_depths_avg[stress_test_scenario] = {}
         dict_depths_anomalies_abs_avg[stress_test_scenario] = {}
         dict_depths_anomalies_percent_avg[stress_test_scenario] = {}
 
@@ -177,16 +179,20 @@ def main(model_run):
             gw_depths_anomalies_abs = (gw_depths - gw_depths_avg) * (-1)
             gw_depths_anomalies_percent = (gw_depths_anomalies_abs / gw_depths_avg) * 100
             # calculate time series of average anomalies
+            gw_depths_avg_ = np.zeros(gw_depths_anomalies_abs.shape[0])
             gw_depths_anomalies_abs_avg = np.zeros(gw_depths_anomalies_abs.shape[0])
             gw_depths_anomalies_percent_avg = np.zeros(gw_depths_anomalies_percent.shape[0])
             click.echo(f"Calculating time series of average groundwater depth anomalies for {area}...")
             for t in range(gw_depths_anomalies_abs.shape[0]):
                 click.echo(f"Calculating time step {t+1} of {gw_depths_anomalies_abs.shape[0]}...")
+                gw_depths_t = np.where(mask, gw_depths[t, :, :], np.nan)
                 gw_depths_anomalies_abs_t = np.where(mask, gw_depths_anomalies_abs[t, :, :], np.nan)
                 gw_depths_anomalies_percent_t = np.where(mask, gw_depths_anomalies_percent[t, :, :], np.nan)
+                gw_depths_avg_[t] = np.nanmean(gw_depths_t)
                 gw_depths_anomalies_abs_avg[t] = np.nanmean(gw_depths_anomalies_abs_t)
                 gw_depths_anomalies_percent_avg[t] = np.nanmean(gw_depths_anomalies_percent_t)
 
+            dict_depths_avg[stress_test_scenario][area] = gw_depths_avg_
             dict_depths_anomalies_abs_avg[stress_test_scenario][area] = gw_depths_anomalies_abs_avg
             dict_depths_anomalies_percent_avg[stress_test_scenario][area] = gw_depths_anomalies_percent_avg
 
@@ -255,7 +261,27 @@ def main(model_run):
             # fig.savefig(figures_dir / f"gw_depth_anomalies_abs_time_series_{area}_1.pdf", dpi=300)
             # plt.close(fig)
 
-            # plot time series of average groundwater depth anomalies for the three stress test scenarios
+            # plot time series of average groundwater depth
+            fig, ax = plt.subplots(figsize=(6, 2.5))
+            ax.axhline(0, color="black", linestyle="-", alpha=0.8)
+            ax.plot(date_time, dict_depths_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373", lw=2.0)
+            ax.plot(date_time, dict_depths_avg[stress_test_scenario][area], color="#fd8d3c", lw=1.5)
+            ax.set_xlim(date_time[0], date_time[-1])
+            ax.set_xlabel("Zeit")
+            ax.set_ylabel("Mittlere GWFA [m]")
+            # set y-axis limits to -10 to 10
+            # get ylimits of the current plot
+            ylims = ax.get_ylim()
+            _ylim = max(abs(ylims[0]), abs(ylims[1]))
+            ylim = np.ceil(_ylim)  
+            ax.set_ylim(-ylim, ylim)
+            # turn legend off
+            ax.legend().set_visible(False)
+            fig.tight_layout()
+            fig.savefig(figures_dir / f"gw_depth_avg_time_series_{area}.pdf", dpi=300)
+            plt.close(fig)
+
+            # plot time series of average groundwater depth anomalies
             fig, ax = plt.subplots(figsize=(6, 2.5))
             ax.axhline(0, color="black", linestyle="-", alpha=0.8)
             ax.plot(date_time, dict_depths_anomalies_abs_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373", lw=2.0)
@@ -309,7 +335,7 @@ def main(model_run):
             # plot time series of average groundwater depth anomalies for the three stress test scenarios
             fig, ax = plt.subplots(figsize=(6, 2.5))
             ax.plot(date_time, dict_depths_anomalies_percent_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373")
-            ax.plot(date_time, dict_depths_anomalies_percent_avg[stress_test_scenario][area], label="Summer Drought", color="#fd8d3c", lw=1.2)
+            ax.plot(date_time, dict_depths_anomalies_percent_avg[stress_test_scenario][area], color="#fd8d3c", lw=1.2)
             ax.set_xlim(date_time[0], date_time[-1])
             ax.axhline(0, color="grey", linestyle="-", alpha=0.8)    
             ax.set_xlabel("Zeit")
