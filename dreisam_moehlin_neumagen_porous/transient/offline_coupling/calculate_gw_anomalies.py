@@ -179,18 +179,17 @@ def main(model_run):
             gw_depths_anomalies_abs = (gw_depths - gw_depths_avg) * (-1)
             gw_depths_anomalies_percent = (gw_depths_anomalies_abs / gw_depths_avg) * 100
             # calculate time series of average anomalies
+            gw_depths_base_avg_ = np.zeros(gw_depths_anomalies_abs.shape[0])
             gw_depths_avg_ = np.zeros(gw_depths_anomalies_abs.shape[0])
-            gw_depths_anomalies_abs_avg = np.zeros(gw_depths_anomalies_abs.shape[0])
-            gw_depths_anomalies_percent_avg = np.zeros(gw_depths_anomalies_percent.shape[0])
             click.echo(f"Calculating time series of average groundwater depth anomalies for {area}...")
             for t in range(gw_depths_anomalies_abs.shape[0]):
                 click.echo(f"Calculating time step {t+1} of {gw_depths_anomalies_abs.shape[0]}...")
                 gw_depths_t = np.where(mask, gw_depths[t, :, :], np.nan)
-                gw_depths_anomalies_abs_t = np.where(mask, gw_depths_anomalies_abs[t, :, :], np.nan)
-                gw_depths_anomalies_percent_t = np.where(mask, gw_depths_anomalies_percent[t, :, :], np.nan)
+                gw_depths_base_t = np.where(mask, gw_depths_base[t, :, :], np.nan)
                 gw_depths_avg_[t] = np.nanmean(gw_depths_t)
-                gw_depths_anomalies_abs_avg[t] = np.nanmean(gw_depths_anomalies_abs_t)
-                gw_depths_anomalies_percent_avg[t] = np.nanmean(gw_depths_anomalies_percent_t)
+                gw_depths_base_avg_[t] = np.nanmean(gw_depths_base_t)
+            gw_depths_anomalies_abs_avg = (gw_depths_avg_ - np.nanmean(gw_depths_base_avg_)) * (-1)
+            gw_depths_anomalies_percent_avg = (((gw_depths_avg_ - np.nanmean(gw_depths_base_avg_)) * (-1)) / gw_depths_avg) * 100
 
             dict_depths_avg[stress_test_scenario][area] = gw_depths_avg_
             dict_depths_anomalies_abs_avg[stress_test_scenario][area] = gw_depths_anomalies_abs_avg

@@ -112,7 +112,7 @@ def main(model_run):
                   "indirect_recharge": " [$m^3$/Jahr]", 
                   "gw_depth": " [m]",
                   "well_extraction": " [$m^3$/Jahr]",
-                  "irrigation": " [$mm$/Jahr]"}
+                  "irrigation": " [mm/Jahr]"}
 
     for area in areas:
         for stress_test_scenario in stress_test_scenarios:

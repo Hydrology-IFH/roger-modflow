@@ -216,34 +216,100 @@ def main(model_run):
             # dataframe with long-term average annual well extraction
             df_well_extraction_long_term_average = pd.DataFrame(index=["long_term_average"], data=[df_well_extraction_annual["well_extraction"].mean()], columns=["well_extraction"])
 
+            if "_irrigation" in stress_test_scenario:
+                # load irrigation
+                click.echo("Loading irrigation...")
+                ll_irrigation = []
+                for year in years:
+                    _stress_test_scenario = stress_test_scenario.replace("_well-extraction-stress", "")
+                    base_path_roger = base_path.parent.parent.parent.parent / "roger"
+                    output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"irrigation_{_stress_test_scenario}_year{year}.nc"
+                    ds_irrigation = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
+                    _irrigation_year = ds_irrigation["irrigation"].values
+                    ds_irrigation.close()
+                    for i in range(_irrigation_year.shape[0]):
+                        irrigation_day = aggregate_to_coarser_resolution(_irrigation_year[i, :, :], 25, 50, method="average")
+                        irrigation_day = np.where(mask, irrigation_day, 0)
+                        ll_irrigation.append(irrigation_day)
+                irrigation = np.stack(ll_irrigation, axis=0)
+                # convert from mm/day to m3/day
+                # get the area of each grid cell in m2
+                _area = 50 * 50  # 50 m x 50 m grid cells
+                # multiply irrigation by area to get m3/day
+                irrigation = irrigation * _area / 1000
+                # create xarray data array for irrigation
+                da_irrigation = xr.DataArray(
+                    data=irrigation,
+                    dims=["time", "y", "x"],
+                    coords={
+                        "time": date_time,
+                        "y": ycoords,
+                        "x": xcoords,
+                    },
+                )
+                # resample to monthly
+                da_irrigation_monthly = da_irrigation.resample(time="ME").sum()
+                # dataframe with monthly total sum of irrigation
+                df_irrigation_monthly = pd.DataFrame(index=da_irrigation_monthly.time.values, data=da_irrigation_monthly.sum(dim=["y", "x"]).values, columns=["irrigation"])
+
+                # resample to annual
+                da_irrigation_annual = da_irrigation.resample(time="YE").sum()
+                # dataframe with annual total sum of irrigation
+                df_irrigation_annual = pd.DataFrame(index=da_irrigation_annual.time.values, data=da_irrigation_annual.sum(dim=["y", "x"]).values
+
             # calculate the monthly extraction balance
             df_extraction_balance_monthly = pd.DataFrame(index=df_well_extraction_monthly.index, columns=["sustainable_extraction", "actual_extraction", "extraction_balance"])
             df_extraction_balance_monthly["sustainable_extraction"] = df_recharge_monthly["recharge"].mean() * 0.3
-            df_extraction_balance_monthly["actual_extraction"] = df_well_extraction_monthly["well_extraction"]
+            if "_irrigation" in stress_test_scenario:
+                df_extraction_balance_monthly["actual_extraction"] = df_well_extraction_monthly["well_extraction"] + df_irrigation_monthly["irrigation"]
+            else:
+                df_extraction_balance_monthly["actual_extraction"] = df_well_extraction_monthly["well_extraction"]
             df_extraction_balance_monthly["extraction_balance"] = df_extraction_balance_monthly["sustainable_extraction"] - df_extraction_balance_monthly["actual_extraction"]
 
             # calculate the annual extraction balance
             df_extraction_balance_annual = pd.DataFrame(index=df_well_extraction_annual.index, columns=["sustainable_extraction", "actual_extraction", "extraction_balance"])
             df_extraction_balance_annual["sustainable_extraction"] = df_recharge_annual["recharge"].mean() * 0.3
-            df_extraction_balance_annual["actual_extraction"] = df_well_extraction_annual["well_extraction"]
+            if "_irrigation" in stress_test_scenario:
+                df_extraction_balance_annual["actual_extraction"] = df_well_extraction_annual["well_extraction"] + df_irrigation_annual["irrigation"]
+            else:
+                df_extraction_balance_annual["actual_extraction"] = df_well_extraction_annual["well_extraction"]
             df_extraction_balance_annual["extraction_balance"] = df_extraction_balance_annual["sustainable_extraction"] - df_extraction_balance_annual["actual_extraction"]
 
             # calculate the long-term sum extraction balance
             df_extraction_balance_long_term = pd.DataFrame(index=["long_term"], columns=["sustainable_extraction", "actual_extraction", "extraction_balance"])
             df_extraction_balance_long_term["sustainable_extraction"] = df_recharge_monthly["recharge"].sum() * 0.3
-            df_extraction_balance_long_term["actual_extraction"] = df_well_extraction_monthly["well_extraction"].sum()
+            if "_irrigation" in stress_test_scenario:
+                df_extraction_balance_long_term["actual_extraction"] = df_well_extraction_monthly["well_extraction"].sum() + df_irrigation_monthly["irrigation"].sum()
+            else:
+                df_extraction_balance_long_term["actual_extraction"] = df_well_extraction_monthly["well_extraction"].sum()
             df_extraction_balance_long_term["extraction_balance"] = df_extraction_balance_long_term["sustainable_extraction"] - df_extraction_balance_long_term["actual_extraction"]
 
             # make figures directory if it does not exist
             figures_dir = base_path.parent / "figures" / "gw_extraction_balance" / stress_test_scenario
             figures_dir.mkdir(exist_ok=True)
 
-            # plot annual drinking water well extraction
             click.echo("Plotting the extraction balance...")
+
+            # plot monthly drinking water well extraction
+            fig, ax = plt.subplots(figsize=(6, 2.5))
+            # convert to million m3/month
+            ax.bar(df_well_extraction_monthly.index, df_well_extraction_monthly["well_extraction"] / 1e6, color="purple", width=15)
+            # rotate xticklabels to vertical and show only the year and month
+            xticklabels = df_well_extraction_monthly.index.strftime("%y-%m")
+            ax.set_xticks(df_well_extraction_monthly.index)
+            ax.set_xticklabels(xticklabels, rotation=90)
+            ax.set_xlim(df_well_extraction_monthly.index[0] - pd.DateOffset(months=1), df_well_extraction_monthly.index[-1] + pd.DateOffset(months=1))
+            ax.set_xlabel("Zeit [Jahr-Monat]")
+            ax.set_ylabel("GW-Entnahme\n[Mio. m³/Monat]")
+            # set legend off
+            ax.legend().set_visible(False)
+            fig.tight_layout()
+            fig.savefig(figures_dir / f"well_extraction_monthly_{area}.pdf", dpi=300)
+
+            # plot annual drinking water well extraction
             fig, ax = plt.subplots(figsize=(6, 2))
             # convert to million m3/year
-            df_well_extraction_annual["well_extraction"] = df_well_extraction_annual["well_extraction"] / 1e6
-            ax.bar(df_well_extraction_annual.index.year, df_well_extraction_annual["well_extraction"], color="purple", width=0.8)
+            ax.bar(df_well_extraction_annual.index.year, df_well_extraction_annual["well_extraction"] / 1e6, color="purple", width=0.8)
             # rotate xticklabels to vertical and show only the year
             ax.set_xlabel("Jahr")
             ax.set_ylabel("GW-Entnahme\n[Mio. m³/Jahr]")
@@ -256,7 +322,7 @@ def main(model_run):
             fig, ax = plt.subplots(figsize=(2, 2))
             long_term_average = df_well_extraction_annual["well_extraction"].mean()
             df_long_term_average = pd.DataFrame(index=["long_term_average"], data=[long_term_average], columns=["well_extraction"])
-            ax.bar(df_long_term_average.index, df_long_term_average["well_extraction"], color="purple")
+            ax.bar(df_long_term_average.index, df_long_term_average["well_extraction"] / 1e6, color="purple")
             ax.set_xlabel("")
             ax.set_xticklabels([""], rotation=0)
             ax.set_ylabel("GW-Entnahme\n[Mio. m³/Jahr]")
@@ -265,6 +331,102 @@ def main(model_run):
             fig.tight_layout()
             fig.savefig(figures_dir / f"well_extraction_annual_long_term_average_{area}.pdf", dpi=300)
             click.echo(f"Long-term average annual drinking water well extraction: {long_term_average:.2f} million m3/year")
+
+            if "_irrigation" in stress_test_scenario:
+                # plot monthly irrigation
+                fig, ax = plt.subplots(figsize=(6, 2.5))
+                # convert to million m3/month
+                ax.bar(df_irrigation_monthly.index, df_irrigation_monthly["irrigation"] / 1e6, color="pink", width=15)
+                # rotate xticklabels to vertical and show only the year and month
+                xticklabels = df_irrigation_monthly.index.strftime("%y-%m")
+                ax.set_xticks(df_irrigation_monthly.index)
+                ax.set_xticklabels(xticklabels, rotation=90)
+                ax.set_xlim(df_irrigation_monthly.index[0] - pd.DateOffset(months=1), df_irrigation_monthly.index[-1] + pd.DateOffset(months=1))
+                ax.set_xlabel("Zeit [Jahr-Monat]")
+                ax.set_ylabel("Bewässerung\n[Mio. m³/Monat]")
+                # set legend off
+                ax.legend().set_visible(False)
+                fig.tight_layout()
+                fig.savefig(figures_dir / f"irrigation_monthly_{area}.pdf", dpi=300)
+
+                # plot annual irrigation
+                fig, ax = plt.subplots(figsize=(6, 2))
+                # convert to million m3/year
+                ax.bar(df_irrigation_annual.index.year, df_irrigation_annual["irrigation"] / 1e6, color="pink", width=0.8)
+                # rotate xticklabels to vertical and show only the year
+                ax.set_xlabel("Jahr")
+                ax.set_ylabel("Bewässerung\n[Mio. m³/Jahr]")
+                # set legend off        
+                ax.legend().set_visible(False)
+                fig.tight_layout()
+                fig.savefig(figures_dir / f"irrigation_annual_{area}.pdf", dpi=300)
+
+                # plot long-term average annual irrigation
+                fig, ax = plt.subplots(figsize=(2, 2))
+                long_term_average = df_irrigation_annual["irrigation"].mean()
+                df_long_term_average = pd.DataFrame(index=["long_term_average"], data=[long_term_average], columns=["irrigation"])
+                ax.bar(df_long_term_average.index, df_long_term_average["irrigation"] / 1e6, color="pink")
+                ax.set_xlabel("")
+                ax.set_xticklabels([""], rotation=0)
+                ax.set_ylabel("Bewässerung\n[Mio. m³/Jahr]")
+                # set legend off
+                ax.legend().set_visible(False)
+                fig.tight_layout()
+                fig.savefig(figures_dir / f"irrigation_annual_long_term_average_{area}.pdf", dpi=300)
+                click.echo(f"Long-term average annual irrigation: {long_term_average:.2f} million m3/year")
+
+                # plot monthly irrigation and well extraction using stacked bar plot use pink for irrigation and purple for well extraction
+                fig, ax = plt.subplots(figsize=(6, 2.5))
+                df_extraction_monthly_stacked = df_well_extraction_monthly.copy()
+                df_extraction_monthly_stacked["irrigation"] = df_irrigation_monthly["irrigation"]/1e6  # convert to million m3/month
+                df_extraction_monthly_stacked["well_extraction"] = df_extraction_monthly_stacked["well_extraction"]/1e6  # convert to million m3/month
+                # make stacked bar plot
+                ax.bar(df_extraction_monthly_stacked.index, df_extraction_monthly_stacked["well_extraction"], color="purple", label="Trinkwasser", width=15)
+                ax.bar(df_extraction_monthly_stacked.index, df_extraction_monthly_stacked["irrigation"], bottom=df_extraction_monthly_stacked["well_extraction"], color="pink", label="Bewässerung", width=15)
+                ax.set_xticks(df_extraction_monthly_stacked.index)
+                # reformat xticklabels to show only the year and month and plot labels of every 4th month
+                xticklabels = df_extraction_monthly_stacked.index.strftime("%y-%m")
+                xticklabels = [label if i % 4 == 0 else "" for i, label in enumerate(xticklabels)]
+                ax.set_xticklabels(xticklabels, rotation=90)
+                ax.set_xlim(df_extraction_monthly_stacked.index[0] - pd.DateOffset(months=1), df_extraction_monthly_stacked.index[-1] + pd.DateOffset(months=1))
+                ax.set_xlabel("Zeit [Jahr-Monat]")
+                ax.set_ylabel("GW-Entnahme\n[Mio. m³/Monat]")
+                # put legend outside of the plot on the top center
+                ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.2), ncol=2)
+                fig.tight_layout()
+                fig.savefig(figures_dir / f"extraction_monthly_stacked_{area}.pdf", dpi=300)
+
+                # plot annual irrigation and well extraction using stacked bar plot use pink for irrigation and purple for well extraction
+                fig, ax = plt.subplots(figsize=(6, 2))
+                df_extraction_annual_stacked = df_well_extraction_annual.copy()
+                df_extraction_annual_stacked["irrigation"] = df_irrigation_annual["irrigation"]/1e6  # convert to million m3/year
+                df_extraction_annual_stacked["well_extraction"] = df_extraction_annual_stacked["well_extraction"]/1e6  # convert to million m3/year
+                ax.bar(df_extraction_annual_stacked.index.year, df_extraction_annual_stacked["well_extraction"], color="purple", label="Trinkwasser", width=0.8)
+                ax.bar(df_extraction_annual_stacked.index.year, df_extraction_annual_stacked["irrigation"], bottom=df_extraction_annual_stacked["well_extraction"], color="pink", label="Bewässerung", width=0.8)
+                ax.set_xlabel("Jahr")
+                ax.set_ylabel("GW-Entnahme\n[Mio. m³/Jahr]")
+                # put legend outside of the plot on the top center
+                ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.2), ncol=2)
+                fig.tight_layout()
+                fig.savefig(figures_dir / f"extraction_annual_stacked_{area}.pdf", dpi=300)
+
+                # plot monthly irrigation share
+                fig, ax = plt.subplots(figsize=(6, 2.5))
+                # convert to million m3/month
+                monthly_total_extraction = df_well_extraction_monthly["well_extraction"] + df_irrigation_monthly["irrigation"]
+                monthly_irrigation_share = (df_irrigation_monthly["irrigation"] / monthly_total_extraction) * 100
+                ax.bar(df_irrigation_monthly.index, monthly_irrigation_share, color="pink", width=15)
+                # rotate xticklabels to vertical and show only the year and month
+                xticklabels = df_irrigation_monthly.index.strftime("%y-%m")
+                ax.set_xticks(df_irrigation_monthly.index)
+                ax.set_xticklabels(xticklabels, rotation=90)
+                ax.set_xlim(df_irrigation_monthly.index[0] - pd.DateOffset(months=1), df_irrigation_monthly.index[-1] + pd.DateOffset(months=1))
+                ax.set_xlabel("Zeit [Jahr-Monat]")
+                ax.set_ylabel("Anteil Bewässerung\nan GW-Entnahme [%]")
+                # set legend off
+                ax.legend().set_visible(False)
+                fig.tight_layout()
+                fig.savefig(figures_dir / f"irrigation_monthly_{area}.pdf", dpi=300)
 
             # plot monthly direct and indirect recharge using stacked bar plot use blue for direct recharge and purple for indirect recharge 
             fig, ax = plt.subplots(figsize=(6, 2.5))
