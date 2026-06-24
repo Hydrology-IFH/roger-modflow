@@ -255,7 +255,7 @@ def main(model_run):
                 # resample to annual
                 da_irrigation_annual = da_irrigation.resample(time="YE").sum()
                 # dataframe with annual total sum of irrigation
-                df_irrigation_annual = pd.DataFrame(index=da_irrigation_annual.time.values, data=da_irrigation_annual.sum(dim=["y", "x"]).values
+                df_irrigation_annual = pd.DataFrame(index=da_irrigation_annual.time.values, data=da_irrigation_annual.sum(dim=["y", "x"]).values, columns=["irrigation"])
 
             # calculate the monthly extraction balance
             df_extraction_balance_monthly = pd.DataFrame(index=df_well_extraction_monthly.index, columns=["sustainable_extraction", "actual_extraction", "extraction_balance"])
