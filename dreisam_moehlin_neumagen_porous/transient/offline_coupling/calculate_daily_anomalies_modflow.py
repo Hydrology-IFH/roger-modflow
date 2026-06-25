@@ -277,7 +277,8 @@ def main(model_run, area):
         ds_well_extraction = xr.open_dataset(output_file, engine="h5netcdf")
         well_extraction_year = ds_well_extraction["well_extraction"].values
         ds_well_extraction.close()
-        well_extraction_year = np.where(mask[np.newaxis, :, :], well_extraction_year, 0)
+        well_extraction_year = np.where(mask[np.newaxis, :, :], well_extraction_year, np.nan)
+        well_extraction_year = np.where(well_extraction_year <= 0, np.nan, well_extraction_year)  # set negative values to nan
         ll_well_extraction.append(well_extraction_year)
     well_extraction = np.concatenate(ll_well_extraction, axis=0)
     well_extraction = np.where(well_extraction <= 0, np.nan, well_extraction)  # set negative values to nan
@@ -311,7 +312,8 @@ def main(model_run, area):
         ds_well_extraction = xr.open_dataset(output_file, engine="h5netcdf")
         well_extraction_year = ds_well_extraction["well_extraction"].values
         ds_well_extraction.close()
-        well_extraction_year = np.where(mask[np.newaxis, :, :], well_extraction_year, 0)
+        well_extraction_year = np.where(mask[np.newaxis, :, :], well_extraction_year, np.nan)
+        well_extraction_year = np.where(well_extraction_year <= 0, np.nan, well_extraction_year) 
 
         value = np.nanmean(well_extraction_year.flatten())
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/day", "metric": "average", "value": value}
@@ -699,7 +701,8 @@ def main(model_run, area):
             ds_well_extraction = xr.open_dataset(output_file, engine="h5netcdf")
             well_extraction_year = ds_well_extraction["well_extraction"].values
             ds_well_extraction.close()
-            well_extraction_year = np.where(mask[np.newaxis, :, :], well_extraction_year, 0)
+            well_extraction_year = np.where(mask[np.newaxis, :, :], well_extraction_year, np.nan)
+            well_extraction_year = np.where(well_extraction_year <= 0, np.nan, well_extraction_year) 
             ll_well_extraction.append(well_extraction_year)
         well_extraction = np.concatenate(ll_well_extraction, axis=0)
         well_extraction = np.where(well_extraction <= 0, np.nan, well_extraction)  # set negative values to nan
@@ -762,6 +765,8 @@ def main(model_run, area):
             click.echo(f"Processing year {year}...")
             well_extraction_base_year = da_well_extraction_base.sel(time=f"{year}").values
             well_extraction_year = da_well_extraction.sel(time=f"{year}").values
+            well_extraction_year = np.where(mask[np.newaxis, :, :], well_extraction_year, np.nan)
+            well_extraction_year = np.where(well_extraction_year <= 0, np.nan, well_extraction_year) 
 
             value = np.nanmean(well_extraction_year.flatten())
             value_base = np.nanmean(well_extraction_base_year.flatten())
