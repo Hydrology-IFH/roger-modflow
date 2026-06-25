@@ -85,6 +85,16 @@ def main(model_run, area):
     df_anomaly_metrics_abs = pd.DataFrame(columns=["scenario", "area", "time", "variable", "unit", "metric", "value"])
     df_anomaly_metrics_rel = pd.DataFrame(columns=["scenario", "area", "time", "variable", "unit", "metric", "value"])
 
+    file = base_path.parent / "input" / f"mask_rivers_.tif"
+    with rasterio.open(file) as src:
+        mask_rivers = src.read(1)
+        mask_rivers = np.where(mask_rivers == 1, True, False)
+
+    file = base_path.parent / "input" / f"mask_wells_.tif"
+    with rasterio.open(file) as src:
+        mask_wells = src.read(1)
+        mask_wells = np.where(mask_wells == 1, True, False)
+
     if area == "dmn":
         mask = ds_params["mask_porous_aquifer"].values
         file = base_path.parent / "input" / f"dmn_25m.tif"
@@ -126,7 +136,7 @@ def main(model_run, area):
         },
     )
     # calculate annual average
-    da_gw_depths_base = _da_gw_depths_base.resample(time="YE").mean(dim="time", skipna=False)
+    da_gw_depths_base = _da_gw_depths_base.resample(time="1Y").mean(dim="time", skipna=False)
     del gw_depths, ll_gw_depths, _da_gw_depths_base, gw_depths_year, ds_gw_depths
     value = np.nanmean(da_gw_depths_base.values.flatten())
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "gw_depth", "unit": "m", "metric": "average", "value": value}
@@ -165,11 +175,11 @@ def main(model_run, area):
         output_file = base_path / "output" / f"modflow_{base}" / f"indirect_recharge_run{model_run}_year{year}.nc"
         # output_file = base_path_output / f"{stress_test_scenario}" / f"indirect_recharge_run{model_run}_year{year}.nc"
         ds_indirect_recharge = xr.open_dataset(output_file, engine="h5netcdf")
-        indirect_recharge_year = ds_indirect_recharge["indirect_recharge"].values * 86400  # convert from m3/s to m3/year
+        indirect_recharge_year = ds_indirect_recharge["indirect_recharge"].values * 86400  # convert from m3/s to m3/day
         ds_indirect_recharge.close()
-        indirect_recharge_year[indirect_recharge_year >= 0] = np.nan  # set positive values to zero
+        indirect_recharge_year[indirect_recharge_year >= 0] = 0  # set positive values to zero
         indirect_recharge_year = np.abs(indirect_recharge_year)
-        indirect_recharge_year = np.where(mask[np.newaxis, :, :], indirect_recharge_year, np.nan)
+        indirect_recharge_year = np.where(mask[np.newaxis, :, :] & mask_rivers[np.newaxis, :, :], indirect_recharge_year, np.nan)
         ll_indirect_recharge.append(indirect_recharge_year)
     indirect_recharge = np.concatenate(ll_indirect_recharge, axis=0)
     # create xarray data array for indirect recharge
@@ -182,7 +192,7 @@ def main(model_run, area):
             "x": ds_indirect_recharge["lon"].values,
         },
     )
-    da_indirect_recharge_base = _da_indirect_recharge_base.resample(time="YE").sum(dim="time")
+    da_indirect_recharge_base = _da_indirect_recharge_base.resample(time="1Y").sum(dim="time", skipna=False)
     del indirect_recharge, ll_indirect_recharge, _da_indirect_recharge_base, indirect_recharge_year, ds_indirect_recharge
     value = np.nanmean(da_indirect_recharge_base.values.flatten())
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "indirect_recharge", "unit": "m3/year", "metric": "average", "value": value}
@@ -238,7 +248,7 @@ def main(model_run, area):
             "x": ds_direct_recharge["x"].values,
         },
     )
-    da_direct_recharge_base = _da_direct_recharge_base.resample(time="YE").sum(dim="time", skipna=False)
+    da_direct_recharge_base = _da_direct_recharge_base.resample(time="1Y").sum(dim="time", skipna=False)
     del direct_recharge, ll_direct_recharge, _da_direct_recharge_base, _direct_recharge_year, ds_direct_recharge
     value = np.nanmean(da_direct_recharge_base.values.flatten())
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "mm/year", "metric": "average", "value": value}
@@ -277,7 +287,7 @@ def main(model_run, area):
         ds_well_extraction = xr.open_dataset(output_file, engine="h5netcdf")
         well_extraction_year = ds_well_extraction["well_extraction"].values
         ds_well_extraction.close()
-        well_extraction_year = np.where(mask[np.newaxis, :, :], well_extraction_year, 0)
+        well_extraction_year = np.where(mask[np.newaxis, :, :] & mask_wells[np.newaxis, :, :], well_extraction_year, np.nan)
         ll_well_extraction.append(well_extraction_year)
     well_extraction = np.concatenate(ll_well_extraction, axis=0)
     well_extraction = np.where(well_extraction <= 0, np.nan, well_extraction)  # set negative values to nan
@@ -291,7 +301,7 @@ def main(model_run, area):
             "x": ds_well_extraction["lon"].values,
         },
     )
-    da_well_extraction_base = _da_well_extraction_base.resample(time="YE").sum(dim="time")
+    da_well_extraction_base = _da_well_extraction_base.resample(time="1Y").sum(dim="time", skipna=False)
     del well_extraction, ll_well_extraction, _da_well_extraction_base, well_extraction_year, ds_well_extraction
 
     value = np.nanmean(da_well_extraction_base.values.flatten())
@@ -312,9 +322,6 @@ def main(model_run, area):
         well_extraction_year = da_well_extraction_base.values[i, :, :]  # sum over time to get annual well extraction
 
         value = np.nanmean(well_extraction_year.flatten())
-        if year == 2023:
-            click.echo(f"Year {year}: well extraction mean = {value}")
-            click.echo(f"{np.unique(well_extraction_year)}")
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/year", "metric": "average", "value": value}
         value = np.nanpercentile(well_extraction_year.flatten(), 5)
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/year", "metric": "5th_percentile", "value": value}
@@ -355,7 +362,7 @@ def main(model_run, area):
                 "x": ds_gw_depths["lon"].values,
             },
         )
-        da_gw_depths = _da_gw_depths.resample(time="YE").mean(dim="time", skipna=False)
+        da_gw_depths = _da_gw_depths.resample(time="1Y").mean(dim="time", skipna=False)
         del gw_depths, ll_gw_depths, _da_gw_depths, gw_depths_year, ds_gw_depths
         click.echo("Calculating groundwater anomalies...")
         value = np.nanmean(da_gw_depths.values.flatten())
@@ -460,9 +467,9 @@ def main(model_run, area):
             ds_indirect_recharge = xr.open_dataset(output_file, engine="h5netcdf")
             indirect_recharge_year = ds_indirect_recharge["indirect_recharge"].values * 86400  # convert from m3/s to m3/year
             ds_indirect_recharge.close()
-            indirect_recharge_year[indirect_recharge_year >= 0] = np.nan  # set positive values to zero
+            indirect_recharge_year[indirect_recharge_year >= 0] = 0  # set positive values to zero
             indirect_recharge_year = np.abs(indirect_recharge_year)
-            indirect_recharge_year = np.where(mask[np.newaxis, :, :], indirect_recharge_year, np.nan)
+            indirect_recharge_year = np.where(mask[np.newaxis, :, :] & mask_rivers[np.newaxis, :, :], indirect_recharge_year, np.nan)
             ll_indirect_recharge.append(indirect_recharge_year)
         indirect_recharge = np.concatenate(ll_indirect_recharge, axis=0)
         # create xarray data array for indirect recharge
@@ -475,7 +482,7 @@ def main(model_run, area):
                 "x": ds_indirect_recharge["lon"].values,
             },
         )
-        da_indirect_recharge = _da_indirect_recharge.resample(time="YE").sum(dim="time")
+        da_indirect_recharge = _da_indirect_recharge.resample(time="1Y").sum(dim="time", skipna=False)
         del indirect_recharge, ll_indirect_recharge, _da_indirect_recharge, indirect_recharge_year, ds_indirect_recharge
         click.echo("Calculating indirect recharge anomalies...")
         value = np.nanmean(da_indirect_recharge.values.flatten())
@@ -598,7 +605,7 @@ def main(model_run, area):
                 "x": ds_direct_recharge["x"].values,
             },
         )
-        da_direct_recharge = _da_direct_recharge.resample(time="YE").sum(dim="time", skipna=False)
+        da_direct_recharge = _da_direct_recharge.resample(time="1Y").sum(dim="time", skipna=False)
         del direct_recharge, ll_direct_recharge, _da_direct_recharge, _direct_recharge_year, ds_direct_recharge
         click.echo("Calculating direct recharge anomalies...")
         value = np.nanmean(da_direct_recharge.values.flatten())
@@ -703,7 +710,7 @@ def main(model_run, area):
             ds_well_extraction = xr.open_dataset(output_file, engine="h5netcdf")
             well_extraction_year = ds_well_extraction["well_extraction"].values
             ds_well_extraction.close()
-            well_extraction_year = np.where(mask[np.newaxis, :, :], well_extraction_year, 0)
+            well_extraction_year = np.where(mask[np.newaxis, :, :] & mask_wells[np.newaxis, :, :], well_extraction_year, np.nan)
             ll_well_extraction.append(well_extraction_year)
         well_extraction = np.concatenate(ll_well_extraction, axis=0)
         well_extraction = np.where(well_extraction <= 0, np.nan, well_extraction)  # set negative values to nan
@@ -717,7 +724,7 @@ def main(model_run, area):
                 "x": ds_well_extraction["lon"].values,
             },
         )
-        da_well_extraction = _da_well_extraction.resample(time="YE").sum(dim="time")
+        da_well_extraction = _da_well_extraction.resample(time="1Y").sum(dim="time", skipna=False)
         del well_extraction, ll_well_extraction, _da_well_extraction, well_extraction_year, ds_well_extraction
         click.echo("Calculating well extraction anomalies...")
         value = np.nanmean(da_well_extraction.values.flatten())

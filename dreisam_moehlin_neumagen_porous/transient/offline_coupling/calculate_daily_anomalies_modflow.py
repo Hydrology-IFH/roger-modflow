@@ -85,6 +85,16 @@ def main(model_run, area):
     df_anomaly_metrics_abs = pd.DataFrame(columns=["scenario", "area", "time", "variable", "unit", "metric", "value"])
     df_anomaly_metrics_rel = pd.DataFrame(columns=["scenario", "area", "time", "variable", "unit", "metric", "value"])
 
+    file = base_path.parent / "input" / f"mask_rivers_.tif"
+    with rasterio.open(file) as src:
+        mask_rivers = src.read(1)
+        mask_rivers = np.where(mask_rivers == 1, True, False)
+
+    file = base_path.parent / "input" / f"mask_wells_.tif"
+    with rasterio.open(file) as src:
+        mask_wells = src.read(1)
+        mask_wells = np.where(mask_wells == 1, True, False)
+
     if area == "dmn":
         mask = ds_params["mask_porous_aquifer"].values
         file = base_path.parent / "input" / f"dmn_25m.tif"
@@ -167,9 +177,9 @@ def main(model_run, area):
         ds_indirect_recharge = xr.open_dataset(output_file, engine="h5netcdf")
         indirect_recharge_year = ds_indirect_recharge["indirect_recharge"].values * 86400  # convert from m3/s to m3/day
         ds_indirect_recharge.close()
-        indirect_recharge_year[indirect_recharge_year >= 0] = np.nan  # set positive values to zero
+        indirect_recharge_year[indirect_recharge_year >= 0] = 0  # set positive values to zero
         indirect_recharge_year = np.abs(indirect_recharge_year)
-        indirect_recharge_year = np.where(mask[np.newaxis, :, :], indirect_recharge_year, np.nan)
+        indirect_recharge_year = np.where(mask[np.newaxis, :, :] & mask_rivers[np.newaxis, :, :], indirect_recharge_year, np.nan)
         ll_indirect_recharge.append(indirect_recharge_year)
     indirect_recharge = np.concatenate(ll_indirect_recharge, axis=0)
     # create xarray data array for indirect recharge
@@ -277,8 +287,7 @@ def main(model_run, area):
         ds_well_extraction = xr.open_dataset(output_file, engine="h5netcdf")
         well_extraction_year = ds_well_extraction["well_extraction"].values
         ds_well_extraction.close()
-        well_extraction_year = np.where(mask[np.newaxis, :, :], well_extraction_year, np.nan)
-        well_extraction_year = np.where(well_extraction_year <= 0, np.nan, well_extraction_year)  # set negative values to nan
+        well_extraction_year = np.where(mask[np.newaxis, :, :] & mask_wells[np.newaxis, :, :], well_extraction_year, np.nan)
         ll_well_extraction.append(well_extraction_year)
     well_extraction = np.concatenate(ll_well_extraction, axis=0)
     well_extraction = np.where(well_extraction <= 0, np.nan, well_extraction)  # set negative values to nan
@@ -308,12 +317,7 @@ def main(model_run, area):
 
     for year in years:
         click.echo(f"Processing year {year}...")
-        output_file = base_path / "output" / f"modflow_{base}" / f"well_extraction_run{model_run}_year{year}.nc"
-        ds_well_extraction = xr.open_dataset(output_file, engine="h5netcdf")
-        well_extraction_year = ds_well_extraction["well_extraction"].values
-        ds_well_extraction.close()
-        well_extraction_year = np.where(mask[np.newaxis, :, :], well_extraction_year, np.nan)
-        well_extraction_year = np.where(well_extraction_year <= 0, np.nan, well_extraction_year) 
+        well_extraction_year = da_well_extraction_base.sel(time=str(year)).values
 
         value = np.nanmean(well_extraction_year.flatten())
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/day", "metric": "average", "value": value}
@@ -461,9 +465,9 @@ def main(model_run, area):
             ds_indirect_recharge = xr.open_dataset(output_file, engine="h5netcdf")
             indirect_recharge_year = ds_indirect_recharge["indirect_recharge"].values * 86400  # convert from m3/s to m3/day
             ds_indirect_recharge.close()
-            indirect_recharge_year[indirect_recharge_year >= 0] = np.nan  # set positive values to zero
+            indirect_recharge_year[indirect_recharge_year >= 0] = 0  # set positive values to zero
             indirect_recharge_year = np.abs(indirect_recharge_year)
-            indirect_recharge_year = np.where(mask[np.newaxis, :, :], indirect_recharge_year, np.nan)
+            indirect_recharge_year = np.where(mask[np.newaxis, :, :] & mask_rivers[np.newaxis, :, :], indirect_recharge_year, np.nan)
             ll_indirect_recharge.append(indirect_recharge_year)
         indirect_recharge = np.concatenate(ll_indirect_recharge, axis=0)
         # create xarray data array for indirect recharge
@@ -701,8 +705,7 @@ def main(model_run, area):
             ds_well_extraction = xr.open_dataset(output_file, engine="h5netcdf")
             well_extraction_year = ds_well_extraction["well_extraction"].values
             ds_well_extraction.close()
-            well_extraction_year = np.where(mask[np.newaxis, :, :], well_extraction_year, np.nan)
-            well_extraction_year = np.where(well_extraction_year <= 0, np.nan, well_extraction_year) 
+            well_extraction_year = np.where(mask[np.newaxis, :, :] & mask_wells[np.newaxis, :, :], well_extraction_year, np.nan)
             ll_well_extraction.append(well_extraction_year)
         well_extraction = np.concatenate(ll_well_extraction, axis=0)
         well_extraction = np.where(well_extraction <= 0, np.nan, well_extraction)  # set negative values to nan
@@ -765,8 +768,6 @@ def main(model_run, area):
             click.echo(f"Processing year {year}...")
             well_extraction_base_year = da_well_extraction_base.sel(time=f"{year}").values
             well_extraction_year = da_well_extraction.sel(time=f"{year}").values
-            well_extraction_year = np.where(mask[np.newaxis, :, :], well_extraction_year, np.nan)
-            well_extraction_year = np.where(well_extraction_year <= 0, np.nan, well_extraction_year) 
 
             value = np.nanmean(well_extraction_year.flatten())
             value_base = np.nanmean(well_extraction_base_year.flatten())
