@@ -142,7 +142,7 @@ def main(model_run):
                 ds_direct_recharge = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
                 _direct_recharge_year = ds_direct_recharge["recharge"].values
                 ds_direct_recharge.close()
-                _direct_recharge_year[_direct_recharge_year < 0] = 0  # set negative values to zero
+                _direct_recharge_year[_direct_recharge_year < 0] = np.nan  # set negative values to nan
                 _direct_recharge_year[_direct_recharge_year > 100] = 100  # set values above 100 mm/day to 100 mm/day
                 for i in range(_direct_recharge_year.shape[0]):
                     direct_recharge_day = aggregate_to_coarser_resolution(_direct_recharge_year[i, :, :], 25, 50, method="average")

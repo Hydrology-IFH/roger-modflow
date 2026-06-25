@@ -66,7 +66,7 @@ def main(model_run, area):
         ds_potential_evapotranspiration = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
         _potential_evapotranspiration_year = ds_potential_evapotranspiration["potential_evapotranspiration"].values
         ds_potential_evapotranspiration.close()
-        _potential_evapotranspiration_year[_potential_evapotranspiration_year < 0] = 0  # set negative values to zero
+        _potential_evapotranspiration_year[_potential_evapotranspiration_year < 0] = np.nan  # set negative values to nan
         ll_potential_evapotranspiration.append(_potential_evapotranspiration_year)
     potential_evapotranspiration = np.concatenate(ll_potential_evapotranspiration, axis=0)
     # create xarray data array for potential evapotranspiration
@@ -118,7 +118,7 @@ def main(model_run, area):
         ds_actual_evapotranspiration = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
         _actual_evapotranspiration_year = ds_actual_evapotranspiration["actual_evapotranspiration"].values
         ds_actual_evapotranspiration.close()
-        _actual_evapotranspiration_year[_actual_evapotranspiration_year < 0] = 0  # set negative values to zero
+        _actual_evapotranspiration_year[_actual_evapotranspiration_year < 0] = np.nan  # set negative values to nan
         ll_actual_evapotranspiration.append(_actual_evapotranspiration_year)
     actual_evapotranspiration = np.concatenate(ll_actual_evapotranspiration, axis=0)
     # create xarray data array for actual evapotranspiration
@@ -171,7 +171,7 @@ def main(model_run, area):
         ds_precipitation = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
         _precipitation_year = ds_precipitation["precipitation"].values
         ds_precipitation.close()
-        _precipitation_year[_precipitation_year < 0] = 0  # set negative values to zero
+        _precipitation_year[_precipitation_year < 0] = np.nan
         ll_precipitation.append(_precipitation_year)
     precipitation = np.concatenate(ll_precipitation, axis=0)
     # create xarray data array for precipitation
@@ -286,7 +286,7 @@ def main(model_run, area):
             ds_potential_evapotranspiration = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
             _potential_evapotranspiration_year = ds_potential_evapotranspiration["potential_evapotranspiration"].values
             # set negative values to zero
-            _potential_evapotranspiration_year[_potential_evapotranspiration_year < 0] = 0
+            _potential_evapotranspiration_year[_potential_evapotranspiration_year < 0] = np.nan
             ds_potential_evapotranspiration.close()
             ll_potential_evapotranspiration.append(_potential_evapotranspiration_year)
         potential_evapotranspiration = np.concatenate(ll_potential_evapotranspiration, axis=0)
@@ -405,7 +405,7 @@ def main(model_run, area):
             ds_actual_evapotranspiration = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
             _actual_evapotranspiration_year = ds_actual_evapotranspiration["actual_evapotranspiration"].values
             # set negative values to zero
-            _actual_evapotranspiration_year[_actual_evapotranspiration_year < 0] = 0
+            _actual_evapotranspiration_year[_actual_evapotranspiration_year < 0] = np.nan
             ds_actual_evapotranspiration.close()
             ll_actual_evapotranspiration.append(_actual_evapotranspiration_year)
         actual_evapotranspiration = np.concatenate(ll_actual_evapotranspiration, axis=0)
@@ -516,7 +516,7 @@ def main(model_run, area):
             ds_precipitation = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
             _precipitation_year = ds_precipitation["precipitation"].values
             ds_precipitation.close()
-            _precipitation_year[_precipitation_year < 0] = 0  # set negative values to zero
+            _precipitation_year[_precipitation_year < 0] = np.nan  # set negative values to nan
             ll_precipitation.append(_precipitation_year)
         precipitation = np.concatenate(ll_precipitation, axis=0)
         # create xarray data array for precipitation

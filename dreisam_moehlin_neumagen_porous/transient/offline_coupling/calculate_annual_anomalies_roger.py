@@ -11,8 +11,6 @@ import gc
 @click.command("main", short_help="Calculate annual anomalies for Roger output")
 def main(model_run, area):
     base_path = Path(__file__).parent
-    # base_path_output = base_path / "output"
-    # base_path_output = Path("/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline-coupling/output")
 
     base = "base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"
     
@@ -66,7 +64,7 @@ def main(model_run, area):
         ds_potential_evapotranspiration = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
         _potential_evapotranspiration_year = ds_potential_evapotranspiration["potential_evapotranspiration"].values
         ds_potential_evapotranspiration.close()
-        _potential_evapotranspiration_year[_potential_evapotranspiration_year < 0] = 0  # set negative values to zero
+        _potential_evapotranspiration_year[_potential_evapotranspiration_year < 0] = np.nan  # set negative values to nan
         _potential_evapotranspiration_year = np.where(mask25[np.newaxis, :, :], _potential_evapotranspiration_year, np.nan)
         ll_potential_evapotranspiration.append(_potential_evapotranspiration_year)
     potential_evapotranspiration = np.concatenate(ll_potential_evapotranspiration, axis=0)
@@ -80,7 +78,7 @@ def main(model_run, area):
             "x": ds_potential_evapotranspiration["x"].values,
         },
     )
-    da_potential_evapotranspiration_base = _da_potential_evapotranspiration_base.resample(time="YE").sum(dim="time")
+    da_potential_evapotranspiration_base = _da_potential_evapotranspiration_base.resample(time="YE").sum(dim="time", skipna=False)
     del potential_evapotranspiration, ll_potential_evapotranspiration, _da_potential_evapotranspiration_base, _potential_evapotranspiration_year, ds_potential_evapotranspiration
     value = np.nanmean(da_potential_evapotranspiration_base.values.flatten())
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "potential_evapotranspiration", "unit": "mm/year", "metric": "average", "value": value}
@@ -120,7 +118,7 @@ def main(model_run, area):
         ds_actual_evapotranspiration = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
         _actual_evapotranspiration_year = ds_actual_evapotranspiration["actual_evapotranspiration"].values
         ds_actual_evapotranspiration.close()
-        _actual_evapotranspiration_year[_actual_evapotranspiration_year < 0] = 0  # set negative values to zero
+        _actual_evapotranspiration_year[_actual_evapotranspiration_year < 0] = np.nan  # set negative values to nan
         _actual_evapotranspiration_year = np.where(mask25[np.newaxis, :, :], _actual_evapotranspiration_year, np.nan)
         ll_actual_evapotranspiration.append(_actual_evapotranspiration_year)
     actual_evapotranspiration = np.concatenate(ll_actual_evapotranspiration, axis=0)
@@ -134,7 +132,7 @@ def main(model_run, area):
             "x": ds_actual_evapotranspiration["x"].values,
         },
     )
-    da_actual_evapotranspiration_base = _da_actual_evapotranspiration_base.resample(time="YE").sum(dim="time")
+    da_actual_evapotranspiration_base = _da_actual_evapotranspiration_base.resample(time="YE").sum(dim="time", skipna=False)
     del actual_evapotranspiration, ll_actual_evapotranspiration, _da_actual_evapotranspiration_base, _actual_evapotranspiration_year, ds_actual_evapotranspiration
     value = np.nanmean(da_actual_evapotranspiration_base.values.flatten())
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "actual_evapotranspiration", "unit": "mm/year", "metric": "average", "value": value}
@@ -175,7 +173,7 @@ def main(model_run, area):
         ds_precipitation = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
         _precipitation_year = ds_precipitation["precipitation"].values
         ds_precipitation.close()
-        _precipitation_year[_precipitation_year < 0] = 0  # set negative values to zero
+        _precipitation_year[_precipitation_year < 0] = np.nan  # set negative values to nan
         _precipitation_year = np.where(mask25[np.newaxis, :, :], _precipitation_year, np.nan)
         ll_precipitation.append(_precipitation_year)
     precipitation = np.concatenate(ll_precipitation, axis=0)
@@ -189,7 +187,7 @@ def main(model_run, area):
             "x": ds_precipitation["x"].values,
         },
     )
-    da_precipitation_base = _da_precipitation_base.resample(time="YE").sum(dim="time")
+    da_precipitation_base = _da_precipitation_base.resample(time="YE").sum(dim="time", skipna=False)
     del precipitation, ll_precipitation, _da_precipitation_base, _precipitation_year, ds_precipitation
 
     value = np.nanmean(da_precipitation_base.values.flatten())
@@ -247,7 +245,7 @@ def main(model_run, area):
             "x": ds_air_temperature["x"].values,
         },
     )
-    da_air_temperature_base = _da_air_temperature_base.resample(time="YE").mean(dim="time")
+    da_air_temperature_base = _da_air_temperature_base.resample(time="YE").mean(dim="time", skipna=False)
     del air_temperature, ll_air_temperature, _da_air_temperature_base, _air_temperature_year, ds_air_temperature
 
     value = np.nanmean(da_air_temperature_base.values.flatten())
@@ -296,7 +294,7 @@ def main(model_run, area):
             _potential_evapotranspiration_year = ds_potential_evapotranspiration["potential_evapotranspiration"].values
             ds_potential_evapotranspiration.close()
             # set negative values to zero
-            _potential_evapotranspiration_year[_potential_evapotranspiration_year < 0] = 0
+            _potential_evapotranspiration_year[_potential_evapotranspiration_year < 0] = np.nan
             _potential_evapotranspiration_year = np.where(mask25[np.newaxis, :, :], _potential_evapotranspiration_year, np.nan)
             ll_potential_evapotranspiration.append(_potential_evapotranspiration_year)
         potential_evapotranspiration = np.concatenate(ll_potential_evapotranspiration, axis=0)
@@ -310,7 +308,7 @@ def main(model_run, area):
                 "x": ds_potential_evapotranspiration["x"].values,
             },
         )
-        da_potential_evapotranspiration = _da_potential_evapotranspiration.resample(time="YE").sum(dim="time")
+        da_potential_evapotranspiration = _da_potential_evapotranspiration.resample(time="YE").sum(dim="time", skipna=False)
         del potential_evapotranspiration, ll_potential_evapotranspiration, _da_potential_evapotranspiration, _potential_evapotranspiration_year, ds_potential_evapotranspiration
         click.echo("Calculating potential evapotranspiration anomalies...")
         value = np.nanmean(da_potential_evapotranspiration.values.flatten())
@@ -417,7 +415,7 @@ def main(model_run, area):
             _actual_evapotranspiration_year = ds_actual_evapotranspiration["actual_evapotranspiration"].values
             ds_actual_evapotranspiration.close()
             # set negative values to zero
-            _actual_evapotranspiration_year[_actual_evapotranspiration_year < 0] = 0
+            _actual_evapotranspiration_year[_actual_evapotranspiration_year < 0] = np.nan
             _actual_evapotranspiration_year = np.where(mask25[np.newaxis, :, :], _actual_evapotranspiration_year, np.nan)
             ll_actual_evapotranspiration.append(_actual_evapotranspiration_year)
         actual_evapotranspiration = np.concatenate(ll_actual_evapotranspiration, axis=0)
@@ -431,7 +429,7 @@ def main(model_run, area):
                 "x": ds_actual_evapotranspiration["x"].values,
             },
         )
-        da_actual_evapotranspiration = _da_actual_evapotranspiration.resample(time="YE").sum(dim="time")
+        da_actual_evapotranspiration = _da_actual_evapotranspiration.resample(time="YE").sum(dim="time", skipna=False)
         del actual_evapotranspiration, ll_actual_evapotranspiration, _da_actual_evapotranspiration, _actual_evapotranspiration_year, ds_actual_evapotranspiration
         click.echo("Calculating actual evapotranspiration anomalies...")
         value = np.nanmean(da_actual_evapotranspiration.values.flatten())
@@ -528,7 +526,7 @@ def main(model_run, area):
             ds_precipitation = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
             _precipitation_year = ds_precipitation["precipitation"].values
             ds_precipitation.close()
-            _precipitation_year[_precipitation_year < 0] = 0  # set negative values to zero
+            _precipitation_year[_precipitation_year < 0] = np.nan  # set negative values to nan
             _precipitation_year = np.where(mask25[np.newaxis, :, :], _precipitation_year, np.nan)
             ll_precipitation.append(_precipitation_year)
         precipitation = np.concatenate(ll_precipitation, axis=0)
@@ -542,7 +540,7 @@ def main(model_run, area):
                 "x": ds_precipitation["x"].values,
             },
         )
-        da_precipitation = _da_precipitation.resample(time="YE").sum(dim="time")
+        da_precipitation = _da_precipitation.resample(time="YE").sum(dim="time", skipna=False)
         del precipitation, ll_precipitation, _da_precipitation, _precipitation_year, ds_precipitation
         click.echo("Calculating precipitation anomalies...")
         value = np.nanmean(da_precipitation.values.flatten())
@@ -664,7 +662,7 @@ def main(model_run, area):
                 "x": ds_air_temperature["x"].values,
             },
         )
-        da_air_temperature = _da_air_temperature.resample(time="YE").mean(dim="time")
+        da_air_temperature = _da_air_temperature.resample(time="YE").mean(dim="time", skipna=False)
         del air_temperature, ll_air_temperature, _da_air_temperature, _air_temperature_year, ds_air_temperature
         click.echo("Calculating air temperature anomalies...")
         value = np.nanmean(da_air_temperature.values.flatten())
@@ -786,7 +784,7 @@ def main(model_run, area):
                     "x": ds_irrigation["x"].values,
                 },
             )
-            da_irrigation = _da_irrigation.resample(time="YE").sum(dim="time")
+            da_irrigation = _da_irrigation.resample(time="YE").sum(dim="time", skipna=False)
             del irrigation, ll_irrigation, _da_irrigation, _irrigation_year, ds_irrigation
             click.echo("Calculating irrigation metrics...")
             value = np.nanmean(da_irrigation.values.flatten())

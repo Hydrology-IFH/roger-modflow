@@ -226,7 +226,7 @@ def main(model_run, area):
         ds_direct_recharge = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
         _direct_recharge_year = ds_direct_recharge["recharge"].values
         ds_direct_recharge.close()
-        _direct_recharge_year[_direct_recharge_year < 0] = 0  # set negative values to zero
+        _direct_recharge_year[_direct_recharge_year < 0] = np.nan  # set negative values to zero
         _direct_recharge_year[_direct_recharge_year > 100] = 100  # set values above 100 mm/day to 100 mm/day
         ll_direct_recharge.append(_direct_recharge_year)
     direct_recharge = np.concatenate(ll_direct_recharge, axis=0)
@@ -588,7 +588,7 @@ def main(model_run, area):
             ds_direct_recharge = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
             _direct_recharge_year = ds_direct_recharge["recharge"].values
             ds_direct_recharge.close()
-            _direct_recharge_year[_direct_recharge_year < 0] = 0  # set negative values to zero
+            _direct_recharge_year[_direct_recharge_year < 0] = np.nan  # set negative values to nan
             _direct_recharge_year[_direct_recharge_year > 100] = 100  # set values above 100 mm/day to 100 mm/day
             ll_direct_recharge.append(_direct_recharge_year)
         direct_recharge = np.concatenate(ll_direct_recharge, axis=0)

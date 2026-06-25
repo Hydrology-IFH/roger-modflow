@@ -135,7 +135,7 @@ def main(model_run):
             # output_file = base_path_output / f"{base}" / f"recharge_{base}_year{year}.nc"
             ds_direct_recharge_base = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
             _direct_recharge_year_base = ds_direct_recharge_base["recharge"].values
-            _direct_recharge_year_base[_direct_recharge_year_base < 0] = 0  # set negative values to zero
+            _direct_recharge_year_base[_direct_recharge_year_base < 0] = np.nan  # set negative values to nan
             _direct_recharge_year_base[_direct_recharge_year_base > 100] = 100  # set values above 100 mm/day to 100 mm/day
             for i in range(_direct_recharge_year_base.shape[0]):
                 direct_recharge_day = aggregate_to_coarser_resolution(_direct_recharge_year_base[i, :, :], 25, 50, method="average")
@@ -247,7 +247,7 @@ def main(model_run):
                 # output_file = base_path_output / f"{stress_test_scenario}" / f"recharge_{_stress_test_scenario}_year{year}.nc"
                 ds_direct_recharge = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
                 _direct_recharge_year = ds_direct_recharge["recharge"].values
-                _direct_recharge_year[_direct_recharge_year < 0] = 0  # set negative values to zero
+                _direct_recharge_year[_direct_recharge_year < 0] = np.nan  # set negative values to nan
                 _direct_recharge_year[_direct_recharge_year > 100] = 100  # set values above 100 mm/day to 100 mm/day
                 for i in range(_direct_recharge_year.shape[0]):
                     direct_recharge_day = aggregate_to_coarser_resolution(_direct_recharge_year[i, :, :], 25, 50, method="average")
