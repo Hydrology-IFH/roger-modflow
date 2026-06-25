@@ -264,6 +264,7 @@ def main(model_run):
             fig, ax = plt.subplots(figsize=(6, 2.5))
             ax.plot(date_time, dict_depths_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area], label="Base", color="#737373", lw=2.0)
             ax.plot(date_time, dict_depths_avg[stress_test_scenario][area], color="#fd8d3c", lw=1.5)
+            ax.axhline(np.nanmean(dict_depths_avg["base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"][area]), color="black", linestyle="--", alpha=0.8)
             ax.set_xlim(date_time[0], date_time[-1])
             ax.set_xlabel("Zeit")
             ax.set_ylabel("Mittlere GWFA [m]")
