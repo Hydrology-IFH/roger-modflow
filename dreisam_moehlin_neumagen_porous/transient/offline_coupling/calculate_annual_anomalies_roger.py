@@ -460,6 +460,13 @@ def main(model_run, area):
         df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "actual_evapotranspiration", "unit": "mm/year", "metric": "median", "value": value}
         df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "actual_evapotranspiration", "unit": "mm/year", "metric": "median", "value": anomaly_abs}
         df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "actual_evapotranspiration", "unit": "%", "metric": "median", "value": anomaly_rel}
+        value = np.nanpercentile(da_actual_evapotranspiration.values.flatten(), 75)
+        value_base = np.nanpercentile(da_actual_evapotranspiration_base.values.flatten(), 75)
+        anomaly_abs = value - value_base
+        anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
+        df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "actual_evapotranspiration", "unit": "mm/year", "metric": "75th_percentile", "value": value}   
+        df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "actual_evapotranspiration", "unit": "mm/year", "metric": "75th_percentile", "value": anomaly_abs}
+        df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "actual_evapotranspiration", "unit": "%", "metric": "75th_percentile", "value": anomaly_rel}
         value = np.nanpercentile(da_actual_evapotranspiration.values.flatten(), 95)
         value_base = np.nanpercentile(da_actual_evapotranspiration_base.values.flatten(), 95)
         anomaly_abs = value - value_base

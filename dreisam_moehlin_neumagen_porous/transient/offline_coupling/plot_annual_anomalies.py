@@ -1,67 +1,17 @@
 from pathlib import Path
 import numpy as np
-import xarray as xr
 import pandas as pd
 import matplotlib.pyplot as plt
 import click
-
-def aggregate_to_coarser_resolution(vals, res_fine, res_coarse, method="sum", x_origin=0, y_origin=0):
-    """Aggregate raster data to a coarser resolution.
-    
-    Args
-    ----
-    vals : numpy.ndarray
-        2D array with the raster data.
-
-    res_fine : int
-        spatial resolution of the fine grid in meters.
-
-    res_coarse : int
-        spatial resolution of the coarse grid in meters.
-
-    method : str
-        Method to aggregate the data. Options are "sum" and "average".
-
-    x_origin : int
-        x-coordinate of the grid origin (lower left corner).
-
-    y_origin : int
-        y-coordinate of the grid origin (lower left corner).  
-    """
-    ny_fine, nx_fine = vals.shape[0], vals.shape[1]
-    nlat_coarse, nlon_coarse = int(res_coarse / res_fine), int(res_coarse / res_fine)
-    meters_to_latlon = 111195
-    lat_fine = np.linspace(y_origin, y_origin + ny_fine*(res_fine/meters_to_latlon), ny_fine)/meters_to_latlon  # boundaries
-    lon_fine = np.linspace(x_origin, x_origin + nx_fine*(res_fine/meters_to_latlon), nx_fine)/meters_to_latlon  # boundaries
-
-    arr_fine = xr.DataArray(vals, coords={"lat": lat_fine, "lon": lon_fine}, dims=["lat", "lon"])
-
-    if method == "sum":
-        arr_coarse = xr.DataArray(
-            arr_fine.coarsen(lat=nlat_coarse, lon=nlon_coarse).sum().values,
-            dims=("lat", "lon"),
-        )
-        
-    elif method == "average":
-        arr_coarse = xr.DataArray(
-            arr_fine.coarsen(lat=nlat_coarse, lon=nlon_coarse).mean().values,
-            dims=("lat", "lon"),
-        )
-    return arr_coarse.values
 
 
 @click.option("-mr", "--model-run", type=int, default=1806)
 @click.command("main", short_help="Evaluate the transient simulation")
 def main(model_run):
-    base_path = Path(__file__).parent
-    base_path_output = base_path / "output"
-    base_path_figures = base_path / "figures"
+    base_path_output = Path("/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline-coupling") / "output"
+    base_path_figures = Path("/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline-coupling") / "figures"
 
-    # areas = ["dmn", "wsg_hausen", "wsg_zartener_becken", "wsg_boetzingen", "wsg_breisach", "wsg_ebringen", "wsg_eichstetten", "wsg_gottenheim", "wsg_krozinger_berg", "wsg_march", "wsg_schlatt", "wsg_tuniberg", "wsg_umkirch"]
-
-    areas = ["dmn"]
-
-    base = "base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"
+    areas = ["dmn", "wsg_hausen", "wsg_zartener_becken", "wsg_boetzingen", "wsg_breisach", "wsg_ebringen", "wsg_eichstetten", "wsg_gottenheim", "wsg_krozinger_berg", "wsg_march", "wsg_schlatt", "wsg_tuniberg", "wsg_umkirch"]
 
     stress_test_scenarios = ["base-magnitude0-duration0_irrigation_no-yellow-mustard_soil-compaction",
                              "summer-drought-magnitude0-duration3_no-irrigation_no-yellow-mustard_soil-compaction",
@@ -82,9 +32,6 @@ def main(model_run):
     periods = ["overall", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023"]
     variables = ["air_temperature", "potential_evapotranspiration", "actual_evapotranspiration", "precipitation", "direct_recharge", "indirect_recharge", "gw_depth"]
     metrics = ["average", "5th_percentile", "25th_percentile", "median", "75th_percentile", "95th_percentile"]
-
-    date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="D")
-    years = np.unique(date_time.year.values)
 
     # load metrics
     output_file = base_path_output / f"annual_values_run{model_run}.csv"

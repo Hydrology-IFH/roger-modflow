@@ -41,7 +41,7 @@ def main():
         script_name = f"calculate_daily_anomalies_{area}_modflow"
         lines = []
         lines.append("#!/bin/bash\n")
-        lines.append("#SBATCH --time=48:00:00\n")
+        lines.append("#SBATCH --time=72:00:00\n")
         lines.append("#SBATCH --ntasks=1\n")
         lines.append("#SBATCH --cpus-per-task=1\n")
         lines.append("#SBATCH --mem=512000\n")

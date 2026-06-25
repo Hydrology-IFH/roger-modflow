@@ -1,11 +1,8 @@
-from time import time
 from pathlib import Path
 import os
 import numpy as np
-import pandas as pd
 import xarray as xr
 import xesmf as xe
-import h5netcdf
 
 def aggregate_to_finer_resolution(vals, res_coarse, res_fine, method="keep", x_origin=0, y_origin=0):
     """Aggregate raster data to a finer resolution.

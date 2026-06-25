@@ -56,8 +56,6 @@ def aggregate_to_coarser_resolution(vals, res_fine, res_coarse, method="sum", x_
 @click.command("main", short_help="Calculate daily anomalies for MODFLOW output")
 def main(model_run, area):
     base_path = Path(__file__).parent
-    # base_path_output = base_path / "output"
-    # base_path_output = Path("/Volumes/LaCie/roger-modflow/dreisam_moehlin_neumagen_porous/transient/offline-coupling/output")
 
     base = "base-magnitude0-duration0_no-irrigation_no-yellow-mustard_soil-compaction"
     
@@ -637,6 +635,13 @@ def main(model_run, area):
         df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "m3/day", "metric": "median", "value": value}
         df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "m3/day", "metric": "median", "value": anomaly_abs}
         df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "%", "metric": "median", "value": anomaly_rel}
+        value = np.nanpercentile(da_direct_recharge.values.flatten(), 75)
+        value_base = np.nanpercentile(da_direct_recharge_base.values.flatten(), 75)
+        anomaly_abs = value - value_base
+        anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
+        df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "m3/day", "metric": "75th_percentile", "value": value}
+        df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "m3/day", "metric": "75th_percentile", "value": anomaly_abs}
+        df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "%", "metric": "75th_percentile", "value": anomaly_rel}
         value = np.nanpercentile(da_direct_recharge.values.flatten(), 95)
         value_base = np.nanpercentile(da_direct_recharge_base.values.flatten(), 95)
         anomaly_abs = value - value_base
