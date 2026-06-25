@@ -228,11 +228,6 @@ def main(model_run, area):
         _direct_recharge_year[_direct_recharge_year > 100] = 100  # set values above 100 mm/day to 100 mm/day
         ll_direct_recharge.append(_direct_recharge_year)
     direct_recharge = np.concatenate(ll_direct_recharge, axis=0)
-    # convert from mm/day to m3/day
-    # get the area of each grid cell in m2
-    _area = 25 * 25  # 25 m x 25 m grid cells
-    # multiply direct recharge by area to get m3/day
-    direct_recharge = direct_recharge * _area / 1000
     # create xarray data array for direct recharge
     da_direct_recharge_base = xr.DataArray(
         data=direct_recharge,
@@ -590,11 +585,6 @@ def main(model_run, area):
             _direct_recharge_year[_direct_recharge_year > 100] = 100  # set values above 100 mm/day to 100 mm/day
             ll_direct_recharge.append(_direct_recharge_year)
         direct_recharge = np.concatenate(ll_direct_recharge, axis=0)
-        # convert from mm/day to m3/day
-        # get the area of each grid cell in m2
-        _area = 25 * 25  # 25 m x 25 m grid cells
-        # multiply direct recharge by area to get m3/day
-        direct_recharge = direct_recharge * _area / 1000
         # create xarray data array for direct recharge
         da_direct_recharge = xr.DataArray(
             data=direct_recharge,

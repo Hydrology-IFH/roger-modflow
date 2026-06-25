@@ -182,7 +182,7 @@ def main(model_run, area):
             "x": ds_indirect_recharge["lon"].values,
         },
     )
-    da_indirect_recharge_base = _da_indirect_recharge_base.resample(time="YE").sum(dim="time", skipna=False)
+    da_indirect_recharge_base = _da_indirect_recharge_base.resample(time="YE").sum(dim="time")
     del indirect_recharge, ll_indirect_recharge, _da_indirect_recharge_base, indirect_recharge_year, ds_indirect_recharge
     value = np.nanmean(da_indirect_recharge_base.values.flatten())
     df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "indirect_recharge", "unit": "m3/year", "metric": "average", "value": value}
@@ -224,15 +224,10 @@ def main(model_run, area):
         _direct_recharge_year = ds_direct_recharge["recharge"].values
         ds_direct_recharge.close()
         _direct_recharge_year[_direct_recharge_year < 0] = np.nan  # set negative values to nan
-        _direct_recharge_year[_direct_recharge_year > 100] = 100  # set values above 100 mm/year to 100 mm/year
+        _direct_recharge_year[_direct_recharge_year > 100] = 100  # set values above 100 mm/day to 100 mm/day
         _direct_recharge_year = np.where(mask25[np.newaxis, :, :], _direct_recharge_year, np.nan)
         ll_direct_recharge.append(_direct_recharge_year)
     direct_recharge = np.concatenate(ll_direct_recharge, axis=0)
-    # convert from mm/year to m3/year
-    # get the area of each grid cell in m2
-    _area = 25 * 25  # 25 m x 25 m grid cells
-    # multiply direct recharge by area to get m3/year
-    direct_recharge = direct_recharge * _area / 1000
     # create xarray data array for direct recharge
     _da_direct_recharge_base = xr.DataArray(
         data=direct_recharge,
@@ -296,7 +291,7 @@ def main(model_run, area):
             "x": ds_well_extraction["lon"].values,
         },
     )
-    da_well_extraction_base = _da_well_extraction_base.resample(time="YE").sum(dim="time", skipna=False)
+    da_well_extraction_base = _da_well_extraction_base.resample(time="YE").sum(dim="time")
     del well_extraction, ll_well_extraction, _da_well_extraction_base, well_extraction_year, ds_well_extraction
 
     value = np.nanmean(da_well_extraction_base.values.flatten())
@@ -477,7 +472,7 @@ def main(model_run, area):
                 "x": ds_indirect_recharge["lon"].values,
             },
         )
-        da_indirect_recharge = _da_indirect_recharge.resample(time="YE").sum(dim="time", skipna=False)
+        da_indirect_recharge = _da_indirect_recharge.resample(time="YE").sum(dim="time")
         del indirect_recharge, ll_indirect_recharge, _da_indirect_recharge, indirect_recharge_year, ds_indirect_recharge
         click.echo("Calculating indirect recharge anomalies...")
         value = np.nanmean(da_indirect_recharge.values.flatten())
@@ -590,11 +585,6 @@ def main(model_run, area):
             _direct_recharge_year = np.where(mask25[np.newaxis, :, :], _direct_recharge_year, np.nan)
             ll_direct_recharge.append(_direct_recharge_year)
         direct_recharge = np.concatenate(ll_direct_recharge, axis=0)
-        # convert from mm/year to m3/year
-        # get the area of each grid cell in m2
-        _area = 25 * 25  # 25 m x 25 m grid cells
-        # multiply direct recharge by area to get m3/year
-        direct_recharge = direct_recharge * _area / 1000
         # create xarray data array for direct recharge
         _da_direct_recharge = xr.DataArray(
             data=direct_recharge,
@@ -724,7 +714,7 @@ def main(model_run, area):
                 "x": ds_well_extraction["lon"].values,
             },
         )
-        da_well_extraction = _da_well_extraction.resample(time="YE").sum(dim="time", skipna=False)
+        da_well_extraction = _da_well_extraction.resample(time="YE").sum(dim="time")
         del well_extraction, ll_well_extraction, _da_well_extraction, well_extraction_year, ds_well_extraction
         click.echo("Calculating well extraction anomalies...")
         value = np.nanmean(da_well_extraction.values.flatten())
