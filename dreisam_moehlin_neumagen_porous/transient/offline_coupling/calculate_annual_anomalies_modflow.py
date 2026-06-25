@@ -241,7 +241,7 @@ def main(model_run, area):
     da_direct_recharge_base = _da_direct_recharge_base.resample(time="YE").sum(dim="time", skipna=False)
     del direct_recharge, ll_direct_recharge, _da_direct_recharge_base, _direct_recharge_year, ds_direct_recharge
     value = np.nanmean(da_direct_recharge_base.values.flatten())
-    df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "m3/year", "metric": "average", "value": value}
+    df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "mm/year", "metric": "average", "value": value}
     value = np.nanpercentile(da_direct_recharge_base.values.flatten(), 5)
     df_metrics.loc[len(df_metrics)] = {"scenario ": base,("area"): area, "time": "overall ", "variable": "direct_recharge ", "unit": "m3/year ", "metric": "5th_percentile ", "value": value}
     value = np.nanpercentile(da_direct_recharge_base.values.flatten(), 25)
@@ -251,13 +251,13 @@ def main(model_run, area):
     value = np.nanpercentile(da_direct_recharge_base.values.flatten(), 75)
     df_metrics.loc[len(df_metrics)] = {"scenario ": base,("area"): area, "time": "overall ", "variable": "direct_recharge ", "unit": "m3/year ", "metric": "75th_percentile ", "value": value}
     value = np.nanpercentile(da_direct_recharge_base.values.flatten(), 95)
-    df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "m3/year", "metric": "95th_percentile", "value": value}
+    df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "mm/year", "metric": "95th_percentile", "value": value}
 
     for i, year in enumerate(years):
         click.echo(f"Processing year {year}...")
         direct_recharge = da_direct_recharge_base.values[i, :, :]
         value = np.nanmean(direct_recharge.flatten())
-        df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "m3/year", "metric": "average", "value": value}
+        df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "mm/year", "metric": "average", "value": value}
         value = np.nanpercentile(direct_recharge.flatten(), 5)
         df_metrics.loc[len(df_metrics)] = {"scenario ": base,("area"): area, "time": f"{year}", "variable":	"direct_recharge ", "unit": "m3/year ", "metric": "5th_percentile ", "value": value}
         value = np.nanpercentile(direct_recharge.flatten(), 25)
@@ -267,7 +267,7 @@ def main(model_run, area):
         value = np.nanpercentile(direct_recharge.flatten(), 75)
         df_metrics.loc[len(df_metrics)] = {"scenario ": base,("area"): area, "time": f"{year}", "variable":	"direct_recharge ", "unit": "m3/year ", "metric": "75th_percentile ", "value": value}
         value = np.nanpercentile(direct_recharge.flatten(), 95)
-        df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "m3/year", "metric": "95th_percentile", "value": value}
+        df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "mm/year", "metric": "95th_percentile", "value": value}
 
     # load well extraction
     click.echo("Loading well extraction...")
@@ -312,6 +312,9 @@ def main(model_run, area):
         well_extraction_year = da_well_extraction_base.values[i, :, :]  # sum over time to get annual well extraction
 
         value = np.nanmean(well_extraction_year.flatten())
+        if year == 2023:
+            click.echo(f"Year {year}: well extraction mean = {value}")
+            click.echo(f"{np.unique(well_extraction_year)}")
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/year", "metric": "average", "value": value}
         value = np.nanpercentile(well_extraction_year.flatten(), 5)
         df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/year", "metric": "5th_percentile", "value": value}
@@ -602,43 +605,43 @@ def main(model_run, area):
         value_base = np.nanmean(da_direct_recharge_base.values.flatten())
         anomaly_abs = value - value_base
         anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-        df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "m3/year", "metric": "average", "value": value}
-        df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "m3/year", "metric": "average", "value": anomaly_abs}
+        df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "mm/year", "metric": "average", "value": value}
+        df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "mm/year", "metric": "average", "value": anomaly_abs}
         df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "%", "metric": "average", "value": anomaly_rel}
         value = np.nanpercentile(da_direct_recharge.values.flatten(), 5)
         value_base = np.nanpercentile(da_direct_recharge_base.values.flatten(), 5)
         anomaly_abs = value - value_base
         anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-        df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "m3/year", "metric": "5th_percentile", "value": value}
-        df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "m3/year", "metric": "5th_percentile", "value": anomaly_abs}
+        df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "mm/year", "metric": "5th_percentile", "value": value}
+        df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "mm/year", "metric": "5th_percentile", "value": anomaly_abs}
         df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "%", "metric": "5th_percentile", "value": anomaly_rel}
         value = np.nanpercentile(da_direct_recharge.values.flatten(), 25)
         value_base = np.nanpercentile(da_direct_recharge_base.values.flatten(), 25)
         anomaly_abs = value - value_base
         anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-        df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "m3/year", "metric": "25th_percentile", "value": value}
-        df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "m3/year", "metric": "25th_percentile", "value": anomaly_abs}
+        df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "mm/year", "metric": "25th_percentile", "value": value}
+        df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "mm/year", "metric": "25th_percentile", "value": anomaly_abs}
         df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "%", "metric": "25th_percentile", "value": anomaly_rel}
         value = np.nanpercentile(da_direct_recharge.values.flatten(), 50)
         value_base = np.nanpercentile(da_direct_recharge_base.values.flatten(), 50)
         anomaly_abs = value - value_base
         anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-        df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "m3/year", "metric": "median", "value": value}
-        df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "m3/year", "metric": "median", "value": anomaly_abs}
+        df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "mm/year", "metric": "median", "value": value}
+        df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "mm/year", "metric": "median", "value": anomaly_abs}
         df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "%", "metric": "median", "value": anomaly_rel}
         value = np.nanpercentile(da_direct_recharge.values.flatten(), 75)
         value_base = np.nanpercentile(da_direct_recharge_base.values.flatten(), 75)
         anomaly_abs = value - value_base
         anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-        df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "m3/year", "metric": "75th_percentile", "value": value}
-        df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "m3/year", "metric": "75th_percentile", "value": anomaly_abs}
+        df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "mm/year", "metric": "75th_percentile", "value": value}
+        df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "mm/year", "metric": "75th_percentile", "value": anomaly_abs}
         df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "%", "metric": "75th_percentile", "value": anomaly_rel}
         value = np.nanpercentile(da_direct_recharge.values.flatten(), 95)
         value_base = np.nanpercentile(da_direct_recharge_base.values.flatten(), 95)
         anomaly_abs = value - value_base
         anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-        df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "m3/year", "metric": "95th_percentile", "value": value}
-        df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "m3/year", "metric": "95th_percentile", "value": anomaly_abs}
+        df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "mm/year", "metric": "95th_percentile", "value": value}
+        df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "mm/year", "metric": "95th_percentile", "value": anomaly_abs}
         df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "direct_recharge", "unit": "%", "metric": "95th_percentile", "value": anomaly_rel}
 
         for i, year in enumerate(years):
@@ -650,43 +653,43 @@ def main(model_run, area):
             value_base = np.nanmean(direct_recharge_base.flatten())
             anomaly_abs = value - value_base
             anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "m3/year", "metric": "average", "value": value}
-            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "m3/year", "metric": "average", "value": anomaly_abs}
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "mm/year", "metric": "average", "value": value}
+            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "mm/year", "metric": "average", "value": anomaly_abs}
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "%", "metric": "average", "value": anomaly_rel}
             value = np.nanpercentile(direct_recharge.flatten(), 5)
             value_base = np.nanpercentile(direct_recharge_base.flatten(), 5)
             anomaly_abs = value - value_base
             anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "m3/year", "metric": "5th_percentile", "value": value}
-            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "m3/year", "metric": "5th_percentile", "value": anomaly_abs}
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "mm/year", "metric": "5th_percentile", "value": value}
+            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "mm/year", "metric": "5th_percentile", "value": anomaly_abs}
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "%", "metric": "5th_percentile", "value": anomaly_rel}
             value = np.nanpercentile(direct_recharge.flatten(), 25)
             value_base = np.nanpercentile(direct_recharge_base.flatten(), 25)
             anomaly_abs = value - value_base
             anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "m3/year", "metric": "25th_percentile", "value": value}
-            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "m3/year", "metric": "25th_percentile", "value": anomaly_abs}
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "mm/year", "metric": "25th_percentile", "value": value}
+            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "mm/year", "metric": "25th_percentile", "value": anomaly_abs}
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "%", "metric": "25th_percentile", "value": anomaly_rel}
             value = np.nanpercentile(direct_recharge.flatten(), 50)
             value_base = np.nanpercentile(direct_recharge_base.flatten(), 50)
             anomaly_abs = value - value_base
             anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "m3/year", "metric": "median", "value": value}
-            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "m3/year", "metric": "median", "value": anomaly_abs}
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "mm/year", "metric": "median", "value": value}
+            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "mm/year", "metric": "median", "value": anomaly_abs}
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "%", "metric": "median", "value": anomaly_rel}
             value = np.nanpercentile(direct_recharge.flatten(), 75)
             value_base = np.nanpercentile(direct_recharge_base.flatten(), 75)
             anomaly_abs = value - value_base
             anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "m3/year", "metric": "75th_percentile", "value": value}
-            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "m3/year", "metric": "75th_percentile", "value": anomaly_abs}
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "mm/year", "metric": "75th_percentile", "value": value}
+            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "mm/year", "metric": "75th_percentile", "value": anomaly_abs}
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "%", "metric": "75th_percentile", "value": anomaly_rel}
             value = np.nanpercentile(direct_recharge.flatten(), 95)
             value_base = np.nanpercentile(direct_recharge_base.flatten(), 95)
             anomaly_abs = value - value_base
             anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "m3/year", "metric": "95th_percentile", "value": value}
-            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "m3/year", "metric": "95th_percentile", "value": anomaly_abs}
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "mm/year", "metric": "95th_percentile", "value": value}
+            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "mm/year", "metric": "95th_percentile", "value": anomaly_abs}
             df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "direct_recharge", "unit": "%", "metric": "95th_percentile", "value": anomaly_rel}
 
         del da_direct_recharge
