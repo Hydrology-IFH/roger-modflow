@@ -227,6 +227,7 @@ def main(model_run):
                     output_file = base_path_roger / "examples" / "catchment_scale" / "dreisam_moehlin_neumagen" / "oneD_crop_distributed" / "output" / f"irrigation_{_stress_test_scenario}_year{year}.nc"
                     ds_irrigation = xr.open_dataset(output_file, engine="h5netcdf", decode_timedelta=False)
                     _irrigation_year = ds_irrigation["irrigation"].values
+                    _irrigation_year = np.where(_irrigation_year < 0, 0, _irrigation_year)  # set negative values to zero
                     ds_irrigation.close()
                     for i in range(_irrigation_year.shape[0]):
                         irrigation_day = aggregate_to_coarser_resolution(_irrigation_year[i, :, :], 25, 50, method="average")
