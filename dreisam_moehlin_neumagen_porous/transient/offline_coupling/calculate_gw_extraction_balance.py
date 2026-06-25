@@ -296,9 +296,10 @@ def main(model_run):
             fig, ax = plt.subplots(figsize=(6, 2.5))
             # convert to million m3/month
             ax.bar(df_well_extraction_monthly.index, df_well_extraction_monthly["well_extraction"] / 1e6, color="purple", width=15)
-            # rotate xticklabels to vertical and show only the year and month
-            xticklabels = df_well_extraction_monthly.index.strftime("%y-%m")
             ax.set_xticks(df_well_extraction_monthly.index)
+            # reformat xticklabels to show only the year and month and plot labels of every 4th month
+            xticklabels = df_well_extraction_monthly.index.strftime("%y-%m")
+            xticklabels = [label if i % 4 == 0 else "" for i, label in enumerate(xticklabels)]
             ax.set_xticklabels(xticklabels, rotation=90)
             ax.set_xlim(df_well_extraction_monthly.index[0] - pd.DateOffset(months=1), df_well_extraction_monthly.index[-1] + pd.DateOffset(months=1))
             ax.set_xlabel("Zeit [Jahr-Monat]")
@@ -322,9 +323,9 @@ def main(model_run):
 
             # plot long-term average annual drinking water well extraction
             fig, ax = plt.subplots(figsize=(2, 2))
-            long_term_average = df_well_extraction_annual["well_extraction"].mean()
+            long_term_average = df_well_extraction_annual["well_extraction"].mean() / 1e6
             df_long_term_average = pd.DataFrame(index=["long_term_average"], data=[long_term_average], columns=["well_extraction"])
-            ax.bar(df_long_term_average.index, df_long_term_average["well_extraction"] / 1e6, color="purple")
+            ax.bar(df_long_term_average.index, df_long_term_average["well_extraction"], color="purple")
             ax.set_xlabel("")
             ax.set_xticklabels([""], rotation=0)
             ax.set_ylabel("GW-Entnahme\n[Mio. m³/Jahr]")
@@ -365,9 +366,9 @@ def main(model_run):
 
                 # plot long-term average annual irrigation
                 fig, ax = plt.subplots(figsize=(2, 2))
-                long_term_average = df_irrigation_annual["irrigation"].mean()
+                long_term_average = df_irrigation_annual["irrigation"].mean() / 1e6
                 df_long_term_average = pd.DataFrame(index=["long_term_average"], data=[long_term_average], columns=["irrigation"])
-                ax.bar(df_long_term_average.index, df_long_term_average["irrigation"] / 1e6, color="pink")
+                ax.bar(df_long_term_average.index, df_long_term_average["irrigation"], color="pink")
                 ax.set_xlabel("")
                 ax.set_xticklabels([""], rotation=0)
                 ax.set_ylabel("Bewässerung\n[Mio. m³/Jahr]")
@@ -394,7 +395,7 @@ def main(model_run):
                 ax.set_xlabel("Zeit [Jahr-Monat]")
                 ax.set_ylabel("GW-Entnahme\n[Mio. m³/Monat]")
                 # put legend outside of the plot on the top center
-                ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.2), ncol=2)
+                ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.3), ncol=2, frameon=False)
                 fig.tight_layout()
                 fig.savefig(figures_dir / f"extraction_monthly_stacked_{area}.pdf", dpi=300)
 
@@ -408,7 +409,7 @@ def main(model_run):
                 ax.set_xlabel("Jahr")
                 ax.set_ylabel("GW-Entnahme\n[Mio. m³/Jahr]")
                 # put legend outside of the plot on the top center
-                ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.2), ncol=2)
+                ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.3), ncol=2, frameon=False)
                 fig.tight_layout()
                 fig.savefig(figures_dir / f"extraction_annual_stacked_{area}.pdf", dpi=300)
 
@@ -421,6 +422,9 @@ def main(model_run):
                 # rotate xticklabels to vertical and show only the year and month
                 xticklabels = df_irrigation_monthly.index.strftime("%y-%m")
                 ax.set_xticks(df_irrigation_monthly.index)
+                # reformat xticklabels to show only the year and month and plot labels of every 4th month
+                xticklabels = df_irrigation_monthly.index.strftime("%y-%m")
+                xticklabels = [label if i % 4 == 0 else "" for i, label in enumerate(xticklabels)]
                 ax.set_xticklabels(xticklabels, rotation=90)
                 ax.set_xlim(df_irrigation_monthly.index[0] - pd.DateOffset(months=1), df_irrigation_monthly.index[-1] + pd.DateOffset(months=1))
                 ax.set_xlabel("Zeit [Jahr-Monat]")
@@ -428,7 +432,7 @@ def main(model_run):
                 # set legend off
                 ax.legend().set_visible(False)
                 fig.tight_layout()
-                fig.savefig(figures_dir / f"irrigation_monthly_{area}.pdf", dpi=300)
+                fig.savefig(figures_dir / f"irrigation_share_monthly_{area}.pdf", dpi=300)
 
             # plot monthly direct and indirect recharge using stacked bar plot use blue for direct recharge and purple for indirect recharge 
             fig, ax = plt.subplots(figsize=(6, 2.5))
@@ -447,7 +451,7 @@ def main(model_run):
             ax.set_xlabel("Zeit [Jahr-Monat]")
             ax.set_ylabel("GWN\n[Mio. m³/Monat]")
             # put legend outside of the plot on the top center
-            ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.2), ncol=2)
+            ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.3), ncol=2, frameon=False)
             fig.tight_layout()
             fig.savefig(figures_dir / f"recharge_monthly_stacked_{area}.pdf", dpi=300)
             plt.close(fig)
@@ -462,7 +466,7 @@ def main(model_run):
             ax.set_xlabel("Jahr")
             ax.set_ylabel("GWN\n[Mio. m³/Jahr]")
             # put legend outside of the plot on the top center
-            ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.2), ncol=2)
+            ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.3), ncol=2, frameon=False)
             fig.tight_layout()
             fig.savefig(figures_dir / f"recharge_annual_stacked_{area}.pdf", dpi=300)
             plt.close(fig)
