@@ -86,6 +86,7 @@ def main(model_run):
     ycoords = ds_params.y.values - 25
 
     for area in areas:
+        click.echo(f"Processing {area}...")
         if area == "dmn":
             mask = ds_params["mask_porous_aquifer"].values
         else:
@@ -216,7 +217,7 @@ def main(model_run):
             # dataframe with long-term average annual well extraction
             df_well_extraction_long_term_average = pd.DataFrame(index=["long_term_average"], data=[df_well_extraction_annual["well_extraction"].mean()], columns=["well_extraction"])
 
-            if "_irrigation" in stress_test_scenario:
+            if "_irrigation_" in stress_test_scenario:
                 # load irrigation
                 click.echo("Loading irrigation...")
                 ll_irrigation = []
@@ -332,7 +333,7 @@ def main(model_run):
             fig.savefig(figures_dir / f"well_extraction_annual_long_term_average_{area}.pdf", dpi=300)
             click.echo(f"Long-term average annual drinking water well extraction: {long_term_average:.2f} million m3/year")
 
-            if "_irrigation" in stress_test_scenario:
+            if "_irrigation_" in stress_test_scenario:
                 # plot monthly irrigation
                 fig, ax = plt.subplots(figsize=(6, 2.5))
                 # convert to million m3/month
