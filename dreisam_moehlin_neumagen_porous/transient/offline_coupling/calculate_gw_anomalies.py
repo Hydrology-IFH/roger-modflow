@@ -252,7 +252,7 @@ def main(model_run):
             # ax.set_xlim(date_time[0], date_time[-1])
             # ax.set_xlabel("Zeit")
             # ax.set_ylabel("Mittlere GWFA Anomalie [m]")
-            # # set y-axis limits to -10 to 10        
+            #         
             # ax.set_ylim(-3, 3)
             # # turn legend off
             # ax.legend().set_visible(False)
@@ -268,7 +268,7 @@ def main(model_run):
             ax.set_xlim(date_time[0], date_time[-1])
             ax.set_xlabel("Zeit")
             ax.set_ylabel("Mittlere GWFA [m]")
-            # set y-axis limits to -10 to 10
+            
             # get ylimits of the current plot
             ylims = ax.get_ylim()
             _ylim = max(abs(ylims[0]), abs(ylims[1]))
@@ -289,7 +289,7 @@ def main(model_run):
             ax.set_xlim(date_time[0], date_time[-1])
             ax.set_xlabel("Zeit")
             ax.set_ylabel("Mittlere GWFA Anomalie [m]")
-            # set y-axis limits to -10 to 10
+            
             # get ylimits of the current plot
             ylims = ax.get_ylim()
             _ylim = max(abs(ylims[0]), abs(ylims[1]))
