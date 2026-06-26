@@ -44,6 +44,7 @@ def main():
     ax.set_ylabel('GW-Entnahme [m³/Tag]')
     ax.set_xlim(df_well_extraction_wsg_hausen.index[0] - pd.Timedelta(days=15), df_well_extraction_wsg_hausen.index[-1] + pd.Timedelta(days=15))
     ax.set_ylim(0, )
+    ax.legend(loc='upper left', frameon=False, ncol=2)
     fig.tight_layout()
     file = base_path / "figures" / "badenova_water_well_extraction_time_series.png"
     fig.savefig(file, dpi=300)
@@ -55,6 +56,7 @@ def main():
     ax.set_ylabel('Entnahmefaktor [-]')
     ax.set_xlim(df_well_extraction_wsg_hausen.index[0] - pd.Timedelta(days=15), df_well_extraction_wsg_hausen.index[-1] + pd.Timedelta(days=15))
     ax.set_ylim(0, 1)
+    ax.legend(loc='upper right', frameon=False, ncol=2)
     fig.tight_layout()
     file = base_path / "figures" / "badenova_water_well_extraction_shares_time_series.png"
     fig.savefig(file, dpi=300)
@@ -93,65 +95,37 @@ def main():
     n_wells = len(df_groundwater_extraction)
     cond_drinking_water_supply = df_groundwater_extraction["purpose"].isin(['Badenova WW Ebnet', 'Badenova WW Hausen', 'Eigenwasserversorgung', 'oeffentliche Wasserversorgung']).values
 
-    # load daily weights for drinking water supply wells to scale the pumping rates of the drinking water supply wells in the well package
-    df_daily_weights_drinking_water_supply = pd.read_csv(base_path / "input" / "drinking_water_well_extraction_data" / "daily_weights_drinking_water_supply.csv", sep=";", index_col=0)
 
     date_time = pd.date_range(start="2013-01-01", end="2023-12-31", freq="D")
-    NDAYS = len(date_time)
-    doys = date_time.dayofyear.values
-    years = date_time.year.values
 
-    df_drinking_water_well_extraction_daily = pd.DataFrame(index=date_time, columns=['well_extraction'])
-    for i in range(NDAYS):
-        year = years[i]
-        extraction_year = df_groundwater_extraction.loc[cond_drinking_water_supply, f"{year}"].values.sum()
-        df_drinking_water_well_extraction_daily.iloc[i, 0] = extraction_year * df_daily_weights_drinking_water_supply.iloc[i, 0]
-
-    # save daily drinking water well extraction to csv
-    df_drinking_water_well_extraction_daily.columns = [['[m3]'], ['well_extraction']]
-    file = base_path / "input" / "drinking_water_well_extraction_daily.csv"
-    df_drinking_water_well_extraction_daily.to_csv(file, sep=";")
-    df_drinking_water_well_extraction_daily.columns = ['well_extraction']
+    _df_well_extraction_daily = pd.read_csv(base_path / "input" / "well_extraction_daily.csv", sep=";", index_col=0)
+    _df_well_extraction_daily.index = pd.to_datetime(_df_well_extraction_daily.index)
+    df_well_extraction_daily = _df_well_extraction_daily.sum(axis=1).to_frame(name='well_extraction')
 
     # aggreate to monthly values
-    df_drinking_water_well_extraction_monthly = df_drinking_water_well_extraction_daily.resample('ME').sum()
-
-    # save monthly drinking water well extraction to csv
-    df_drinking_water_well_extraction_monthly.columns = [['[m3]'], ['well_extraction']]
-    file = base_path / "input" / "drinking_water_well_extraction_monthly.csv"
-    df_drinking_water_well_extraction_monthly.to_csv(file, sep=";")
-    df_drinking_water_well_extraction_monthly.columns = ['well_extraction']
+    df_well_extraction_monthly = df_well_extraction_daily.resample("ME").sum()
 
     # barplot monthly drinking water well extraction    
     fig, ax = plt.subplots(figsize=(6, 3))
-    ax.bar(df_drinking_water_well_extraction_monthly.index, df_drinking_water_well_extraction_monthly['well_extraction']/ 1000000, color='purple', width=20)
-    ax.set_xlim(df_drinking_water_well_extraction_monthly.index[0] - pd.Timedelta(days=15), df_drinking_water_well_extraction_monthly.index[-1] + pd.Timedelta(days=15))
+    ax.bar(df_well_extraction_monthly.index, df_well_extraction_monthly['well_extraction']/ 1000000, color='purple', width=20)
+    ax.set_xlim(df_well_extraction_monthly.index[0] - pd.Timedelta(days=15), df_well_extraction_monthly.index[-1] + pd.Timedelta(days=15))
     ax.set_xlabel('Zeit')
     ax.set_ylabel('GW-Entnahme\n[Mio. m³/Monat]')
     fig.tight_layout()
-    file = base_path / "figures" / "drinking_water_well_extraction.png"
+    file = base_path / "figures" / "well_extraction_monthly.png"
     fig.savefig(file, dpi=300)
     plt.close(fig)
 
     # barplot monthly drinking water well extraction    
     fig, ax = plt.subplots(figsize=(6, 3))
-    ax.bar(df_drinking_water_well_extraction_monthly.index, df_drinking_water_well_extraction_monthly['well_extraction']/ 1000000, color='purple', width=20, zorder=1)
-    df_drinking_water_well_extraction_monthly.loc[:, 'well_extraction'] = df_drinking_water_well_extraction_monthly.loc[:, 'well_extraction'] * 1.1
-    # # select July and August of year 2018 and 2020 and increase values by 40% to visualize the effect of increased pumping rates during droughts
-    # cond = (df_drinking_water_well_extraction_monthly.index.month == 7) & (df_drinking_water_well_extraction_monthly.index.year == 2018)
-    # df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] = df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] * 1.1
-    # cond = (df_drinking_water_well_extraction_monthly.index.month == 8) & (df_drinking_water_well_extraction_monthly.index.year == 2018)
-    # df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] = df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] * 1.1
-    # cond = (df_drinking_water_well_extraction_monthly.index.month == 7) & (df_drinking_water_well_extraction_monthly.index.year == 2020)
-    # df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] = df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] * 1.1
-    # cond = (df_drinking_water_well_extraction_monthly.index.month == 8) & (df_drinking_water_well_extraction_monthly.index.year == 2020)
-    # df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] = df_drinking_water_well_extraction_monthly.loc[cond, 'well_extraction'] * 1.1
-    ax.bar(df_drinking_water_well_extraction_monthly.index, df_drinking_water_well_extraction_monthly['well_extraction']/ 1000000, color='red', width=20, zorder=0)
-    ax.set_xlim(df_drinking_water_well_extraction_monthly.index[0] - pd.Timedelta(days=15), df_drinking_water_well_extraction_monthly.index[-1] + pd.Timedelta(days=15))
+    ax.bar(df_well_extraction_monthly.index, df_well_extraction_monthly['well_extraction']/ 1000000, color='purple', width=20, zorder=1)
+    df_well_extraction_monthly.loc[:, 'well_extraction'] = df_well_extraction_monthly.loc[:, 'well_extraction'] * 1.3
+    ax.bar(df_well_extraction_monthly.index, df_well_extraction_monthly['well_extraction']/ 1000000, color='red', width=20, zorder=0)
+    ax.set_xlim(df_well_extraction_monthly.index[0] - pd.Timedelta(days=15), df_well_extraction_monthly.index[-1] + pd.Timedelta(days=15))
     ax.set_xlabel('Zeit')
     ax.set_ylabel('GW-Entnahme\n[Mio. m³/Monat]')
     fig.tight_layout()
-    file = base_path / "figures" / "drinking_water_well_extraction_stress.png"
+    file = base_path / "figures" / "well_extraction_monthly_stress.png"
     fig.savefig(file, dpi=300)
     plt.close(fig)
 

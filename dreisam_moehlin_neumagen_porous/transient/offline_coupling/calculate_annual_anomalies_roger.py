@@ -794,6 +794,8 @@ def main(model_run, area):
             da_irrigation = _da_irrigation.resample(time="YE").sum(dim="time", skipna=False)
             del irrigation, ll_irrigation, _da_irrigation, _irrigation_year, ds_irrigation
             click.echo("Calculating irrigation metrics...")
+            value = np.nanmean(np.nansum(da_irrigation.values.flatten(), axis=0))
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "irrigation", "unit": "mm/year", "metric": "sum", "value": value}
             value = np.nanmean(da_irrigation.values.flatten())
             df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "irrigation", "unit": "mm/year", "metric": "average", "value": value}
             value = np.nanpercentile(da_irrigation.values.flatten(), 5)
@@ -810,6 +812,8 @@ def main(model_run, area):
             for i, year in enumerate(years):
                 irrigation = da_irrigation.values[i, :, :]
 
+                value = np.nansum(irrigation.flatten())
+                df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "irrigation", "unit": "mm/year", "metric": "sum", "value": value}
                 value = np.nanmean(irrigation.flatten())
                 df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "irrigation", "unit": "mm/year", "metric": "average", "value": value}
                 value = np.nanpercentile(irrigation.flatten(), 5)

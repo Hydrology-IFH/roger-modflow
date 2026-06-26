@@ -304,35 +304,15 @@ def main(model_run, area):
     da_well_extraction_base = _da_well_extraction_base.resample(time="YE").sum(dim="time", skipna=False)
     del well_extraction, ll_well_extraction, _da_well_extraction_base, well_extraction_year, ds_well_extraction
 
-    value = np.nanmean(da_well_extraction_base.values.flatten())
-    df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/year", "metric": "average", "value": value}
-    value = np.nanpercentile(da_well_extraction_base.values.flatten(), 5)
-    df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/year", "metric": "5th_percentile", "value": value}
-    value = np.nanpercentile(da_well_extraction_base.values.flatten(), 25)
-    df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/year", "metric": "25th_percentile", "value": value}
-    value = np.nanpercentile(da_well_extraction_base.values.flatten(), 50)
-    df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/year", "metric": "median", "value": value}
-    value = np.nanpercentile(da_well_extraction_base.values.flatten(), 75)
-    df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/year", "metric": "75th_percentile", "value": value}
-    value = np.nanpercentile(da_well_extraction_base.values.flatten(), 95)
-    df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/year", "metric": "95th_percentile", "value": value}
+    value = np.nanmean(np.nansum(da_well_extraction_base.values.flatten(), axis=0))
+    df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/year", "metric": "sum", "value": value}
 
     for i, year in enumerate(years):
         click.echo(f"Processing year {year}...")
         well_extraction_year = da_well_extraction_base.values[i, :, :]  # sum over time to get annual well extraction
 
-        value = np.nanmean(well_extraction_year.flatten())
-        df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/year", "metric": "average", "value": value}
-        value = np.nanpercentile(well_extraction_year.flatten(), 5)
-        df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/year", "metric": "5th_percentile", "value": value}
-        value = np.nanpercentile(well_extraction_year.flatten(), 25)
-        df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/year", "metric": "25th_percentile", "value": value}
-        value = np.nanpercentile(well_extraction_year.flatten(), 50)
-        df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/year", "metric": "median", "value": value}
-        value = np.nanpercentile(well_extraction_year.flatten(), 75)
-        df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/year", "metric": "75th_percentile", "value": value}
-        value = np.nanpercentile(well_extraction_year.flatten(), 95)
-        df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/year", "metric": "95th_percentile", "value": value}
+        value = np.nansum(well_extraction_year.flatten())
+        df_metrics.loc[len(df_metrics)] = {"scenario": base, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/year", "metric": "sum", "value": value}
 
     # save the metrics to csv
     output_file = base_path / "output" / f"annual_values_run{model_run}_{area}_modflow.csv"
@@ -706,7 +686,6 @@ def main(model_run, area):
         ll_well_extraction = []
         for year in years:
             output_file = base_path / "output" / f"modflow_{stress_test_scenario}" / f"well_extraction_run{model_run}_year{year}.nc"
-            # output_file = base_path_output / f"{stress_test_scenario}" / f"well_extraction_run{model_run}_year{year}.nc"
             ds_well_extraction = xr.open_dataset(output_file, engine="h5netcdf")
             well_extraction_year = ds_well_extraction["well_extraction"].values
             ds_well_extraction.close()
@@ -727,96 +706,26 @@ def main(model_run, area):
         da_well_extraction = _da_well_extraction.resample(time="YE").sum(dim="time", skipna=False)
         del well_extraction, ll_well_extraction, _da_well_extraction, well_extraction_year, ds_well_extraction
         click.echo("Calculating well extraction anomalies...")
-        value = np.nanmean(da_well_extraction.values.flatten())
-        value_base = np.nanmean(da_well_extraction_base.values.flatten())
+        value = np.nanmean(np.nansum(da_well_extraction.values.flatten(), axis=0))
+        value_base = np.nanmean(np.nansum(da_well_extraction_base.values.flatten(), axis=0))
         anomaly_abs = value - value_base
         anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-        df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/s", "metric": "average", "value": value}
-        df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/s", "metric": "average", "value": anomaly_abs}
-        df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "well_extraction", "unit": "%", "metric": "average", "value": anomaly_rel}
-        value = np.nanpercentile(da_well_extraction.values.flatten(), 5)
-        value_base = np.nanpercentile(da_well_extraction_base.values.flatten(), 5)
-        anomaly_abs = value - value_base
-        anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-        df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/s", "metric": "5th_percentile", "value": value}
-        df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area,"variable": 'well_extraction', "unit": 'm3/s', ("metric"): '5th_percentile', ("value"): anomaly_abs}
-        df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "well_extraction", "unit": "%",("metric"): '5th_percentile', ("value"): anomaly_rel}
-        value = np.nanpercentile(da_well_extraction.values.flatten(), 25)
-        value_base = np.nanpercentile(da_well_extraction_base.values.flatten(), 25)
-        anomaly_abs = value - value_base
-        anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-        df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/s", "metric": "25th_percentile", "value": value}
-        df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/s", "metric": "25th_percentile", "value": anomaly_abs}
-        df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "well_extraction", "unit": "%", "metric": "25th_percentile", "value": anomaly_rel}
-        value = np.nanpercentile(da_well_extraction.values.flatten(), 50)
-        value_base = np.nanpercentile(da_well_extraction_base.values.flatten(), 50)
-        anomaly_abs = value - value_base
-        anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-        df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/s", "metric": "median", "value": value}
-        df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/s", "metric": "median", "value": anomaly_abs}
-        df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "well_extraction", "unit": "%", "metric": "median", "value": anomaly_rel}
-        value = np.nanpercentile(da_well_extraction.values.flatten(), 75)
-        value_base = np.nanpercentile(da_well_extraction_base.values.flatten(), 75)
-        anomaly_abs = value - value_base
-        anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-        df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/s", "metric": "75th_percentile", "value": value}
-        df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/s", "metric": "75th_percentile", "value": anomaly_abs}
-        df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "well_extraction", "unit": "%", "metric": "75th_percentile", "value": anomaly_rel}
-        value = np.nanpercentile(da_well_extraction.values.flatten(), 95)
-        value_base = np.nanpercentile(da_well_extraction_base.values.flatten(), 95)
-        anomaly_abs = value - value_base
-        anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-        df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/s", "metric": "95th_percentile", "value": value}
-        df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/s", "metric": "95th_percentile", "value": anomaly_abs}
-        df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "well_extraction", "unit": "%", "metric": "95th_percentile", "value": anomaly_rel}
+        df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/s", "metric": "sum", "value": value}
+        df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "well_extraction", "unit": "m3/s", "metric": "sum", "value": anomaly_abs}
+        df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": "overall", "variable": "well_extraction", "unit": "%", "metric": "sum", "value": anomaly_rel}
 
         for i, year in enumerate(years):
             click.echo(f"Processing year {year}...")
             well_extraction_base_year = da_well_extraction_base.values[i, :, :]
             well_extraction_year = da_well_extraction.values[i, :, :]
 
-            value = np.nanmean(well_extraction_year.flatten())
-            value_base = np.nanmean(well_extraction_base_year.flatten())
+            value = np.nansum(well_extraction_year.flatten())
+            value_base = np.nansum(well_extraction_base_year.flatten())
             anomaly_abs = value - value_base
             anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/s", "metric": "average", "value": value}
-            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/s", "metric": "average", "value": anomaly_abs}
-            df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "%", "metric": "average", "value": anomaly_rel}
-            value = np.nanpercentile(well_extraction_year.flatten(), 5)
-            value_base = np.nanpercentile(well_extraction_base_year.flatten(), 5)
-            anomaly_abs = value - value_base
-            anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/s", "metric": "5th_percentile", "value": value}
-            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": 'well_extraction', "unit": 'm3/s', ("metric"): '5th_percentile', ("value"): anomaly_abs}
-            df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "%",("metric"): '5th_percentile', ("value"): anomaly_rel}
-            value = np.nanpercentile(well_extraction_year.flatten(), 25)
-            value_base = np.nanpercentile(well_extraction_base_year.flatten(), 25)
-            anomaly_abs = value - value_base
-            anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/s", "metric": "25th_percentile", "value": value}
-            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/s", "metric": "25th_percentile", "value": anomaly_abs}
-            df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "%", "metric": "25th_percentile", "value": anomaly_rel}
-            value = np.nanpercentile(well_extraction_year.flatten(), 50)
-            value_base = np.nanpercentile(well_extraction_base_year.flatten(), 50)
-            anomaly_abs = value - value_base
-            anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/s", "metric": "median", "value": value}
-            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/s", "metric": "median", "value": anomaly_abs}
-            df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "%", "metric": "median", "value": anomaly_rel}
-            value = np.nanpercentile(well_extraction_year.flatten(), 75)
-            value_base = np.nanpercentile(well_extraction_base_year.flatten(), 75)
-            anomaly_abs = value - value_base
-            anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/s", "metric": "75th_percentile", "value": value}
-            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/s", "metric": "75th_percentile", "value": anomaly_abs}
-            df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "%", "metric": "75th_percentile", "value": anomaly_rel}
-            value = np.nanpercentile(well_extraction_year.flatten(), 95)
-            value_base = np.nanpercentile(well_extraction_base_year.flatten(), 95)
-            anomaly_abs = value - value_base
-            anomaly_rel = (value - value_base) / value_base * 100 if value_base != 0 else np.nan
-            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/s", "metric": "95th_percentile", "value": value}
-            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/s", "metric": "95th_percentile", "value": anomaly_abs}
-            df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "%", "metric": "95th_percentile", "value": anomaly_rel}
+            df_metrics.loc[len(df_metrics)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/s", "metric": "sum", "value": value}
+            df_anomaly_metrics_abs.loc[len(df_anomaly_metrics_abs)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "m3/s", "metric": "sum", "value": anomaly_abs}
+            df_anomaly_metrics_rel.loc[len(df_anomaly_metrics_rel)] = {"scenario": stress_test_scenario, "area": area, "time": f"{year}", "variable": "well_extraction", "unit": "%", "metric": "sum", "value": anomaly_rel}
 
         del da_well_extraction
 
