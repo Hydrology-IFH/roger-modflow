@@ -33,7 +33,7 @@ def main(model_run):
     periods = ["overall", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023"]
     variables = ["air_temperature", "potential_evapotranspiration", "actual_evapotranspiration", "precipitation", "direct_recharge", "indirect_recharge", "gw_depth"]
     
-    variables = ["air_temperature", "potential_evapotranspiration", "precipitation", "indirect_recharge", "gw_depth"]
+    variables = ["air_temperature", "potential_evapotranspiration", "precipitation", "direct_recharge", "indirect_recharge", "gw_depth"]
     metrics = ["average", "5th_percentile", "25th_percentile", "median", "75th_percentile", "95th_percentile"]
 
     # load metrics
