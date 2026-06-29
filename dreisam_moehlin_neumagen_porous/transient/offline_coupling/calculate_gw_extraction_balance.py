@@ -268,6 +268,9 @@ def main(model_run):
                 df_extraction_balance_monthly["actual_extraction"] = df_well_extraction_monthly["well_extraction"]
             df_extraction_balance_monthly["extraction_balance"] = df_extraction_balance_monthly["sustainable_extraction"] - df_extraction_balance_monthly["actual_extraction"]
 
+            click.echo(f"Long-term sustainable extraction: {df_extraction_balance_monthly['sustainable_extraction'].mean():.2f} m3/month")
+            click.echo(f"Long-term actual extraction: {df_extraction_balance_monthly['actual_extraction'].mean():.2f} m3/month")
+    
             # calculate the annual extraction balance
             df_extraction_balance_annual = pd.DataFrame(index=df_well_extraction_annual.index, columns=["sustainable_extraction", "actual_extraction", "extraction_balance"])
             df_extraction_balance_annual["sustainable_extraction"] = df_recharge_annual["recharge"].mean() * 0.3
@@ -276,6 +279,9 @@ def main(model_run):
             else:
                 df_extraction_balance_annual["actual_extraction"] = df_well_extraction_annual["well_extraction"]
             df_extraction_balance_annual["extraction_balance"] = df_extraction_balance_annual["sustainable_extraction"] - df_extraction_balance_annual["actual_extraction"]
+
+            click.echo(f"Long-term sustainable extraction: {df_extraction_balance_annual['sustainable_extraction'].mean():.2f} m3/year")
+            click.echo(f"Long-term actual extraction: {df_extraction_balance_annual['actual_extraction'].mean():.2f} m3/year")
 
             # calculate the long-term sum extraction balance
             df_extraction_balance_long_term = pd.DataFrame(index=["long_term"], columns=["sustainable_extraction", "actual_extraction", "extraction_balance"])
