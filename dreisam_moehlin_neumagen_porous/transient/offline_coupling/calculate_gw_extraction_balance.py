@@ -291,7 +291,7 @@ def main(model_run):
                 df_extraction_balance_annual["actual_extraction"] = df_well_extraction_annual["well_extraction"]
             df_extraction_balance_annual["extraction_balance"] = df_extraction_balance_annual["sustainable_extraction"] - df_extraction_balance_annual["actual_extraction"]
 
-            click.echo(f"Long-term sustainable extraction: {df_extraction_balance_annual['sustainable_extraction']:.2f} m3/year")
+            click.echo(f"Long-term sustainable extraction: {df_extraction_balance_annual['sustainable_extraction'].mean():.2f} m3/year")
             click.echo(f"Long-term actual extraction: {df_extraction_balance_annual['actual_extraction'].mean():.2f} m3/year")
 
             # calculate the long-term sum extraction balance
